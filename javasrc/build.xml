@@ -1,0 +1,26 @@
+<project name='seede' default='all' >
+
+   <property name='PRO' value='/research' />
+   <property name='IVYBIN' value='/research/ivy/java' />
+   <property name='BUBBLESBIN' value='/research/bubbles/java' />
+   <property name='SEEDE' value='/research/people/spr/seede' />
+
+   <target name='all'>
+      <ant antfile="build.xml" dir="edu/brown/cs/seede/sesame" />
+   </target>
+
+   <path id='jdocsrc'>
+      <pathelement location='${FAIT}/java' />
+      <pathelement location='${IVYBIN}' />
+      <pathelement location='${BUBBLESBIN}' />
+      <pathelement location='${PRO}/bubbles/lib/junit.jar' />
+      <fileset dir='${SEEDE}/lib/' includes='asm*.jar' />
+   </path>
+
+   <target name='doc'>
+      <javadoc sourcepathref='jdocsrc' classpathref='jdocsrc' destdir='${SEEDE}/doc'>
+	 <package name='edu.brown.cs.seede.sesame' />
+      </javadoc>
+   </target>
+
+</project>

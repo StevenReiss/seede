@@ -1,0 +1,40 @@
+<project name='seede' default='all'>
+
+   <target name='all'>
+      <ant antfile="build.xml" dir="javasrc" />
+   </target>
+
+   <path id='jdocsrc'>
+      <pathelement location='./javasrc' />
+      <pathelement location='${PRO}/ivy/javasrc' />
+      <pathelement location='${PRO}/bubbles/javasrc' />
+    </path>
+
+   <target name='doc'>
+      <ant antfile='build.xml' dir='javasrc' target='doc' />
+      <zip zipfile='lib/apidoc.zip' basedir='doc' />
+   </target>
+
+   <target name='jar' depends='all'>
+      <jar destfile='seede.jar'>
+	 <manifest>
+	 </manifest>
+	 <fileset dir='./java' includes='**/*.class' />
+      </jar>
+   </target>
+
+</project>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
