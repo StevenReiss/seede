@@ -15,6 +15,7 @@
 	 <pathelement location='${BUBBLESBIN}' />
 	 <fileset dir='${SEEDE}/lib/' includes='asm*.jar' />
 	 <pathelement location='${PRO}/bubbles/lib/junit.jar' />
+	 <fileset dir='${PRO}/ivy/lib/eclipsejar' includes='*.jar' />
       </path>
       <path id='test.classpath'>
 	 <pathelement location='${SEEDE}/java' />
@@ -22,6 +23,7 @@
 	 <pathelement location='${BUBBLESBIN}' />
 	 <fileset dir='${SEEDE}/lib/' includes='asm*.jar' />
 	 <pathelement location='${PRO}/bubbles/lib/junit.jar' />
+	 <fileset dir='${PRO}/ivy/lib/eclipsejar' includes='*.jar' />
       </path>
    </target>
 
