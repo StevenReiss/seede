@@ -1,9 +1,9 @@
 <project name='seede' default='all' >
 
-   <property name='PRO' value='/research' />
-   <property name='IVYBIN' value='/research/ivy/java' />
-   <property name='BUBBLESBIN' value='/research/bubbles/java' />
-   <property name='SEEDE' value='/research/people/spr/seede' />
+   <property name='PRO' value='/pro' />
+   <property name='IVYBIN' value='/pro/ivy/java' />
+   <property name='BUBBLESBIN' value='/pro/bubbles/java' />
+   <property name='SEEDE' value='${basedir}/..' />
 
    <target name='all'>
       <ant antfile="build.xml" dir="edu/brown/cs/seede/sesame" />
@@ -24,3 +24,43 @@
    </target>
 
 </project>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

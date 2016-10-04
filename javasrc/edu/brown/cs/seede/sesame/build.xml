@@ -1,12 +1,12 @@
 <project name='seede.sesame' default='compile'>
 
    <property file='../../../../../../build.properties' />
-   <property name='PRO' value='/research' />
+   <property name='PRO' value='/pro' />
    <available file="${PRO}/ivy" type="dir" property="ivy.present" />
    <available file="${PRO}/bubbles" type="dir" property="bubbles.present" />
    <property name='IVYBIN' value='${PRO}/ivy/java' />
    <property name='BUBBLESBIN' value='${PRO}/bubbles/java' />
-   <property name='SEEDE' value='/research/people/spr/seede' />
+   <property name='SEEDE' value='${basedir}/../../../../../..' />
 
    <target name='init'>
       <path id='seede.classpath'>
