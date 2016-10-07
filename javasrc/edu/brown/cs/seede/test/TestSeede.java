@@ -1,21 +1,21 @@
 /********************************************************************************/
-/*                                                                              */
-/*              TestSeede.java                                                  */
-/*                                                                              */
-/*      General test program for seede execution engine                         */
-/*                                                                              */
+/*										*/
+/*		TestSeede.java							*/
+/*										*/
+/*	General test program for seede execution engine 			*/
+/*										*/
 /********************************************************************************/
-/*      Copyright 2011 Brown University -- Steven P. Reiss                    */
+/*	Copyright 2011 Brown University -- Steven P. Reiss		      */
 /*********************************************************************************
- *  Copyright 2011, Brown University, Providence, RI.                            *
- *                                                                               *
- *                        All Rights Reserved                                    *
- *                                                                               *
- * This program and the accompanying materials are made available under the      *
+ *  Copyright 2011, Brown University, Providence, RI.				 *
+ *										 *
+ *			  All Rights Reserved					 *
+ *										 *
+ * This program and the accompanying materials are made available under the	 *
  * terms of the Eclipse Public License v1.0 which accompanies this distribution, *
- * and is available at                                                           *
- *      http://www.eclipse.org/legal/epl-v10.html                                *
- *                                                                               *
+ * and is available at								 *
+ *	http://www.eclipse.org/legal/epl-v10.html				 *
+ *										 *
  ********************************************************************************/
 
 /* SVN: $Id$ */
@@ -27,6 +27,7 @@ package edu.brown.cs.seede.test;
 import java.io.File;
 import java.io.IOException;
 
+import org.junit.After;
 import org.junit.Before;
 
 import edu.brown.cs.ivy.exec.IvyExec;
@@ -37,32 +38,32 @@ import edu.brown.cs.ivy.mint.MintConstants;
 
 
 
-public class TestSeede implements MintConstants 
+public class TestSeede implements MintConstants
 {
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Private Storage                                                         */
-/*                                                                              */
+/*										*/
+/*	Private Storage 							*/
+/*										*/
 /********************************************************************************/
 
-private static final String             MINT_NAME = "SEEDE_TEST_spr";
-private static final String             SOURCE_ID = "SEED_12345";
+private static final String		MINT_NAME = "SEEDE_TEST_spr";
+private static final String		SOURCE_ID = "SEED_12345";
 
-private MintControl     mint_control;
+private MintControl	mint_control;
 
 
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Constructors                                                            */
-/*                                                                              */
+/*										*/
+/*	Constructors								*/
+/*										*/
 /********************************************************************************/
 
 public TestSeede()
-{ 
+{
    mint_control = MintControl.create(MINT_NAME,MintSyncMode.ONLY_REPLIES);
 }
 
@@ -79,26 +80,32 @@ public TestSeede()
       System.err.println("Can't find bubbles version of eclipse to run");
       System.exit(1);
     }
-   
+
    String cmd = ec1.getAbsolutePath();
    cmd += " -application edu.brown.cs.bubbles.bedrock.application";
    cmd += " -data " + ec2.getAbsolutePath();
-   cmd += " -vmargs -Dedu.brown.cs.bubbles.MINT=" + MINT_NAME; 
-   
+   cmd += " -vmargs -Dedu.brown.cs.bubbles.MINT=" + MINT_NAME;
+
    try {
       IvyExec ex = new IvyExec(cmd);
       for (int i = 0; i < 250; ++i) {
-         synchronized(this) {
-            try { wait(1000); } catch (InterruptedException e) { }
-          }
-         if (tryPing()) return;
+	 synchronized(this) {
+	    try { wait(1000); } catch (InterruptedException e) { }
+	  }
+	 if (tryPing()) return;
        }
     }
    catch (IOException e) { }
-   
+
    throw new Error("Problem running Eclipse");
 }
 
+
+
+@After public void shutdownBedrock()
+{
+   sendMessage("EXIT",null,null,null);
+}
 
 
 
@@ -111,6 +118,13 @@ private boolean tryPing()
 }
 
 
+
+
+/********************************************************************************/
+/*										*/
+/*	Messaging methods							*/
+/*										*/
+/********************************************************************************/
 
 private void sendMessage(String cmd)
 {
@@ -139,10 +153,47 @@ private void sendMessage(String cmd,String proj,String flds,String cnts,MintRepl
 
 
 
-}       // end of class TestSeede
+}	// end of class TestSeede
 
 
 
 
 /* end of TestSeede.java */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
