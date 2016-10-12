@@ -74,7 +74,7 @@ public TestSeede()
    File ec1 = new File("/u/spr/eclipse-neonx/eclipse/eclipse");
    File ec2 = new File("/u/spr/Eclipse/seede-test");
    if (!ec1.exists()) {
-      ec1 = new File("/Developer/eclipse42/Eclipse.app");
+      ec1 = new File("/Developer/eclipse42/eclipse");
       ec2 = new File("/Users/spr/Documents/seede-test");
     }
    if (!ec1.exists()) {
@@ -85,6 +85,7 @@ public TestSeede()
    String cmd = ec1.getAbsolutePath();
    cmd += " -application edu.brown.cs.bubbles.bedrock.application";
    cmd += " -data " + ec2.getAbsolutePath();
+   cmd += " -nosplash";
    cmd += " -vmargs -Dedu.brown.cs.bubbles.MINT=" + MINT_NAME;
 
    try {
@@ -93,7 +94,11 @@ public TestSeede()
 	 synchronized(this) {
 	    try { wait(1000); } catch (InterruptedException e) { }
 	  }
-	 if (tryPing()) return;
+	 if (tryPing()) {
+            sendMessage("LOGLEVEL",null,"LEVEL='DEBUG'",null);
+            sendMessage("ENTER");
+            return;
+          }
        }
     }
    catch (IOException e) { }
@@ -113,8 +118,8 @@ public TestSeede()
 private boolean tryPing()
 {
    MintDefaultReply mdr = new MintDefaultReply();
-   sendMessage("PING",null,null,null,null,MINT_MSG_FIRST_NON_NULL);
-   String r = mdr.waitForString(50000);
+   sendMessage("PING",null,null,null,mdr,MINT_MSG_FIRST_NON_NULL);
+   String r = mdr.waitForString(500);
    return r != null;
 }
 
