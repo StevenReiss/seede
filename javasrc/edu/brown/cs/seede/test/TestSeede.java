@@ -29,6 +29,7 @@ import java.io.IOException;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Test;
 
 import edu.brown.cs.ivy.exec.IvyExec;
 import edu.brown.cs.ivy.mint.MintControl;
@@ -71,10 +72,10 @@ public TestSeede()
 @Before public void setupBedrock()
 {
    File ec1 = new File("/u/spr/eclipse-neonx/eclipse/eclipse");
-   File ec2 = new File("/u/spr/Eclipse/solar");
+   File ec2 = new File("/u/spr/Eclipse/seede-test");
    if (!ec1.exists()) {
       ec1 = new File("/Developer/eclipse42/Eclipse.app");
-      ec2 = new File("/Users/spr/Documents/workspacesolar");
+      ec2 = new File("/Users/spr/Documents/seede-test");
     }
    if (!ec1.exists()) {
       System.err.println("Can't find bubbles version of eclipse to run");
@@ -97,7 +98,7 @@ public TestSeede()
     }
    catch (IOException e) { }
 
-   throw new Error("Problem running Eclipse");
+   throw new Error("Problem running Eclipse: " + cmd);
 }
 
 
@@ -117,6 +118,19 @@ private boolean tryPing()
    return r != null;
 }
 
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Basic Tests                                                             */
+/*                                                                              */
+/********************************************************************************/
+
+@Test public void test1()
+{
+   // do something here
+}
 
 
 
