@@ -124,6 +124,11 @@ private class EclipseHandler implements MintHandler {
    @Override public void receive(MintMessage msg,MintArguments args) {
       String cmd = args.getArgument(0);
       Element e = msg.getXml();
+      switch (cmd) {
+         case "PING" :
+            msg.replyTo("PONG");
+            break;
+       }
     }
    
 }       // end of inner class EclipseHandler
