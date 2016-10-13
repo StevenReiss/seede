@@ -30,12 +30,18 @@ import java.io.IOException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.Assert;
+import org.w3c.dom.Element;
 
 import edu.brown.cs.ivy.exec.IvyExec;
+import edu.brown.cs.ivy.mint.MintArguments;
 import edu.brown.cs.ivy.mint.MintControl;
 import edu.brown.cs.ivy.mint.MintDefaultReply;
+import edu.brown.cs.ivy.mint.MintHandler;
+import edu.brown.cs.ivy.mint.MintMessage;
 import edu.brown.cs.ivy.mint.MintReply;
 import edu.brown.cs.ivy.mint.MintConstants;
+import edu.brown.cs.ivy.xml.IvyXml;
 
 
 
@@ -51,8 +57,12 @@ public class TestSeede implements MintConstants
 
 private static final String		MINT_NAME = "SEEDE_TEST_spr";
 private static final String		SOURCE_ID = "SEED_12345";
+private static final String             TEST_PROJECT = "Sample1";      
+private static final String             LAUNCH_NAME = "test1";
+
 
 private MintControl	mint_control;
+private String          stopped_thread;
 
 
 
@@ -66,6 +76,7 @@ private MintControl	mint_control;
 public TestSeede()
 {
    mint_control = MintControl.create(MINT_NAME,MintSyncMode.ONLY_REPLIES);
+   mint_control.register("<BEDROCK SOURCE='ECLIPSE' TYPE='_VAR_0' />",new IDEHandler());
 }
 
 
@@ -134,6 +145,34 @@ private boolean tryPing()
 
 @Test public void test1()
 {
+   stopped_thread = null;
+   String args = "NAME='" + LAUNCH_NAME + "'";
+   args += " MODE='DEBUG='debug'";
+   args += " BUILD='true'";
+   args += " REGISTER='true'";
+   MintDefaultReply rply = new MintDefaultReply();
+   sendMessage("START",TEST_PROJECT,args,null,rply,MINT_MSG_FIRST_NON_NULL);
+   Element xml = rply.waitForXml();
+   Element ldata = IvyXml.getChild(xml,"LANUCH");
+   Assert.assertNotNull(ldata);
+   String launchid = IvyXml.getAttrString(xml,"ID");
+   Assert.assertNotNull(launchid);
+   String targetid = IvyXml.getAttrString(xml,"TARGET");
+   Assert.assertNotNull(targetid);
+   String processid = IvyXml.getAttrString(xml,"PROCESS");
+   Assert.assertNotNull(processid);
+   waitForStop();
+   stopped_thread = null;
+   
+   
+   args = "LANUCH='" + launchid + "'";
+   args += " TARGET='" + targetid + "'";
+   args += " PROCESS='" + processid + "'";
+   args += " ACTION='RESUME'";
+   rply = new MintDefaultReply();
+   sendMessage("DEBUGACTION",TEST_PROJECT,args,null,rply,MINT_MSG_FIRST_NON_NULL);
+   String threadid = waitForStop();
+
    // do something here
 }
 
@@ -170,6 +209,126 @@ private void sendMessage(String cmd,String proj,String flds,String cnts,MintRepl
 }
 
 
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Handle messages from Eclipse                                            */
+/*                                                                              */
+/********************************************************************************/
+
+private class IDEHandler implements MintHandler {
+
+   @Override public void receive(MintMessage msg,MintArguments args) {
+      String cmd = args.getArgument(0);
+      Element e = msg.getXml();
+      if (cmd == null) return;
+      
+      switch (cmd) {
+         case "ELISIION" :
+            break;
+         case "EDITERROR" :
+            break;
+         case "FILEERROR" :
+            break;
+         case "PRIVATEERROR" :
+            break;
+         case "EDIT" :
+            break;
+         case "BREAKEVENT" :
+            break;
+         case "LAUNCHCONFIGEVENT" :
+            break;
+         case "RUNEVENT" :
+            long when = IvyXml.getAttrLong(e,"TIME");
+            for (Element re : IvyXml.children(e,"RUNEVENT")) {
+               handleRunEvent(re,when);
+             }
+            msg.replyTo("<OK/>");
+            break;
+         case "NAMES" :
+         case "ENDNAMES" :
+            break;
+         case "PING" :
+            msg.replyTo("<PONG/>");
+            break;
+         case "PROGRESS" :
+            msg.replyTo("<OK/>");
+            break;
+         case "RESOURCE" :
+            break;
+         case "CONSOLE" :
+            msg.replyTo("<OK/>");
+            break;
+         case "OPENEDITOR" :
+            break;
+         case "EVALUATION" :
+            msg.replyTo("<OK/>");
+            break;
+         case "BUILDDONE" :
+         case "FILECHANGE" :
+         case "PROJECTDATA" :
+         case "PROJECTOPEN" :
+            break;
+         case "STOP" :
+            break;
+         default :
+            break;
+       }
+    }
+   
+}       // end of innerclass IDEHandler
+
+
+
+private void handleRunEvent(Element xml,long when)
+{
+   String type = IvyXml.getAttrString(xml,"TYPE");
+   if (type == null) return;
+   switch (type) {
+      case "PROCESS" :
+         break;
+      case "THREAD" :
+         handleThreadEvent(xml,when);
+         break;
+      case "TARGET" :
+         break;
+      default :
+         break;
+    }
+}
+
+
+private void handleThreadEvent(Element xml,long when)
+{
+   String kind = IvyXml.getAttrString(xml,"KIND");
+   String detail = IvyXml.getAttrString(xml,"DETAIL");
+   Element thread = IvyXml.getChild(xml,"THREAD");
+   if (thread == null) return;
+   switch (kind) {
+      case "SUSPEND" :
+         synchronized (this) {
+            stopped_thread = IvyXml.getAttrString(thread,"ID");
+            notifyAll();
+          }
+         break;   
+    }
+}
+
+
+
+private String waitForStop()
+{
+   synchronized (this) {
+      while (stopped_thread == null) {
+         try {
+            wait();
+          }
+         catch (InterruptedException e) { }
+       }
+      return stopped_thread;
+    }
+}
 
 
 }	// end of class TestSeede
