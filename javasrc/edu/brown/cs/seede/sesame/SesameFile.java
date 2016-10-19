@@ -57,6 +57,18 @@ SesameFile(File f)
 
 
 
+/********************************************************************************/
+/*                                                                              */
+/*      Action methods                                                          */
+/*                                                                              */
+/********************************************************************************/
+
+void editFile(int len,int off,String txt,boolean complete)
+{
+   if (complete) len = edit_document.getLength();
+   
+}
+
 }	// end of class SesameFile
 
 

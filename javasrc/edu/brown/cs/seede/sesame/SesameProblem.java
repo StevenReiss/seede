@@ -1,8 +1,8 @@
 /********************************************************************************/
 /*                                                                              */
-/*              SesameFileManager.java                                          */
+/*              SesameProblem.java                                              */
 /*                                                                              */
-/*      Manage file buffers                                                     */
+/*      Hold information about a compilation problem                            */
 /*                                                                              */
 /********************************************************************************/
 /*      Copyright 2011 Brown University -- Steven P. Reiss                    */
@@ -18,17 +18,17 @@
  *                                                                               *
  ********************************************************************************/
 
+/* SVN: $Id$ */
+
 
 
 package edu.brown.cs.seede.sesame;
 
-import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
+import org.w3c.dom.Element;
 
 
 
-class SesameFileManager implements SesameConstants
+class SesameProblem implements SesameConstants
 {
 
 
@@ -38,8 +38,6 @@ class SesameFileManager implements SesameConstants
 /*                                                                              */
 /********************************************************************************/
 
-private Map<File,SesameFile>    known_files;
-private SesameMain              sesame_control;
 
 
 /********************************************************************************/
@@ -48,66 +46,17 @@ private SesameMain              sesame_control;
 /*                                                                              */
 /********************************************************************************/
 
-SesameFileManager(SesameMain sm)
+SesameProblem(Element xml)
 {
-   sesame_control = sm;
-   known_files = new HashMap<File,SesameFile>();
+   
 }
 
 
 
-/********************************************************************************/
-/*                                                                              */
-/*      Setup methods                                                           */
-/*                                                                              */
-/********************************************************************************/
-
-SesameFile openFile(File f)
-{
-   synchronized (known_files) {
-      SesameFile sf = known_files.get(f);
-      if (sf == null) {
-         sf = new SesameFile(f);
-         known_files.put(f,sf);
-       }
-      return sf;
-    }
-}
-
-
-void closeFile(File f)
-{
-   synchronized (known_files) {
-      known_files.remove(f);
-    }
-}
-
-
-
-/********************************************************************************/
-/*                                                                              */
-/*      File Action methods                                                     */
-/*                                                                              */
-/********************************************************************************/
-
-void handleEdit(File f,int len,int offset,boolean complete,String txt)
-{
-   SesameFile sf = known_files.get(f);
-   if (sf == null) return;
-   if (complete && txt == null) {
-      closeFile(f);
-      return;
-    }
-   sf.editFile(len,offset,txt,complete);
-}
+}       // end of class SesameProblem
 
 
 
 
-}       // end of class SesameFileManager
-
-
-
-
-/* end of SesameFileManager.java */
+/* end of SesameProblem.java */
 

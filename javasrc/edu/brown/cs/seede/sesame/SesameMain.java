@@ -73,7 +73,7 @@ private SesameMain(String [] args)
    
    scanArgs(args);
    
-   file_manager = new SesameFileManager();
+   file_manager = new SesameFileManager(this);
 }
 
 
@@ -125,6 +125,10 @@ private void badArgs()
 /********************************************************************************/
 
 SesameFileManager getFileManager()              { return file_manager; }
+
+String getMintId()                              { return message_id; }
+
+
 
 
 
