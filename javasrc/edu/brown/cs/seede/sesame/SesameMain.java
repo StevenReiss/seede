@@ -24,9 +24,17 @@
 
 package edu.brown.cs.seede.sesame;
 
-import edu.brown.cs.bubbles.board.BoardConstants;
+import java.util.Map;
 
-public class SesameMain implements SesameConstants
+import org.w3c.dom.Element;
+
+import edu.brown.cs.bubbles.board.BoardConstants;
+import edu.brown.cs.ivy.mint.MintConstants;
+import edu.brown.cs.ivy.mint.MintDefaultReply;
+import edu.brown.cs.ivy.mint.MintReply;
+import edu.brown.cs.ivy.xml.IvyXmlWriter;
+
+public class SesameMain implements SesameConstants, MintConstants 
 {
 
 
@@ -56,7 +64,7 @@ public static void main(String [] args)
 private String                  message_id;
 private String                  launch_id;
 private SesameFileManager       file_manager;
-
+private SesameMonitor           message_monitor;
 
 
 
@@ -74,6 +82,7 @@ private SesameMain(String [] args)
    scanArgs(args);
    
    file_manager = new SesameFileManager(this);
+   message_monitor = new SesameMonitor(this);
 }
 
 
@@ -125,11 +134,64 @@ private void badArgs()
 /********************************************************************************/
 
 SesameFileManager getFileManager()              { return file_manager; }
+SesameMonitor getMonitor()                      { return message_monitor; }
 
 String getMintId()                              { return message_id; }
 
 
 
+
+/********************************************************************************/
+/*                                                                              */
+/*      Messaging methods                                                       */
+/*                                                                              */
+/********************************************************************************/
+ 
+void sendMessage(String cmd,String proj,Map<String,Object> flds,String cnts)
+{
+   sendMessage(cmd,proj,flds,cnts,null,MINT_MSG_NO_REPLY);
+}
+
+String getStringReply(String cmd,String proj,Map<String,Object> flds,String cnts,long delay)
+{
+   MintDefaultReply rply = new MintDefaultReply();
+   sendMessage(cmd,proj,flds,cnts,rply,MINT_MSG_FIRST_REPLY);
+   return rply.waitForString(delay);
+}
+
+
+Element getXmlReply(String cmd,String proj,Map<String,Object> flds,String cnts,long delay)
+{
+   MintDefaultReply rply = new MintDefaultReply();
+   sendMessage(cmd,proj,flds,cnts,rply,MINT_MSG_FIRST_REPLY);
+   return rply.waitForXml(delay);
+}
+
+
+private void sendMessage(String cmd,String proj,Map<String,Object> flds,String cnts,
+      MintReply rply,int fgs)
+{
+   IvyXmlWriter xw = new IvyXmlWriter();
+   xw.begin("BUBBLES");
+   xw.field("BID",SOURCE_ID);
+   if (proj != null && proj.length() > 0) xw.field("PROJECT",proj);
+   xw.field("LANG","Eclipse");
+   if (flds != null) {
+      for (Map.Entry<String,Object> ent : flds.entrySet()) {
+         xw.field(ent.getKey(),ent.getValue());
+       }
+    }
+   if (cnts != null) {
+      xw.xmlText(cnts);
+    }
+   xw.end("BUBBLES");
+   String msg = xw.toString();
+   xw.close();
+   
+   SesameLog.logD("SEND: " + msg);
+   
+   message_monitor.sendMessage(msg,rply,fgs);
+}
 
 
 /********************************************************************************/

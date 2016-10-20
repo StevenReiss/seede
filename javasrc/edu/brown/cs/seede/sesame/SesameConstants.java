@@ -22,11 +22,14 @@
 
 package edu.brown.cs.seede.sesame;
 
+import java.util.Random;
+
 
 
 public interface SesameConstants {
 
 
+String    SOURCE_ID = "SEEDE_" + (new Random().nextInt(1000000));
 
 
 

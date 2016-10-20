@@ -26,6 +26,8 @@ package edu.brown.cs.seede.sesame;
 
 import java.io.File;
 
+import org.eclipse.jface.text.BadLocationException;
+import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.IDocument;
 
 
@@ -49,10 +51,10 @@ private File                    for_file;
 /*										*/
 /********************************************************************************/
 
-SesameFile(File f)
+SesameFile(File f,String cnts)
 {
    for_file = f;
-   edit_document = null;
+   edit_document = new Document(cnts);
 }
 
 
@@ -66,8 +68,16 @@ SesameFile(File f)
 void editFile(int len,int off,String txt,boolean complete)
 {
    if (complete) len = edit_document.getLength();
-   
+   try {
+      edit_document.replace(off,len,txt);
+    }
+   catch (BadLocationException e) {
+      SesameLog.logE("Problem doing file edit",e);
+    }
 }
+
+
+
 
 }	// end of class SesameFile
 

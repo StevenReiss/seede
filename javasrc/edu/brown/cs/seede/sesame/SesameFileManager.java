@@ -26,6 +26,10 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.w3c.dom.Element;
+
+import edu.brown.cs.ivy.xml.IvyXml;
+
 
 
 class SesameFileManager implements SesameConstants
@@ -66,8 +70,26 @@ SesameFile openFile(File f)
 {
    synchronized (known_files) {
       SesameFile sf = known_files.get(f);
+      if (sf != null) return sf;
+    }
+   
+   Map<String,Object> args = new HashMap<String,Object>();
+   args.put("FILE",f.getPath());
+   args.put("CONTENTS",Boolean.TRUE);
+   
+   Element filerslt = sesame_control.getXmlReply("STARTFILE",null,args,null,0);
+   if (!IvyXml.isElement(filerslt,"RESULT")) {
+      SesameLog.logE("Can't open file " + f);
+      return null;
+    }
+   String linesep = IvyXml.getAttrString(filerslt,"LINESEP");
+   byte [] data = IvyXml.getBytesElement(filerslt,"CONTENTS");
+   String cnts = new String(data);
+   
+   synchronized (known_files) {
+      SesameFile sf = known_files.get(f);
       if (sf == null) {
-         sf = new SesameFile(f);
+         sf = new SesameFile(f,cnts);
          known_files.put(f,sf);
        }
       return sf;
