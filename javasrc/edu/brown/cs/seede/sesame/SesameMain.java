@@ -62,7 +62,6 @@ public static void main(String [] args)
 /********************************************************************************/
 
 private String                  message_id;
-private String                  launch_id;
 private SesameFileManager       file_manager;
 private SesameMonitor           message_monitor;
 
@@ -77,7 +76,6 @@ private SesameMonitor           message_monitor;
 private SesameMain(String [] args)
 {
    message_id = null;
-   launch_id = null;
    
    scanArgs(args);
    
@@ -100,10 +98,6 @@ private void scanArgs(String [] args)
          if (args[i].startsWith("-m") && i+1 < args.length) {
             message_id = args[++i];
           }
-         else if (args[i].startsWith("-l") && i+1 < args.length) {
-   
-            launch_id = args[++i];
-          }
          else badArgs();
        }
       else badArgs();
@@ -120,7 +114,7 @@ private void scanArgs(String [] args)
 
 private void badArgs()
 {
-   System.err.println("Sesame: SesameMain -m <message_id> -l <launch id>");
+   System.err.println("Sesame: SesameMain -m <message_id>");
    System.exit(1);
 }
 
@@ -202,7 +196,7 @@ private void sendMessage(String cmd,String proj,Map<String,Object> flds,String c
 
 private void process()
 {
-   
+   message_monitor.startServer();
 }
 
 

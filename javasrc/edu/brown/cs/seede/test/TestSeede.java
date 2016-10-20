@@ -26,6 +26,8 @@ package edu.brown.cs.seede.test;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.junit.After;
 import org.junit.Before;
@@ -42,6 +44,7 @@ import edu.brown.cs.ivy.mint.MintMessage;
 import edu.brown.cs.ivy.mint.MintReply;
 import edu.brown.cs.ivy.mint.MintConstants;
 import edu.brown.cs.ivy.xml.IvyXml;
+import edu.brown.cs.ivy.xml.IvyXmlWriter;
 
 
 
@@ -100,14 +103,15 @@ public TestSeede()
    cmd += " -vmargs -Dedu.brown.cs.bubbles.MINT=" + MINT_NAME;
 
    try {
-      IvyExec ex = new IvyExec(cmd);
+      new IvyExec(cmd);
       for (int i = 0; i < 250; ++i) {
 	 synchronized(this) {
 	    try { wait(1000); } catch (InterruptedException e) { }
 	  }
 	 if (tryPing()) {
-            sendMessage("LOGLEVEL",null,"LEVEL='DEBUG'",null);
-            sendMessage("ENTER");
+            CommandArgs args = new CommandArgs("LEVEL","DEBUG");
+            sendBubblesMessage("LOGLEVEL",null,args,null);
+            sendBubblesMessage("ENTER");
             return;
           }
        }
@@ -121,7 +125,7 @@ public TestSeede()
 
 @After public void shutdownBedrock()
 {
-   sendMessage("EXIT",null,null,null);
+   sendBubblesMessage("EXIT",null,null,null);
 }
 
 
@@ -129,7 +133,7 @@ public TestSeede()
 private boolean tryPing()
 {
    MintDefaultReply mdr = new MintDefaultReply();
-   sendMessage("PING",null,null,null,mdr,MINT_MSG_FIRST_NON_NULL);
+   sendBubblesMessage("PING",null,null,null,mdr,MINT_MSG_FIRST_NON_NULL);
    String r = mdr.waitForString(500);
    return r != null;
 }
@@ -146,12 +150,10 @@ private boolean tryPing()
 @Test public void test1()
 {
    stopped_thread = null;
-   String args = "NAME='" + LAUNCH_NAME + "'";
-   args += " MODE='DEBUG='debug'";
-   args += " BUILD='true'";
-   args += " REGISTER='true'";
+   CommandArgs args = new CommandArgs("NAME",LAUNCH_NAME,"MODE","DEBUG","BUILD","TRUE",
+         "REGISTER","TRUE");
    MintDefaultReply rply = new MintDefaultReply();
-   sendMessage("START",TEST_PROJECT,args,null,rply,MINT_MSG_FIRST_NON_NULL);
+   sendBubblesMessage("START",TEST_PROJECT,args,null,rply,MINT_MSG_FIRST_NON_NULL);
    Element xml = rply.waitForXml();
    Element ldata = IvyXml.getChild(xml,"LANUCH");
    Assert.assertNotNull(ldata);
@@ -164,13 +166,9 @@ private boolean tryPing()
    waitForStop();
    stopped_thread = null;
    
-   
-   args = "LANUCH='" + launchid + "'";
-   args += " TARGET='" + targetid + "'";
-   args += " PROCESS='" + processid + "'";
-   args += " ACTION='RESUME'";
+   args = new CommandArgs("LAUNCH",launchid,"TARGET",targetid,"PROCESS",processid,"ACTION","RESUME");
    rply = new MintDefaultReply();
-   sendMessage("DEBUGACTION",TEST_PROJECT,args,null,rply,MINT_MSG_FIRST_NON_NULL);
+   sendBubblesMessage("DEBUGACTION",TEST_PROJECT,args,null,rply,MINT_MSG_FIRST_NON_NULL);
    String threadid = waitForStop();
 
    // do something here
@@ -180,31 +178,81 @@ private boolean tryPing()
 
 /********************************************************************************/
 /*										*/
-/*	Messaging methods							*/
+/*	Bubbles Messaging methods						*/
 /*										*/
 /********************************************************************************/
 
-private void sendMessage(String cmd)
+private void sendBubblesMessage(String cmd)
 {
-   sendMessage(cmd,null,null,null,null,MINT_MSG_NO_REPLY);
+   sendBubblesMessage(cmd,null,null,null,null,MINT_MSG_NO_REPLY);
 }
 
 
-private void sendMessage(String cmd,String proj,String flds,String cnts)
+private void sendBubblesMessage(String cmd,String proj,Map<String,Object> flds,String cnts)
 {
-   sendMessage(cmd,proj,flds,cnts,null,MINT_MSG_NO_REPLY);
+   sendBubblesMessage(cmd,proj,flds,cnts,null,MINT_MSG_NO_REPLY);
 }
 
 
-private void sendMessage(String cmd,String proj,String flds,String cnts,MintReply rply,int fgs)
+private void sendBubblesMessage(String cmd,String proj,Map<String,Object> flds,String cnts,
+      MintReply rply,int fgs)
 {
-   String xml = "<BUBBLES DO='" + cmd + "'";
-   xml += " BID='" + SOURCE_ID + "'";
-   if (proj != null && proj.length() > 0) xml += " PROJECT='" + proj + "'";
-   if (flds != null) xml += " " + flds;
-   xml += " LANG='Java' >";
-   if (cnts != null) xml += cnts;
-   xml += "</BUBBLES>";
+   IvyXmlWriter xw = new IvyXmlWriter();
+   xw.begin("BUBBLES");
+   xw.field("DO",cmd);
+   xw.field("BID",SOURCE_ID);
+   if (proj != null && proj.length() > 0) xw.field("PROJECT",proj);
+   if (flds != null) {
+      for (Map.Entry<String,Object> ent : flds.entrySet()) {
+         xw.field(ent.getKey(),ent.getValue());
+       }
+    }
+   xw.field("LANG","eclipse");
+   if (cnts != null) xw.xmlText(cnts);
+   xw.end("BUBBLES");
+   
+   String xml = xw.toString();
+   xw.close();
+   mint_control.send(xml,rply,fgs);
+}
+
+
+
+/********************************************************************************/
+/*										*/
+/*	Sesame Messaging methods						*/
+/*										*/
+/********************************************************************************/
+
+private void sendSeedeMessage(String cmd)
+{
+   sendSeedeMessage(cmd,null,null,null,MINT_MSG_NO_REPLY);
+}
+
+
+private void sendSeedeMessage(String cmd,Map<String,Object> flds,String cnts)
+{
+   sendSeedeMessage(cmd,flds,cnts,null,MINT_MSG_NO_REPLY);
+}
+
+
+private void sendSeedeMessage(String cmd,Map<String,Object> flds,String cnts,
+      MintReply rply,int fgs)
+{
+   IvyXmlWriter xw = new IvyXmlWriter();
+   xw.begin("SEEDE");
+   xw.field("DO",cmd);
+   xw.field("SID",SOURCE_ID);
+   if (flds != null) {
+      for (Map.Entry<String,Object> ent : flds.entrySet()) {
+         xw.field(ent.getKey(),ent.getValue());
+       }
+    }
+   if (cnts != null) xw.xmlText(cnts);
+   xw.end("SEEDE");
+   
+   String xml = xw.toString();
+   xw.close();
    mint_control.send(xml,rply,fgs);
 }
 
@@ -329,6 +377,38 @@ private String waitForStop()
       return stopped_thread;
     }
 }
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Command arguments                                                       */
+/*                                                                              */
+/********************************************************************************/
+
+private static class CommandArgs extends HashMap<String,Object> {
+   
+   CommandArgs() { }
+   CommandArgs(String key,Object... args) {
+      this();
+      if (args.length == 0) return;
+      put(key,args[0]);
+      for (int i = 2; i < args.length; i += 2) {
+         put(args[i-1].toString(),args[i]);
+       }
+    }
+   
+   void put(String key,Object... args) {
+      if (args.length == 0) return;
+      put(key,args[0]);
+      for (int i = 2; i < args.length; i += 2) {
+         put(args[i-1].toString(),args[i]);
+       }
+    }
+   
+}       // end of inr class CommandArgs
+
+
 
 
 }	// end of class TestSeede

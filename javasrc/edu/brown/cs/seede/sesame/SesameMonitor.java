@@ -83,21 +83,13 @@ SesameMonitor(SesameMain sm)
 /*										*/
 /********************************************************************************/
 
-void server()
+void startServer()
 {
    mint_control.register("<BEDROCK SOURCE='ECLIPSE' TYPE='_VAR_0' />",new EclipseHandler());
    mint_control.register("<BUBBLES DO='_VAR_0' />",new BubblesHandler());
-   mint_control.register("<SEEDE DO='_VAR_0' />",new CommandHandler());
-	
-   synchronized (this) {
-      while (!is_done) {
-	 checkEclipse();
-	 try {
-	    wait(30000l);
-	  }
-	 catch (InterruptedException e) { }
-       }
-    }
+   mint_control.register("<SEEDE DO='_VAR_0' SID='_VAR_1' />",new CommandHandler());
+   
+   new WaitForExit().start();
 }
 
 
@@ -119,6 +111,30 @@ private void checkEclipse()
    if (r == null) is_done = true;
 }
 
+
+
+private class WaitForExit extends Thread {
+   
+   WaitForExit() {
+      super("WaitForExit");
+      setDaemon(true);
+    }
+   
+   @Override public void run() {
+      synchronized (this) {
+         while (!is_done) {
+            checkEclipse();
+            try {
+               wait(30000l);
+             }
+            catch (InterruptedException e) { }
+          }
+       }
+      
+      System.exit(0);
+    }
+   
+}       // end of inner class WaitForExit
 
 
 
@@ -230,6 +246,7 @@ private class EclipseHandler implements MintHandler {
 	    for (Element re : IvyXml.children(e,"DELTA")) {
 	       handleResourceChange(re);
 	     }
+            break;
 	 case "CONSOLE" :
 	    handleConsoleEvent(e);
 	    break;
