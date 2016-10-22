@@ -39,6 +39,7 @@ import edu.brown.cs.ivy.mint.MintReply;
 import edu.brown.cs.ivy.mint.MintConstants.MintSyncMode;
 import edu.brown.cs.ivy.mint.MintConstants;
 import edu.brown.cs.ivy.xml.IvyXml;
+import edu.brown.cs.ivy.xml.IvyXmlWriter;
 
 
 
@@ -304,9 +305,31 @@ private class CommandHandler implements MintHandler {
    @Override public void receive(MintMessage msg,MintArguments args) {
       String cmd = args.getArgument(0);
       Element e = msg.getXml();
+      IvyXmlWriter xw = new IvyXmlWriter();
+      switch (cmd) {
+         case "PING" :
+            xw.begin("PONG");
+            xw.end();
+            break;
+         case "EXIT" :
+            System.exit(0);
+            break;
+         case "BEGIN" :
+            break;
+         default :
+            SesameLog.logE("Unknown command " + cmd);
+            break;
+       }
+      String rslt = xw.toString();
+      xw.close();
+      if (rslt != null &&rslt.trim().length() > 0) {
+         msg.replyTo(rslt);
+       }
     }
 
 }	// end of inner class CommandHandler
+
+
 
 
 
@@ -319,7 +342,6 @@ private class CommandHandler implements MintHandler {
 private class EvalData {
 
    EvalData() {
-
     }
 
    void handleResult(Element xml) {
