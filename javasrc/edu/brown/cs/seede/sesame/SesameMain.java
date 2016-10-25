@@ -24,6 +24,7 @@
 
 package edu.brown.cs.seede.sesame;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.w3c.dom.Element;
@@ -64,6 +65,7 @@ public static void main(String [] args)
 private String                  message_id;
 private SesameFileManager       file_manager;
 private SesameMonitor           message_monitor;
+private Map<String,SesameProject> project_map;
 
 
 
@@ -76,6 +78,7 @@ private SesameMonitor           message_monitor;
 private SesameMain(String [] args)
 {
    message_id = null;
+   project_map = new HashMap<String,SesameProject>();
    
    scanArgs(args);
    
@@ -132,6 +135,28 @@ SesameMonitor getMonitor()                      { return message_monitor; }
 
 String getMintId()                              { return message_id; }
 
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Project managment                                                       */
+/*                                                                              */
+/********************************************************************************/
+
+SesameProject getProject(String name)
+{
+   if (name == null) return null;
+   
+   synchronized (project_map) {
+      SesameProject sp = project_map.get(name);
+      if (sp == null) {
+         sp = new SesameProject(this,name);
+         project_map.put(name,sp);
+       }
+      return sp;
+    }
+}
 
 
 

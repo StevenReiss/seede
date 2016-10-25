@@ -99,7 +99,7 @@ void editFile(int len,int off,String txt,boolean complete)
 /*                                                                              */
 /********************************************************************************/
 
-synchronized ASTNode getAST()
+synchronized ASTNode getAstNode()
 {
    ASTNode an = file_ast;
    if (an != null) return an;

@@ -65,6 +65,7 @@ static SesameSession createSession(SesameMain sm,Element xml)
 
 protected SesameMain    sesame_control;
 private String          session_id;
+private SesameProject   for_project;
 
 
 
@@ -76,19 +77,20 @@ private String          session_id;
 
 protected SesameSession(SesameMain sm)
 {
-   this(sm,(String) null);
+   this(sm,null,null);
 }
 
 
 protected SesameSession(SesameMain sm,Element xml)
 {
-   this(sm,IvyXml.getAttrString(xml,"ID"));
+   this(sm,IvyXml.getAttrString(xml,"ID"),IvyXml.getAttrString(xml,"PROJECT"));
 }
    
 
-protected SesameSession(SesameMain sm,String id)
+protected SesameSession(SesameMain sm,String id,String proj)
 {
    sesame_control = sm;
+   for_project = sm.getProject(proj);
    if (id == null) {
       Random r = new Random();
       id = "SESAME_" + r.nextInt(10000000);
@@ -105,6 +107,8 @@ protected SesameSession(SesameMain sm,String id)
 /********************************************************************************/
 
 String getSessionId()                   { return session_id; }
+
+SesameProject getProject()              { return for_project; }
 
 
 
