@@ -22,6 +22,7 @@
 
 package edu.brown.cs.seede.sesame;
 
+import java.util.HashMap;
 import java.util.Random;
 
 
@@ -30,6 +31,37 @@ public interface SesameConstants {
 
 
 String    SOURCE_ID = "SEEDE_" + (new Random().nextInt(1000000));
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Command arguments                                                       */
+/*                                                                              */
+/********************************************************************************/
+
+class CommandArgs extends HashMap<String,Object> {
+   
+   CommandArgs() { }
+   CommandArgs(String key,Object... args) {
+      this();
+      if (args.length == 0) return;
+      put(key,args[0]);
+      for (int i = 2; i < args.length; i += 2) {
+         put(args[i-1].toString(),args[i]);
+       }
+    }
+   
+   void put(String key,Object... args) {
+      if (args.length == 0) return;
+      put(key,args[0]);
+      for (int i = 2; i < args.length; i += 2) {
+         put(args[i-1].toString(),args[i]);
+       }
+    }
+
+}       // end of inr class CommandArgs
+
 
 
 

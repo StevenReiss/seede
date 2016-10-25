@@ -1,8 +1,8 @@
 /********************************************************************************/
 /*                                                                              */
-/*              SesameExecutionControl.java                                     */
+/*              SesameSession.java                                              */
 /*                                                                              */
-/*      Control for a single execution environment                              */
+/*      Abstarct representation of a evaluation session                         */
 /*                                                                              */
 /********************************************************************************/
 /*      Copyright 2011 Brown University -- Steven P. Reiss                    */
@@ -25,11 +25,36 @@
 package edu.brown.cs.seede.sesame;
 
 import java.io.File;
+import java.util.Random;
 
-import org.eclipse.jface.text.Position;
+import org.w3c.dom.Element;
 
-class SesameExecutionControl implements SesameConstants
+import edu.brown.cs.ivy.xml.IvyXml;
+
+abstract class SesameSession implements SesameConstants
 {
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Factory methods                                                         */
+/*                                                                              */
+/********************************************************************************/
+
+static SesameSession createSession(SesameMain sm,Element xml)
+{
+   SesameSession ss = null;
+   
+   if (IvyXml.isElement(xml,"LAUNCH")) {
+      ss = new SesameSessionLaunch(sm,xml);
+    }
+   else if (IvyXml.isElement(xml,"TEST")) {
+      ss = new SesameSessionTest(sm,xml);
+    }
+   
+   return ss;
+}
+
 
 
 /********************************************************************************/
@@ -38,10 +63,8 @@ class SesameExecutionControl implements SesameConstants
 /*                                                                              */
 /********************************************************************************/
 
-private String          launch_id;
-private File            for_file;
-private String          method_name;
-private Position        start_position;
+protected SesameMain    sesame_control;
+private String          session_id;
 
 
 
@@ -51,21 +74,45 @@ private Position        start_position;
 /*                                                                              */
 /********************************************************************************/
 
-SesameExecutionControl(String launch,File file,String method)
+protected SesameSession(SesameMain sm)
 {
-   launch_id = launch;
-   for_file = file;
-   method_name = method;
-   start_position = null;
+   this(sm,(String) null);
+}
+
+
+protected SesameSession(SesameMain sm,Element xml)
+{
+   this(sm,IvyXml.getAttrString(xml,"ID"));
+}
+   
+
+protected SesameSession(SesameMain sm,String id)
+{
+   sesame_control = sm;
+   if (id == null) {
+      Random r = new Random();
+      id = "SESAME_" + r.nextInt(10000000);
+    }
+   session_id = id;
 }
 
 
 
+/********************************************************************************/
+/*                                                                              */
+/*      Access methods                                                          */
+/*                                                                              */
+/********************************************************************************/
 
-}       // end of class SesameExecutionControl
+String getSessionId()                   { return session_id; }
 
 
 
 
-/* end of SesameExecutionControl.java */
+}       // end of class SesameSession
+
+
+
+
+/* end of SesameSession.java */
 
