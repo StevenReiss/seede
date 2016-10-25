@@ -24,7 +24,11 @@
 
 package edu.brown.cs.seede.sesame;
 
+import java.util.Iterator;
 import java.util.List;
+import org.w3c.dom.Element;
+
+import edu.brown.cs.ivy.xml.IvyXml;
 
 class SesameProject implements SesameConstants
 {
@@ -38,7 +42,7 @@ class SesameProject implements SesameConstants
 
 private SesameMain      sesame_control;   
 private String          project_name;
-private List<String>    jar_files;
+private List<String>    class_paths;
 
 
 
@@ -51,9 +55,39 @@ private List<String>    jar_files;
 SesameProject(SesameMain sm,String name)
 {
    sesame_control = sm;
+   project_name = name;
    
-   CommandArgs args = new CommandArgs("NAME",
-   sm.getXmlReply("OPENPROJECT",
+   // compute class path for project
+   CommandArgs args = new CommandArgs("PATHS",true);
+   Element xml = sm.getXmlReply("OPENPROJECT",name,args,null,0);
+   if (IvyXml.isElement(xml,"RESULT")) xml = IvyXml.getChild(xml,"PROJECT");
+   Element cp = IvyXml.getChild(xml,"CLASSPATH");
+   String ignore = null;
+   for (Element rpe : IvyXml.children(cp,"PATH")) {
+      String bn = null;
+      String ptyp = IvyXml.getAttrString(rpe,"TYPE");
+      if (ptyp != null && ptyp.equals("SOURCE")) {
+         bn = IvyXml.getTextElement(rpe,"OUTPUT");
+       }
+      else {
+         bn = IvyXml.getTextElement(rpe,"BINARY");
+       }
+      if (bn == null) continue;
+      if (bn.endsWith("/lib/rt.jar")) {
+         int idx = bn.lastIndexOf("rt.jar");
+         ignore = bn.substring(0,idx);
+       }
+      class_paths.add(bn);
+    }
+   if (ignore != null) {
+      for (Iterator<String> it = class_paths.iterator(); it.hasNext(); ) {
+         String nm = it.next();
+         if (nm.startsWith(ignore)) it.remove();
+       }
+    }
+}
+
+
 
 }       // end of class SesameProject
 
