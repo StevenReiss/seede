@@ -24,10 +24,18 @@
 
 package edu.brown.cs.seede.sesame;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
+
 import org.w3c.dom.Element;
 
+import edu.brown.cs.ivy.jcomp.JcompControl;
+import edu.brown.cs.ivy.jcomp.JcompProject;
+import edu.brown.cs.ivy.jcomp.JcompSource;
 import edu.brown.cs.ivy.xml.IvyXml;
 
 class SesameProject implements SesameConstants
@@ -43,6 +51,8 @@ class SesameProject implements SesameConstants
 private SesameMain      sesame_control;   
 private String          project_name;
 private List<String>    class_paths;
+private Set<SesameFile> active_files;
+private JcompProject    base_project;
 
 
 
@@ -56,6 +66,9 @@ SesameProject(SesameMain sm,String name)
 {
    sesame_control = sm;
    project_name = name;
+   base_project = null;
+   
+   active_files = new HashSet<SesameFile>();
    
    // compute class path for project
    CommandArgs args = new CommandArgs("PATHS",true);
@@ -88,6 +101,61 @@ SesameProject(SesameMain sm,String name)
 }
 
 
+
+/********************************************************************************/
+/*                                                                              */
+/*      Access methods                                                          */
+/*                                                                              */
+/********************************************************************************/
+
+String getName()                        { return project_name; }
+
+void addFile(SesameFile sf)
+{
+   active_files.add(sf);
+   clearProject();
+}
+
+
+void removeFile(SesameFile sf)
+{
+   active_files.remove(sf);
+   clearProject();
+}
+
+
+Collection<String> getClassPath()
+{
+   return class_paths;
+}
+
+
+Collection<SesameFile> getActiveFiles()
+{
+   return active_files;
+}
+
+
+private synchronized void clearProject()
+{
+   if (base_project != null) {
+      JcompControl jc = sesame_control.getJcompBase();
+      jc.freeProject(base_project);
+      base_project = null;
+    }
+}
+
+
+synchronized JcompProject getJcompProject()
+{
+   if (base_project != null) return base_project;
+   
+   JcompControl jc = sesame_control.getJcompBase();
+   Collection<JcompSource> srcs = new ArrayList<JcompSource>(active_files);
+   base_project = jc.getProject(class_paths,srcs,false);
+   
+   return base_project;
+}
 
 }       // end of class SesameProject
 

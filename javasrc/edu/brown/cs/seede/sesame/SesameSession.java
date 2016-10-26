@@ -41,15 +41,17 @@ abstract class SesameSession implements SesameConstants
 /*                                                                              */
 /********************************************************************************/
 
-static SesameSession createSession(SesameMain sm,Element xml)
+static SesameSession createSession(SesameMain sm,String sid,Element xml)
 {
    SesameSession ss = null;
    
-   if (IvyXml.isElement(xml,"LAUNCH")) {
-      ss = new SesameSessionLaunch(sm,xml);
+   String typ = IvyXml.getAttrString(xml,"TYPE");
+   
+   if (typ.equals("LAUNCH")) {
+      ss = new SesameSessionLaunch(sm,sid,xml);
     }
-   else if (IvyXml.isElement(xml,"TEST")) {
-      ss = new SesameSessionTest(sm,xml);
+   else if (typ.equals("TEST")) {
+      ss = new SesameSessionTest(sm,sid,xml);
     }
    
    return ss;
@@ -77,13 +79,13 @@ private SesameProject   for_project;
 
 protected SesameSession(SesameMain sm)
 {
-   this(sm,null,null);
+   this(sm,null,(String) null);
 }
 
 
-protected SesameSession(SesameMain sm,Element xml)
+protected SesameSession(SesameMain sm,String sid,Element xml)
 {
-   this(sm,IvyXml.getAttrString(xml,"ID"),IvyXml.getAttrString(xml,"PROJECT"));
+   this(sm,sid,IvyXml.getAttrString(xml,"PROJECT"));
 }
    
 

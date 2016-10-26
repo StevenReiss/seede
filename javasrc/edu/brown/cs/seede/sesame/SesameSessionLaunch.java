@@ -49,9 +49,9 @@ private String          launch_id;
 /*                                                                              */
 /********************************************************************************/
 
-SesameSessionLaunch(SesameMain sm,Element xml)
+SesameSessionLaunch(SesameMain sm,String sid,Element xml)
 {
-   super(sm,xml);
+   super(sm,sid,xml);
    
    launch_id = IvyXml.getAttrString(xml,"LAUNCHID");
    

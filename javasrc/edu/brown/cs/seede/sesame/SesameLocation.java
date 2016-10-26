@@ -81,12 +81,12 @@ SesameLocation(SesameMain sm,File f,int line,String method,String sign)
 
 private void setupPosition()
 {
-   ASTNode root = sesame_file.getAstNode(); 
+   ASTNode root = sesame_file.getAst(); 
    FindPositionVisitor fpv = new FindPositionVisitor();
    root.accept(fpv);
    int pos = fpv.getStartOffset();
    if (pos >= 0) {
-    //  start_position = sesame_file.createPosition(pos);
+      start_position = sesame_file.createPosition(pos);
     }
 }
 
@@ -115,7 +115,7 @@ private class FindPositionVisitor extends ASTVisitor {
       if (line_number < startln || line_number > endln) return false;
       switch (n.getNodeType()) {
          case ASTNode.METHOD_DECLARATION :
-            break;
+            return true;
          case ASTNode.FIELD_DECLARATION :
             return false;
          case ASTNode.TYPE_DECLARATION :
@@ -127,9 +127,11 @@ private class FindPositionVisitor extends ASTVisitor {
          default :
             return false;
        }
-      
-      // method declaration in bounds here
-      MethodDeclaration md = (MethodDeclaration) n;
+    }
+   
+   @Override public boolean visit(MethodDeclaration md) {
+      if (comp_unit == null) return false;
+      int startln = comp_unit.getLineNumber(md.getStartPosition());   
       Block b = md.getBody();
       if (b == null) return false;
       int blockln = comp_unit.getLineNumber(b.getStartPosition());

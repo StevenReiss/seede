@@ -46,9 +46,9 @@ class SesameSessionTest extends SesameSession
 /*                                                                              */
 /********************************************************************************/
 
-SesameSessionTest(SesameMain sm,Element xml)
+SesameSessionTest(SesameMain sm,String sid,Element xml)
 {
-   super(sm,xml);
+   super(sm,sid,xml);
 }
 
 

@@ -30,37 +30,39 @@ import java.util.Random;
 public interface SesameConstants {
 
 
-String    SOURCE_ID = "SEEDE_" + (new Random().nextInt(1000000));
+String	  SOURCE_ID = "SEEDE_" + (new Random().nextInt(1000000));
 
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Command arguments                                                       */
-/*                                                                              */
+/*										*/
+/*	Command arguments							*/
+/*										*/
 /********************************************************************************/
 
 class CommandArgs extends HashMap<String,Object> {
-   
+
+   private static final long serialVersionUID = 1;
+
    CommandArgs() { }
    CommandArgs(String key,Object... args) {
       this();
       if (args.length == 0) return;
       put(key,args[0]);
       for (int i = 2; i < args.length; i += 2) {
-         put(args[i-1].toString(),args[i]);
+	 put(args[i-1].toString(),args[i]);
        }
     }
-   
+
    void put(String key,Object... args) {
       if (args.length == 0) return;
       put(key,args[0]);
       for (int i = 2; i < args.length; i += 2) {
-         put(args[i-1].toString(),args[i]);
+	 put(args[i-1].toString(),args[i]);
        }
     }
 
-}       // end of inr class CommandArgs
+}	// end of inr class CommandArgs
 
 
 

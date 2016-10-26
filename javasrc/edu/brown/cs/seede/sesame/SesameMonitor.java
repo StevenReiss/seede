@@ -200,6 +200,20 @@ private void handleConsoleEvent(Element e)
 
 
 
+
+/********************************************************************************/
+/*                                                                              */
+/*      Methods to handle commands                                              */
+/*                                                                              */
+/********************************************************************************/
+
+private void handleBegin(String sid,Element xml,IvyXmlWriter xw)
+{
+   
+}
+
+
+
 /********************************************************************************/
 /*										*/
 /*	Handle Messages from Eclipse						*/
@@ -304,6 +318,7 @@ private class CommandHandler implements MintHandler {
 
    @Override public void receive(MintMessage msg,MintArguments args) {
       String cmd = args.getArgument(0);
+      String sid = args.getArgument(1);
       Element e = msg.getXml();
       IvyXmlWriter xw = new IvyXmlWriter();
       switch (cmd) {
@@ -315,6 +330,9 @@ private class CommandHandler implements MintHandler {
             System.exit(0);
             break;
          case "BEGIN" :
+            handleBegin(sid,IvyXml.getChild(e,"SESSION"),xw);
+            break;
+         case "ADDFILE" :
             break;
          default :
             SesameLog.logE("Unknown command " + cmd);

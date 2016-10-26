@@ -30,6 +30,7 @@ import java.util.Map;
 import org.w3c.dom.Element;
 
 import edu.brown.cs.bubbles.board.BoardConstants;
+import edu.brown.cs.ivy.jcomp.JcompControl;
 import edu.brown.cs.ivy.mint.MintConstants;
 import edu.brown.cs.ivy.mint.MintDefaultReply;
 import edu.brown.cs.ivy.mint.MintReply;
@@ -66,6 +67,7 @@ private String                  message_id;
 private SesameFileManager       file_manager;
 private SesameMonitor           message_monitor;
 private Map<String,SesameProject> project_map;
+private JcompControl            jcomp_base;
 
 
 
@@ -79,6 +81,7 @@ private SesameMain(String [] args)
 {
    message_id = null;
    project_map = new HashMap<String,SesameProject>();
+   jcomp_base = new JcompControl();
    
    scanArgs(args);
    
@@ -135,6 +138,7 @@ SesameMonitor getMonitor()                      { return message_monitor; }
 
 String getMintId()                              { return message_id; }
 
+JcompControl getJcompBase()                     { return jcomp_base; }
 
 
 
