@@ -24,8 +24,6 @@
 
 package edu.brown.cs.seede.sesame;
 
-import java.io.File;
-
 import org.w3c.dom.Element;
 
 import edu.brown.cs.ivy.xml.IvyXml;

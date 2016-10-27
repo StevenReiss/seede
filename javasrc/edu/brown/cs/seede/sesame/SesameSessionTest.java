@@ -26,8 +26,6 @@ package edu.brown.cs.seede.sesame;
 
 import org.w3c.dom.Element;
 
-import edu.brown.cs.ivy.xml.IvyXml;
-
 class SesameSessionTest extends SesameSession
 {
 
