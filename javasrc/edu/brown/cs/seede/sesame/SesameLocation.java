@@ -25,6 +25,7 @@
 package edu.brown.cs.seede.sesame;
 
 import java.io.File;
+import java.util.Random;
 
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTVisitor;
@@ -33,6 +34,9 @@ import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.Statement;
 import org.eclipse.jface.text.Position;
+import org.w3c.dom.Element;
+
+import edu.brown.cs.ivy.xml.IvyXml;
 
 class SesameLocation implements SesameConstants
 {
@@ -44,11 +48,13 @@ class SesameLocation implements SesameConstants
 /*                                                                              */
 /********************************************************************************/
 
+private String          location_id;
 private SesameMain      sesame_control;
 private SesameFile      sesame_file;
 private Position        start_position;
 private int             line_number;
 private String          method_name;
+private boolean         is_active;
 
 
 
@@ -58,19 +64,39 @@ private String          method_name;
 /*                                                                              */
 /********************************************************************************/
 
-SesameLocation(SesameMain sm,File f,int line,String method,String sign)
+SesameLocation(SesameMain sm,Element xml)
 {
    sesame_control = sm;
+   location_id = IvyXml.getAttrString(xml,"ID");
+   if (location_id == null) {
+      location_id = "L_" + new Random().nextInt(10000000);
+    }
+   String fnm = IvyXml.getAttrString(xml,"FILE");
+   File f = new File(fnm);
    sesame_file = sm.getFileManager().openFile(f);
-   line_number = line;
-   method_name = method;
+   line_number = IvyXml.getAttrInt(xml,"LINE");
+   method_name = IvyXml.getAttrString(xml,"METHOD");
+   String cnm = IvyXml.getAttrString(xml,"CLASS");
+   if (cnm != null) method_name = cnm + "." + method_name;
+   String sign = IvyXml.getAttrString(xml,"SIGNATURE");
    if (sign != null) method_name += sign;
-   start_position = null;
+   is_active = IvyXml.getAttrBool(xml,"ACTIVE");
    
+   start_position = null;
    if (sesame_file == null) return;
    setupPosition();
 }
 
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Access methods                                                          */
+/*                                                                              */
+/********************************************************************************/
+
+String getId()                  { return location_id; }
+SesameFile getFile()            { return sesame_file; }
 
 
 /********************************************************************************/
@@ -149,6 +175,31 @@ private class FindPositionVisitor extends ASTVisitor {
    
 }       // end of inner class FindPositionVisitor
 
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Output methods                                                          */
+/*                                                                              */
+/********************************************************************************/
+
+@Override public String toString()
+{
+   StringBuffer buf = new StringBuffer();
+   buf.append("LOC[");
+   if (is_active) buf.append("*");
+   if (line_number > 0) {
+      buf.append(line_number);
+      buf.append("@");
+    }
+   buf.append(sesame_file.getFileName());
+   buf.append(":");
+   buf.append(method_name);
+   buf.append(":");
+   buf.append(start_position);
+   buf.append("]");
+   return buf.toString();
+}
 
 }       // end of class SesameLocation
 

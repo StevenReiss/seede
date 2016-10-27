@@ -1,8 +1,8 @@
 /********************************************************************************/
 /*                                                                              */
-/*              SesameSessionTest.java                                          */
+/*              CashewConstants.java                                            */
 /*                                                                              */
-/*      Session based on specific test inputs                                   */
+/*      Constants for Seede Cache and Value manager                             */
 /*                                                                              */
 /********************************************************************************/
 /*      Copyright 2011 Brown University -- Steven P. Reiss                    */
@@ -22,60 +22,36 @@
 
 
 
-package edu.brown.cs.seede.sesame;
+package edu.brown.cs.seede.cashew;
 
-import org.w3c.dom.Element;
 
-import edu.brown.cs.ivy.xml.IvyXml;
 
-class SesameSessionTest extends SesameSession
+public interface CashewConstants
 {
 
 
 /********************************************************************************/
 /*                                                                              */
-/*      Private Storage                                                         */
+/*      Kinds of values                                                         */
 /*                                                                              */
 /********************************************************************************/
 
-private TestCase        test_case;
-
-
-
-/********************************************************************************/
-/*                                                                              */
-/*      Constructors                                                            */
-/*                                                                              */
-/********************************************************************************/
-
-SesameSessionTest(SesameMain sm,String sid,Element xml)
-{
-   super(sm,sid,xml);
-   
-   Element txml = IvyXml.getChild(xml,"TEST");
-   test_case = null;
-   if (txml != null) test_case = new TestCase(txml);
-}
-
-
-
-/********************************************************************************/
-/*                                                                              */
-/*      Holder of the test case                                                 */
-/*                                                                              */
-/********************************************************************************/
-
-private class TestCase {
-   
-   TestCase(Element xml) {
-      
-    }
-}
-
-}       // end of class SesameSessionTest
+enum CashewValueKind {
+   UNKNOWN,
+   PRIMITIVE,
+   STRING,
+   CLASS,
+   OBJECT,
+   ARRAY
+};
 
 
 
 
-/* end of SesameSessionTest.java */
+}       // end of interface CashewConstants
+
+
+
+
+/* end of CashewConstants.java */
 

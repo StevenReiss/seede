@@ -26,7 +26,6 @@ package edu.brown.cs.seede.test;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.After;
@@ -47,10 +46,10 @@ import edu.brown.cs.ivy.xml.IvyXml;
 import edu.brown.cs.ivy.xml.IvyXmlWriter;
 
 import edu.brown.cs.seede.sesame.SesameMain;
+import edu.brown.cs.seede.sesame.SesameConstants;
 
 
-
-public class TestSeede implements MintConstants
+public class TestSeede implements MintConstants, SesameConstants
 {
 
 
@@ -123,7 +122,7 @@ public TestSeede()
             Element pxml = rply.waitForXml();
             if (!IvyXml.isElement(pxml,"PROJECT")) pxml = IvyXml.getChild(pxml,"PROJECT");
             String dirs = IvyXml.getAttrString(pxml,"PATH");
-            project_directory = new File(dirs);
+            if (dirs != null) project_directory = new File(dirs);
             return;
           }
        }
@@ -346,7 +345,8 @@ private void sendSeedeMessage(String cmd,String sess,Map<String,Object> flds,Str
    IvyXmlWriter xw = new IvyXmlWriter();
    xw.begin("SEEDE");
    xw.field("DO",cmd);
-   if (sess != null) xw.field("SID",sess);
+   if (sess == null) sess = "*";
+   xw.field("SID",sess);
    if (flds != null) {
       for (Map.Entry<String,Object> ent : flds.entrySet()) {
          xw.field(ent.getKey(),ent.getValue());
@@ -487,33 +487,7 @@ private String waitForStop()
 
 
 
-/********************************************************************************/
-/*                                                                              */
-/*      Command arguments                                                       */
-/*                                                                              */
-/********************************************************************************/
 
-private static class CommandArgs extends HashMap<String,Object> {
-   
-   CommandArgs() { }
-   CommandArgs(String key,Object... args) {
-      this();
-      if (args.length == 0) return;
-      put(key,args[0]);
-      for (int i = 2; i < args.length; i += 2) {
-         put(args[i-1].toString(),args[i]);
-       }
-    }
-   
-   void put(String key,Object... args) {
-      if (args.length == 0) return;
-      put(key,args[0]);
-      for (int i = 2; i < args.length; i += 2) {
-         put(args[i-1].toString(),args[i]);
-       }
-    }
-   
-}       // end of inr class CommandArgs
 
 
 

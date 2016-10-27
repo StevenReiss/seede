@@ -24,6 +24,8 @@
 
 package edu.brown.cs.seede.sesame;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 
 import org.w3c.dom.Element;
@@ -67,6 +69,7 @@ static SesameSession createSession(SesameMain sm,String sid,Element xml)
 protected SesameMain    sesame_control;
 private String          session_id;
 private SesameProject   for_project;
+private Map<String,SesameLocation> location_map; 
 
 
 
@@ -76,27 +79,24 @@ private SesameProject   for_project;
 /*                                                                              */
 /********************************************************************************/
 
-protected SesameSession(SesameMain sm)
-{
-   this(sm,null,(String) null);
-}
-
-
 protected SesameSession(SesameMain sm,String sid,Element xml)
 {
-   this(sm,sid,IvyXml.getAttrString(xml,"PROJECT"));
-}
-   
-
-protected SesameSession(SesameMain sm,String id,String proj)
-{
    sesame_control = sm;
+   
+   String proj = IvyXml.getAttrString(xml,"PROJECT");
    for_project = sm.getProject(proj);
-   if (id == null) {
+   
+   if (sid == null) {
       Random r = new Random();
-      id = "SESAME_" + r.nextInt(10000000);
+      sid = "SESAME_" + r.nextInt(10000000);
     }
-   session_id = id;
+   session_id = sid;
+   
+   location_map = new HashMap<String,SesameLocation>();
+   for (Element locxml : IvyXml.children(xml,"LOCATION")) {
+      SesameLocation sloc = new SesameLocation(sm,locxml);
+      location_map.put(sloc.getId(),sloc);
+    }
 }
 
 
