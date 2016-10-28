@@ -108,7 +108,6 @@ public TestSeede()
    cmd += " -vmargs -Dedu.brown.cs.bubbles.MINT=" + MINT_NAME;
 
    try {
-      new IvyExec(cmd);
       for (int i = 0; i < 250; ++i) {
 	 synchronized(this) {
 	    try { wait(1000); } catch (InterruptedException e) { }
@@ -125,6 +124,7 @@ public TestSeede()
             if (dirs != null) project_directory = new File(dirs);
             return;
           }
+         if (i == 0) new IvyExec(cmd);
        }
     }
    catch (IOException e) { }
@@ -136,9 +136,9 @@ public TestSeede()
 @Before public void startSeede()
 {
    SeedeThread st = new SeedeThread();
-   st.start();
    for (int i = 0; i < 100; ++i) {
       if (pingSeede()) return;
+      if (i == 0) st.start();
       synchronized(this) {
          try { wait(1000); } catch (InterruptedException e) { }
        }

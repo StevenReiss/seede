@@ -196,6 +196,7 @@ private void sendMessage(String cmd,String proj,Map<String,Object> flds,String c
 {
    IvyXmlWriter xw = new IvyXmlWriter();
    xw.begin("BUBBLES");
+   xw.field("DO",cmd);
    xw.field("BID",SOURCE_ID);
    if (proj != null && proj.length() > 0) xw.field("PROJECT",proj);
    xw.field("LANG","Eclipse");

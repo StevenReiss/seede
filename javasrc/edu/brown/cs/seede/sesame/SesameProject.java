@@ -67,6 +67,7 @@ SesameProject(SesameMain sm,String name)
    sesame_control = sm;
    project_name = name;
    base_project = null;
+   class_paths = new ArrayList<String>();
    
    active_files = new HashSet<SesameFile>();
    

@@ -73,7 +73,7 @@ SesameMonitor(SesameMain sm)
    is_done = false;
    eval_handlers = new HashMap<String,EvalData>();
 
-   mint_control = MintControl.create(sm.getMintId(),MintSyncMode.ONLY_REPLIES);
+   mint_control = MintControl.create(sm.getMintId(),MintSyncMode.SINGLE);
 }
 
 
@@ -209,7 +209,8 @@ private void handleConsoleEvent(Element e)
 
 private void handleBegin(String sid,Element xml,IvyXmlWriter xw)
 {
-   
+   SesameSession ss = SesameSession.createSession(sesame_control,sid,xml);
+   System.err.println("BEGIN " + sid + " " + ss);
 }
 
 
@@ -226,59 +227,59 @@ private class EclipseHandler implements MintHandler {
       String cmd = args.getArgument(0);
       Element e = msg.getXml();
       switch (cmd) {
-	 case "PING" :
-	    msg.replyTo("PONG");
-	    break;
-	 case "EDITERROR" :
-	 case "FIEERROR" :
-	    handleErrors(IvyXml.getAttrString(e,"PROJECT"),
-		  new File(IvyXml.getAttrString(e,"FILE")),
-		  IvyXml.getAttrInt(e,"ID",-1),
-		  IvyXml.getChild(e,"MESSAGES"));
-	    break;
-	 case "EDIT" :
-	    String txt = IvyXml.getText(e);
-	    boolean complete = IvyXml.getAttrBool(e,"COMPLETE");
-	    boolean remove = IvyXml.getAttrBool(e,"REMOVE");
-	    if (complete) {
-	       byte [] data = IvyXml.getBytesElement(e,"CONTENTS");
-	       if (data != null) txt = new String(data);
-	       else remove = true;
-	     }
-	    handleEdit(IvyXml.getAttrString(e,"BID"),
-		  new File(IvyXml.getAttrString(e,"FILE")),
-		  IvyXml.getAttrInt(e,"LENGTH"),
-		  IvyXml.getAttrInt(e,"OFFSET"),
-		  complete,remove,txt);
-	    break;
-	 case "RUNEVENT" :
-	    long when = IvyXml.getAttrLong(e,"TIME");
-	    for (Element re : IvyXml.children(e,"RUNEVENT")) {
-	       handleRunEvent(re,when);
-	     }
-	    break;
-	 case "RESOURCE" :
-	    for (Element re : IvyXml.children(e,"DELTA")) {
-	       handleResourceChange(re);
-	     }
+         case "PING" :
+            msg.replyTo("PONG");
             break;
-	 case "CONSOLE" :
-	    handleConsoleEvent(e);
-	    break;
-	 case "EVALUATION" :
-	    String bid = IvyXml.getAttrString(e,"BID");
-	    String id = IvyXml.getAttrString(e,"ID");
-	    if ((bid == null || bid.equals(SOURCE_ID)) && id != null) {
-	       EvalData ed = eval_handlers.remove(id);
-	       if (ed != null) {
-		  ed.handleResult(e);
-		}
-	     }
-	    msg.replyTo("<OK/>");
-	    break;
-	 case "STOP" :
-	    serverDone();
-	    break;
+         case "EDITERROR" :
+         case "FIEERROR" :
+            handleErrors(IvyXml.getAttrString(e,"PROJECT"),
+        	  new File(IvyXml.getAttrString(e,"FILE")),
+        	  IvyXml.getAttrInt(e,"ID",-1),
+        	  IvyXml.getChild(e,"MESSAGES"));
+            break;
+         case "EDIT" :
+            String txt = IvyXml.getText(e);
+            boolean complete = IvyXml.getAttrBool(e,"COMPLETE");
+            boolean remove = IvyXml.getAttrBool(e,"REMOVE");
+            if (complete) {
+               byte [] data = IvyXml.getBytesElement(e,"CONTENTS");
+               if (data != null) txt = new String(data);
+               else remove = true;
+             }
+            handleEdit(IvyXml.getAttrString(e,"BID"),
+        	  new File(IvyXml.getAttrString(e,"FILE")),
+        	  IvyXml.getAttrInt(e,"LENGTH"),
+        	  IvyXml.getAttrInt(e,"OFFSET"),
+        	  complete,remove,txt);
+            break;
+         case "RUNEVENT" :
+            long when = IvyXml.getAttrLong(e,"TIME");
+            for (Element re : IvyXml.children(e,"RUNEVENT")) {
+               handleRunEvent(re,when);
+             }
+            break;
+         case "RESOURCE" :
+            for (Element re : IvyXml.children(e,"DELTA")) {
+               handleResourceChange(re);
+             }
+            break;
+         case "CONSOLE" :
+            handleConsoleEvent(e);
+            break;
+         case "EVALUATION" :
+            String bid = IvyXml.getAttrString(e,"BID");
+            String id = IvyXml.getAttrString(e,"ID");
+            if ((bid == null || bid.equals(SOURCE_ID)) && id != null) {
+               EvalData ed = eval_handlers.remove(id);
+               if (ed != null) {
+        	  ed.handleResult(e);
+        	}
+             }
+            msg.replyTo("<OK/>");
+            break;
+         case "STOP" :
+            serverDone();
+            break;
        }
     }
 
@@ -298,9 +299,9 @@ private class BubblesHandler implements MintHandler {
       String cmd = args.getArgument(0);
       Element e = msg.getXml();
       switch (cmd) {
-	 case "EXIT" :
-	    serverDone();
-	    break;
+         case "EXIT" :
+            serverDone();
+            break;
        }
     }
 

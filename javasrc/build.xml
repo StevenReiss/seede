@@ -6,6 +6,7 @@
    <property name='SEEDE' value='${basedir}/..' />
 
    <target name='all'>
+      <ant antfile="build.xml" dir="edu/brown/cs/seede/cashew" />
       <ant antfile="build.xml" dir="edu/brown/cs/seede/sesame" />
    </target>
 
@@ -19,6 +20,7 @@
 
    <target name='doc'>
       <javadoc sourcepathref='jdocsrc' classpathref='jdocsrc' destdir='${SEEDE}/doc'>
+	 <package name='edu.brown.cs.seede.cashew' />
 	 <package name='edu.brown.cs.seede.sesame' />
       </javadoc>
    </target>

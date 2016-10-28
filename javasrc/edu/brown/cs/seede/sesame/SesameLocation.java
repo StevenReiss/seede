@@ -138,12 +138,14 @@ private class FindPositionVisitor extends ASTVisitor {
       if (comp_unit == null) return true;
       int startln = comp_unit.getLineNumber(n.getStartPosition());
       int endln = comp_unit.getLineNumber(n.getStartPosition() + n.getLength() + 1);
+      if (endln < 0) endln = line_number+1;
       if (line_number < startln || line_number > endln) return false;
       switch (n.getNodeType()) {
          case ASTNode.METHOD_DECLARATION :
             return true;
          case ASTNode.FIELD_DECLARATION :
             return false;
+         case ASTNode.COMPILATION_UNIT :
          case ASTNode.TYPE_DECLARATION :
          case ASTNode.TYPE_DECLARATION_STATEMENT :
          case ASTNode.ANONYMOUS_CLASS_DECLARATION :
