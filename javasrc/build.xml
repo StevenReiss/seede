@@ -8,6 +8,7 @@
    <target name='all'>
       <ant antfile="build.xml" dir="edu/brown/cs/seede/cashew" />
       <ant antfile="build.xml" dir="edu/brown/cs/seede/sesame" />
+      <ant antfile="build.xml" dir="edu/brown/cs/seede/test" />
    </target>
 
    <path id='jdocsrc'>

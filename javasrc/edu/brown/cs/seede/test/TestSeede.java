@@ -29,7 +29,9 @@ import java.io.IOException;
 import java.util.Map;
 
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.Assert;
 import org.w3c.dom.Element;
@@ -68,10 +70,15 @@ private static final String             LAUNCH_NAME = "test1";
 private static final String             REL_PATH1 = "src/edu/brown/cs/seede/sample/Tester.java";
 
 
-private MintControl	mint_control;
-private String          stopped_thread;
-private File            project_directory;
+private static MintControl mint_control;
+private static File        project_directory;
 
+private String          stopped_thread;
+
+
+static {
+   mint_control = MintControl.create(MINT_NAME,MintSyncMode.ONLY_REPLIES);
+}
 
 
 
@@ -83,13 +90,13 @@ private File            project_directory;
 
 public TestSeede()
 {
-   mint_control = MintControl.create(MINT_NAME,MintSyncMode.ONLY_REPLIES);
    mint_control.register("<BEDROCK SOURCE='ECLIPSE' TYPE='_VAR_0' />",new IDEHandler());
 }
 
 
-@Before public void setupBedrock()
+@BeforeClass public static void setupBedrock()
 {
+   System.err.println("SETTING UP BEDROCK");
    File ec1 = new File("/u/spr/eclipse-neonx/eclipse/eclipse");
    File ec2 = new File("/u/spr/Eclipse/seede-test");
    if (!ec1.exists()) {
@@ -109,9 +116,7 @@ public TestSeede()
 
    try {
       for (int i = 0; i < 250; ++i) {
-	 synchronized(this) {
-	    try { wait(1000); } catch (InterruptedException e) { }
-	  }
+         try { Thread.sleep(1000); } catch (InterruptedException e) { }
 	 if (pingEclipse()) {
             CommandArgs args = new CommandArgs("LEVEL","DEBUG");
             sendBubblesMessage("LOGLEVEL",null,args,null);
@@ -133,35 +138,37 @@ public TestSeede()
 }
 
 
-@Before public void startSeede()
-{
+@BeforeClass public static void startSeede()
+{ 
+   System.err.println("Setting Up Sesame");
+   
    SeedeThread st = new SeedeThread();
    for (int i = 0; i < 100; ++i) {
       if (pingSeede()) return;
       if (i == 0) st.start();
-      synchronized(this) {
-         try { wait(1000); } catch (InterruptedException e) { }
-       }
+      try { Thread.sleep(1000); } catch (InterruptedException e) { }
     }
    throw new Error("Problem starting sesame server");
 }
 
 
 
-@After public void shutdownBedrock()
+@AfterClass public static void shutdownBedrock()
 {
+   System.err.println("Shut down bedrock");
    sendBubblesMessage("EXIT");
 }
 
 
 
-@After public void shutdownSeede()
+@AfterClass public static void shutdownSeede()
 {
-   sendSeedeMessage("EXIT");
+   System.err.println("Shut down seede");
+   // sendSeedeMessage("EXIT");
 }
 
 
-private boolean pingEclipse()
+private static boolean pingEclipse()
 {
    MintDefaultReply mdr = new MintDefaultReply();
    sendBubblesMessage("PING",null,null,null,mdr);
@@ -169,7 +176,7 @@ private boolean pingEclipse()
    return r != null;
 }
 
-private boolean pingSeede()
+private static boolean pingSeede()
 {
    MintDefaultReply mdr = new MintDefaultReply();
    sendSeedeMessage("PING",null,null,null,mdr);
@@ -201,6 +208,7 @@ private static class SeedeThread extends Thread {
 
 @Test public void test1()
 {
+   System.err.println("Start TEST1");
    stopped_thread = null;
    CommandArgs args = new CommandArgs("NAME",LAUNCH_NAME,"MODE","DEBUG","BUILD","TRUE",
          "REGISTER","TRUE");
@@ -230,6 +238,9 @@ private static class SeedeThread extends Thread {
 
 @Test public void test2()
 {
+   System.err.println("START TEST2");
+   System .err.flush();
+   
    MintDefaultReply rply = new MintDefaultReply();
    sendSeedeMessage("PING",null,null,null,rply);
    String srply = rply.waitForString();
@@ -282,19 +293,19 @@ private static class SeedeThread extends Thread {
 /*										*/
 /********************************************************************************/
 
-private void sendBubblesMessage(String cmd)
+private static void sendBubblesMessage(String cmd)
 {
    sendBubblesMessage(cmd,null,null,null,null);
 }
 
 
-private void sendBubblesMessage(String cmd,String proj,Map<String,Object> flds,String cnts)
+private static void sendBubblesMessage(String cmd,String proj,Map<String,Object> flds,String cnts)
 {
    sendBubblesMessage(cmd,proj,flds,cnts,null);
 }
 
 
-private void sendBubblesMessage(String cmd,String proj,Map<String,Object> flds,String cnts,
+private static void sendBubblesMessage(String cmd,String proj,Map<String,Object> flds,String cnts,
       MintReply rply)
 {
    IvyXmlWriter xw = new IvyXmlWriter();
@@ -327,19 +338,19 @@ private void sendBubblesMessage(String cmd,String proj,Map<String,Object> flds,S
 /*										*/
 /********************************************************************************/
 
-private void sendSeedeMessage(String cmd)
+private static void sendSeedeMessage(String cmd)
 {
    sendSeedeMessage(cmd,null,null,null);
 }
 
 
-private void sendSeedeMessage(String cmd,String sess,Map<String,Object> flds,String cnts)
+private static void sendSeedeMessage(String cmd,String sess,Map<String,Object> flds,String cnts)
 {
    sendSeedeMessage(cmd,sess,flds,cnts,null);
 }
 
 
-private void sendSeedeMessage(String cmd,String sess,Map<String,Object> flds,String cnts,
+private static void sendSeedeMessage(String cmd,String sess,Map<String,Object> flds,String cnts,
       MintReply rply)
 {
    IvyXmlWriter xw = new IvyXmlWriter();

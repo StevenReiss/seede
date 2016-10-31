@@ -73,7 +73,8 @@ SesameMonitor(SesameMain sm)
    is_done = false;
    eval_handlers = new HashMap<String,EvalData>();
 
-   mint_control = MintControl.create(sm.getMintId(),MintSyncMode.SINGLE);
+   mint_control = MintControl.create(sm.getMintId(),MintSyncMode.ONLY_REPLIES
+   );
 }
 
 
@@ -89,7 +90,7 @@ void startServer()
    mint_control.register("<BEDROCK SOURCE='ECLIPSE' TYPE='_VAR_0' />",new EclipseHandler());
    mint_control.register("<BUBBLES DO='_VAR_0' />",new BubblesHandler());
    mint_control.register("<SEEDE DO='_VAR_0' SID='_VAR_1' />",new CommandHandler());
-   
+
    new WaitForExit().start();
 }
 
@@ -103,39 +104,50 @@ private synchronized void serverDone()
 
 
 
-private void checkEclipse()
+private boolean checkEclipse()
 {
    MintDefaultReply rply = new MintDefaultReply();
    String msg = "<BUBBLES DO='PING' />";
    mint_control.send(msg,rply,MintConstants.MINT_MSG_FIRST_NON_NULL);
    String r = rply.waitForString(30000);
-   if (r == null) is_done = true;
+   if (r == null) return false;
+   return true;
 }
 
 
 
 private class WaitForExit extends Thread {
-   
+
    WaitForExit() {
       super("WaitForExit");
       setDaemon(true);
     }
-   
+
    @Override public void run() {
       synchronized (this) {
-         while (!is_done) {
-            checkEclipse();
-            try {
-               wait(30000l);
-             }
-            catch (InterruptedException e) { }
-          }
+	 for ( ; ; ) {
+	    if (checkEclipse()) break;
+	    try {
+	       wait(30000l);
+	     }
+	    catch (InterruptedException e) { }
+	  }
+
+	 while (!is_done) {
+	    if (!checkEclipse()) is_done = true;
+	    else {
+	       try {
+		  wait(30000l);
+		}
+	       catch (InterruptedException e) { }
+	     }
+	  }
        }
-      
+
       System.exit(0);
     }
-   
-}       // end of inner class WaitForExit
+
+}	// end of inner class WaitForExit
 
 
 
@@ -202,9 +214,9 @@ private void handleConsoleEvent(Element e)
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Methods to handle commands                                              */
-/*                                                                              */
+/*										*/
+/*	Methods to handle commands						*/
+/*										*/
 /********************************************************************************/
 
 private void handleBegin(String sid,Element xml,IvyXmlWriter xw)
@@ -227,59 +239,59 @@ private class EclipseHandler implements MintHandler {
       String cmd = args.getArgument(0);
       Element e = msg.getXml();
       switch (cmd) {
-         case "PING" :
-            msg.replyTo("PONG");
-            break;
-         case "EDITERROR" :
-         case "FIEERROR" :
-            handleErrors(IvyXml.getAttrString(e,"PROJECT"),
-        	  new File(IvyXml.getAttrString(e,"FILE")),
-        	  IvyXml.getAttrInt(e,"ID",-1),
-        	  IvyXml.getChild(e,"MESSAGES"));
-            break;
-         case "EDIT" :
-            String txt = IvyXml.getText(e);
-            boolean complete = IvyXml.getAttrBool(e,"COMPLETE");
-            boolean remove = IvyXml.getAttrBool(e,"REMOVE");
-            if (complete) {
-               byte [] data = IvyXml.getBytesElement(e,"CONTENTS");
-               if (data != null) txt = new String(data);
-               else remove = true;
-             }
-            handleEdit(IvyXml.getAttrString(e,"BID"),
-        	  new File(IvyXml.getAttrString(e,"FILE")),
-        	  IvyXml.getAttrInt(e,"LENGTH"),
-        	  IvyXml.getAttrInt(e,"OFFSET"),
-        	  complete,remove,txt);
-            break;
-         case "RUNEVENT" :
-            long when = IvyXml.getAttrLong(e,"TIME");
-            for (Element re : IvyXml.children(e,"RUNEVENT")) {
-               handleRunEvent(re,when);
-             }
-            break;
-         case "RESOURCE" :
-            for (Element re : IvyXml.children(e,"DELTA")) {
-               handleResourceChange(re);
-             }
-            break;
-         case "CONSOLE" :
-            handleConsoleEvent(e);
-            break;
-         case "EVALUATION" :
-            String bid = IvyXml.getAttrString(e,"BID");
-            String id = IvyXml.getAttrString(e,"ID");
-            if ((bid == null || bid.equals(SOURCE_ID)) && id != null) {
-               EvalData ed = eval_handlers.remove(id);
-               if (ed != null) {
-        	  ed.handleResult(e);
-        	}
-             }
-            msg.replyTo("<OK/>");
-            break;
-         case "STOP" :
-            serverDone();
-            break;
+	 case "PING" :
+	    msg.replyTo("PONG");
+	    break;
+	 case "EDITERROR" :
+	 case "FIEERROR" :
+	    handleErrors(IvyXml.getAttrString(e,"PROJECT"),
+		  new File(IvyXml.getAttrString(e,"FILE")),
+		  IvyXml.getAttrInt(e,"ID",-1),
+		  IvyXml.getChild(e,"MESSAGES"));
+	    break;
+	 case "EDIT" :
+	    String txt = IvyXml.getText(e);
+	    boolean complete = IvyXml.getAttrBool(e,"COMPLETE");
+	    boolean remove = IvyXml.getAttrBool(e,"REMOVE");
+	    if (complete) {
+	       byte [] data = IvyXml.getBytesElement(e,"CONTENTS");
+	       if (data != null) txt = new String(data);
+	       else remove = true;
+	     }
+	    handleEdit(IvyXml.getAttrString(e,"BID"),
+		  new File(IvyXml.getAttrString(e,"FILE")),
+		  IvyXml.getAttrInt(e,"LENGTH"),
+		  IvyXml.getAttrInt(e,"OFFSET"),
+		  complete,remove,txt);
+	    break;
+	 case "RUNEVENT" :
+	    long when = IvyXml.getAttrLong(e,"TIME");
+	    for (Element re : IvyXml.children(e,"RUNEVENT")) {
+	       handleRunEvent(re,when);
+	     }
+	    break;
+	 case "RESOURCE" :
+	    for (Element re : IvyXml.children(e,"DELTA")) {
+	       handleResourceChange(re);
+	     }
+	    break;
+	 case "CONSOLE" :
+	    handleConsoleEvent(e);
+	    break;
+	 case "EVALUATION" :
+	    String bid = IvyXml.getAttrString(e,"BID");
+	    String id = IvyXml.getAttrString(e,"ID");
+	    if ((bid == null || bid.equals(SOURCE_ID)) && id != null) {
+	       EvalData ed = eval_handlers.remove(id);
+	       if (ed != null) {
+		  ed.handleResult(e);
+		}
+	     }
+	    msg.replyTo("<OK/>");
+	    break;
+	 case "STOP" :
+	    serverDone();
+	    break;
        }
     }
 
@@ -299,9 +311,9 @@ private class BubblesHandler implements MintHandler {
       String cmd = args.getArgument(0);
       Element e = msg.getXml();
       switch (cmd) {
-         case "EXIT" :
-            serverDone();
-            break;
+	 case "EXIT" :
+	    serverDone();
+	    break;
        }
     }
 
@@ -323,26 +335,26 @@ private class CommandHandler implements MintHandler {
       Element e = msg.getXml();
       IvyXmlWriter xw = new IvyXmlWriter();
       switch (cmd) {
-         case "PING" :
-            xw.begin("PONG");
-            xw.end();
-            break;
-         case "EXIT" :
-            System.exit(0);
-            break;
-         case "BEGIN" :
-            handleBegin(sid,IvyXml.getChild(e,"SESSION"),xw);
-            break;
-         case "ADDFILE" :
-            break;
-         default :
-            SesameLog.logE("Unknown command " + cmd);
-            break;
+	 case "PING" :
+	    xw.begin("PONG");
+	    xw.end();
+	    break;
+	 case "EXIT" :
+	    System.exit(0);
+	    break;
+	 case "BEGIN" :
+	    handleBegin(sid,IvyXml.getChild(e,"SESSION"),xw);
+	    break;
+	 case "ADDFILE" :
+	    break;
+	 default :
+	    SesameLog.logE("Unknown command " + cmd);
+	    break;
        }
       String rslt = xw.toString();
       xw.close();
       if (rslt != null &&rslt.trim().length() > 0) {
-         msg.replyTo(rslt);
+	 msg.replyTo(rslt);
        }
     }
 
@@ -377,4 +389,561 @@ private class EvalData {
 
 
 /* end of SesameMonitor.java */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
