@@ -25,6 +25,8 @@
 package edu.brown.cs.seede.sesame;
 
 import java.io.File;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Map;
 import java.util.HashMap;
 
@@ -223,6 +225,9 @@ private void handleBegin(String sid,Element xml,IvyXmlWriter xw)
 {
    SesameSession ss = SesameSession.createSession(sesame_control,sid,xml);
    System.err.println("BEGIN " + sid + " " + ss);
+   xw.begin("SESSION");
+   xw.field("ID",ss.getSessionId());
+   xw.end();
 }
 
 
@@ -327,37 +332,78 @@ private class BubblesHandler implements MintHandler {
 /*										*/
 /********************************************************************************/
 
+private String processCommand(String cmd,String sid,Element e) throws SesameException
+{
+   IvyXmlWriter xw = new IvyXmlWriter();
+   xw.begin("RESULT");
+   switch (cmd) {
+      case "PING" :
+         xw.text("PONG");
+         break;
+      case "EXIT" :
+         System.exit(0);
+         break;
+      case "BEGIN" :
+         handleBegin(sid,IvyXml.getChild(e,"SESSION"),xw);
+         break;
+      case "ADDFILE" :
+         break;
+      default :
+         SesameLog.logE("Unknown command " + cmd);
+         break;
+    }
+   xw.end("RESULT");
+   String rslt = xw.toString();
+   xw.close();
+   
+   return rslt;
+}
+
+
 private class CommandHandler implements MintHandler {
 
    @Override public void receive(MintMessage msg,MintArguments args) {
       String cmd = args.getArgument(0);
       String sid = args.getArgument(1);
       Element e = msg.getXml();
-      IvyXmlWriter xw = new IvyXmlWriter();
-      switch (cmd) {
-	 case "PING" :
-	    xw.begin("PONG");
-	    xw.end();
-	    break;
-	 case "EXIT" :
-	    System.exit(0);
-	    break;
-	 case "BEGIN" :
-	    handleBegin(sid,IvyXml.getChild(e,"SESSION"),xw);
-	    break;
-	 case "ADDFILE" :
-	    break;
-	 default :
-	    SesameLog.logE("Unknown command " + cmd);
-	    break;
+      String rslt = null;
+      try {
+         rslt = processCommand(cmd,sid,e);
        }
-      String rslt = xw.toString();
-      xw.close();
-      if (rslt != null &&rslt.trim().length() > 0) {
-	 msg.replyTo(rslt);
+      catch (SesameException t) {
+         String xmsg = "BEDROCK: error in command " + cmd + ": " + t;
+         SesameLog.logE(xmsg,t);
+         IvyXmlWriter xw = new IvyXmlWriter();
+         xw.cdataElement("ERROR",xmsg);
+         rslt = xw.toString();
+         xw.close();
        }
+      catch (Throwable t) {
+         String xmsg = "Problem processing command " + cmd + ": " + t;
+         SesameLog.logE(xmsg,t);
+         StringWriter sw = new StringWriter();
+         PrintWriter pw = new PrintWriter(sw);
+         t.printStackTrace(pw);
+         Throwable xt = t;
+         for ( ; xt.getCause() != null; xt = xt.getCause());
+         if (xt != null && xt != t) {
+            pw.println();
+            xt.printStackTrace(pw);
+          }
+         SesameLog.logE("TRACE: " + sw.toString());
+         IvyXmlWriter xw = new IvyXmlWriter();
+         xw.begin("ERROR");
+         xw.textElement("MESSAGE",xmsg);
+         xw.cdataElement("EXCEPTION",t.toString());
+         xw.cdataElement("STACK",sw.toString());
+         xw.end("ERROR");
+         rslt = xw.toString();
+         xw.close();
+         pw.close();
+       }
+      msg.replyTo(rslt);
     }
-
+   
 }	// end of inner class CommandHandler
 
 
