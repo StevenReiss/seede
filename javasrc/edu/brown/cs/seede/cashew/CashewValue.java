@@ -31,6 +31,7 @@ import org.w3c.dom.Element;
 
 import edu.brown.cs.ivy.jcomp.JcompType;
 import edu.brown.cs.ivy.jcomp.JcompTyper;
+import edu.brown.cs.ivy.xml.IvyXml;
 
 public abstract class CashewValue implements CashewConstants
 {
@@ -44,9 +45,50 @@ public abstract class CashewValue implements CashewConstants
 /*                                                                              */
 /********************************************************************************/
 
-public static CashewValue createValue(JcompTyper typer,Element xml) 
+public static CashewValue createValue(JcompTyper typer,Element xml) throws CashewException
 {
-   return null;
+   String tnm = IvyXml.getAttrString(xml,"TYPE");
+   JcompType jtype = typer.findType(tnm);
+   if (jtype == null) throw new CashewException("Unknown type");
+   if (jtype.isPrimitiveType()) {
+      switch (tnm) {
+         case "int" :
+         case "short" :
+         case "byte" :
+         case "long" :
+            long v = IvyXml.getAttrLong(xml,"VALUE");
+            return numericValue(jtype,v);
+         case "char" :
+            String s = IvyXml.getAttrString(xml,"VALUE");
+            if (s.length() == 0) throw new CashewException("Empty character constants");
+            char c = s.charAt(0);
+            return characterValue(jtype,c);
+         case "float" :
+         case "double" :
+            double dv = IvyXml.getAttrDouble(xml,"VALUE");
+            return numericValue(jtype,dv);
+         default :
+            throw new CashewException("Illegal primitive type");
+       }
+    }
+   else if (jtype.getName().equals("java.lang.String")) {
+      String s = IvyXml.getTextElement(xml,"VALUE");
+      return stringValue(jtype,s);
+    }
+   else if (jtype.getName().equals("java.lang.Class")) {
+      String s = IvyXml.getTextElement(xml,"VALUE");
+      if (s == null) return nullValue(typer);
+      JcompType vtyp = typer.findType(s);
+      if (vtyp == null) throw new CashewException("Unknown type name " + s);
+      return classValue(jtype,vtyp);
+    }
+   String val = IvyXml.getTextElement(xml,"VALUE");
+   if (val != null && val.equals("null")) return nullValue(typer);
+   
+   ValueObject vo = new ValueObject(jtype);
+   // set up fields of the object
+   
+   return vo;
 }
 
 
@@ -55,6 +97,14 @@ public static CashewValue createRemoteValue(JcompTyper typer,Element xml)
    return null;
 }
 
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Internal value finders                                                  */
+/*                                                                              */
+/********************************************************************************/
 
 private static CashewValue nullValue(JcompTyper typer)
 {
@@ -67,6 +117,56 @@ private static CashewValue nullValue(JcompTyper typer)
 }
 
 
+private static CashewValue numericValue(JcompType t,long v)
+{
+   synchronized (int_values) {
+      ValueNumeric vn = int_values.get(v);
+      if (vn == null) {
+         vn = new ValueNumeric(t,v);
+         int_values.put(v,vn);
+       }
+      return vn;
+    }
+}
+
+
+private static CashewValue characterValue(JcompType t,char v)
+{
+   synchronized (char_values) {
+      ValueNumeric vn = char_values.get(v);
+      if (vn == null) {
+         vn = new ValueNumeric(t,v);
+         char_values.put(v,vn);
+       }
+      return vn;
+    }
+}
+
+
+private static CashewValue numericValue(JcompType t,double v)
+{
+   return new ValueNumeric(t,v);
+}
+
+
+private static CashewValue stringValue(JcompType t,String s)
+{
+   synchronized (string_values) {
+      ValueString vs = string_values.get(s);
+      if (vs == null) {
+         vs = new ValueString(t,s);
+         string_values.put(s,vs);
+       }
+      return vs;
+    }
+}
+
+
+private static CashewValue classValue(JcompType t,JcompType vtyp)
+{
+   return new ValueClass(t,vtyp);
+}
+
 
 
 /********************************************************************************/
@@ -76,6 +176,17 @@ private static CashewValue nullValue(JcompTyper typer)
 /********************************************************************************/
 
 private static ValueNull        null_value;
+private static Map<Long,ValueNumeric> int_values;
+private static Map<Character,ValueNumeric> char_values;
+private static Map<String,ValueString> string_values;
+
+
+static {
+   null_value = null;
+   int_values = new HashMap<Long,ValueNumeric>();
+   char_values = new HashMap<Character,ValueNumeric>();
+   string_values = new HashMap<String,ValueString>();
+}
 
 
 
@@ -345,9 +456,9 @@ private static class ValueNull extends CashewValue
 
 private static class ValueClass extends CashewValue 
 {
-   private Class<?>     class_value;
+   private JcompType     class_value;
    
-   ValueClass(JcompType jt,Class<?> c) {
+   ValueClass(JcompType jt,JcompType c) {
       super(jt);
       class_value = c;
     }

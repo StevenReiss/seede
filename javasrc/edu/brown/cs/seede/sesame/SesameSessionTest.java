@@ -24,9 +24,15 @@
 
 package edu.brown.cs.seede.sesame;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.w3c.dom.Element;
 
+import edu.brown.cs.ivy.jcomp.JcompTyper;
 import edu.brown.cs.ivy.xml.IvyXml;
+import edu.brown.cs.seede.cashew.CashewException;
+import edu.brown.cs.seede.cashew.CashewValue;
 
 class SesameSessionTest extends SesameSession
 {
@@ -48,7 +54,7 @@ private TestCase        test_case;
 /*                                                                              */
 /********************************************************************************/
 
-SesameSessionTest(SesameMain sm,String sid,Element xml)
+SesameSessionTest(SesameMain sm,String sid,Element xml) throws SesameException
 {
    super(sm,sid,xml);
    
@@ -67,10 +73,27 @@ SesameSessionTest(SesameMain sm,String sid,Element xml)
 
 private class TestCase {
    
-   TestCase(Element xml) {
-      
+   private String test_method;
+   private List<CashewValue> test_args;
+   
+   TestCase(Element xml) throws SesameException {
+      JcompTyper typer = getProject().getTyper();
+      test_args = new ArrayList<CashewValue>();
+      test_method = IvyXml.getAttrString(xml,"METHOD");
+      try {
+         for (Element axml : IvyXml.children(xml,"ARG")) {
+            test_args.add(CashewValue.createValue(typer,axml));
+          }
+       }
+      catch (CashewException e) {
+         throw new SesameException("Illebal value",e);
+       }
     }
-}
+   
+}       // end of inner class TestCase
+
+
+
 
 }       // end of class SesameSessionTest
 

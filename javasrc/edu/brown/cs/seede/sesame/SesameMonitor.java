@@ -221,7 +221,7 @@ private void handleConsoleEvent(Element e)
 /*										*/
 /********************************************************************************/
 
-private void handleBegin(String sid,Element xml,IvyXmlWriter xw)
+private void handleBegin(String sid,Element xml,IvyXmlWriter xw) throws SesameException
 {
    SesameSession ss = SesameSession.createSession(sesame_control,sid,xml);
    System.err.println("BEGIN " + sid + " " + ss);
@@ -244,59 +244,59 @@ private class EclipseHandler implements MintHandler {
       String cmd = args.getArgument(0);
       Element e = msg.getXml();
       switch (cmd) {
-	 case "PING" :
-	    msg.replyTo("PONG");
-	    break;
-	 case "EDITERROR" :
-	 case "FIEERROR" :
-	    handleErrors(IvyXml.getAttrString(e,"PROJECT"),
-		  new File(IvyXml.getAttrString(e,"FILE")),
-		  IvyXml.getAttrInt(e,"ID",-1),
-		  IvyXml.getChild(e,"MESSAGES"));
-	    break;
-	 case "EDIT" :
-	    String txt = IvyXml.getText(e);
-	    boolean complete = IvyXml.getAttrBool(e,"COMPLETE");
-	    boolean remove = IvyXml.getAttrBool(e,"REMOVE");
-	    if (complete) {
-	       byte [] data = IvyXml.getBytesElement(e,"CONTENTS");
-	       if (data != null) txt = new String(data);
-	       else remove = true;
-	     }
-	    handleEdit(IvyXml.getAttrString(e,"BID"),
-		  new File(IvyXml.getAttrString(e,"FILE")),
-		  IvyXml.getAttrInt(e,"LENGTH"),
-		  IvyXml.getAttrInt(e,"OFFSET"),
-		  complete,remove,txt);
-	    break;
-	 case "RUNEVENT" :
-	    long when = IvyXml.getAttrLong(e,"TIME");
-	    for (Element re : IvyXml.children(e,"RUNEVENT")) {
-	       handleRunEvent(re,when);
-	     }
-	    break;
-	 case "RESOURCE" :
-	    for (Element re : IvyXml.children(e,"DELTA")) {
-	       handleResourceChange(re);
-	     }
-	    break;
-	 case "CONSOLE" :
-	    handleConsoleEvent(e);
-	    break;
-	 case "EVALUATION" :
-	    String bid = IvyXml.getAttrString(e,"BID");
-	    String id = IvyXml.getAttrString(e,"ID");
-	    if ((bid == null || bid.equals(SOURCE_ID)) && id != null) {
-	       EvalData ed = eval_handlers.remove(id);
-	       if (ed != null) {
-		  ed.handleResult(e);
-		}
-	     }
-	    msg.replyTo("<OK/>");
-	    break;
-	 case "STOP" :
-	    serverDone();
-	    break;
+         case "PING" :
+            msg.replyTo("<PONG/>");
+            break;
+         case "EDITERROR" :
+         case "FIEERROR" :
+            handleErrors(IvyXml.getAttrString(e,"PROJECT"),
+        	  new File(IvyXml.getAttrString(e,"FILE")),
+        	  IvyXml.getAttrInt(e,"ID",-1),
+        	  IvyXml.getChild(e,"MESSAGES"));
+            break;
+         case "EDIT" :
+            String txt = IvyXml.getText(e);
+            boolean complete = IvyXml.getAttrBool(e,"COMPLETE");
+            boolean remove = IvyXml.getAttrBool(e,"REMOVE");
+            if (complete) {
+               byte [] data = IvyXml.getBytesElement(e,"CONTENTS");
+               if (data != null) txt = new String(data);
+               else remove = true;
+             }
+            handleEdit(IvyXml.getAttrString(e,"BID"),
+        	  new File(IvyXml.getAttrString(e,"FILE")),
+        	  IvyXml.getAttrInt(e,"LENGTH"),
+        	  IvyXml.getAttrInt(e,"OFFSET"),
+        	  complete,remove,txt);
+            break;
+         case "RUNEVENT" :
+            long when = IvyXml.getAttrLong(e,"TIME");
+            for (Element re : IvyXml.children(e,"RUNEVENT")) {
+               handleRunEvent(re,when);
+             }
+            break;
+         case "RESOURCE" :
+            for (Element re : IvyXml.children(e,"DELTA")) {
+               handleResourceChange(re);
+             }
+            break;
+         case "CONSOLE" :
+            handleConsoleEvent(e);
+            break;
+         case "EVALUATION" :
+            String bid = IvyXml.getAttrString(e,"BID");
+            String id = IvyXml.getAttrString(e,"ID");
+            if ((bid == null || bid.equals(SOURCE_ID)) && id != null) {
+               EvalData ed = eval_handlers.remove(id);
+               if (ed != null) {
+        	  ed.handleResult(e);
+        	}
+             }
+            msg.replyTo("<OK/>");
+            break;
+         case "STOP" :
+            serverDone();
+            break;
        }
     }
 

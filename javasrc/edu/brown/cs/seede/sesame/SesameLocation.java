@@ -64,7 +64,7 @@ private boolean         is_active;
 /*                                                                              */
 /********************************************************************************/
 
-SesameLocation(SesameMain sm,Element xml)
+SesameLocation(SesameMain sm,SesameProject sp,Element xml)
 {
    sesame_control = sm;
    location_id = IvyXml.getAttrString(xml,"ID");
@@ -85,6 +85,8 @@ SesameLocation(SesameMain sm,Element xml)
    start_position = null;
    if (sesame_file == null) return;
    setupPosition();
+   
+   if (sesame_file != null && sp != null) sp.addFile(sesame_file);
 }
 
 

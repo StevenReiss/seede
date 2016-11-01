@@ -42,7 +42,7 @@ abstract class SesameSession implements SesameConstants
 /*                                                                              */
 /********************************************************************************/
 
-static SesameSession createSession(SesameMain sm,String sid,Element xml)
+static SesameSession createSession(SesameMain sm,String sid,Element xml) throws SesameException
 {
    SesameSession ss = null;
    
@@ -94,7 +94,7 @@ protected SesameSession(SesameMain sm,String sid,Element xml)
    
    location_map = new HashMap<String,SesameLocation>();
    for (Element locxml : IvyXml.children(xml,"LOCATION")) {
-      SesameLocation sloc = new SesameLocation(sm,locxml);
+      SesameLocation sloc = new SesameLocation(sm,for_project,locxml);
       location_map.put(sloc.getId(),sloc);
     }
 }

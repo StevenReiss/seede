@@ -31,11 +31,16 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import org.eclipse.jdt.core.dom.ASTNode;
 import org.w3c.dom.Element;
 
+import edu.brown.cs.ivy.jcomp.JcompAst;
 import edu.brown.cs.ivy.jcomp.JcompControl;
 import edu.brown.cs.ivy.jcomp.JcompProject;
+import edu.brown.cs.ivy.jcomp.JcompSemantics;
 import edu.brown.cs.ivy.jcomp.JcompSource;
+import edu.brown.cs.ivy.jcomp.JcompTyper;
+
 import edu.brown.cs.ivy.xml.IvyXml;
 
 class SesameProject implements SesameConstants
@@ -156,6 +161,29 @@ synchronized JcompProject getJcompProject()
    base_project = jc.getProject(class_paths,srcs,false);
    
    return base_project;
+}
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Context methods                                                         */
+/*                                                                              */
+/********************************************************************************/
+
+JcompTyper getTyper()
+{
+   getJcompProject();
+   if (base_project == null) return null;
+   base_project.resolve();
+   Collection<JcompSemantics> srcs = base_project.getSources();
+   for (JcompSemantics js : srcs) {
+      ASTNode an = js.getRootNode();
+      JcompTyper jt = JcompAst.getTyper(an);
+      if (jt != null) return jt;
+    }
+   
+   return null;
 }
 
 }       // end of class SesameProject
