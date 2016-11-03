@@ -208,18 +208,18 @@ private static class SeedeThread extends Thread {
 {
    System.err.println("Start TEST1");
    stopped_thread = null;
-   CommandArgs args = new CommandArgs("NAME",LAUNCH_NAME,"MODE","DEBUG","BUILD","TRUE",
+   CommandArgs args = new CommandArgs("NAME",LAUNCH_NAME,"MODE","debug","BUILD","TRUE",
          "REGISTER","TRUE");
    MintDefaultReply rply = new MintDefaultReply();
    sendBubblesMessage("START",TEST_PROJECT,args,null,rply);
    Element xml = rply.waitForXml();
-   Element ldata = IvyXml.getChild(xml,"LANUCH");
+   Element ldata = IvyXml.getChild(xml,"LAUNCH");
    Assert.assertNotNull(ldata);
-   String launchid = IvyXml.getAttrString(xml,"ID");
+   String launchid = IvyXml.getAttrString(ldata,"ID");
    Assert.assertNotNull(launchid);
-   String targetid = IvyXml.getAttrString(xml,"TARGET");
+   String targetid = IvyXml.getAttrString(ldata,"TARGET");
    Assert.assertNotNull(targetid);
-   String processid = IvyXml.getAttrString(xml,"PROCESS");
+   String processid = IvyXml.getAttrString(ldata,"PROCESS");
    Assert.assertNotNull(processid);
    waitForStop();
    stopped_thread = null;
@@ -227,8 +227,9 @@ private static class SeedeThread extends Thread {
    args = new CommandArgs("LAUNCH",launchid,"TARGET",targetid,"PROCESS",processid,"ACTION","RESUME");
    rply = new MintDefaultReply();
    sendBubblesMessage("DEBUGACTION",TEST_PROJECT,args,null,rply);
+   String x = rply.waitForString();
    String threadid = waitForStop();
-
+   Assert.assertNotNull(threadid);
    // do something here
 }
 
@@ -486,7 +487,7 @@ private String waitForStop()
    synchronized (this) {
       while (stopped_thread == null) {
          try {
-            wait();
+            wait(3000);
           }
          catch (InterruptedException e) { }
        }
