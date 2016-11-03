@@ -242,7 +242,7 @@ public CashewValue getFieldValue(String name)
    throw new Error("Value is not an object");
 }
 
-public CashewValue setFieldValue(String name,CashewValue v)
+CashewValue setFieldValue(String name,CashewValue v)
 {
    throw new Error("Value is not an object");
 }
@@ -253,7 +253,7 @@ public CashewValue getIndexValue(int idx)
    throw new Error("Value is not an array");
 }
 
-public CashewValue setIndexValue(int idx,CashewValue v)
+CashewValue setIndexValue(int idx,CashewValue v)
 {
    throw new Error("Value is not an array");
 }
@@ -402,7 +402,7 @@ private static class ValueObject extends CashewValue
       return cv;
     }
    
-   @Override public CashewValue setFieldValue(String nm,CashewValue cv) {
+   @Override CashewValue setFieldValue(String nm,CashewValue cv) {
       CashewValue ov = field_values.get(nm);
       if (ov == null) {
          throw new Error("UndefinedField");
@@ -515,7 +515,7 @@ private static class ValueArray extends CashewValue {
       return array_values[idx];
     }
    
-   @Override public CashewValue setIndexValue(int idx,CashewValue v) {
+   @Override CashewValue setIndexValue(int idx,CashewValue v) {
       if (idx < 0 || idx >= dim_size) throw new Error("IndexOutOfBounds");
       return new ValueArray(this,idx,v);
     }
