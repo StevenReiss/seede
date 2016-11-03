@@ -89,7 +89,7 @@ SesameFile openFile(File f)
    synchronized (known_files) {
       SesameFile sf = known_files.get(f);
       if (sf == null) {
-         sf = new SesameFile(f,cnts);
+         sf = new SesameFile(f,cnts,linesep);
          known_files.put(f,sf);
        }
       return sf;

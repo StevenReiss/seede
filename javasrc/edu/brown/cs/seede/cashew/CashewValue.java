@@ -82,6 +82,12 @@ public static CashewValue createValue(JcompTyper typer,Element xml) throws Cashe
       if (vtyp == null) throw new CashewException("Unknown type name " + s);
       return classValue(jtype,vtyp);
     }
+   else if (jtype.getName().endsWith("[]")) {
+      int dim = IvyXml.getAttrInt(xml,"DIM");
+      ValueArray va = new ValueArray(jtype,dim);
+      // set up contents of va
+      return va;
+    }
    String val = IvyXml.getTextElement(xml,"VALUE");
    if (val != null && val.equals("null")) return nullValue(typer);
    
@@ -89,12 +95,6 @@ public static CashewValue createValue(JcompTyper typer,Element xml) throws Cashe
    // set up fields of the object
    
    return vo;
-}
-
-
-public static CashewValue createRemoteValue(JcompTyper typer,Element xml)
-{
-   return null;
 }
 
 

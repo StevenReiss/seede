@@ -69,7 +69,7 @@ private static final String NO_PROJECT = "*NOPROJECT*";
 /*										*/
 /********************************************************************************/
 
-SesameFile(File f,String cnts)
+SesameFile(File f,String cnts,String linesep)
 {
    for_file = f;
    edit_document = new Document(cnts);

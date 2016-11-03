@@ -49,7 +49,6 @@ class SesameLocation implements SesameConstants
 /********************************************************************************/
 
 private String          location_id;
-private SesameMain      sesame_control;
 private SesameFile      sesame_file;
 private Position        start_position;
 private int             line_number;
@@ -66,7 +65,6 @@ private boolean         is_active;
 
 SesameLocation(SesameMain sm,SesameProject sp,Element xml)
 {
-   sesame_control = sm;
    location_id = IvyXml.getAttrString(xml,"ID");
    if (location_id == null) {
       location_id = "L_" + new Random().nextInt(10000000);

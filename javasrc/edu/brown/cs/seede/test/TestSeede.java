@@ -228,6 +228,7 @@ private static class SeedeThread extends Thread {
    rply = new MintDefaultReply();
    sendBubblesMessage("DEBUGACTION",TEST_PROJECT,args,null,rply);
    String x = rply.waitForString();
+   Assert.assertNotNull(x);
    String threadid = waitForStop();
    Assert.assertNotNull(threadid);
    // do something here
@@ -467,7 +468,7 @@ private void handleRunEvent(Element xml,long when)
 private void handleThreadEvent(Element xml,long when)
 {
    String kind = IvyXml.getAttrString(xml,"KIND");
-   String detail = IvyXml.getAttrString(xml,"DETAIL");
+   // String detail = IvyXml.getAttrString(xml,"DETAIL");
    Element thread = IvyXml.getChild(xml,"THREAD");
    if (thread == null) return;
    switch (kind) {

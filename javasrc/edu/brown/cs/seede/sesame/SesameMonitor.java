@@ -314,11 +314,11 @@ private class BubblesHandler implements MintHandler {
 
    @Override public void receive(MintMessage msg,MintArguments args) {
       String cmd = args.getArgument(0);
-      Element e = msg.getXml();
+      // Element e = msg.getXml();
       switch (cmd) {
-	 case "EXIT" :
-	    serverDone();
-	    break;
+         case "EXIT" :
+            serverDone();
+            break;
        }
     }
 
