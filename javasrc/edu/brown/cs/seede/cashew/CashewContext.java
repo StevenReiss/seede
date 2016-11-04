@@ -1,8 +1,8 @@
 /********************************************************************************/
 /*                                                                              */
-/*              CashewConstants.java                                            */
+/*              CashewContext.java                                              */
 /*                                                                              */
-/*      Constants for Seede Cache and Value manager                             */
+/*      Context for looking up symbols/names                                    */
 /*                                                                              */
 /********************************************************************************/
 /*      Copyright 2011 Brown University -- Steven P. Reiss                    */
@@ -24,45 +24,82 @@
 
 package edu.brown.cs.seede.cashew;
 
+import java.util.HashMap;
+import java.util.Map;
 
+import edu.brown.cs.ivy.jcomp.JcompSymbol;
 
-public interface CashewConstants
+public abstract class CashewContext implements CashewConstants
 {
 
 
 /********************************************************************************/
 /*                                                                              */
-/*      Kinds of values                                                         */
+/*      Private Storage                                                         */
 /*                                                                              */
 /********************************************************************************/
 
-enum CashewValueKind {
-   UNKNOWN,
-   PRIMITIVE,
-   STRING,
-   CLASS,
-   OBJECT,
-   ARRAY
-};
+private Map<Object,CashewAddress> context_map;
+
 
 
 /********************************************************************************/
 /*                                                                              */
-/*      Placeholder types                                                       */
+/*      Constructors                                                            */
 /*                                                                              */
 /********************************************************************************/
 
-// Representation of an address or unique ID for a variable or reference.  Might
-// be merged with CashewRef or might just be a UID...
-
-class CashewAddress { }
-
-
-
-}       // end of interface CashewConstants
+protected CashewContext()
+{ 
+   context_map = new HashMap<>();
+}
 
 
+/********************************************************************************/
+/*                                                                              */
+/*      Context Operators                                                       */
+/*                                                                              */
+/********************************************************************************/
+
+public CashewAddress findReference(JcompSymbol sym) throws CashewException
+{
+   // for AST-based lookup
+   return findReference((Object) sym);
+}
 
 
-/* end of CashewConstants.java */
+
+public CashewAddress findReference(Object var)
+{
+   // for byte-code based lookup
+   return context_map.get(var);
+}
+
+
+public CashewContext pop() throws CashewException
+{
+   throw new CashewException("Can't pop a non-stack context");
+}
+
+
+public void define(JcompSymbol sym,CashewAddress addr)
+{
+   define((Object) sym,addr);
+}
+
+
+public void define(Object var,CashewAddress addr)
+{
+   context_map.put(var,addr);
+}
+
+
+
+
+}       // end of class CashewContext
+
+
+
+
+/* end of CashewContext.java */
 

@@ -1,8 +1,8 @@
 /********************************************************************************/
 /*                                                                              */
-/*              CashewConstants.java                                            */
+/*              CuminConstants.java                                             */
 /*                                                                              */
-/*      Constants for Seede Cache and Value manager                             */
+/*      ContinUous (M) Interpreter constant definitions                         */
 /*                                                                              */
 /********************************************************************************/
 /*      Copyright 2011 Brown University -- Steven P. Reiss                    */
@@ -22,47 +22,20 @@
 
 
 
-package edu.brown.cs.seede.cashew;
+package edu.brown.cs.seede.cumin;
 
 
 
-public interface CashewConstants
+public interface CuminConstants
 {
 
 
-/********************************************************************************/
-/*                                                                              */
-/*      Kinds of values                                                         */
-/*                                                                              */
-/********************************************************************************/
-
-enum CashewValueKind {
-   UNKNOWN,
-   PRIMITIVE,
-   STRING,
-   CLASS,
-   OBJECT,
-   ARRAY
-};
 
 
-/********************************************************************************/
-/*                                                                              */
-/*      Placeholder types                                                       */
-/*                                                                              */
-/********************************************************************************/
-
-// Representation of an address or unique ID for a variable or reference.  Might
-// be merged with CashewRef or might just be a UID...
-
-class CashewAddress { }
-
-
-
-}       // end of interface CashewConstants
+}       // end of interface CuminConstants
 
 
 
 
-/* end of CashewConstants.java */
+/* end of CuminConstants.java */
 

@@ -1,0 +1,173 @@
+/********************************************************************************/
+/*                                                                              */
+/*              CashewValueObject.java                                          */
+/*                                                                              */
+/*      Object Value representation                                             */
+/*                                                                              */
+/********************************************************************************/
+/*      Copyright 2011 Brown University -- Steven P. Reiss                    */
+/*********************************************************************************
+ *  Copyright 2011, Brown University, Providence, RI.                            *
+ *                                                                               *
+ *                        All Rights Reserved                                    *
+ *                                                                               *
+ * This program and the accompanying materials are made available under the      *
+ * terms of the Eclipse Public License v1.0 which accompanies this distribution, *
+ * and is available at                                                           *
+ *      http://www.eclipse.org/legal/epl-v10.html                                *
+ *                                                                               *
+ ********************************************************************************/
+
+/* SVN: $Id$ */
+
+
+
+package edu.brown.cs.seede.cashew;
+
+import edu.brown.cs.ivy.jcomp.JcompType;
+
+import java.util.HashMap;
+import java.util.Map;
+
+abstract public class CashewValueObject extends CashewValue implements CashewConstants
+{
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Private storage                                                         */
+/*                                                                              */
+/********************************************************************************/
+
+private Map<String,JcompType>   object_fields;
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Constructors                                                            */
+/*                                                                              */
+/********************************************************************************/
+
+CashewValueObject(JcompType jt) 
+{
+   super(jt);
+   
+   object_fields = jt.getFields();
+}
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Access methods                                                          */
+/*                                                                              */
+/********************************************************************************/
+
+@Override public CashewValueKind getKind()      { return CashewValueKind.OBJECT; }
+
+
+
+protected Map<String,JcompType> getAllFields()  { return object_fields; }
+
+@Override abstract public CashewValue getFieldValue(String nm); 
+@Override abstract CashewValue setFieldValue(String nm,CashewValue cv);
+
+public void addField(String name,JcompType type) 
+{
+   object_fields.put(name,type);
+}
+
+
+@Override public String getString() {
+   StringBuffer buf = new StringBuffer();
+   buf.append("{");
+   int ctr = 0;
+   for (String fldname : object_fields.keySet()) {
+      if (ctr++ == 0) buf.append(",");
+      buf.append(fldname);
+      buf.append(":");
+      buf.append(getFieldValue(fldname));
+    }
+   buf.append("}");
+   return buf.toString();
+}
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Computed Object value                                                   */
+/*                                                                              */
+/********************************************************************************/
+
+static class ComputedValueObject extends CashewValueObject {
+   
+   private final Map<String,CashewValue> field_values;
+   
+   ComputedValueObject(JcompType jt) {
+      super(jt);
+      field_values = new HashMap<String,CashewValue>();
+    }
+   
+   private ComputedValueObject(ComputedValueObject base,String fld,CashewValue val) {
+      super(base.getDataType());
+      field_values = new HashMap<String,CashewValue>(base.field_values);
+      field_values.put(fld,val);
+    }
+   
+   @Override public CashewValue getFieldValue(String nm) {
+      CashewValue cv = field_values.get(nm);
+      if (cv == null) {
+         throw new Error("UndefinedField");
+       }
+      return cv;
+    }
+   
+   @Override CashewValue setFieldValue(String nm,CashewValue cv) {
+      CashewValue ov = field_values.get(nm);
+      if (ov == null) {
+         throw new Error("UndefinedField");
+       }
+      
+      return new ComputedValueObject(this,nm,cv);
+    }
+   
+}       // end of inner class ComputedValueObject
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*     Class Object value                                                       */
+/*                                                                              */
+/********************************************************************************/
+
+static class ValueClass extends ComputedValueObject 
+{
+   private JcompType     class_value;
+
+   ValueClass(JcompType jt,JcompType c) {
+      super(jt);
+      class_value = c;
+    }
+
+   @Override public CashewValueKind getKind()   { return CashewValueKind.CLASS; }
+   
+   @Override public String getString() {
+      return class_value.toString();
+    }
+
+}       // end of inner class ValueClass
+
+
+
+
+
+}       // end of class CashewValueObject
+
+
+
+
+/* end of CashewValueObject.java */
+

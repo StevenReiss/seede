@@ -32,6 +32,7 @@ import org.w3c.dom.Element;
 import edu.brown.cs.ivy.jcomp.JcompType;
 import edu.brown.cs.ivy.jcomp.JcompTyper;
 import edu.brown.cs.ivy.xml.IvyXml;
+import edu.brown.cs.seede.cashew.CashewValueObject.ValueClass;
 
 public abstract class CashewValue implements CashewConstants
 {
@@ -84,14 +85,14 @@ public static CashewValue createValue(JcompTyper typer,Element xml) throws Cashe
     }
    else if (jtype.getName().endsWith("[]")) {
       int dim = IvyXml.getAttrInt(xml,"DIM");
-      ValueArray va = new ValueArray(jtype,dim);
+      CashewValueArray va = new CashewValueArray.ComputedValueArray(jtype,dim);
       // set up contents of va
       return va;
     }
    String val = IvyXml.getTextElement(xml,"VALUE");
    if (val != null && val.equals("null")) return nullValue(typer);
    
-   ValueObject vo = new ValueObject(jtype);
+   CashewValueObject vo = new CashewValueObject.ComputedValueObject(jtype);
    // set up fields of the object
    
    return vo;
@@ -106,7 +107,7 @@ public static CashewValue createValue(JcompTyper typer,Element xml) throws Cashe
 /*                                                                              */
 /********************************************************************************/
 
-private static CashewValue nullValue(JcompTyper typer)
+static CashewValue nullValue(JcompTyper typer)
 {
    if (null_value == null) {
       JcompType t = typer.findType("*ANY*");
@@ -117,7 +118,7 @@ private static CashewValue nullValue(JcompTyper typer)
 }
 
 
-private static CashewValue numericValue(JcompType t,long v)
+static CashewValue numericValue(JcompType t,long v)
 {
    synchronized (int_values) {
       ValueNumeric vn = int_values.get(v);
@@ -130,7 +131,7 @@ private static CashewValue numericValue(JcompType t,long v)
 }
 
 
-private static CashewValue characterValue(JcompType t,char v)
+static CashewValue characterValue(JcompType t,char v)
 {
    synchronized (char_values) {
       ValueNumeric vn = char_values.get(v);
@@ -143,13 +144,13 @@ private static CashewValue characterValue(JcompType t,char v)
 }
 
 
-private static CashewValue numericValue(JcompType t,double v)
+static CashewValue numericValue(JcompType t,double v)
 {
    return new ValueNumeric(t,v);
 }
 
 
-private static CashewValue stringValue(JcompType t,String s)
+static CashewValue stringValue(JcompType t,String s)
 {
    synchronized (string_values) {
       ValueString vs = string_values.get(s);
@@ -164,7 +165,14 @@ private static CashewValue stringValue(JcompType t,String s)
 
 private static CashewValue classValue(JcompType t,JcompType vtyp)
 {
-   return new ValueClass(t,vtyp);
+   synchronized (class_values) {
+      CashewValueObject cv = class_values.get(t);
+      if (cv == null) {
+         cv = new CashewValueObject.ValueClass(t,vtyp);
+         class_values.put(t,cv);
+       }
+      return cv;
+    }
 }
 
 
@@ -179,6 +187,8 @@ private static ValueNull        null_value;
 private static Map<Long,ValueNumeric> int_values;
 private static Map<Character,ValueNumeric> char_values;
 private static Map<String,ValueString> string_values;
+private static Map<JcompType,CashewValueObject> class_values;
+
 
 
 static {
@@ -186,6 +196,7 @@ static {
    int_values = new HashMap<Long,ValueNumeric>();
    char_values = new HashMap<Character,ValueNumeric>();
    string_values = new HashMap<String,ValueString>();
+   class_values = new HashMap<JcompType,CashewValueObject>();
 }
 
 
@@ -370,61 +381,7 @@ private static class ValueString extends CashewValue
 
 
 
-/********************************************************************************/
-/*                                                                              */
-/*      Object values                                                           */
-/*                                                                              */
-/********************************************************************************/
 
-private static class ValueObject extends CashewValue
-{
-   private final Map<String,CashewValue> field_values;
-   
-   ValueObject(JcompType jt) {
-      super(jt);
-      field_values = new HashMap<String,CashewValue>();
-      // want to iterate over fields and set default values
-    }
-   
-   private ValueObject(ValueObject base,String fld,CashewValue val) {
-      super(base.getDataType());
-      field_values = new HashMap<String,CashewValue>(base.field_values);
-      field_values.put(fld,val);
-    }
-   
-   @Override public CashewValueKind getKind()   { return CashewValueKind.OBJECT; }
-   
-   @Override public CashewValue getFieldValue(String nm) {
-      CashewValue cv = field_values.get(nm);
-      if (cv == null) {
-          throw new Error("UndefinedField");
-       }
-      return cv;
-    }
-   
-   @Override CashewValue setFieldValue(String nm,CashewValue cv) {
-      CashewValue ov = field_values.get(nm);
-      if (ov == null) {
-         throw new Error("UndefinedField");
-       }
-      return new ValueObject(this,nm,cv);
-    }
-   
-   @Override public String getString() {
-      StringBuffer buf = new StringBuffer();
-      buf.append("{");
-      int ctr = 0;
-      for (Map.Entry<String,CashewValue> ent : field_values.entrySet()) {
-         if (ctr++ == 0) buf.append(",");
-         buf.append(ent.getKey());
-         buf.append(":");
-         buf.append(ent.getValue().getString());
-       }
-      buf.append("}");
-      return buf.toString();
-    }
-   
-}       // end of inner class ValueObject
 
 
 
@@ -452,88 +409,6 @@ private static class ValueNull extends CashewValue
    
 }       // end of inner class ValueNull
 
-
-
-private static class ValueClass extends CashewValue 
-{
-   private JcompType     class_value;
-   
-   ValueClass(JcompType jt,JcompType c) {
-      super(jt);
-      class_value = c;
-    }
-   
-   @Override public CashewValueKind getKind()   { return CashewValueKind.CLASS; }
-   
-   @Override public String getString() {
-      return class_value.toString();
-    }
-   
-}       // end of inner class ValueClass
-
-
-
-
-/********************************************************************************/
-/*                                                                              */
-/*      Array Values                                                            */
-/*                                                                              */
-/********************************************************************************/
-
-private static class ValueArray extends CashewValue {
-   
-   private int dim_size;
-   private CashewValue[] array_values;
-   
-   ValueArray(JcompType jt,int dim) {
-      super(jt);
-      dim_size = dim;
-      array_values = new CashewValue[dim];
-      // initialize array_values with default value for base type
-    }
-   
-   private ValueArray(ValueArray base,int idx,CashewValue cv) {
-      super(base.getDataType());
-      dim_size = base.dim_size;
-      array_values = new CashewValue[dim_size];
-      System.arraycopy(base.array_values,0,array_values,0,dim_size);
-      array_values[idx] = cv;
-    }
-  
-   @Override public CashewValueKind getKind()   { return CashewValueKind.ARRAY; }   
-   
-   @Override public CashewValue getFieldValue(String nm) {
-      if (nm == "length") {
-         // return new ValueNumber(int_type,dim_size);
-         return null;
-       }
-      throw new Error("Illegal Value Conversion");
-    }
-   
-   @Override public CashewValue getIndexValue(int idx) {
-      if (idx < 0 || idx >= dim_size) throw new Error("IndexOutOfBounds");
-      return array_values[idx];
-    }
-   
-   @Override CashewValue setIndexValue(int idx,CashewValue v) {
-      if (idx < 0 || idx >= dim_size) throw new Error("IndexOutOfBounds");
-      return new ValueArray(this,idx,v);
-    }
-   
-   @Override public String getString() {
-      StringBuffer buf = new StringBuffer();
-      buf.append("[");
-      for (int i = 0; i < dim_size; ++i) {
-         if (i != 0) buf.append(",");
-         buf.append(array_values[i].toString());
-       }
-      buf.append("]");
-      return buf.toString();
-    }
-   
-}       // end of inner class ValueArray
-
-   
 
 
 }       // end of class CashewValue
