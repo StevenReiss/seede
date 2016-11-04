@@ -1,0 +1,10 @@
+bBUFFERS
+bCONTROL
+derby.log
+java/
+javasrc/edu/brown/cs/seede/cashew/bBACKUP/
+javasrc/edu/brown/cs/seede/sesame/bBACKUP/
+javasrc/edu/brown/cs/seede/sesame/xxx
+javasrc/edu/brown/cs/seede/test/TEST-edu.brown.cs.seede.test.TestSeede.txt
+javasrc/edu/brown/cs/seede/test/bBACKUP/
+javasrc/edu/brown/cs/seede/test/test.out.xml
