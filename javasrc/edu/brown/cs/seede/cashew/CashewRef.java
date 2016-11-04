@@ -47,6 +47,9 @@ class CashewRef implements CashewConstants
 /********************************************************************************/
 
 private SortedMap<Long,CashewValue>     value_map;
+private long    last_update;
+private CashewValue last_value;
+
 
 
 
@@ -59,6 +62,8 @@ private SortedMap<Long,CashewValue>     value_map;
 CashewRef() 
 {
    value_map = null;
+   last_update = -1;
+   last_value = null;
 }
 
 
@@ -71,9 +76,15 @@ CashewRef()
 
 CashewValue getValueAt(CashewClock cc)
 {
+   long tv = cc.getTimeValue();
+   
+   if (last_update >= 0) {
+      if (tv > last_update) return last_value;
+    }
+   
    if (value_map == null) return null;
    
-   SortedMap<Long,CashewValue> head = value_map.headMap(cc.getTimeValue());
+   SortedMap<Long,CashewValue> head = value_map.headMap(tv);
    if (head.isEmpty()) return null;
    
    return value_map.get(head.lastKey());
@@ -83,7 +94,25 @@ CashewValue getValueAt(CashewClock cc)
 
 void setValueAt(CashewClock cc,CashewValue cv)
 {
-   if (value_map == null) value_map = new TreeMap<Long,CashewValue>();
+   long tv = cc.getTimeValue();
+   
+   if (last_update < 0) {
+      // first time -- just record value
+      last_update = tv;
+      last_value = cv;
+      return;
+    }
+   
+   if (value_map == null) {
+      value_map = new TreeMap<Long,CashewValue>();
+      value_map.put(last_update,last_value);
+    }
+   
+   if (tv > last_update) {
+      last_update = tv;
+      last_value = cv;
+    }
+   
    value_map.put(cc.getTimeValue(),cv);
    cc.tick();
 }
