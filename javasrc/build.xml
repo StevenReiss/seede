@@ -8,6 +8,7 @@
    <target name='all'>
       <ant antfile="build.xml" dir="edu/brown/cs/seede/cashew" />
       <ant antfile="build.xml" dir="edu/brown/cs/seede/sesame" />
+      <ant antfile="build.xml" dir="edu/brown/cs/seede/cumin" />
       <ant antfile="build.xml" dir="edu/brown/cs/seede/test" />
    </target>
 
@@ -23,6 +24,7 @@
       <javadoc sourcepathref='jdocsrc' classpathref='jdocsrc' destdir='${SEEDE}/doc'>
 	 <package name='edu.brown.cs.seede.cashew' />
 	 <package name='edu.brown.cs.seede.sesame' />
+	 <package name='edu.brown.cs.seede.cumin' />
       </javadoc>
    </target>
 
