@@ -46,16 +46,7 @@ enum CashewValueKind {
 };
 
 
-/********************************************************************************/
-/*                                                                              */
-/*      Placeholder types                                                       */
-/*                                                                              */
-/********************************************************************************/
 
-// Representation of an address or unique ID for a variable or reference.  Might
-// be merged with CashewRef or might just be a UID...
-
-class CashewAddress { }
 
 
 

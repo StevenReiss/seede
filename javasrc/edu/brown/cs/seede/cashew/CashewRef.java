@@ -36,7 +36,7 @@ import java.util.List;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-class CashewRef implements CashewConstants
+class CashewRef extends CashewValue implements CashewConstants
 {
 
 
@@ -65,6 +65,94 @@ CashewRef()
    last_update = -1;
    last_value = null;
 }
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Access methods                                                          */
+/*                                                                              */
+/********************************************************************************/
+
+@Override public Number getNumber(CashewClock cc)
+{
+   CashewValue cv = getValueAt(cc);
+   if (cv == null) return null;
+   return cv.getNumber(cc);
+}
+
+
+@Override public Character getChar(CashewClock cc)
+{
+   CashewValue cv = getValueAt(cc);
+   if (cv == null) return null;
+   return cv.getChar(cc);
+}
+
+
+
+@Override public String getString(CashewClock cc)
+{
+   CashewValue cv = getValueAt(cc);
+   if (cv == null) return null;
+   return cv.getString(cc);
+}
+
+
+
+@Override public CashewValue getFieldValue(CashewClock cc,String name)
+{
+   CashewValue cv = getValueAt(cc);
+   if (cv == null) return null;
+   return cv.getFieldValue(cc,name);
+}
+
+
+
+@Override public CashewValue setFieldValue(CashewClock cc,String name,CashewValue v)
+{
+   CashewValue cv = getValueAt(cc);
+   if (cv == null) return null;
+   CashewValue ncv = cv.setFieldValue(cc,name,v);
+   setValueAt(cc,ncv);
+   return this;
+}
+
+
+@Override public CashewValue getIndexValue(CashewClock cc,int idx)
+{
+   CashewValue cv = getValueAt(cc);
+   if (cv == null) return null;
+   return cv.getIndexValue(cc,idx);
+}
+
+
+@Override public CashewValue setIndexValue(CashewClock cc,int idx,CashewValue v)
+{
+   CashewValue cv = getValueAt(cc);
+   if (cv == null) return null;
+   CashewValue ncv = cv.setIndexValue(cc,idx,v);
+   setValueAt(cc,ncv);
+   return this;
+}
+
+
+
+@Override public Boolean isNull(CashewClock cc)
+{
+   CashewValue cv = getValueAt(cc);
+   if (cv == null) return null;
+   return cv.isNull(cc);
+}
+
+
+@Override public Boolean isCategory2(CashewClock cc)
+{
+   CashewValue cv = getValueAt(cc);
+   if (cv == null) return null;
+   return cv.isCategory2(cc);
+}
+
 
 
 

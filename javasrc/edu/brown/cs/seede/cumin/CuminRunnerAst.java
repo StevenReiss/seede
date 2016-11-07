@@ -1,8 +1,8 @@
 /********************************************************************************/
 /*                                                                              */
-/*              CashewContext.java                                              */
+/*              CuminRunnerAst.java                                             */
 /*                                                                              */
-/*      Context for looking up symbols/names                                    */
+/*      AST-based code interpreter                                              */
 /*                                                                              */
 /********************************************************************************/
 /*      Copyright 2011 Brown University -- Steven P. Reiss                    */
@@ -22,14 +22,16 @@
 
 
 
-package edu.brown.cs.seede.cashew;
+package edu.brown.cs.seede.cumin;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
-import edu.brown.cs.ivy.jcomp.JcompSymbol;
+import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jdt.core.dom.ASTVisitor;
 
-public abstract class CashewContext implements CashewConstants
+import edu.brown.cs.seede.cashew.CashewValue;
+
+class CuminRunnerAst extends CuminRunner
 {
 
 
@@ -39,7 +41,9 @@ public abstract class CashewContext implements CashewConstants
 /*                                                                              */
 /********************************************************************************/
 
-private Map<Object,CashewValue> context_map;
+private ASTNode         method_node;
+private CuminStack      execution_stack;
+private ASTNode         current_node;
 
 
 
@@ -49,57 +53,48 @@ private Map<Object,CashewValue> context_map;
 /*                                                                              */
 /********************************************************************************/
 
-protected CashewContext()
-{ 
-   context_map = new HashMap<>();
+CuminRunnerAst(ASTNode method)
+{
+   method_node = method;
+   current_node = null;
+   execution_stack = null;
 }
 
 
 /********************************************************************************/
 /*                                                                              */
-/*      Context Operators                                                       */
+/*      Basic operations                                                        */
 /*                                                                              */
 /********************************************************************************/
 
-public CashewValue findReference(JcompSymbol sym) throws CashewException
+void startRunner()
 {
-   // for AST-based lookup
-   return findReference((Object) sym);
+   current_node = method_node;
+   execution_stack = new CuminStack();
+   for (CashewValue cv : getInitialParameters()) {
+      execution_stack.push(cv);
+    }
 }
 
 
-
-public CashewValue findReference(Object var)
+void runOneStatement()
 {
-   // for byte-code based lookup
-   return context_map.get(var);
+   
 }
 
 
-public CashewContext pop() throws CashewException
+void runToStop()
 {
-   throw new CashewException("Can't pop a non-stack context");
-}
-
-
-public void define(JcompSymbol sym,CashewValue addr)
-{
-   define((Object) sym,addr);
-}
-
-
-public void define(Object var,CashewValue addr)
-{
-   context_map.put(var,addr);
+   
 }
 
 
 
 
-}       // end of class CashewContext
+}       // end of class CuminRunnerAst
 
 
 
 
-/* end of CashewContext.java */
+/* end of CuminRunnerAst.java */
 

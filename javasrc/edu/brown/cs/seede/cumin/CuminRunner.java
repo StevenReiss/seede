@@ -1,8 +1,8 @@
 /********************************************************************************/
 /*                                                                              */
-/*              CashewContext.java                                              */
+/*              CuminRunner.java                                                */
 /*                                                                              */
-/*      Context for looking up symbols/names                                    */
+/*      Generic code runner (interpreter)                                       */
 /*                                                                              */
 /********************************************************************************/
 /*      Copyright 2011 Brown University -- Steven P. Reiss                    */
@@ -22,14 +22,14 @@
 
 
 
-package edu.brown.cs.seede.cashew;
+package edu.brown.cs.seede.cumin;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
-import edu.brown.cs.ivy.jcomp.JcompSymbol;
+import edu.brown.cs.seede.cashew.CashewValue;
 
-public abstract class CashewContext implements CashewConstants
+public abstract class CuminRunner implements CuminConstants
 {
 
 
@@ -39,8 +39,7 @@ public abstract class CashewContext implements CashewConstants
 /*                                                                              */
 /********************************************************************************/
 
-private Map<Object,CashewValue> context_map;
-
+private List<CashewValue>        initial_parameters;
 
 
 /********************************************************************************/
@@ -49,57 +48,29 @@ private Map<Object,CashewValue> context_map;
 /*                                                                              */
 /********************************************************************************/
 
-protected CashewContext()
-{ 
-   context_map = new HashMap<>();
+protected CuminRunner()
+{
+   initial_parameters = new ArrayList<>();
 }
+
 
 
 /********************************************************************************/
 /*                                                                              */
-/*      Context Operators                                                       */
+/*      Access methods                                                          */
 /*                                                                              */
 /********************************************************************************/
 
-public CashewValue findReference(JcompSymbol sym) throws CashewException
+protected List<CashewValue> getInitialParameters()
 {
-   // for AST-based lookup
-   return findReference((Object) sym);
+   return initial_parameters;
 }
 
 
-
-public CashewValue findReference(Object var)
-{
-   // for byte-code based lookup
-   return context_map.get(var);
-}
-
-
-public CashewContext pop() throws CashewException
-{
-   throw new CashewException("Can't pop a non-stack context");
-}
-
-
-public void define(JcompSymbol sym,CashewValue addr)
-{
-   define((Object) sym,addr);
-}
-
-
-public void define(Object var,CashewValue addr)
-{
-   context_map.put(var,addr);
-}
+}       // end of class CuminRunner
 
 
 
 
-}       // end of class CashewContext
-
-
-
-
-/* end of CashewContext.java */
+/* end of CuminRunner.java */
 

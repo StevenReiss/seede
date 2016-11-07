@@ -58,26 +58,24 @@ CashewValueArray(JcompType jt,int dim) {
 /*                                                                              */
 /********************************************************************************/
 
-@Override public CashewValueKind getKind()      { return CashewValueKind.ARRAY; }   
-
-@Override public CashewValue getFieldValue(String nm) {
+@Override public CashewValue getFieldValue(CashewClock cc,String nm) {
    if (nm == "length") {
       return CashewValue.numericValue(null,dim_size);
     }
-   return super.getFieldValue(nm);
+   return super.getFieldValue(cc,nm);
 }
 
 protected int getSize()                         { return dim_size; }
 
-@Override public abstract CashewValue getIndexValue(int idx);
+@Override public abstract CashewValue getIndexValue(CashewClock cc,int idx);
 
 
-@Override public String getString() {
+@Override public String getString(CashewClock cc) {
    StringBuffer buf = new StringBuffer();
    buf.append("[");
    for (int i = 0; i < dim_size; ++i) {
       if (i != 0) buf.append(",");
-      buf.append(getIndexValue(i).toString());
+      buf.append(getIndexValue(cc,i).toString());
     }
    buf.append("]");
    return buf.toString();
@@ -106,12 +104,12 @@ static class ComputedValueArray extends CashewValueArray {
       array_values[idx] = cv;
     }
    
-   @Override public CashewValue getIndexValue(int idx) {
+   @Override public CashewValue getIndexValue(CashewClock cc,int idx) {
       if (idx < 0 || idx >= getSize()) throw new Error("IndexOutOfBounds");
       return array_values[idx];
     }
    
-   @Override CashewValue setIndexValue(int idx,CashewValue v) {
+   @Override CashewValue setIndexValue(CashewClock cc,int idx,CashewValue v) {
       if (idx < 0 || idx >= getSize()) throw new Error("IndexOutOfBounds");
       return new ComputedValueArray(this,idx,v);
     }

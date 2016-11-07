@@ -64,14 +64,10 @@ CashewValueObject(JcompType jt)
 /*                                                                              */
 /********************************************************************************/
 
-@Override public CashewValueKind getKind()      { return CashewValueKind.OBJECT; }
-
-
-
 protected Map<String,JcompType> getAllFields()  { return object_fields; }
 
-@Override abstract public CashewValue getFieldValue(String nm); 
-@Override abstract CashewValue setFieldValue(String nm,CashewValue cv);
+@Override abstract public CashewValue getFieldValue(CashewClock cc,String nm); 
+@Override abstract CashewValue setFieldValue(CashewClock cc,String nm,CashewValue cv);
 
 public void addField(String name,JcompType type) 
 {
@@ -79,7 +75,7 @@ public void addField(String name,JcompType type)
 }
 
 
-@Override public String getString() {
+@Override public String getString(CashewClock cc) {
    StringBuffer buf = new StringBuffer();
    buf.append("{");
    int ctr = 0;
@@ -87,7 +83,7 @@ public void addField(String name,JcompType type)
       if (ctr++ == 0) buf.append(",");
       buf.append(fldname);
       buf.append(":");
-      buf.append(getFieldValue(fldname));
+      buf.append(getFieldValue(cc,fldname));
     }
    buf.append("}");
    return buf.toString();
@@ -116,7 +112,7 @@ static class ComputedValueObject extends CashewValueObject {
       field_values.put(fld,val);
     }
    
-   @Override public CashewValue getFieldValue(String nm) {
+   @Override public CashewValue getFieldValue(CashewClock cc,String nm) {
       CashewValue cv = field_values.get(nm);
       if (cv == null) {
          throw new Error("UndefinedField");
@@ -124,7 +120,7 @@ static class ComputedValueObject extends CashewValueObject {
       return cv;
     }
    
-   @Override CashewValue setFieldValue(String nm,CashewValue cv) {
+   @Override CashewValue setFieldValue(CashewClock cc,String nm,CashewValue cv) {
       CashewValue ov = field_values.get(nm);
       if (ov == null) {
          throw new Error("UndefinedField");
@@ -152,9 +148,7 @@ static class ValueClass extends ComputedValueObject
       class_value = c;
     }
 
-   @Override public CashewValueKind getKind()   { return CashewValueKind.CLASS; }
-   
-   @Override public String getString() {
+   @Override public String getString(CashewClock cc) {
       return class_value.toString();
     }
 

@@ -1,8 +1,8 @@
 /********************************************************************************/
 /*                                                                              */
-/*              CashewContext.java                                              */
+/*              CuminStack.java                                                 */
 /*                                                                              */
-/*      Context for looking up symbols/names                                    */
+/*      Stack for holding execution values                                      */
 /*                                                                              */
 /********************************************************************************/
 /*      Copyright 2011 Brown University -- Steven P. Reiss                    */
@@ -22,14 +22,13 @@
 
 
 
-package edu.brown.cs.seede.cashew;
+package edu.brown.cs.seede.cumin;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Stack;
 
-import edu.brown.cs.ivy.jcomp.JcompSymbol;
+import edu.brown.cs.seede.cashew.CashewValue;
 
-public abstract class CashewContext implements CashewConstants
+class CuminStack implements CuminConstants
 {
 
 
@@ -39,8 +38,7 @@ public abstract class CashewContext implements CashewConstants
 /*                                                                              */
 /********************************************************************************/
 
-private Map<Object,CashewValue> context_map;
-
+private Stack<Object>       execution_stack;
 
 
 /********************************************************************************/
@@ -49,57 +47,58 @@ private Map<Object,CashewValue> context_map;
 /*                                                                              */
 /********************************************************************************/
 
-protected CashewContext()
-{ 
-   context_map = new HashMap<>();
+CuminStack()
+{
+   execution_stack = new Stack<>();
 }
+
 
 
 /********************************************************************************/
 /*                                                                              */
-/*      Context Operators                                                       */
+/*      Stack Operations                                                        */
 /*                                                                              */
 /********************************************************************************/
 
-public CashewValue findReference(JcompSymbol sym) throws CashewException
+CashewValue push(CashewValue cv)
 {
-   // for AST-based lookup
-   return findReference((Object) sym);
+   execution_stack.push(cv);
+   return cv;
 }
 
 
-
-public CashewValue findReference(Object var)
+CashewValue pop()
 {
-   // for byte-code based lookup
-   return context_map.get(var);
+   return (CashewValue) execution_stack.pop();
 }
 
 
-public CashewContext pop() throws CashewException
+CashewValue peek(int idx)
 {
-   throw new CashewException("Can't pop a non-stack context");
+   int itm = execution_stack.size() - idx - 1;
+   if (itm < 0) throw new Error("Attempt to peek too far down the stack");
+   return (CashewValue) execution_stack.get(itm);
 }
 
 
-public void define(JcompSymbol sym,CashewValue addr)
+void pushMarker(Object v)
 {
-   define((Object) sym,addr);
+   execution_stack.push(v);
 }
 
 
-public void define(Object var,CashewValue addr)
+Object popMarker()
 {
-   context_map.put(var,addr);
+   Object v = execution_stack.pop();
+   if (v instanceof CashewValue) throw new Error("Non-marker popped from stack");
+   return v;
 }
 
 
-
-
-}       // end of class CashewContext
+}       // end of class CuminStack
 
 
 
 
-/* end of CashewContext.java */
+/* end of CuminStack.java */
 

@@ -107,7 +107,7 @@ public static CashewValue createValue(JcompTyper typer,Element xml) throws Cashe
 /*                                                                              */
 /********************************************************************************/
 
-static CashewValue nullValue(JcompTyper typer)
+public static CashewValue nullValue(JcompTyper typer)
 {
    if (null_value == null) {
       JcompType t = typer.findType("*ANY*");
@@ -118,8 +118,10 @@ static CashewValue nullValue(JcompTyper typer)
 }
 
 
-static CashewValue numericValue(JcompType t,long v)
+public static CashewValue numericValue(JcompType t,long v)
 {
+   // needs to take type into account as well as value
+   
    synchronized (int_values) {
       ValueNumeric vn = int_values.get(v);
       if (vn == null) {
@@ -130,8 +132,9 @@ static CashewValue numericValue(JcompType t,long v)
     }
 }
 
+// ADD booleanValue(JcompType t,boolean v)
 
-static CashewValue characterValue(JcompType t,char v)
+public static CashewValue characterValue(JcompType t,char v)
 {
    synchronized (char_values) {
       ValueNumeric vn = char_values.get(v);
@@ -144,13 +147,13 @@ static CashewValue characterValue(JcompType t,char v)
 }
 
 
-static CashewValue numericValue(JcompType t,double v)
+public static CashewValue numericValue(JcompType t,double v)
 {
    return new ValueNumeric(t,v);
 }
 
 
-static CashewValue stringValue(JcompType t,String s)
+public static CashewValue stringValue(JcompType t,String s)
 {
    synchronized (string_values) {
       ValueString vs = string_values.get(s);
@@ -163,7 +166,7 @@ static CashewValue stringValue(JcompType t,String s)
 }
 
 
-private static CashewValue classValue(JcompType t,JcompType vtyp)
+public static CashewValue classValue(JcompType t,JcompType vtyp)
 {
    synchronized (class_values) {
       CashewValueObject cv = class_values.get(t);
@@ -223,56 +226,66 @@ protected CashewValue(JcompType jt)
 }
 
 
+protected CashewValue()
+{
+   decl_type = null; 
+}
+
 /********************************************************************************/
 /*                                                                              */
 /*      Access methods                                                          */
 /*                                                                              */
 /********************************************************************************/
 
-public JcompType getDataType()                  { return decl_type; }
+public JcompType getDataType(CashewClock cc)    { return decl_type; }
 
-abstract public CashewValueKind getKind();
+protected JcompType getDataType()               
+{ 
+   if (decl_type == null) throw new Error("Illegal use of getDataType without clock");
+   return decl_type;
+}
 
-public Number getNumber()
+
+public Number getNumber(CashewClock cc)
 {
    throw new Error("Illegal value conversion");
 }
 
-public char getChar()
+public Character getChar(CashewClock cc)
 {
    throw new Error("Illegal value conversion");
 }
 
-public String getString()
+public String getString(CashewClock cc)
 {
    throw new Error("Illegal value conversion");
 }
 
-public CashewValue getFieldValue(String name)
+public CashewValue getFieldValue(CashewClock cc,String name)
 {
    throw new Error("Value is not an object");
 }
 
-CashewValue setFieldValue(String name,CashewValue v)
+CashewValue setFieldValue(CashewClock cc,String name,CashewValue v)
 {
    throw new Error("Value is not an object");
 }
 
 
-public CashewValue getIndexValue(int idx)
+public CashewValue getIndexValue(CashewClock cc,int idx)
 {
    throw new Error("Value is not an array");
 }
 
-CashewValue setIndexValue(int idx,CashewValue v)
+CashewValue setIndexValue(CashewClock cc,int idx,CashewValue v)
 {
    throw new Error("Value is not an array");
 }
 
 
-public boolean isNull()                         { return false; }
+public Boolean isNull(CashewClock cc)           { return false; }
 
-public boolean isCategory2()                    { return false; }
+public Boolean isCategory2(CashewClock cc)      { return false; }
 
 
 
@@ -299,26 +312,24 @@ private static class ValueNumeric extends CashewValue {
       num_value = fixValue((short) c);
     }
    
-   @Override public CashewValueKind getKind()   { return CashewValueKind.PRIMITIVE; }
-   
-   @Override public Number getNumber() {
+   @Override public Number getNumber(CashewClock cc) {
        return num_value;
     }
    
-   @Override public char getChar() {
+   @Override public Character getChar(CashewClock cc) {
       return (char) num_value.shortValue();
     }
    
-   @Override public String getString() {
+   @Override public String getString(CashewClock cc) {
       return num_value.toString();
     }
    
-   @Override public boolean isCategory2() {
+   @Override public Boolean isCategory2(CashewClock cc) {
       if (num_value instanceof Double || num_value instanceof Long) return true;
       return false;
     }
    
-   @Override public boolean isNull() {
+   @Override public Boolean isNull(CashewClock cc) {
       throw new Error("Illegal value conversion");
     }
    
@@ -372,9 +383,7 @@ private static class ValueString extends CashewValue
       string_value = s;
     }
    
-   @Override public CashewValueKind getKind()   { return CashewValueKind.STRING; }
-   
-   @Override public String getString()          { return string_value; }
+   @Override public String getString(CashewClock cc)    { return string_value; }
    
 }       // end of inner class ValueString
 
@@ -391,19 +400,17 @@ private static class ValueNull extends CashewValue
       super(jt);
     }
    
-   @Override public CashewValueKind getKind()   { return CashewValueKind.OBJECT; }   
+   @Override public Boolean isNull(CashewClock cc)      { return true; }
    
-   @Override public boolean isNull()            { return true; }
-   
-   @Override public CashewValue getFieldValue(String nm) {
+   @Override public CashewValue getFieldValue(CashewClock cc,String nm) {
       throw new Error("NullPointerException");
     }
    
-   @Override public CashewValue setFieldValue(String nm,CashewValue v) {
+   @Override public CashewValue setFieldValue(CashewClock cc,String nm,CashewValue v) {
       throw new Error("NullPointerException");
     }
    
-   @Override public String toString() {
+   @Override public String getString(CashewClock cc) {
       return "null";
     }
    
