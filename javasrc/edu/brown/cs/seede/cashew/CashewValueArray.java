@@ -91,19 +91,13 @@ protected int getSize()                         { return dim_size; }
 
 static class ComputedValueArray extends CashewValueArray {
    
-   private CashewValue[] array_values;
+   private CashewRef[] array_values;
 
    ComputedValueArray(JcompType jt,int dim) {
       super(jt,dim);
+      array_values = new CashewRef[dim];
     }
   
-   private ComputedValueArray(ComputedValueArray base,int idx,CashewValue cv) {
-      super(base.getDataType(),base.getSize());
-      array_values = new CashewValue[getSize()];
-      System.arraycopy(base.array_values,0,array_values,0,getSize());
-      array_values[idx] = cv;
-    }
-   
    @Override public CashewValue getIndexValue(CashewClock cc,int idx) {
       if (idx < 0 || idx >= getSize()) throw new Error("IndexOutOfBounds");
       return array_values[idx];
@@ -111,7 +105,8 @@ static class ComputedValueArray extends CashewValueArray {
    
    @Override CashewValue setIndexValue(CashewClock cc,int idx,CashewValue v) {
       if (idx < 0 || idx >= getSize()) throw new Error("IndexOutOfBounds");
-      return new ComputedValueArray(this,idx,v);
+      array_values[idx].setValueAt(cc,v);
+      return this;
     }
    
 }       // end of inner class ComputedValueArray

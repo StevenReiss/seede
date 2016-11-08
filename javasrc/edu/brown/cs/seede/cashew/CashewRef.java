@@ -100,6 +100,13 @@ CashewRef()
 
 
 
+@Override public CashewValue getActualValue(CashewClock cc)
+{
+   return getValueAt(cc);
+}
+
+
+
 @Override public CashewValue getFieldValue(CashewClock cc,String name)
 {
    CashewValue cv = getValueAt(cc);
@@ -180,7 +187,7 @@ CashewValue getValueAt(CashewClock cc)
 
 
 
-void setValueAt(CashewClock cc,CashewValue cv)
+@Override public CashewValue setValueAt(CashewClock cc,CashewValue cv)
 {
    long tv = cc.getTimeValue();
    
@@ -188,7 +195,7 @@ void setValueAt(CashewClock cc,CashewValue cv)
       // first time -- just record value
       last_update = tv;
       last_value = cv;
-      return;
+      return this;
     }
    
    if (value_map == null) {
@@ -203,6 +210,8 @@ void setValueAt(CashewClock cc,CashewValue cv)
    
    value_map.put(cc.getTimeValue(),cv);
    cc.tick();
+   
+   return this;
 }
    
 

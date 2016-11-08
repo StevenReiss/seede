@@ -61,7 +61,7 @@ protected CashewContext()
 /*                                                                              */
 /********************************************************************************/
 
-public CashewValue findReference(JcompSymbol sym) throws CashewException
+public CashewValue findReference(JcompSymbol sym)
 {
    // for AST-based lookup
    return findReference((Object) sym);
@@ -72,7 +72,10 @@ public CashewValue findReference(JcompSymbol sym) throws CashewException
 public CashewValue findReference(Object var)
 {
    // for byte-code based lookup
-   return context_map.get(var);
+   CashewValue cv = context_map.get(var);
+   if (cv != null) return cv;
+   // need to create a new value here
+   return cv;
 }
 
 

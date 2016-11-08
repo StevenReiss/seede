@@ -251,6 +251,15 @@ public Number getNumber(CashewClock cc)
    throw new Error("Illegal value conversion");
 }
 
+public Boolean getBoolean(CashewClock cc)
+{
+   Number n = getNumber(cc);
+   if (n == null) return null;
+   
+   return n.intValue() != 0;
+}
+
+
 public Character getChar(CashewClock cc)
 {
    throw new Error("Illegal value conversion");
@@ -259,6 +268,11 @@ public Character getChar(CashewClock cc)
 public String getString(CashewClock cc)
 {
    throw new Error("Illegal value conversion");
+}
+
+public CashewValue getActualValue(CashewClock cc)
+{
+   return this;
 }
 
 public CashewValue getFieldValue(CashewClock cc,String name)
@@ -281,6 +295,13 @@ CashewValue setIndexValue(CashewClock cc,int idx,CashewValue v)
 {
    throw new Error("Value is not an array");
 }
+
+
+public CashewValue setValueAt(CashewClock cc,CashewValue cv)
+{
+   throw new Error("Not an l-value");
+}
+
 
 
 public Boolean isNull(CashewClock cc)           { return false; }

@@ -99,17 +99,14 @@ public void addField(String name,JcompType type)
 
 static class ComputedValueObject extends CashewValueObject {
    
-   private final Map<String,CashewValue> field_values;
+   private final Map<String,CashewRef> field_values;
    
    ComputedValueObject(JcompType jt) {
       super(jt);
-      field_values = new HashMap<String,CashewValue>();
-    }
-   
-   private ComputedValueObject(ComputedValueObject base,String fld,CashewValue val) {
-      super(base.getDataType());
-      field_values = new HashMap<String,CashewValue>(base.field_values);
-      field_values.put(fld,val);
+      field_values = new HashMap<String,CashewRef>();
+      for (Map.Entry<String,JcompType> ent : getAllFields().entrySet()) {
+         field_values.put(ent.getKey(),new CashewRef());
+       }
     }
    
    @Override public CashewValue getFieldValue(CashewClock cc,String nm) {
@@ -121,12 +118,12 @@ static class ComputedValueObject extends CashewValueObject {
     }
    
    @Override CashewValue setFieldValue(CashewClock cc,String nm,CashewValue cv) {
-      CashewValue ov = field_values.get(nm);
+      CashewRef ov = field_values.get(nm);
       if (ov == null) {
          throw new Error("UndefinedField");
        }
-      
-      return new ComputedValueObject(this,nm,cv);
+      ov.setValueAt(cc,cv);
+      return this;
     }
    
 }       // end of inner class ComputedValueObject

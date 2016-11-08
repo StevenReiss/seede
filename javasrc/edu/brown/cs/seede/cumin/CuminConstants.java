@@ -31,6 +31,19 @@ public interface CuminConstants
 
 
 
+/********************************************************************************/
+/*                                                                              */
+/*      Operators                                                               */
+/*                                                                              */
+/********************************************************************************/
+
+enum CuminOperator {
+   MUL, DIV, MOD, ADD, SUB, LSH, RSH, RSHU, LSS, GTR, LEQ, GEQ, EQL, NEQ,
+   XOR, AND, OR, POSTINCR, POSTDECR, INCR, DECR, COMP, NEG, NOP,
+   ASG, ASG_ADD, ASG_SUB, ASG_MUL, ASG_DIV, ASG_AND, ASG_OR, ASG_XOR, ASG_MOD, 
+   ASG_LSH, ASG_RSH, ASG_RSHU
+}
+
 
 }       // end of interface CuminConstants
 
