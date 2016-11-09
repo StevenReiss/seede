@@ -66,7 +66,9 @@ JcompType FLOAT_TYPE = JCOMP_BASE.getSystemType("float");
 JcompType DOUBLE_TYPE = JCOMP_BASE.getSystemType("double");
 JcompType BOOLEAN_TYPE = JCOMP_BASE.getSystemType("boolean");
 JcompType VOID_TYPE = JCOMP_BASE.getSystemType("void");
+
 JcompType NULL_TYPE = JCOMP_BASE.getSystemType("*ANY*");
+JcompType ERROR_TYPE = JCOMP_BASE.getSystemType("*ERROR*");
 
 JcompType STRING_TYPE = JCOMP_BASE.getSystemType("java.lang.String");
 JcompType OBJECT_TYPE = JCOMP_BASE.getSystemType("java.lang.Object");

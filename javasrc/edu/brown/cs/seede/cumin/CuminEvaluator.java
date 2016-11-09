@@ -50,6 +50,7 @@ static CashewValue evaluate(CashewClock cc,CuminOperator op,CashewValue v1,Cashe
    boolean isdbl = t1 == DOUBLE_TYPE || t2 == DOUBLE_TYPE;
    boolean islng = t1 == LONG_TYPE || t2 == LONG_TYPE;
    Boolean crslt = null;
+   int irslt = 0;
    
    switch (op) {
       case ADD :
@@ -299,7 +300,29 @@ static CashewValue evaluate(CashewClock cc,CuminOperator op,CashewValue v1,Cashe
             int v0 = v1.getNumber(cc).intValue() ^ v2.getNumber(cc).intValue();
             rslt = CashewValue.numericValue(INT_TYPE,v0);
           }
-         break;   
+         break; 
+      case SIG :
+         if (isdbl) {
+            if (v1.getNumber(cc).doubleValue() < v1.getNumber(cc).doubleValue()) irslt = -1;
+            else if (v1.getNumber(cc).doubleValue() > v1.getNumber(cc).doubleValue()) irslt = 1;
+            else irslt = 0;
+          }
+         else if (isflt) {
+            if (v1.getNumber(cc).floatValue() < v1.getNumber(cc).floatValue()) irslt = -1;
+            else if (v1.getNumber(cc).floatValue() > v1.getNumber(cc).floatValue()) irslt = 1;
+            else irslt = 0;
+          }
+         else if (islng) {
+            if (v1.getNumber(cc).longValue() < v1.getNumber(cc).longValue()) irslt = -1;
+            else if (v1.getNumber(cc).longValue() > v1.getNumber(cc).longValue()) irslt = 1;
+            else irslt = 0;
+          }
+         else {
+            if (v1.getNumber(cc).intValue() < v1.getNumber(cc).intValue()) irslt = -1;
+            else if (v1.getNumber(cc).intValue() > v1.getNumber(cc).intValue()) irslt = 1;
+            else irslt = 0;
+          }
+         return CashewValue.numericValue(INT_TYPE,irslt);
       default :
          // illegal binary operator
          break;

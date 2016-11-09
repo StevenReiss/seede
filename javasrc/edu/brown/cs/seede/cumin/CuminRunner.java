@@ -24,10 +24,6 @@
 
 package edu.brown.cs.seede.cumin;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import edu.brown.cs.seede.cashew.CashewValue;
 
 public abstract class CuminRunner implements CuminConstants
 {
@@ -39,8 +35,6 @@ public abstract class CuminRunner implements CuminConstants
 /*                                                                              */
 /********************************************************************************/
 
-private List<CashewValue>        initial_parameters;
-
 
 /********************************************************************************/
 /*                                                                              */
@@ -50,7 +44,6 @@ private List<CashewValue>        initial_parameters;
 
 protected CuminRunner()
 {
-   initial_parameters = new ArrayList<>();
 }
 
 
@@ -61,10 +54,32 @@ protected CuminRunner()
 /*                                                                              */
 /********************************************************************************/
 
-protected List<CashewValue> getInitialParameters()
+boolean isAtError()
 {
-   return initial_parameters;
+   return false;
 }
+
+
+boolean isAtException()
+{
+   return false;
+}
+
+
+boolean isComplete()
+{
+   return false;
+}
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Evaluation methods                                                      */
+/*                                                                              */
+/********************************************************************************/
+
+abstract void interpret(EvalType et);
 
 
 }       // end of class CuminRunner

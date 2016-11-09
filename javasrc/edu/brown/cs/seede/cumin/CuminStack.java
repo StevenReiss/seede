@@ -99,29 +99,9 @@ Object popMarker()
 }
 
 
-/********************************************************************************/
-/*                                                                              */
-/*      Context Management methods                                              */
-/*                                                                              */
-/********************************************************************************/
-
-void setBaseContext(CashewContext ctx)
-{
-   
-}
+int size()                      { return execution_stack.size(); }
 
 
-
-void pushContext(List<JcompSymbol> locals)
-{
-   
-}
-
-
-void popContext()
-{
-   
-}
 
 
 }       // end of class CuminStack

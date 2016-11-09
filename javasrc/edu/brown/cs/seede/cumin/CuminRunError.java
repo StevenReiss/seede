@@ -1,8 +1,8 @@
 /********************************************************************************/
 /*                                                                              */
-/*              CuminRunnerAst.java                                             */
+/*              CuminRunError.java                                              */
 /*                                                                              */
-/*      AST-based code interpreter                                              */
+/*      description of class                                                    */
 /*                                                                              */
 /********************************************************************************/
 /*      Copyright 2011 Brown University -- Steven P. Reiss                    */
@@ -24,12 +24,9 @@
 
 package edu.brown.cs.seede.cumin;
 
-
-import org.eclipse.jdt.core.dom.ASTNode;
-
 import edu.brown.cs.seede.cashew.CashewValue;
 
-class CuminRunnerAst extends CuminRunner
+class CuminRunError extends Error
 {
 
 
@@ -39,8 +36,11 @@ class CuminRunnerAst extends CuminRunner
 /*                                                                              */
 /********************************************************************************/
 
-private ASTNode         method_node;
-private CuminStack      execution_stack;
+enum Reason { ERROR, EXCEPTION, BREAKPOINT, TIMEOUT, 
+   STEP_END, BREAK, CONTINUE, RETURN };
+
+private Reason          throw_reason;
+private CashewValue     associated_value;
 
 
 
@@ -50,34 +50,53 @@ private CuminStack      execution_stack;
 /*                                                                              */
 /********************************************************************************/
 
-CuminRunnerAst(ASTNode method)
+CuminRunError(Reason r,String msg,Throwable cause,CashewValue v) 
 {
-   method_node = method;
-   execution_stack = null;
-}
-
-
-
-
-
-@Override void interpret(EvalType et)
-{
+   super(msg,cause);
    
+   throw_reason = r;
+   associated_value = v;
 }
 
-
-void runToStop()
+CuminRunError(Reason r)
 {
-   
+   this(r,r.toString(),null,null);
+}
+
+CuminRunError(Reason r,String label)
+{
+   this(r,label,null,null);
 }
 
 
+CuminRunError(Throwable t)
+{
+   this(Reason.ERROR,t.getMessage(),t,null);
+}
+   
+
+CuminRunError(Reason r,CashewValue v)
+{
+   this(r,r.toString(),null,null);
+   // v can be an throwable value (r = EXCEPTION) or a return value (r = RETURN)
+}
 
 
-}       // end of class CuminRunnerAst
+/********************************************************************************/
+/*                                                                              */
+/*      Access methods                                                          */
+/*                                                                              */
+/********************************************************************************/
+
+Reason getReason()                      { return throw_reason; }
+
+CashewValue getValue()                  { return associated_value; }
+
+
+}       // end of class CuminRunError
 
 
 
 
-/* end of CuminRunnerAst.java */
+/* end of CuminRunError.java */
 

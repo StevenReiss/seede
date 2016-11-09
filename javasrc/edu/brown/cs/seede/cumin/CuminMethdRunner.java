@@ -1,8 +1,8 @@
 /********************************************************************************/
 /*                                                                              */
-/*              CuminRunnerAst.java                                             */
+/*              CuminMethdRunner.java                                           */
 /*                                                                              */
-/*      AST-based code interpreter                                              */
+/*      Evaluate a method                                                       */
 /*                                                                              */
 /********************************************************************************/
 /*      Copyright 2011 Brown University -- Steven P. Reiss                    */
@@ -24,12 +24,11 @@
 
 package edu.brown.cs.seede.cumin;
 
-
-import org.eclipse.jdt.core.dom.ASTNode;
+import java.util.List;
 
 import edu.brown.cs.seede.cashew.CashewValue;
 
-class CuminRunnerAst extends CuminRunner
+class CuminMethdRunner implements CuminConstants
 {
 
 
@@ -39,8 +38,9 @@ class CuminRunnerAst extends CuminRunner
 /*                                                                              */
 /********************************************************************************/
 
-private ASTNode         method_node;
-private CuminStack      execution_stack;
+private String          method_name;
+private List<CashewValue> initial_parameters;
+private CuminRunner     current_runner;
 
 
 
@@ -50,34 +50,51 @@ private CuminStack      execution_stack;
 /*                                                                              */
 /********************************************************************************/
 
-CuminRunnerAst(ASTNode method)
+CuminMethdRunner(String name,List<CashewValue> params)
 {
-   method_node = method;
-   execution_stack = null;
+   method_name = name;
+   initial_parameters = params;
+   current_runner = null;
 }
 
 
 
 
+/********************************************************************************/
+/*                                                                              */
+/*      Evaluation methods                                                      */
+/*                                                                              */
+/********************************************************************************/
 
-@Override void interpret(EvalType et)
+void evaluate(EvalType et)
 {
+   setupRunner();
    
 }
 
 
-void runToStop()
+
+
+
+private void setupRunner()
 {
+   if (current_runner != null) return;
    
+   // first split method into class/method/signature
+   // then determine if class is known or not
+   // if known, find its AST and use AST evaluation
+   // else find the JcodeMethod and use byte code evaluation
+   // set up context
+   // set up initial stack
 }
 
 
+   
+
+}       // end of class CuminMethdRunner
 
 
-}       // end of class CuminRunnerAst
 
 
-
-
-/* end of CuminRunnerAst.java */
+/* end of CuminMethdRunner.java */
 
