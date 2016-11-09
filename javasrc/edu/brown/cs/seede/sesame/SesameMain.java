@@ -35,6 +35,7 @@ import edu.brown.cs.ivy.mint.MintConstants;
 import edu.brown.cs.ivy.mint.MintDefaultReply;
 import edu.brown.cs.ivy.mint.MintReply;
 import edu.brown.cs.ivy.xml.IvyXmlWriter;
+import edu.brown.cs.seede.cashew.CashewConstants;
 
 public class SesameMain implements SesameConstants, MintConstants 
 {
@@ -81,7 +82,7 @@ private SesameMain(String [] args)
 {
    message_id = null;
    project_map = new HashMap<String,SesameProject>();
-   jcomp_base = new JcompControl();
+   jcomp_base = CashewConstants.JCOMP_BASE;
    
    scanArgs(args);
    
@@ -133,12 +134,13 @@ private void badArgs()
 /*                                                                              */
 /********************************************************************************/
 
+JcompControl getJcompBase()                     { return jcomp_base; }
+
 SesameFileManager getFileManager()              { return file_manager; }
 SesameMonitor getMonitor()                      { return message_monitor; }
 
 String getMintId()                              { return message_id; }
 
-JcompControl getJcompBase()                     { return jcomp_base; }
 
 
 

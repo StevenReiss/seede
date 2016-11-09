@@ -140,8 +140,8 @@ static class ValueClass extends ComputedValueObject
 {
    private JcompType     class_value;
 
-   ValueClass(JcompType jt,JcompType c) {
-      super(jt);
+   ValueClass(JcompType c) {
+      super(CLASS_TYPE);
       class_value = c;
     }
 

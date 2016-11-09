@@ -24,8 +24,11 @@
 
 package edu.brown.cs.seede.cumin;
 
+import java.util.List;
 import java.util.Stack;
 
+import edu.brown.cs.ivy.jcomp.JcompSymbol;
+import edu.brown.cs.seede.cashew.CashewContext;
 import edu.brown.cs.seede.cashew.CashewValue;
 
 class CuminStack implements CuminConstants
@@ -39,7 +42,7 @@ class CuminStack implements CuminConstants
 /********************************************************************************/
 
 private Stack<Object>       execution_stack;
-
+private CashewContext       lookup_context;
 
 /********************************************************************************/
 /*                                                                              */
@@ -50,6 +53,7 @@ private Stack<Object>       execution_stack;
 CuminStack()
 {
    execution_stack = new Stack<>();
+   lookup_context = null;
 }
 
 
@@ -92,6 +96,31 @@ Object popMarker()
    Object v = execution_stack.pop();
    if (v instanceof CashewValue) throw new Error("Non-marker popped from stack");
    return v;
+}
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Context Management methods                                              */
+/*                                                                              */
+/********************************************************************************/
+
+void setBaseContext(CashewContext ctx)
+{
+   
+}
+
+
+
+void pushContext(List<JcompSymbol> locals)
+{
+   
+}
+
+
+void popContext()
+{
+   
 }
 
 

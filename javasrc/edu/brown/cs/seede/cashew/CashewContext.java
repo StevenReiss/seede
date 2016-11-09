@@ -40,6 +40,7 @@ public abstract class CashewContext implements CashewConstants
 /********************************************************************************/
 
 private Map<Object,CashewValue> context_map;
+private CashewContext parent_context;
 
 
 
@@ -49,9 +50,16 @@ private Map<Object,CashewValue> context_map;
 /*                                                                              */
 /********************************************************************************/
 
-protected CashewContext()
+protected CashewContext() 
+{
+   this(null);
+}
+
+
+protected CashewContext(CashewContext par)
 { 
    context_map = new HashMap<>();
+   parent_context = par;
 }
 
 
@@ -64,17 +72,28 @@ protected CashewContext()
 public CashewValue findReference(JcompSymbol sym)
 {
    // for AST-based lookup
-   return findReference((Object) sym);
+   return findReference(sym,true);
 }
-
 
 
 public CashewValue findReference(Object var)
 {
+   return findReference(var,true);
+}
+
+
+public CashewValue findReference(Object var,boolean create)
+{
    // for byte-code based lookup
    CashewValue cv = context_map.get(var);
    if (cv != null) return cv;
-   // need to create a new value here
+   if (parent_context != null) {
+      cv = parent_context.findReference(var,false);
+    }
+   if (cv == null && create) {
+      // create new value here
+    }
+   
    return cv;
 }
 

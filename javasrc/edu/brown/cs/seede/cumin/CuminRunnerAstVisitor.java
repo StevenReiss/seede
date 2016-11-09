@@ -26,19 +26,29 @@ package edu.brown.cs.seede.cumin;
 
 import java.util.Map;
 
-import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.ArrayAccess;
 import org.eclipse.jdt.core.dom.ArrayCreation;
+import org.eclipse.jdt.core.dom.AssertStatement;
 import org.eclipse.jdt.core.dom.Assignment;
+import org.eclipse.jdt.core.dom.Block;
 import org.eclipse.jdt.core.dom.BooleanLiteral;
+import org.eclipse.jdt.core.dom.BreakStatement;
 import org.eclipse.jdt.core.dom.CastExpression;
 import org.eclipse.jdt.core.dom.CharacterLiteral;
 import org.eclipse.jdt.core.dom.ClassInstanceCreation;
 import org.eclipse.jdt.core.dom.ConditionalExpression;
+import org.eclipse.jdt.core.dom.ConstructorInvocation;
+import org.eclipse.jdt.core.dom.ContinueStatement;
+import org.eclipse.jdt.core.dom.DoStatement;
+import org.eclipse.jdt.core.dom.EmptyStatement;
+import org.eclipse.jdt.core.dom.ExpressionStatement;
 import org.eclipse.jdt.core.dom.FieldAccess;
+import org.eclipse.jdt.core.dom.ForStatement;
+import org.eclipse.jdt.core.dom.IfStatement;
 import org.eclipse.jdt.core.dom.InfixExpression;
 import org.eclipse.jdt.core.dom.InstanceofExpression;
+import org.eclipse.jdt.core.dom.LabeledStatement;
 import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.NullLiteral;
 import org.eclipse.jdt.core.dom.NumberLiteral;
@@ -46,16 +56,24 @@ import org.eclipse.jdt.core.dom.ParenthesizedExpression;
 import org.eclipse.jdt.core.dom.PostfixExpression;
 import org.eclipse.jdt.core.dom.PrefixExpression;
 import org.eclipse.jdt.core.dom.QualifiedName;
+import org.eclipse.jdt.core.dom.ReturnStatement;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.StringLiteral;
+import org.eclipse.jdt.core.dom.SuperConstructorInvocation;
 import org.eclipse.jdt.core.dom.SuperFieldAccess;
 import org.eclipse.jdt.core.dom.SuperMethodInvocation;
+import org.eclipse.jdt.core.dom.SwitchStatement;
+import org.eclipse.jdt.core.dom.SynchronizedStatement;
 import org.eclipse.jdt.core.dom.ThisExpression;
+import org.eclipse.jdt.core.dom.ThrowStatement;
+import org.eclipse.jdt.core.dom.TryStatement;
+import org.eclipse.jdt.core.dom.TypeDeclarationStatement;
 import org.eclipse.jdt.core.dom.TypeLiteral;
 import org.eclipse.jdt.core.dom.VariableDeclarationExpression;
+import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
+import org.eclipse.jdt.core.dom.WhileStatement;
 
 import edu.brown.cs.ivy.jcomp.JcompType;
-import edu.brown.cs.ivy.jcomp.JcompTyper;
 import edu.brown.cs.ivy.jcomp.JcompAst;
 import edu.brown.cs.ivy.jcomp.JcompSymbol;
 import edu.brown.cs.seede.cashew.CashewClock;
@@ -143,8 +161,7 @@ CuminRunnerAstVisitor(CuminStack stack,CashewClock clock,CashewContext ctx)
 
 @Override public boolean visit(BooleanLiteral v)
 {
-   JcompType bool = JcompAst.getExprType(v);
-   execution_stack.push(CashewValue.numericValue(bool,v.booleanValue() ? 1 : 0));
+   execution_stack.push(CashewValue.booleanValue(v.booleanValue()));
    return false; 
 }
 
@@ -160,7 +177,7 @@ CuminRunnerAstVisitor(CuminStack stack,CashewClock clock,CashewContext ctx)
 
 @Override public boolean visit(NullLiteral v)
 {
-   execution_stack.push(CashewValue.nullValue(JcompAst.getTyper(v)));
+   execution_stack.push(CashewValue.nullValue());
    return false;
 }
 
@@ -187,8 +204,7 @@ CuminRunnerAstVisitor(CuminStack stack,CashewClock clock,CashewContext ctx)
 
 @Override public boolean visit(StringLiteral v)
 {
-   JcompType jt = JcompAst.getExprType(v);
-   execution_stack.push(CashewValue.stringValue(jt,v.getLiteralValue()));
+   execution_stack.push(CashewValue.stringValue(v.getLiteralValue()));
    return false;
 }
 
@@ -198,7 +214,7 @@ CuminRunnerAstVisitor(CuminStack stack,CashewClock clock,CashewContext ctx)
 {
    JcompType jt = JcompAst.getExprType(v);
    JcompType acttyp = JcompAst.getJavaType(v.getType());
-   execution_stack.push(CashewValue.classValue(jt,acttyp));
+   execution_stack.push(CashewValue.classValue(acttyp));
    return false;
 }
 
@@ -230,7 +246,8 @@ CuminRunnerAstVisitor(CuminStack stack,CashewClock clock,CashewContext ctx)
    CashewValue v2 = execution_stack.pop();
    CashewValue v1 = execution_stack.pop();
    CuminOperator op = op_map.get(v.getOperator());
-   CashewValue v0 = CuminEvaluator.evaluate(execution_clock,op,v1,v2);
+   JcompType tgt = JcompAst.getExprType(v.getLeftHandSide());
+   CashewValue v0 = CuminEvaluator.evaluateAssign(execution_clock,op,v1,v2,tgt);
    execution_stack.push(v0);
 }
 
@@ -238,7 +255,10 @@ CuminRunnerAstVisitor(CuminStack stack,CashewClock clock,CashewContext ctx)
 
 @Override public void endVisit(CastExpression v)
 {
-   
+   JcompType tgt = JcompAst.getJavaType(v.getType());
+   CashewValue cv = execution_stack.pop();
+   cv = CuminEvaluator.castValue(execution_clock,cv,tgt);
+   execution_stack.push(cv);
 }
 
 
@@ -249,15 +269,28 @@ CuminRunnerAstVisitor(CuminStack stack,CashewClock clock,CashewContext ctx)
 
 
 
-@Override public void endVisit(ConditionalExpression v)
+@Override public boolean visit(ConditionalExpression v)
 {
-   
+   v.getExpression().accept(this);
+   CashewValue cv = execution_stack.pop();
+   if (cv.getBoolean(execution_clock)) {
+      v.getThenExpression().accept(this);
+    }
+   else {
+      v.getElseExpression().accept(this);
+    }
+   return false;
 }
 
 
-@Override public void endVisit(FieldAccess v)
+@Override public boolean visit(FieldAccess v)
 {
-   
+   v.getExpression().accept(this);
+   CashewValue obj = execution_stack.pop();
+   JcompSymbol sym = JcompAst.getReference(v.getName());
+   CashewValue rslt = obj.getFieldValue(execution_clock,sym.getFullName());
+   execution_stack.push(rslt);
+   return false;
 }
 
 
@@ -320,7 +353,7 @@ CuminRunnerAstVisitor(CuminStack stack,CashewClock clock,CashewContext ctx)
    if (js.isFieldSymbol()) {
       // handle this.field reference
     }
-   
+   // this should look things up on the stack
    CashewValue cv = execution_context.findReference(js);
    execution_stack.push(cv);
 }
@@ -329,6 +362,8 @@ CuminRunnerAstVisitor(CuminStack stack,CashewClock clock,CashewContext ctx)
 
 @Override public boolean visit(QualifiedName v)
 {
+   // could be field access -- need to handle
+   
    v.getName().accept(this);
    
    return false;
@@ -389,14 +424,128 @@ CuminRunnerAstVisitor(CuminStack stack,CashewClock clock,CashewContext ctx)
 
 /********************************************************************************/
 /*                                                                              */
-/*      Helper methods                                                          */
+/*      Statement visitors                                                      */
 /*                                                                              */
 /********************************************************************************/
 
-JcompType getSystemType(ASTNode n,String s)
+@Override public boolean visit(AssertStatement as)
 {
-   JcompTyper typer = JcompAst.getTyper(n); 
-   return typer.findSystemType(s);
+   return true;
+}
+
+
+
+@Override public boolean visit(Block as)
+{
+   return true;
+}
+
+
+@Override public boolean visit(BreakStatement as)
+{
+   return true;
+}
+
+
+@Override public boolean visit(ConstructorInvocation as)
+{
+   return true;
+}
+
+
+@Override public boolean visit(ContinueStatement as)
+{
+   return true;
+}
+
+
+@Override public boolean visit(DoStatement as)
+{
+   return true;
+}
+
+
+@Override public boolean visit(EmptyStatement as)
+{
+   return true;
+}
+
+
+@Override public boolean visit(ExpressionStatement as)
+{
+   return true;
+}
+
+
+@Override public boolean visit(ForStatement as)
+{
+   return true;
+}
+
+
+@Override public boolean visit(IfStatement as)
+{
+   return true;
+}
+
+
+@Override public boolean visit(LabeledStatement as)
+{
+   return true;
+}
+
+
+@Override public boolean visit(ReturnStatement as)
+{
+   return true;
+}
+
+
+@Override public boolean visit(SuperConstructorInvocation as)
+{
+   return true;
+}
+
+
+@Override public boolean visit(SwitchStatement as)
+{
+   return true;
+}
+
+
+@Override public boolean visit(SynchronizedStatement as)
+{
+   return true;
+}
+
+
+@Override public boolean visit(ThrowStatement as)
+{
+   return true;
+}
+
+
+@Override public boolean visit(TryStatement as)
+{
+   return true;
+}
+
+
+@Override public boolean visit(TypeDeclarationStatement as)
+{
+   return true;
+}
+
+
+@Override public boolean visit(VariableDeclarationStatement as)
+{
+   return true;
+}
+
+
+@Override public boolean visit(WhileStatement as)
+{
+   return true;
 }
 
 

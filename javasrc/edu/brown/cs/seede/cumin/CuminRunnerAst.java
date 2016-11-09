@@ -24,10 +24,8 @@
 
 package edu.brown.cs.seede.cumin;
 
-import java.util.List;
 
 import org.eclipse.jdt.core.dom.ASTNode;
-import org.eclipse.jdt.core.dom.ASTVisitor;
 
 import edu.brown.cs.seede.cashew.CashewValue;
 
@@ -43,7 +41,6 @@ class CuminRunnerAst extends CuminRunner
 
 private ASTNode         method_node;
 private CuminStack      execution_stack;
-private ASTNode         current_node;
 
 
 
@@ -56,7 +53,6 @@ private ASTNode         current_node;
 CuminRunnerAst(ASTNode method)
 {
    method_node = method;
-   current_node = null;
    execution_stack = null;
 }
 
@@ -69,7 +65,6 @@ CuminRunnerAst(ASTNode method)
 
 void startRunner()
 {
-   current_node = method_node;
    execution_stack = new CuminStack();
    for (CashewValue cv : getInitialParameters()) {
       execution_stack.push(cv);
