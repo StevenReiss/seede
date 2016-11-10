@@ -33,13 +33,10 @@ import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 
-import edu.brown.cs.ivy.jcode.JcodeClass;
 import edu.brown.cs.ivy.jcode.JcodeMethod;
 import edu.brown.cs.ivy.jcomp.JcompAst;
 import edu.brown.cs.ivy.jcomp.JcompSymbol;
-import edu.brown.cs.ivy.jcomp.JcompType;
 import edu.brown.cs.ivy.jcomp.JcompTyper;
-import edu.brown.cs.seede.cashew.CashewClock;
 import edu.brown.cs.seede.cashew.CashewValue;
 
 class CuminMethodRunner implements CuminConstants

@@ -25,13 +25,20 @@
 package edu.brown.cs.seede.cumin;
 
 import java.util.List;
+import java.util.Set;
 
+import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 
 import edu.brown.cs.ivy.jcode.JcodeClass;
 import edu.brown.cs.ivy.jcode.JcodeFactory;
 import edu.brown.cs.ivy.jcode.JcodeMethod;
+import edu.brown.cs.ivy.jcomp.JcompAst;
 import edu.brown.cs.ivy.jcomp.JcompProject;
+import edu.brown.cs.ivy.jcomp.JcompSearcher;
+import edu.brown.cs.ivy.jcomp.JcompSemantics;
+import edu.brown.cs.ivy.jcomp.JcompSource;
 import edu.brown.cs.ivy.jcomp.JcompSymbol;
 import edu.brown.cs.ivy.jcomp.JcompTyper;
 import edu.brown.cs.ivy.jcomp.JcompType;
@@ -116,15 +123,15 @@ protected CashewValue handleCall(CashewClock cc,JcompSymbol method,List<CashewVa
    
    JcompType type = method.getClassType();
    if (type.isKnownType()) {
-      // find ast here
+      MethodDeclaration md = findAstForMethod(method.getFullName());
+      if (md != null) return doCall(cc,md,args);
     }
-   else {
-      JcodeClass mcls = getCodeFactory().findClass(type.getName());
-      JcodeMethod mthd = mcls.findMethod(method.getName(),method.getType().getName());
-      return doCall(cc,mthd,args);
-    }
-   return null;
+   
+   JcodeClass mcls = getCodeFactory().findClass(type.getName());
+   JcodeMethod mthd = mcls.findMethod(method.getName(),method.getType().getName());
+   return doCall(cc,mthd,args);
 }
+
 
 
 protected CashewValue handleCall(CashewClock cc,JcodeMethod method,List<CashewValue> args,
@@ -137,12 +144,11 @@ protected CashewValue handleCall(CashewClock cc,JcodeMethod method,List<CashewVa
    
    JcompType type = getTyper().findType(method.getDeclaringClass().getName());
    if (type.isKnownType()) {
-      // find ast here
+      MethodDeclaration md = findAstForMethod(method.getFullName());
+      if (md != null) return doCall(cc,md,args);
     }
-   else {
-      // find binary here
-    }
-   return null;
+   
+   return doCall(cc,method,args);
 }
 
 
@@ -186,6 +192,57 @@ private JcodeMethod findTargetMethod(CashewClock cc,JcodeMethod method,
    
    return method;
 }
+
+
+
+private MethodDeclaration findAstForMethod(String nm)
+{
+   JcompProject jp = base_project.getJcompProject();
+   JcompSearcher js = jp.findSymbols(nm,"METHOD");
+   for (JcompSearcher.SearchResult sr : js.getMatches()) {
+      JcompSource src = sr.getFile();
+      if (src == null) continue;
+      for (JcompSemantics jsem : jp.getSources()) {
+         if (jsem.getFile() == src) {
+            ASTNode n = jsem.getAstNode();
+            MethodFinder mf = new MethodFinder(sr.getSymbol());
+            n.accept(mf);
+            MethodDeclaration md = mf.getMethodAst();
+            if (md != null) return md;
+          }
+       }
+    }
+   
+   return null;
+}
+
+
+
+
+private static class MethodFinder extends ASTVisitor {
+   
+   private JcompSymbol look_for;
+   private MethodDeclaration found_method;
+   
+   MethodFinder(JcompSymbol js) {
+      look_for = js;
+      found_method = null;
+    }
+   
+   MethodDeclaration getMethodAst()             { return found_method; }
+   
+   @Override public boolean visit(MethodDeclaration n) {
+      JcompSymbol js = JcompAst.getDefinition(n);
+      if (js == null) js = JcompAst.getDefinition(n.getName());
+      if (js == look_for) {
+         found_method = n;
+       }
+      return false;
+    }
+   
+}       // end of inner class MethodFinder
+
+
 
 
 

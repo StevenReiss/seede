@@ -287,7 +287,11 @@ CuminRunnerAstVisitor(CuminStack stack,CashewClock clock,CashewContext ctx)
 
 @Override public void endVisit(ArrayAccess v)
 {
-   
+   CashewValue cv = execution_stack.pop();
+   CashewValue av = execution_stack.pop();
+   int idx = (int) cv.getNumber(execution_clock);
+   CashewValue rv = av.getIndexValue(execution_clock,idx);
+   execution_stack.push(rv);
 }
 
 
@@ -388,9 +392,14 @@ CuminRunnerAstVisitor(CuminStack stack,CashewClock clock,CashewContext ctx)
 }
 
 
-@Override public void endVisit(InstanceofExpression v)
+@Override public boolean visit(InstanceofExpression v)
 {
+   v.getLeftOperand().accept(this);
+   JcompType rt = JcompAst.getJavaType(v.getRightOperand());
+   CashewValue nv = CuminEvaluator.castValue(execution_clock,execution_stack.pop(),rt);
+   execution_stack.push(nv);
    
+   return false;
 }
 
 
@@ -438,7 +447,6 @@ CuminRunnerAstVisitor(CuminStack stack,CashewClock clock,CashewContext ctx)
    CashewValue v1 = execution_stack.pop();
    CuminOperator op = op_map.get(v.getOperator());
    CashewValue v0 = CuminEvaluator.evaluate(execution_clock,op,v1);
-   // need to handle LVALUES
    execution_stack.push(v0);
 }
 
@@ -468,13 +476,18 @@ CuminRunnerAstVisitor(CuminStack stack,CashewClock clock,CashewContext ctx)
 
 @Override public void endVisit(ThisExpression v)
 {
-   
+   String name = "this";
+   if (v.getQualifier() != null) {
+      name = v.getQualifier().getFullyQualifiedName() + "." + name;
+    }
+   CashewValue cv = execution_context.findReference(name);
+   execution_stack.push(cv);
 }
 
 
 @Override public void endVisit(VariableDeclarationExpression v)
 {
-   
+   // nothing to do here
 }
 
 
@@ -756,8 +769,23 @@ private boolean checkLabel(Statement s,String lbl)
 @Override public void endVisit(TypeDeclaration n)
 { }
 
-@Override public void endVisit(VariableDeclarationFragment n)
-{ }
+@Override public boolean visit(VariableDeclarationFragment n)
+{ 
+   JcompSymbol js = JcompAst.getDefinition(n.getName());
+   CashewValue cv = null;
+   if (n.getInitializer() != null) {
+      n.getInitializer().accept(this);
+      cv = execution_stack.pop();
+    }
+   else {
+      cv = CashewValue.createDefaultValue(js.getType());
+    }
+   
+   CashewValue vv = execution_context.findReference(js);
+   CuminEvaluator.evaluate(execution_clock,CuminOperator.ASG,vv,cv);
+   
+   return false;
+}
 
 
 
