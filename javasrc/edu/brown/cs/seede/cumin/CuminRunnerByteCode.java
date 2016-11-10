@@ -32,6 +32,7 @@ import edu.brown.cs.seede.cashew.CashewClock;
 import edu.brown.cs.seede.cashew.CashewConstants;
 import edu.brown.cs.seede.cashew.CashewContext;
 import edu.brown.cs.seede.cashew.CashewValue;
+import edu.brown.cs.seede.sesame.SesameProject;
 
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -61,14 +62,16 @@ private JcompTyper      type_converter;
 /*                                                                              */
 /********************************************************************************/
 
-CuminRunnerByteCode(CuminStack stack,CashewClock clock,CashewContext ctx,
-      JcompTyper typer,JcodeMethod mthd)
+CuminRunnerByteCode(SesameProject sp,CuminStack stack,CashewClock clock,CashewContext ctx,
+      JcodeMethod mthd)
 {
+   super(sp);
+   
    execution_stack = stack;
    execution_clock = clock;
    execution_context = ctx;
    jcode_method = mthd;
-   type_converter = typer;
+   type_converter = sp.getTyper();
    current_instruction = 0;
 }
 

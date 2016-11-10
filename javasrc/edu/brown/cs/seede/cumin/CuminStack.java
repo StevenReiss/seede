@@ -24,10 +24,8 @@
 
 package edu.brown.cs.seede.cumin;
 
-import java.util.List;
 import java.util.Stack;
 
-import edu.brown.cs.ivy.jcomp.JcompSymbol;
 import edu.brown.cs.seede.cashew.CashewContext;
 import edu.brown.cs.seede.cashew.CashewValue;
 

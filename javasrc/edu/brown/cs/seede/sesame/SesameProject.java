@@ -34,6 +34,7 @@ import java.util.Set;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.w3c.dom.Element;
 
+import edu.brown.cs.ivy.jcode.JcodeFactory;
 import edu.brown.cs.ivy.jcomp.JcompAst;
 import edu.brown.cs.ivy.jcomp.JcompControl;
 import edu.brown.cs.ivy.jcomp.JcompProject;
@@ -43,7 +44,7 @@ import edu.brown.cs.ivy.jcomp.JcompTyper;
 
 import edu.brown.cs.ivy.xml.IvyXml;
 
-class SesameProject implements SesameConstants
+public class SesameProject implements SesameConstants
 {
 
 
@@ -58,6 +59,7 @@ private String          project_name;
 private List<String>    class_paths;
 private Set<SesameFile> active_files;
 private JcompProject    base_project;
+private JcodeFactory    binary_control;
 
 
 
@@ -152,7 +154,7 @@ private synchronized void clearProject()
 }
 
 
-synchronized JcompProject getJcompProject()
+public synchronized JcompProject getJcompProject()
 {
    if (base_project != null) return base_project;
    
@@ -163,6 +165,19 @@ synchronized JcompProject getJcompProject()
    return base_project;
 }
 
+public synchronized JcodeFactory getJcodeFactory()
+{
+   if (binary_control != null) return binary_control;
+   
+   JcodeFactory jf = new JcodeFactory();
+   for (String s : class_paths) {
+      jf.addToClassPath(s);
+    }
+   jf.load();
+   
+   return binary_control;
+}
+
 
 
 /********************************************************************************/
@@ -171,7 +186,7 @@ synchronized JcompProject getJcompProject()
 /*                                                                              */
 /********************************************************************************/
 
-JcompTyper getTyper()
+public JcompTyper getTyper()
 {
    getJcompProject();
    if (base_project == null) return null;

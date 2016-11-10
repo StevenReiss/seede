@@ -27,7 +27,7 @@ package edu.brown.cs.seede.cumin;
 
 import org.eclipse.jdt.core.dom.ASTNode;
 
-import edu.brown.cs.seede.cashew.CashewValue;
+import edu.brown.cs.seede.sesame.SesameProject;
 
 class CuminRunnerAst extends CuminRunner
 {
@@ -50,8 +50,10 @@ private CuminStack      execution_stack;
 /*                                                                              */
 /********************************************************************************/
 
-CuminRunnerAst(ASTNode method)
+CuminRunnerAst(SesameProject sp,ASTNode method)
 {
+   super(sp);
+   
    method_node = method;
    execution_stack = null;
 }
