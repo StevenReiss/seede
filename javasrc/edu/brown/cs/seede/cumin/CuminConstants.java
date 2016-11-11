@@ -42,6 +42,11 @@ enum EvalType {
 }
 
 
+enum CallType {
+   STATIC, SPECIAL, INTERFACE, DYNAMIC, VIRTUAL 
+}
+
+
 
 /********************************************************************************/
 /*                                                                              */

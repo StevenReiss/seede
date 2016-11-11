@@ -222,6 +222,13 @@ public static CashewValue classValue(JcompType vtyp)
 }
 
 
+public static CashewValue arrayValue(JcompType atyp,int dim)
+{
+   return new CashewValueArray.ComputedValueArray(atyp,dim);
+}
+
+
+
 
 /********************************************************************************/
 /*                                                                              */
@@ -333,7 +340,7 @@ public CashewValue getFieldValue(CashewClock cc,String name)
    throw new Error("Value is not an object");
 }
 
-CashewValue setFieldValue(CashewClock cc,String name,CashewValue v)
+public CashewValue setFieldValue(CashewClock cc,String name,CashewValue v)
 {
    throw new Error("Value is not an object");
 }
@@ -344,7 +351,7 @@ public CashewValue getIndexValue(CashewClock cc,int idx)
    throw new Error("Value is not an array");
 }
 
-CashewValue setIndexValue(CashewClock cc,int idx,CashewValue v)
+public CashewValue setIndexValue(CashewClock cc,int idx,CashewValue v)
 {
    throw new Error("Value is not an array");
 }

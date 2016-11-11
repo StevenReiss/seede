@@ -24,7 +24,9 @@
 
 package edu.brown.cs.seede.cumin;
 
+import java.util.List;
 import java.util.Map;
+import java.util.Stack;
 
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTVisitor;
@@ -65,6 +67,7 @@ import org.eclipse.jdt.core.dom.InstanceofExpression;
 import org.eclipse.jdt.core.dom.LabeledStatement;
 import org.eclipse.jdt.core.dom.MarkerAnnotation;
 import org.eclipse.jdt.core.dom.MemberValuePair;
+import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.NormalAnnotation;
@@ -125,8 +128,12 @@ class CuminRunnerAstVisitor extends ASTVisitor implements CuminConstants
 private CuminStack      execution_stack;
 private CashewClock     execution_clock;
 private CashewContext   execution_context;
+private CuminRunnerAst  ast_runner;
+private ASTNode         root_node;
 private ASTNode         current_node;
-
+private EvalType        eval_type;
+private Stack<EvalData> eval_stack;
+private int             stack_level;
 
 private static Map<Object,CuminOperator> op_map;
 
@@ -178,13 +185,32 @@ static {
 /*                                                                              */
 /********************************************************************************/
 
-CuminRunnerAstVisitor(CuminStack stack,CashewClock clock,CashewContext ctx)
+CuminRunnerAstVisitor(CuminRunnerAst runner,ASTNode root)
 {
-   execution_stack = stack;
-   execution_clock = clock;
-   execution_context = ctx;
+   ast_runner = runner;
+   execution_stack = runner.getStack();
+   execution_clock = runner.getClock();
+   execution_context = runner.getLookupContext();
+   eval_type = EvalType.RUN;
    current_node = null;
+   root_node = root;
+   eval_stack = new Stack<>();
+   stack_level = -1;
 }
+
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Access methods                                                          */
+/*                                                                              */
+/********************************************************************************/
+
+ASTNode getCurrentNode()                        { return current_node; }
+
+void setEvalType(EvalType et)                   { eval_type = et; }
+
 
 
 /********************************************************************************/
@@ -206,6 +232,50 @@ CuminRunnerAstVisitor(CuminStack stack,CashewClock clock,CashewContext ctx)
     }
    
    return true;
+}
+
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Handle method initialization                                            */
+/*                                                                              */
+/********************************************************************************/
+
+@Override public boolean visit(MethodDeclaration v)
+{
+   List<CashewValue> args = ast_runner.getCallArgs();
+   
+   int whence = checkRoot(v);
+   
+   if (whence < 0) {
+      int idx = 0;
+      int off = 0;
+      JcompSymbol vsym = JcompAst.getDefinition(v);
+      if (!vsym.isStatic()) {
+         off = 1;
+         execution_context.define("this",args.get(0));
+       } 
+      // need to handle nested this values as well
+      
+      int nparm = v.parameters().size();
+      for (Object o : v.parameters()) {
+         SingleVariableDeclaration svd = (SingleVariableDeclaration) o;
+         JcompSymbol psym = JcompAst.getDefinition(svd.getName());
+         if (idx == nparm-1 && v.isVarargs()) {
+            // handle var args
+          }
+         else {
+            execution_context.define(psym,args.get(idx+off));
+          }
+         ++idx;
+       }
+    }
+   
+   v.getBody().accept(this);
+   
+   return false;
 }
 
 
@@ -511,7 +581,19 @@ CuminRunnerAstVisitor(CuminStack stack,CashewClock clock,CashewContext ctx)
 
 @Override public boolean visit(Block s)
 {
-   return true;
+   int whence = enter(s);
+   int idx = 0;
+   for (Object o : s.statements()) {
+      Statement st = (Statement) o;
+      if (whence < 0 || idx >= whence) {
+         st.accept(this);
+         mark(s,idx+1);
+       }
+      ++idx;
+    }
+   exit(s);
+   
+   return false;
 }
 
 
@@ -748,40 +830,84 @@ private boolean checkLabel(Statement s,String lbl)
 /********************************************************************************/
 
 @Override public void endVisit(ArrayInitializer n)
-{ }
-
-@Override public void endVisit(EnumConstantDeclaration n)
-{ }
-
-@Override public void endVisit(EnumDeclaration n)
-{ }
-
-@Override public void endVisit(FieldDeclaration n)
-{ }
-
-@Override public void endVisit(Modifier n)
-{ }
-
-@Override public void endVisit(SingleVariableDeclaration n)
-{ }
-
-@Override public void endVisit(TypeDeclaration n)
-{ }
-
-@Override public boolean visit(VariableDeclarationFragment n)
 { 
-   JcompSymbol js = JcompAst.getDefinition(n.getName());
+   int dim = n.expressions().size();
+   JcompType typ = JcompAst.getExprType(n);
+   CashewValue arrval = CashewValue.arrayValue(typ,dim);
+   for (int i = dim-1; i >= 0; --i) {
+      CashewValue cv = execution_stack.pop();
+      arrval.setIndexValue(execution_clock,i,cv);
+    }
+   execution_stack.push(arrval);
+}
+
+
+
+@Override public boolean visit(EnumConstantDeclaration n)
+{ 
+   return false;
+}
+
+
+@Override public boolean visit(EnumDeclaration n)
+{ 
+   return false;
+}
+
+@Override public boolean visit(FieldDeclaration n)
+{ 
+   return true;                 // handle initializations
+}
+
+@Override public boolean visit(Modifier n)
+{ 
+   return false;
+}
+
+@Override public boolean visit(SingleVariableDeclaration n)
+{ 
+   ASTNode par = n.getParent();
+   if (par instanceof MethodDeclaration) {
+      // handle formal parameters
+      return false;             // already handled
+    }
+   else if (par instanceof CatchClause) {
+      // handle exception
+    }
+   else {
+      JcompSymbol js = JcompAst.getDefinition(n.getName());
+      handleInitialization(js,n.getInitializer());
+    }
+   
+   return false;
+}
+
+
+private void handleInitialization(JcompSymbol js,ASTNode init)
+{
    CashewValue cv = null;
-   if (n.getInitializer() != null) {
-      n.getInitializer().accept(this);
+   if (init != null) {
+      init.accept(this);
       cv = execution_stack.pop();
     }
    else {
       cv = CashewValue.createDefaultValue(js.getType());
     }
-   
    CashewValue vv = execution_context.findReference(js);
    CuminEvaluator.evaluate(execution_clock,CuminOperator.ASG,vv,cv);
+}
+
+
+
+@Override public boolean visit(TypeDeclaration n)
+{ 
+   return false;
+}
+
+@Override public boolean visit(VariableDeclarationFragment n)
+{ 
+   JcompSymbol js = JcompAst.getDefinition(n.getName());
+   handleInitialization(js,n.getInitializer());
    
    return false;
 }
@@ -796,47 +922,69 @@ private boolean checkLabel(Statement s,String lbl)
 /********************************************************************************/
 
 
-@Override public void endVisit(AnnotationTypeDeclaration n)
-{ }
+@Override public boolean visit(AnnotationTypeDeclaration n)
+{
+   return false;
+}
 
 
-@Override public void endVisit(AnnotationTypeMemberDeclaration n)
-{ }
+@Override public boolean visit(AnnotationTypeMemberDeclaration n)
+{ 
+   return false;
+}
 
 
-@Override public void endVisit(AnonymousClassDeclaration n)
-{ }
+@Override public boolean visit(AnonymousClassDeclaration n)
+{ 
+   return false;
+}
 
 
-@Override public void endVisit(CompilationUnit n) 
-{ }
+@Override public boolean visit(CompilationUnit n) 
+{ 
+   return false;
+}
 
-@Override public void endVisit(ImportDeclaration n)
-{ }
-
-
-@Override public void endVisit(Initializer n)
-{ }
-
-
-@Override public void endVisit(MarkerAnnotation n) 
-{ }
+@Override public boolean visit(ImportDeclaration n)
+{ 
+   return false;
+}
 
 
-@Override public void endVisit(MemberValuePair n)
-{ }
+@Override public boolean visit(Initializer n)
+{ 
+   return true;
+}
 
 
-@Override public void endVisit(NormalAnnotation n)
-{ }
+@Override public boolean visit(MarkerAnnotation n) 
+{ 
+   return false;
+}
 
 
-@Override public void endVisit(PackageDeclaration n)
-{ }
+@Override public boolean visit(MemberValuePair n)
+{ 
+   return false;
+}
 
 
-@Override public void endVisit(SingleMemberAnnotation n)
-{ }
+@Override public boolean visit(NormalAnnotation n)
+{ 
+   return false;
+}
+
+
+@Override public boolean visit(PackageDeclaration n)
+{ 
+   return false;
+}
+
+
+@Override public boolean visit(SingleMemberAnnotation n)
+{ 
+   return false;
+}
 
 
 
@@ -894,6 +1042,77 @@ private boolean checkLabel(Statement s,String lbl)
 { 
    return false;
 }
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Eval stack methods                                                      */
+/*                                                                              */
+/********************************************************************************/
+
+private int enter(ASTNode n) 
+{
+   if (stack_level >= 0) {
+      EvalData ed = eval_stack.get(stack_level);
+      if (ed.getNode() == n) {
+         ++stack_level;
+         if (stack_level >= eval_stack.size()) stack_level = -1;
+         return ed.getIndex();
+       }
+    }
+   
+   eval_stack.push(new EvalData(n,0));
+   return -1;
+}
+
+
+private void mark(ASTNode n,int idx)
+{
+   EvalData ed = eval_stack.peek();
+   if (ed.getNode() != n) {
+      System.err.println("Missing stack entry for mark");
+      return;
+    }
+   ed.setIndex(idx);
+}
+
+
+private void exit(ASTNode n)
+{
+   EvalData ed = eval_stack.pop();
+   if (ed.getNode() == n) return;
+   System.err.println("Missing stack entry for exit");
+   eval_stack.push(ed);
+}
+
+
+
+private int checkRoot(ASTNode n) 
+{
+   if (eval_stack.size() == 0) return -1;
+   if (eval_stack.get(0).getNode() != n) return -1;
+   stack_level = 1;
+   return eval_stack.get(0).getIndex();
+}
+
+
+
+
+private static class EvalData {
+
+   private ASTNode for_node;
+   private int     node_index;
+   
+   EvalData(ASTNode n,int idx) {
+      for_node = n;
+      node_index = idx;
+    }
+   
+   ASTNode getNode()                    { return for_node; }
+   int getIndex()                       { return node_index; }
+   void setIndex(int idx)               { node_index = idx; }
+
+}       // end of inner class EvalData
 
 
 

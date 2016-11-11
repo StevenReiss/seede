@@ -44,7 +44,6 @@ import edu.brown.cs.ivy.jcomp.JcompType;
 import edu.brown.cs.seede.cashew.CashewClock;
 import edu.brown.cs.seede.cashew.CashewContext;
 import edu.brown.cs.seede.cashew.CashewValue;
-import edu.brown.cs.seede.cumin.CuminMethodRunner.CallType;
 import edu.brown.cs.seede.sesame.SesameProject;
 
 
@@ -64,6 +63,7 @@ private CuminRunner     nested_call;
 protected CuminStack    execution_stack;
 protected CashewClock   execution_clock;
 protected CashewContext lookup_context;
+protected List<CashewValue> call_args;
 
 
 
@@ -73,13 +73,14 @@ protected CashewContext lookup_context;
 /*                                                                              */
 /********************************************************************************/
 
-protected CuminRunner(SesameProject sp,CashewClock cc)
+protected CuminRunner(SesameProject sp,CashewClock cc,List<CashewValue> args)
 {
    base_project = sp;
    nested_call = null;
    execution_stack = new CuminStack();
    if (cc == null) execution_clock = new CashewClock();
    else execution_clock = cc;
+   call_args = args;
    lookup_context = null;
 }
 
@@ -118,7 +119,8 @@ CashewClock getClock()                  { return execution_clock; }
 
 CuminStack getStack()                   { return execution_stack; }
 
-CashewContext getLookupContext()        { return lookup_context; }      
+CashewContext getLookupContext()        { return lookup_context; }   
+List<CashewValue> getCallArgs()         { return call_args; }
 
 protected void setLoockupContext(CashewContext ctx)
 {
@@ -204,7 +206,7 @@ protected CuminRunner handleCall(CashewClock cc,JcodeMethod method,List<CashewVa
 
 private CuminRunner doCall(CashewClock cc,MethodDeclaration ast,List<CashewValue> args)
 {
-   CuminRunnerAst rast = new CuminRunnerAst(base_project,cc,ast);
+   CuminRunnerAst rast = new CuminRunnerAst(base_project,cc,ast,args);
    
    return rast;
 }
@@ -212,7 +214,7 @@ private CuminRunner doCall(CashewClock cc,MethodDeclaration ast,List<CashewValue
 
 private CuminRunner doCall(CashewClock cc,JcodeMethod mthd,List<CashewValue> args)
 {
-   CuminRunnerByteCode rbyt = new CuminRunnerByteCode(base_project,cc,mthd);
+   CuminRunnerByteCode rbyt = new CuminRunnerByteCode(base_project,cc,mthd,args);
    
    return rbyt;
 }

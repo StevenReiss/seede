@@ -26,6 +26,7 @@ package edu.brown.cs.seede.cumin;
 
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.eclipse.jdt.core.dom.ASTNode;
@@ -53,7 +54,9 @@ class CuminRunnerAst extends CuminRunner
 /********************************************************************************/
 
 private ASTNode         method_node;
-
+private ASTNode         current_node;
+private List<CashewValue> call_args;
+private CuminRunnerAstVisitor runner_visitor;
 
 
 
@@ -63,11 +66,13 @@ private ASTNode         method_node;
 /*                                                                              */
 /********************************************************************************/
 
-CuminRunnerAst(SesameProject sp,CashewClock cc,ASTNode method)
+CuminRunnerAst(SesameProject sp,CashewClock cc,ASTNode method,List<CashewValue> args)
 {
-   super(sp,cc);
+   super(sp,cc,args);
    
    method_node = method;
+   current_node = method_node;
+   runner_visitor = new CuminRunnerAstVisitor(this,method);
    
    setupContext();
 }
@@ -78,7 +83,17 @@ CuminRunnerAst(SesameProject sp,CashewClock cc,ASTNode method)
 
 @Override protected void interpretRun(EvalType et)
 {
+   runner_visitor.setEvalType(et);
    
+   try {
+      method_node.accept(runner_visitor);
+      throw new CuminRunError(CuminRunError.Reason.RETURN);
+    }
+   catch (CuminRunError r) {
+      if (r.getReason() == CuminRunError.Reason.RETURN) current_node = null;
+      else current_node = runner_visitor.getCurrentNode();
+      throw r;
+    }
 }
 
 

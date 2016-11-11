@@ -34,6 +34,8 @@ import edu.brown.cs.seede.cashew.CashewContext;
 import edu.brown.cs.seede.cashew.CashewValue;
 import edu.brown.cs.seede.sesame.SesameProject;
 
+import java.util.List;
+
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
@@ -60,9 +62,9 @@ private JcompTyper      type_converter;
 /********************************************************************************/
 
 CuminRunnerByteCode(SesameProject sp,CashewClock clock,
-      JcodeMethod mthd)
+      JcodeMethod mthd,List<CashewValue> args)
 {
-   super(sp,clock);
+   super(sp,clock,args);
    
    execution_stack = new CuminStack();
    execution_clock = clock;

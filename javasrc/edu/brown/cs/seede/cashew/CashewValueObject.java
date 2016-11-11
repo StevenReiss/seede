@@ -67,7 +67,7 @@ CashewValueObject(JcompType jt)
 protected Map<String,JcompType> getAllFields()  { return object_fields; }
 
 @Override abstract public CashewValue getFieldValue(CashewClock cc,String nm); 
-@Override abstract CashewValue setFieldValue(CashewClock cc,String nm,CashewValue cv);
+@Override public abstract CashewValue setFieldValue(CashewClock cc,String nm,CashewValue cv);
 
 public void addField(String name,JcompType type) 
 {
@@ -117,7 +117,7 @@ static class ComputedValueObject extends CashewValueObject {
       return cv;
     }
    
-   @Override CashewValue setFieldValue(CashewClock cc,String nm,CashewValue cv) {
+   @Override public CashewValue setFieldValue(CashewClock cc,String nm,CashewValue cv) {
       CashewRef ov = field_values.get(nm);
       if (ov == null) {
          throw new Error("UndefinedField");

@@ -103,7 +103,7 @@ static class ComputedValueArray extends CashewValueArray {
       return array_values[idx];
     }
    
-   @Override CashewValue setIndexValue(CashewClock cc,int idx,CashewValue v) {
+   @Override public CashewValue setIndexValue(CashewClock cc,int idx,CashewValue v) {
       if (idx < 0 || idx >= getSize()) throw new Error("IndexOutOfBounds");
       array_values[idx].setValueAt(cc,v);
       return this;
