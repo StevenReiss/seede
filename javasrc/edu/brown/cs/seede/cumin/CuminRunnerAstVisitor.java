@@ -270,7 +270,6 @@ CuminRunnerAstVisitor(CuminStack stack,CashewClock clock,CashewContext ctx)
 
 @Override public boolean visit(TypeLiteral v)
 {
-   JcompType jt = JcompAst.getExprType(v);
    JcompType acttyp = JcompAst.getJavaType(v.getType());
    execution_stack.push(CashewValue.classValue(acttyp));
    return false;
@@ -289,7 +288,7 @@ CuminRunnerAstVisitor(CuminStack stack,CashewClock clock,CashewContext ctx)
 {
    CashewValue cv = execution_stack.pop();
    CashewValue av = execution_stack.pop();
-   int idx = (int) cv.getNumber(execution_clock);
+   int idx = cv.getNumber(execution_clock).intValue();
    CashewValue rv = av.getIndexValue(execution_clock,idx);
    execution_stack.push(rv);
 }

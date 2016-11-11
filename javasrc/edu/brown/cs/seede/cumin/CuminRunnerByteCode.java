@@ -49,9 +49,6 @@ class CuminRunnerByteCode extends CuminRunner implements CuminConstants,
 /********************************************************************************/
 
 private JcodeMethod     jcode_method;
-private CuminStack      execution_stack;
-private CashewClock     execution_clock;
-private CashewContext   execution_context;
 private int             current_instruction;
 private JcompTyper      type_converter;
 
@@ -62,17 +59,18 @@ private JcompTyper      type_converter;
 /*                                                                              */
 /********************************************************************************/
 
-CuminRunnerByteCode(SesameProject sp,CuminStack stack,CashewClock clock,CashewContext ctx,
+CuminRunnerByteCode(SesameProject sp,CashewClock clock,
       JcodeMethod mthd)
 {
-   super(sp);
+   super(sp,clock);
    
-   execution_stack = stack;
+   execution_stack = new CuminStack();
    execution_clock = clock;
-   execution_context = ctx;
    jcode_method = mthd;
    type_converter = sp.getTyper();
    current_instruction = 0;
+   
+   setupContext();
 }
 
 
@@ -83,7 +81,7 @@ CuminRunnerByteCode(SesameProject sp,CuminStack stack,CashewClock clock,CashewCo
 /*                                                                              */
 /********************************************************************************/
 
-@Override void interpret(EvalType et)
+@Override protected void interpretRun(EvalType et)
 {
    current_instruction = 0;
    try {
@@ -101,6 +99,27 @@ CuminRunnerByteCode(SesameProject sp,CuminStack stack,CashewClock clock,CashewCo
       
     }
 }
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Context setup                                                           */
+/*                                                                              */
+/********************************************************************************/
+
+private void setupContext()
+{
+   CashewContext ctx = new CashewContext();
+   
+   int nlcl = jcode_method.getLocalSize();
+   for (int i = 0; i <= nlcl; ++i) {
+      ctx.define(Integer.valueOf(i),CashewValue.nullValue());
+    }
+   
+   setLoockupContext(ctx);
+}
+
 
 
 /********************************************************************************/

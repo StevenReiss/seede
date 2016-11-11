@@ -42,6 +42,8 @@ enum Reason { ERROR, EXCEPTION, BREAKPOINT, TIMEOUT,
 private Reason          throw_reason;
 private CashewValue     associated_value;
 
+private final static long serialVersionUID = 1;
+
 
 
 /********************************************************************************/

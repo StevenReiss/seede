@@ -29,7 +29,7 @@ import java.util.Map;
 
 import edu.brown.cs.ivy.jcomp.JcompSymbol;
 
-public abstract class CashewContext implements CashewConstants
+public class CashewContext implements CashewConstants
 {
 
 
@@ -50,13 +50,13 @@ private CashewContext parent_context;
 /*                                                                              */
 /********************************************************************************/
 
-protected CashewContext() 
+public CashewContext() 
 {
    this(null);
 }
 
 
-protected CashewContext(CashewContext par)
+public CashewContext(CashewContext par)
 { 
    context_map = new HashMap<>();
    parent_context = par;

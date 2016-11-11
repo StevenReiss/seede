@@ -25,7 +25,6 @@
 package edu.brown.cs.seede.cumin;
 
 import java.util.List;
-import java.util.Set;
 
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTVisitor;
@@ -43,6 +42,7 @@ import edu.brown.cs.ivy.jcomp.JcompSymbol;
 import edu.brown.cs.ivy.jcomp.JcompTyper;
 import edu.brown.cs.ivy.jcomp.JcompType;
 import edu.brown.cs.seede.cashew.CashewClock;
+import edu.brown.cs.seede.cashew.CashewContext;
 import edu.brown.cs.seede.cashew.CashewValue;
 import edu.brown.cs.seede.cumin.CuminMethodRunner.CallType;
 import edu.brown.cs.seede.sesame.SesameProject;
@@ -59,6 +59,11 @@ public abstract class CuminRunner implements CuminConstants
 /********************************************************************************/
 
 private SesameProject   base_project;
+private CuminRunner     nested_call;
+
+protected CuminStack    execution_stack;
+protected CashewClock   execution_clock;
+protected CashewContext lookup_context;
 
 
 
@@ -68,9 +73,14 @@ private SesameProject   base_project;
 /*                                                                              */
 /********************************************************************************/
 
-protected CuminRunner(SesameProject sp)
+protected CuminRunner(SesameProject sp,CashewClock cc)
 {
    base_project = sp;
+   nested_call = null;
+   execution_stack = new CuminStack();
+   if (cc == null) execution_clock = new CashewClock();
+   else execution_clock = cc;
+   lookup_context = null;
 }
 
 
@@ -98,12 +108,52 @@ boolean isComplete()
    return false;
 }
 
-JcompTyper getTyper()           { return base_project.getTyper(); }
+JcompTyper getTyper()                   { return base_project.getTyper(); }
 
-JcodeFactory getCodeFactory()   { return base_project.getJcodeFactory(); }
+JcodeFactory getCodeFactory()           { return base_project.getJcodeFactory(); }
 
-JcompProject getCompProjoect()  { return base_project.getJcompProject(); }
+JcompProject getCompProjoect()          { return base_project.getJcompProject(); }
 
+CashewClock getClock()                  { return execution_clock; }
+
+CuminStack getStack()                   { return execution_stack; }
+
+CashewContext getLookupContext()        { return lookup_context; }      
+
+protected void setLoockupContext(CashewContext ctx)
+{
+   lookup_context = ctx;
+}
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Evaluation methods                                                      */
+/*                                                                              */
+/********************************************************************************/
+
+public void interpret(EvalType et)
+{
+   if (nested_call != null) {
+      try {
+         nested_call.interpret(et);
+       }
+      catch (CuminRunError r) {
+         if (r.getReason() == CuminRunError.Reason.RETURN) {
+            
+          }
+       }
+    }
+}
+
+
+abstract protected void interpretRun(EvalType et);
+
+protected void saveReturn(CashewValue cv)
+{
+   
+}
 
 
 
@@ -113,7 +163,7 @@ JcompProject getCompProjoect()  { return base_project.getJcompProject(); }
 /*                                                                              */
 /********************************************************************************/
 
-protected CashewValue handleCall(CashewClock cc,JcompSymbol method,List<CashewValue> args,
+protected CuminRunner handleCall(CashewClock cc,JcompSymbol method,List<CashewValue> args,
       CallType ctyp)
 {
    CashewValue thisarg = null;
@@ -134,7 +184,7 @@ protected CashewValue handleCall(CashewClock cc,JcompSymbol method,List<CashewVa
 
 
 
-protected CashewValue handleCall(CashewClock cc,JcodeMethod method,List<CashewValue> args,
+protected CuminRunner handleCall(CashewClock cc,JcodeMethod method,List<CashewValue> args,
       CallType ctyp)
 {
    CashewValue thisarg = null;
@@ -152,15 +202,19 @@ protected CashewValue handleCall(CashewClock cc,JcodeMethod method,List<CashewVa
 }
 
 
-private CashewValue doCall(CashewClock cc,MethodDeclaration ast,List<CashewValue> args)
+private CuminRunner doCall(CashewClock cc,MethodDeclaration ast,List<CashewValue> args)
 {
-   return null;
+   CuminRunnerAst rast = new CuminRunnerAst(base_project,cc,ast);
+   
+   return rast;
 }
 
 
-private CashewValue doCall(CashewClock cc,JcodeMethod mthd,List<CashewValue> args)
+private CuminRunner doCall(CashewClock cc,JcodeMethod mthd,List<CashewValue> args)
 {
-   return null;
+   CuminRunnerByteCode rbyt = new CuminRunnerByteCode(base_project,cc,mthd);
+   
+   return rbyt;
 }
 
 private JcompSymbol findTargetMethod(CashewClock cc,JcompSymbol method,
@@ -245,14 +299,6 @@ private static class MethodFinder extends ASTVisitor {
 
 
 
-
-/********************************************************************************/
-/*                                                                              */
-/*      Evaluation methods                                                      */
-/*                                                                              */
-/********************************************************************************/
-
-abstract void interpret(EvalType et);
 
 
 

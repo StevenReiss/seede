@@ -46,7 +46,7 @@ private long            max_time;
 /*                                                                              */
 /********************************************************************************/
 
-CashewClock()
+public CashewClock()
 {
    time_count = 0;
    max_time = 0;

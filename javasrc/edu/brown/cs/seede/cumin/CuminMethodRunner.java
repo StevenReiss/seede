@@ -96,23 +96,9 @@ private CuminMethodRunner(List<CashewValue> params)
 
 void evaluate(EvalType et)
 {
-   setupRunner();
    
 }
 
-
-
-private void setupRunner()
-{
-   if (current_runner != null) return;
-   
-   // first split method into class/method/signature
-   // then determine if class is known or not
-   // if known, find its AST and use AST evaluation
-   // else find the JcodeMethod and use byte code evaluation
-   // set up context
-   // set up initial stack
-}
 
 
 /********************************************************************************/
