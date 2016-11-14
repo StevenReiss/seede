@@ -135,22 +135,29 @@ protected void setLoockupContext(CashewContext ctx)
 /*                                                                              */
 /********************************************************************************/
 
-public void interpret(EvalType et)
+public void interpret(EvalType et) throws CuminRunError
 {
+   CuminRunError ret = null;
+   
    if (nested_call != null) {
       try {
          nested_call.interpret(et);
        }
       catch (CuminRunError r) {
-         if (r.getReason() == CuminRunError.Reason.RETURN) {
-            
+         if (r.getReason() == CuminRunError.Reason.RETURN || 
+              r.getReason() == CuminRunError.Reason.EXCEPTION) {
+            ret = r;
           }
+         else throw r;
        }
     }
+   
+   interpretRun(ret);
 }
 
 
-abstract protected void interpretRun(EvalType et);
+abstract protected void interpretRun(CuminRunError ret) throws CuminRunError;
+
 
 protected void saveReturn(CashewValue cv)
 {

@@ -83,19 +83,13 @@ CuminRunnerByteCode(SesameProject sp,CashewClock clock,
 /*                                                                              */
 /********************************************************************************/
 
-@Override protected void interpretRun(EvalType et)
+@Override protected void interpretRun(CuminRunError r)
 {
    current_instruction = 0;
    try {
       while (current_instruction > 0) {
          evaluateInstruction();
-         if (et == EvalType.STEP) {
-            // check if new line and stop if so
-          }
        }
-    }
-   catch (CuminRunError r) {
-      
     }
    catch (Throwable t) {
       
