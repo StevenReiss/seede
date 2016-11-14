@@ -111,12 +111,12 @@ static {
    op_map.put(InfixExpression.Operator.GREATER,CuminOperator.GTR);
    op_map.put(InfixExpression.Operator.GREATER_EQUALS,CuminOperator.GEQ);
    op_map.put(InfixExpression.Operator.LEFT_SHIFT,CuminOperator.LSH);
-   op_map.put(InfixExpression.Operator.LESS,CuminOperator.LSS); 
+   op_map.put(InfixExpression.Operator.LESS,CuminOperator.LSS);
    op_map.put(InfixExpression.Operator.LESS_EQUALS,CuminOperator.LEQ);
    op_map.put(InfixExpression.Operator.MINUS,CuminOperator.SUB);
    op_map.put(InfixExpression.Operator.NOT_EQUALS,CuminOperator.NEQ);
    op_map.put(InfixExpression.Operator.OR,CuminOperator.OR);
-   op_map.put(InfixExpression.Operator.PLUS,CuminOperator.ADD); 
+   op_map.put(InfixExpression.Operator.PLUS,CuminOperator.ADD);
    op_map.put(InfixExpression.Operator.REMAINDER,CuminOperator.MOD);
    op_map.put(InfixExpression.Operator.RIGHT_SHIFT_SIGNED,CuminOperator.RSH);
    op_map.put(InfixExpression.Operator.RIGHT_SHIFT_UNSIGNED,CuminOperator.RSHU);
@@ -178,7 +178,7 @@ CuminRunnerAst(SesameProject sp,CashewClock cc,ASTNode method,List<CashewValue> 
 	 if (passerror != null) {
 	    evalThrow(current_node,passerror);
 	    passerror = null;
-	  }	
+	  }
 	 else {
 	    evalNode(current_node,afternode);
 	  }
@@ -471,7 +471,7 @@ private void evalNode(ASTNode node,ASTNode afterchild) throws CuminRunError
       default :
 	 SesameLog.logE("Unknown AST node " + current_node);
 	 break;
-	
+
     }
 }
 
@@ -558,8 +558,8 @@ private void evalThrow(ASTNode node,CuminRunError cause) throws CuminRunError
       case ASTNode.VARIABLE_DECLARATION_EXPRESSION :
       case ASTNode.VARIABLE_DECLARATION_FRAGMENT :
       case ASTNode.VARIABLE_DECLARATION_STATEMENT :
-	 break;
-	
+	 throw cause;
+
       case ASTNode.DO_STATEMENT :
 	 visitThrow((DoStatement) node,cause);
 	 break;
@@ -587,11 +587,11 @@ private void evalThrow(ASTNode node,CuminRunError cause) throws CuminRunError
       case ASTNode.WHILE_STATEMENT :
 	 visitThrow((WhileStatement) node,cause);
 	 break;
-	
+
       default :
 	 SesameLog.logE("Unknown AST node " + current_node);
 	 break;
-	
+
     }
 }
 
@@ -1196,7 +1196,7 @@ private void visit(ArrayInitializer n,ASTNode after)
       CashewValue arrval = CashewValue.arrayValue(typ,dim);
       for (int i = dim-1; i >= 0; --i) {
 	 CashewValue cv = execution_stack.pop();
-	 arrval.setIndexValue(execution_clock,i,cv);	
+	 arrval.setIndexValue(execution_clock,i,cv);
        }
       execution_stack.push(arrval);
     }
