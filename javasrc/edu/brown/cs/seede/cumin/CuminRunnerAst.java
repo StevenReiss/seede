@@ -1,21 +1,21 @@
 /********************************************************************************/
-/*                                                                              */
-/*              CuminRunnerAst.java                                             */
-/*                                                                              */
-/*      AST-based code interpreter                                              */
-/*                                                                              */
+/*										*/
+/*		CuminRunnerAst.java						*/
+/*										*/
+/*	AST-based code interpreter						*/
+/*										*/
 /********************************************************************************/
-/*      Copyright 2011 Brown University -- Steven P. Reiss                    */
+/*	Copyright 2011 Brown University -- Steven P. Reiss		      */
 /*********************************************************************************
- *  Copyright 2011, Brown University, Providence, RI.                            *
- *                                                                               *
- *                        All Rights Reserved                                    *
- *                                                                               *
- * This program and the accompanying materials are made available under the      *
+ *  Copyright 2011, Brown University, Providence, RI.				 *
+ *										 *
+ *			  All Rights Reserved					 *
+ *										 *
+ * This program and the accompanying materials are made available under the	 *
  * terms of the Eclipse Public License v1.0 which accompanies this distribution, *
- * and is available at                                                           *
- *      http://www.eclipse.org/legal/epl-v10.html                                *
- *                                                                               *
+ * and is available at								 *
+ *	http://www.eclipse.org/legal/epl-v10.html				 *
+ *										 *
  ********************************************************************************/
 
 /* SVN: $Id$ */
@@ -90,38 +90,38 @@ class CuminRunnerAst extends CuminRunner
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Private Storage                                                         */
-/*                                                                              */
+/*										*/
+/*	Private Storage 							*/
+/*										*/
 /********************************************************************************/
- 
-private ASTNode         method_node;
+
+private ASTNode 	method_node;
 private List<CashewValue> call_args;
 private CuminRunnerAstVisitor runner_visitor;
-private EvalType        eval_type;
-private ASTNode         current_node;
-private ASTNode         next_node;
+private EvalType	eval_type;
+private ASTNode 	current_node;
+private ASTNode 	next_node;
 
 private static Map<Object,CuminOperator> op_map;
 
 static {
    op_map.put(InfixExpression.Operator.AND,CuminOperator.AND);
-   op_map.put(InfixExpression.Operator.DIVIDE,CuminOperator.DIV); 
-   op_map.put(InfixExpression.Operator.EQUALS,CuminOperator.EQL); 
-   op_map.put(InfixExpression.Operator.GREATER,CuminOperator.GTR);  
-   op_map.put(InfixExpression.Operator.GREATER_EQUALS,CuminOperator.GEQ);  
-   op_map.put(InfixExpression.Operator.LEFT_SHIFT,CuminOperator.LSH);  
-   op_map.put(InfixExpression.Operator.LESS,CuminOperator.LSS);  
-   op_map.put(InfixExpression.Operator.LESS_EQUALS,CuminOperator.LEQ);  
-   op_map.put(InfixExpression.Operator.MINUS,CuminOperator.SUB);   
-   op_map.put(InfixExpression.Operator.NOT_EQUALS,CuminOperator.NEQ);  
-   op_map.put(InfixExpression.Operator.OR,CuminOperator.OR);  
-   op_map.put(InfixExpression.Operator.PLUS,CuminOperator.ADD);   
-   op_map.put(InfixExpression.Operator.REMAINDER,CuminOperator.MOD);   
-   op_map.put(InfixExpression.Operator.RIGHT_SHIFT_SIGNED,CuminOperator.RSH);  
-   op_map.put(InfixExpression.Operator.RIGHT_SHIFT_UNSIGNED,CuminOperator.RSHU);  
-   op_map.put(InfixExpression.Operator.TIMES,CuminOperator.MUL);  
-   op_map.put(InfixExpression.Operator.XOR,CuminOperator.XOR); 
+   op_map.put(InfixExpression.Operator.DIVIDE,CuminOperator.DIV);
+   op_map.put(InfixExpression.Operator.EQUALS,CuminOperator.EQL);
+   op_map.put(InfixExpression.Operator.GREATER,CuminOperator.GTR);
+   op_map.put(InfixExpression.Operator.GREATER_EQUALS,CuminOperator.GEQ);
+   op_map.put(InfixExpression.Operator.LEFT_SHIFT,CuminOperator.LSH);
+   op_map.put(InfixExpression.Operator.LESS,CuminOperator.LSS); 
+   op_map.put(InfixExpression.Operator.LESS_EQUALS,CuminOperator.LEQ);
+   op_map.put(InfixExpression.Operator.MINUS,CuminOperator.SUB);
+   op_map.put(InfixExpression.Operator.NOT_EQUALS,CuminOperator.NEQ);
+   op_map.put(InfixExpression.Operator.OR,CuminOperator.OR);
+   op_map.put(InfixExpression.Operator.PLUS,CuminOperator.ADD); 
+   op_map.put(InfixExpression.Operator.REMAINDER,CuminOperator.MOD);
+   op_map.put(InfixExpression.Operator.RIGHT_SHIFT_SIGNED,CuminOperator.RSH);
+   op_map.put(InfixExpression.Operator.RIGHT_SHIFT_UNSIGNED,CuminOperator.RSHU);
+   op_map.put(InfixExpression.Operator.TIMES,CuminOperator.MUL);
+   op_map.put(InfixExpression.Operator.XOR,CuminOperator.XOR);
    op_map.put(PostfixExpression.Operator.INCREMENT,CuminOperator.POSTINCR);
    op_map.put(PostfixExpression.Operator.DECREMENT,CuminOperator.POSTDECR);
    op_map.put(PrefixExpression.Operator.COMPLEMENT,CuminOperator.COMP);
@@ -148,19 +148,19 @@ static {
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Constructors                                                            */
-/*                                                                              */
+/*										*/
+/*	Constructors								*/
+/*										*/
 /********************************************************************************/
 
 CuminRunnerAst(SesameProject sp,CashewClock cc,ASTNode method,List<CashewValue> args)
 {
    super(sp,cc,args);
-   
+
    method_node = method;
    current_node = method_node;
    runner_visitor = new CuminRunnerAstVisitor(this,method);
-   
+
    setupContext();
 }
 
@@ -172,30 +172,30 @@ CuminRunnerAst(SesameProject sp,CashewClock cc,ASTNode method,List<CashewValue> 
 {
    ASTNode afternode = null;
    CuminRunError passerror = err;
-   
+
    for ( ; ; ) {
       try {
-         if (passerror != null) {
-            evalThrow(current_node,passerror);
-            passerror = null;
-          }         
-         else {
-            evalNode(current_node,afternode);
-          }
-         if (next_node == null) {
-            afternode = current_node;
-            current_node = current_node.getParent();
-          }
-         else {
-            current_node = next_node;
-            afternode = null;
-          }
+	 if (passerror != null) {
+	    evalThrow(current_node,passerror);
+	    passerror = null;
+	  }	
+	 else {
+	    evalNode(current_node,afternode);
+	  }
+	 if (next_node == null) {
+	    afternode = current_node;
+	    current_node = current_node.getParent();
+	  }
+	 else {
+	    current_node = next_node;
+	    afternode = null;
+	  }
        }
       catch (CuminRunError r) {
-         if (current_node == method_node) throw r;
-         passerror = r;
-         current_node = current_node.getParent();
-         afternode = null;
+	 if (current_node == method_node) throw r;
+	 passerror = r;
+	 current_node = current_node.getParent();
+	 afternode = null;
        }
     }
 }
@@ -205,9 +205,9 @@ CuminRunnerAst(SesameProject sp,CashewClock cc,ASTNode method,List<CashewValue> 
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Context methods                                                         */
-/*                                                                              */
+/*										*/
+/*	Context methods 							*/
+/*										*/
 /********************************************************************************/
 
 private void setupContext()
@@ -220,7 +220,7 @@ private void setupContext()
       CashewValue nv = CashewValue.createDefaultValue(lty);
       ctx.define(lcl,nv);
     }
-    
+
    JcompSymbol js = JcompAst.getDefinition(method_node);
    if (!js.isStatic()) {
       ctx.define("this",CashewValue.nullValue());
@@ -228,16 +228,16 @@ private void setupContext()
    JcompType cty = js.getClassType();
    for (ASTNode n = method_node; n != null; n = n.getParent()) {
       if (n instanceof TypeDeclaration) {
-         TypeDeclaration td = (TypeDeclaration) n;
-         JcompSymbol sty = JcompAst.getDefinition(td.getName());
-         JcompType ty = JcompAst.getJavaType(td);
-         if (ty != cty && !sty.isStatic()) {
-            String nm = sty.getFullName() + ".this";
-            ctx.define(nm,CashewValue.nullValue());
-          }
+	 TypeDeclaration td = (TypeDeclaration) n;
+	 JcompSymbol sty = JcompAst.getDefinition(td.getName());
+	 JcompType ty = JcompAst.getJavaType(td);
+	 if (ty != cty && !sty.isStatic()) {
+	    String nm = sty.getFullName() + ".this";
+	    ctx.define(nm,CashewValue.nullValue());
+	  }
        }
-    } 
-   
+    }
+
    setLoockupContext(ctx);
 }
 
@@ -245,9 +245,9 @@ private void setupContext()
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Find local variables for a method                                       */
-/*                                                                              */
+/*										*/
+/*	Find local variables for a method					*/
+/*										*/
 /********************************************************************************/
 
 private static class LocalFinder extends ASTVisitor {
@@ -257,40 +257,40 @@ private static class LocalFinder extends ASTVisitor {
    LocalFinder() {
       local_vars = new HashSet<JcompSymbol>();
     }
-   
-   Set<JcompSymbol> getLocalVars()              { return local_vars; }
-   
+
+   Set<JcompSymbol> getLocalVars()		{ return local_vars; }
+
    @Override public void endVisit(SingleVariableDeclaration n) {
       JcompSymbol js = JcompAst.getDefinition(n.getName());
       local_vars.add(js);
     }
-   
+
    @Override public void endVisit(VariableDeclarationFragment n) {
       JcompSymbol js = JcompAst.getDefinition(n.getName());
       local_vars.add(js);
     }
 
-}       // end of inner class LocalFinder
+}	// end of inner class LocalFinder
 
 
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Evauation dispatch methods                                              */
-/*                                                                              */
+/*										*/
+/*	Evauation dispatch methods						*/
+/*										*/
 /********************************************************************************/
 
 private void evalNode(ASTNode node,ASTNode afterchild) throws CuminRunError
 {
    if (node instanceof Statement && afterchild == null) {
       // check for breakpoint
-      // check for step 
+      // check for step
       // check for timeout
     }
-   
+
    next_node = null;
-   
+
    switch (node.getNodeType()) {
       // nodes that can be ignored for interpretation
       case ASTNode.ANNOTATION_TYPE_DECLARATION :
@@ -325,153 +325,153 @@ private void evalNode(ASTNode node,ASTNode afterchild) throws CuminRunError
       case ASTNode.TYPE_PARAMETER :
       case ASTNode.UNION_TYPE :
       case ASTNode.WILDCARD_TYPE :
-         break;
+	 break;
       case ASTNode.ARRAY_ACCESS :
-         visit((ArrayAccess) node,afterchild);
-         break;
+	 visit((ArrayAccess) node,afterchild);
+	 break;
       case ASTNode.ARRAY_CREATION :
-         break;
+	 break;
       case ASTNode.ARRAY_INITIALIZER :
-         visit((ArrayInitializer) node,afterchild);
-         break;
+	 visit((ArrayInitializer) node,afterchild);
+	 break;
       case ASTNode.ASSERT_STATEMENT :
-         visit((AssertStatement) node,afterchild);
-         break;
+	 visit((AssertStatement) node,afterchild);
+	 break;
       case ASTNode.ASSIGNMENT :
-         visit((Assignment) node,afterchild);
-         break;
+	 visit((Assignment) node,afterchild);
+	 break;
       case ASTNode.BLOCK :
-         visit((Block) node,afterchild);
-         break;
+	 visit((Block) node,afterchild);
+	 break;
       case ASTNode.BOOLEAN_LITERAL :
-         visit((BooleanLiteral) node);
-         break;
+	 visit((BooleanLiteral) node);
+	 break;
       case ASTNode.BREAK_STATEMENT :
-         visit((BreakStatement) node);
-         break;
+	 visit((BreakStatement) node);
+	 break;
       case ASTNode.CAST_EXPRESSION :
-         visit((CastExpression) node,afterchild);
-         break;
+	 visit((CastExpression) node,afterchild);
+	 break;
       case ASTNode.CATCH_CLAUSE :
-         break;
+	 break;
       case ASTNode.CHARACTER_LITERAL :
-         visit((CharacterLiteral) node);
-         break;
+	 visit((CharacterLiteral) node);
+	 break;
       case ASTNode.CLASS_INSTANCE_CREATION :
-         break;
+	 break;
       case ASTNode.CONDITIONAL_EXPRESSION :
-         visit((ConditionalExpression) node,afterchild);
-         break;
+	 visit((ConditionalExpression) node,afterchild);
+	 break;
       case ASTNode.CONSTRUCTOR_INVOCATION :
-         break;
+	 break;
       case ASTNode.CONTINUE_STATEMENT :
-         visit((ContinueStatement) node);
-         break;
+	 visit((ContinueStatement) node);
+	 break;
       case ASTNode.DO_STATEMENT :
-         visit((DoStatement) node,afterchild);
-         break;
+	 visit((DoStatement) node,afterchild);
+	 break;
       case ASTNode.ENHANCED_FOR_STATEMENT :
-         break;
+	 break;
       case ASTNode.EXPRESSION_STATEMENT :
-         visit((ExpressionStatement) node,afterchild);
-         break;
+	 visit((ExpressionStatement) node,afterchild);
+	 break;
       case ASTNode.FIELD_ACCESS :
-         visit((FieldAccess) node,afterchild);
-         break;
+	 visit((FieldAccess) node,afterchild);
+	 break;
       case ASTNode.FIELD_DECLARATION :
-         visit((FieldDeclaration) node,afterchild);
-         break;
+	 visit((FieldDeclaration) node,afterchild);
+	 break;
       case ASTNode.FOR_STATEMENT :
-         visit((ForStatement) node,afterchild);
-         break;
+	 visit((ForStatement) node,afterchild);
+	 break;
       case ASTNode.IF_STATEMENT :
-         visit((IfStatement) node,afterchild);
-         break;
+	 visit((IfStatement) node,afterchild);
+	 break;
       case ASTNode.INFIX_EXPRESSION :
-         visit((InfixExpression) node,afterchild);
-         break;
+	 visit((InfixExpression) node,afterchild);
+	 break;
       case ASTNode.INITIALIZER :
-         break;
+	 break;
       case ASTNode.INSTANCEOF_EXPRESSION :
-         visit((InstanceofExpression) node,afterchild);
-         break;
+	 visit((InstanceofExpression) node,afterchild);
+	 break;
       case ASTNode.LABELED_STATEMENT :
-         visit((LabeledStatement) node,afterchild);
-         break;
+	 visit((LabeledStatement) node,afterchild);
+	 break;
       case ASTNode.METHOD_DECLARATION :
-         break;
+	 break;
       case ASTNode.METHOD_INVOCATION :
-         break;
+	 break;
       case ASTNode.NULL_LITERAL :
-         visit((NullLiteral) node);
-         break;
+	 visit((NullLiteral) node);
+	 break;
       case ASTNode.NUMBER_LITERAL :
-         visit((NumberLiteral) node);
-         break;
+	 visit((NumberLiteral) node);
+	 break;
       case ASTNode.PARENTHESIZED_EXPRESSION :
-         visit((ParenthesizedExpression) node,afterchild);
-         break;
+	 visit((ParenthesizedExpression) node,afterchild);
+	 break;
       case ASTNode.POSTFIX_EXPRESSION :
-         visit((PostfixExpression) node,afterchild);
-         break;
+	 visit((PostfixExpression) node,afterchild);
+	 break;
       case ASTNode.PREFIX_EXPRESSION :
-         visit((PrefixExpression) node,afterchild);
-         break;
+	 visit((PrefixExpression) node,afterchild);
+	 break;
       case ASTNode.QUALIFIED_NAME :
-         visit((QualifiedName) node,afterchild);
-         break;
+	 visit((QualifiedName) node,afterchild);
+	 break;
       case ASTNode.RETURN_STATEMENT :
-         break;
+	 break;
       case ASTNode.SIMPLE_NAME :
-         visit((SimpleName) node);
-         break;
+	 visit((SimpleName) node);
+	 break;
       case ASTNode.SINGLE_VARIABLE_DECLARATION :
-         visit((SingleVariableDeclaration) node,afterchild);
-         break;
+	 visit((SingleVariableDeclaration) node,afterchild);
+	 break;
       case ASTNode.STRING_LITERAL :
-         visit((StringLiteral) node);
-         break;
+	 visit((StringLiteral) node);
+	 break;
       case ASTNode.SUPER_CONSTRUCTOR_INVOCATION :
-         break;
+	 break;
       case ASTNode.SUPER_FIELD_ACCESS :
-         break;
+	 break;
       case ASTNode.SUPER_METHOD_INVOCATION :
-         break;
+	 break;
       case ASTNode.SWITCH_CASE :
-         visit((SwitchCase) node,afterchild);
-         break;
+	 visit((SwitchCase) node,afterchild);
+	 break;
       case ASTNode.SWITCH_STATEMENT :
-         visit((SwitchStatement) node,afterchild);
-         break;
+	 visit((SwitchStatement) node,afterchild);
+	 break;
       case ASTNode.SYNCHRONIZED_STATEMENT :
-         break;
+	 break;
       case ASTNode.THIS_EXPRESSION :
-         visit((ThisExpression) node);
-         break;
+	 visit((ThisExpression) node);
+	 break;
       case ASTNode.THROW_STATEMENT :
-         visit((ThrowStatement) node,afterchild);
-         break;
+	 visit((ThrowStatement) node,afterchild);
+	 break;
       case ASTNode.TRY_STATEMENT :
-         visit((TryStatement) node,afterchild);
-         break;
+	 visit((TryStatement) node,afterchild);
+	 break;
       case ASTNode.TYPE_LITERAL :
-         visit((TypeLiteral) node);
-         break;
+	 visit((TypeLiteral) node);
+	 break;
       case ASTNode.VARIABLE_DECLARATION_EXPRESSION :
-         visit((VariableDeclarationExpression) node,afterchild);
-         break;
+	 visit((VariableDeclarationExpression) node,afterchild);
+	 break;
       case ASTNode.VARIABLE_DECLARATION_FRAGMENT :
-         visit((VariableDeclarationFragment) node,afterchild);
-         break;
+	 visit((VariableDeclarationFragment) node,afterchild);
+	 break;
       case ASTNode.VARIABLE_DECLARATION_STATEMENT :
-         break;
+	 break;
       case ASTNode.WHILE_STATEMENT :
-         visit((WhileStatement) node,afterchild);
-         break;
+	 visit((WhileStatement) node,afterchild);
+	 break;
       default :
-         SesameLog.logE("Unknown AST node " + current_node);
-         break;
-         
+	 SesameLog.logE("Unknown AST node " + current_node);
+	 break;
+	
     }
 }
 
@@ -481,9 +481,9 @@ private void evalNode(ASTNode node,ASTNode afterchild) throws CuminRunError
 private void evalThrow(ASTNode node,CuminRunError cause) throws CuminRunError
 {
    next_node = null;
-   
+
    // need to restore stack in each of these
-   
+
    switch (node.getNodeType()) {
       // nodes that can be ignored for catching exceptions
       case ASTNode.ANNOTATION_TYPE_DECLARATION :
@@ -558,49 +558,49 @@ private void evalThrow(ASTNode node,CuminRunError cause) throws CuminRunError
       case ASTNode.VARIABLE_DECLARATION_EXPRESSION :
       case ASTNode.VARIABLE_DECLARATION_FRAGMENT :
       case ASTNode.VARIABLE_DECLARATION_STATEMENT :
-         break;
-         
+	 break;
+	
       case ASTNode.DO_STATEMENT :
-         visitThrow((DoStatement) node,cause);
-         break;
+	 visitThrow((DoStatement) node,cause);
+	 break;
       case ASTNode.ENHANCED_FOR_STATEMENT :
-         break;
+	 break;
       case ASTNode.FOR_STATEMENT :
-         visitThrow((ForStatement) node,cause);
-         break;
+	 visitThrow((ForStatement) node,cause);
+	 break;
       case ASTNode.METHOD_DECLARATION :
-         break;
+	 break;
       case ASTNode.METHOD_INVOCATION :
-         break;
+	 break;
       case ASTNode.SUPER_CONSTRUCTOR_INVOCATION :
-         break;
+	 break;
       case ASTNode.SUPER_METHOD_INVOCATION :
-         break;
+	 break;
       case ASTNode.SWITCH_STATEMENT :
-         visitThrow((SwitchStatement) node,cause);
-         break;
+	 visitThrow((SwitchStatement) node,cause);
+	 break;
       case ASTNode.SYNCHRONIZED_STATEMENT :
-         break;
+	 break;
       case ASTNode.TRY_STATEMENT :
-         visitThrow((TryStatement) node,cause);
-         break;
+	 visitThrow((TryStatement) node,cause);
+	 break;
       case ASTNode.WHILE_STATEMENT :
-         visitThrow((WhileStatement) node,cause);
-         break;
-         
+	 visitThrow((WhileStatement) node,cause);
+	 break;
+	
       default :
-         SesameLog.logE("Unknown AST node " + current_node);
-         break;
-         
+	 SesameLog.logE("Unknown AST node " + current_node);
+	 break;
+	
     }
 }
 
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Constant Handling                                                       */
-/*                                                                              */
+/*										*/
+/*	Constant Handling							*/
+/*										*/
 /********************************************************************************/
 
 private void visit(BooleanLiteral v)
@@ -629,13 +629,13 @@ private void visit(NumberLiteral v)
    switch (jt.getName()) {
       case "float" :
       case "double" :
-         double dv = Double.parseDouble(v.getToken());
-         execution_stack.push(CashewValue.numericValue(jt,dv));
-         break;
+	 double dv = Double.parseDouble(v.getToken());
+	 execution_stack.push(CashewValue.numericValue(jt,dv));
+	 break;
       default :
-         long lv = Long.parseLong(v.getToken());
-         execution_stack.push(CashewValue.numericValue(jt,lv));
-         break;
+	 long lv = Long.parseLong(v.getToken());
+	 execution_stack.push(CashewValue.numericValue(jt,lv));
+	 break;
     }
 }
 
@@ -657,9 +657,9 @@ private void visit(TypeLiteral v)
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Expression handling                                                     */
-/*                                                                              */
+/*										*/
+/*	Expression handling							*/
+/*										*/
 /********************************************************************************/
 
 private void visit(ArrayAccess v,ASTNode after)
@@ -710,10 +710,10 @@ private void visit(ConditionalExpression v,ASTNode after)
    else if (after == v.getExpression()) {
       CashewValue cv = execution_stack.pop();
       if (cv.getBoolean(execution_clock)) {
-         next_node = v.getThenExpression();
+	 next_node = v.getThenExpression();
        }
       else {
-         next_node = v.getElseExpression();
+	 next_node = v.getElseExpression();
        }
     }
 }
@@ -731,38 +731,38 @@ private void visit(FieldAccess v,ASTNode after)
 }
 
 
-private void visit(InfixExpression v,ASTNode after) 
+private void visit(InfixExpression v,ASTNode after)
 {
    if (after == null) next_node = v.getLeftOperand();
    else if (after == v.getLeftOperand()) {
       if (v.getOperator() == InfixExpression.Operator.CONDITIONAL_AND) {
-         CashewValue v1 = execution_stack.pop();
-         if (v1.getBoolean(execution_clock)) {
-            next_node = v.getRightOperand();
-          }
-         else {
-            execution_stack.push(v1);
-          }
+	 CashewValue v1 = execution_stack.pop();
+	 if (v1.getBoolean(execution_clock)) {
+	    next_node = v.getRightOperand();
+	  }
+	 else {
+	    execution_stack.push(v1);
+	  }
        }
       else if (v.getOperator() == InfixExpression.Operator.CONDITIONAL_OR) {
-         CashewValue v1 = execution_stack.pop();
-         if (v1.getBoolean(execution_clock)) {
-            execution_stack.push(v1);
-          }
-         else {
-            next_node = v.getRightOperand();
-          }
+	 CashewValue v1 = execution_stack.pop();
+	 if (v1.getBoolean(execution_clock)) {
+	    execution_stack.push(v1);
+	  }
+	 else {
+	    next_node = v.getRightOperand();
+	  }
        }
       else next_node = v.getRightOperand();
     }
    else {
       if (v.getOperator() != InfixExpression.Operator.CONDITIONAL_AND &&
-            v.getOperator() != InfixExpression.Operator.CONDITIONAL_OR) {  
-         CashewValue v2 = execution_stack.pop();
-         CashewValue v1 = execution_stack.pop();
-         CuminOperator op = op_map.get(v.getOperator());
-         CashewValue v0 = CuminEvaluator.evaluate(execution_clock,op,v1,v2);
-         execution_stack.push(v0);
+	    v.getOperator() != InfixExpression.Operator.CONDITIONAL_OR) {
+	 CashewValue v2 = execution_stack.pop();
+	 CashewValue v1 = execution_stack.pop();
+	 CuminOperator op = op_map.get(v.getOperator());
+	 CashewValue v0 = CuminEvaluator.evaluate(execution_clock,op,v1,v2);
+	 execution_stack.push(v0);
        }
     }
 }
@@ -795,7 +795,7 @@ private void visit(SimpleName v)
 }
 
 
-private void visit(QualifiedName v,ASTNode after) 
+private void visit(QualifiedName v,ASTNode after)
 {
    if (after == null) next_node = v.getName();
    // could be field access -- need to handle
@@ -850,8 +850,8 @@ private void visit(VariableDeclarationExpression v,ASTNode after)
 {
    for (Object o : v.fragments()) {
       if (after == null) {
-         next_node = (ASTNode) o;
-         return;
+	 next_node = (ASTNode) o;
+	 return;
        }
       else if (after == o) after = null;
     }
@@ -859,9 +859,9 @@ private void visit(VariableDeclarationExpression v,ASTNode after)
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Statement methods                                                       */
-/*                                                                              */
+/*										*/
+/*	Statement methods							*/
+/*										*/
 /********************************************************************************/
 
 private void visit(AssertStatement s,ASTNode after)
@@ -869,7 +869,7 @@ private void visit(AssertStatement s,ASTNode after)
    if (after == null) next_node = s.getExpression();
    else {
       if (!execution_stack.pop().getBoolean(execution_clock)) {
-         // throw assertion exception
+	 // throw assertion exception
        }
     }
 }
@@ -917,14 +917,14 @@ private void visitThrow(DoStatement s,CuminRunError r)
    String lbl = r.getMessage();
    switch (r.getReason()) {
       case BREAK :
-         if (checkLabel(s,lbl)) break;
-         else throw r;
+	 if (checkLabel(s,lbl)) break;
+	 else throw r;
       case CONTINUE :
-         if (checkLabel(s,lbl)) next_node = s.getExpression();
-         else throw r;
-         break;
+	 if (checkLabel(s,lbl)) next_node = s.getExpression();
+	 else throw r;
+	 break;
       default :
-         throw r;
+	 throw r;
     }
 }
 
@@ -943,24 +943,24 @@ private void visit(ForStatement s,ASTNode after)
 {
    StructuralPropertyDescriptor spd = null;
    if (after != null) spd = after.getLocationInParent();
-   
+
    if (after != null && after == s.getExpression()) {
       if (execution_stack.pop().getBoolean(execution_clock)) {
-         next_node = s.getBody();
+	 next_node = s.getBody();
        }
       else return;
     }
-   
+
    if (after == null || spd == ForStatement.INITIALIZERS_PROPERTY) {
       int idx = 0;
       List<?> inits = s.initializers();
       if (after != null) {
-         idx = inits.indexOf(after)+1;
-         if (idx == 0) idx = inits.size();
+	 idx = inits.indexOf(after)+1;
+	 if (idx == 0) idx = inits.size();
        }
       if (idx < inits.size()) {
-         next_node = (ASTNode) inits.get(idx);
-         return;
+	 next_node = (ASTNode) inits.get(idx);
+	 return;
        }
     }
    if (after == s.getBody() || spd == ForStatement.UPDATERS_PROPERTY) {
@@ -968,8 +968,8 @@ private void visit(ForStatement s,ASTNode after)
       int idx = 0;
       if (after != s.getBody()) idx = updts.indexOf(after)+1;
       if (idx < updts.size()) {
-         next_node = (ASTNode) updts.get(idx);
-         return;
+	 next_node = (ASTNode) updts.get(idx);
+	 return;
        }
     }
    if (s.getExpression() == null) next_node = s.getBody();
@@ -983,17 +983,17 @@ private void visitThrow(ForStatement s,CuminRunError r)
    String lbl = r.getMessage();
    switch (r.getReason()) {
       case BREAK :
-         if (checkLabel(s,lbl)) break;
-         else throw r;
+	 if (checkLabel(s,lbl)) break;
+	 else throw r;
       case CONTINUE :
-         if (checkLabel(s,lbl)) {
-            if (s.getExpression() != null) next_node = s.getExpression();
-            else next_node = s.getBody();
-          }
-         else throw r;
-         break;
+	 if (checkLabel(s,lbl)) {
+	    if (s.getExpression() != null) next_node = s.getExpression();
+	    else next_node = s.getBody();
+	  }
+	 else throw r;
+	 break;
       default :
-         throw r;
+	 throw r;
     }
 }
 
@@ -1004,10 +1004,10 @@ private void visit(IfStatement s,ASTNode after)
    if (after == null) next_node = s.getExpression();
    else if (after == s.getExpression()) {
       if (execution_stack.pop().getBoolean(execution_clock)) {
-         next_node = s.getThenStatement();
+	 next_node = s.getThenStatement();
        }
       else if (s.getElseStatement() != null) {
-         next_node = s.getElseStatement();
+	 next_node = s.getElseStatement();
        }
     }
 }
@@ -1023,23 +1023,23 @@ private void visit(SwitchStatement s,ASTNode after)
    if (after == null) {
       next_node = s.getExpression();
       return;
-    }  
-   
+    }
+
    List<?> stmts = s.statements();
-   
+
    if (after != null && after instanceof SwitchCase) {
       CashewValue cv = execution_stack.pop();
       CashewValue sv = execution_stack.pop();
       // compare cv and sv correctly here
       int idx = stmts.indexOf(after) + 1;
       if (cv == sv) {
-         while (idx < stmts.size()) {
-            Statement stmt = (Statement) stmts.get(idx);
-            if (stmt instanceof SwitchCase) continue;
-            next_node = stmt;
-            break;
-          }
-         return;
+	 while (idx < stmts.size()) {
+	    Statement stmt = (Statement) stmts.get(idx);
+	    if (stmt instanceof SwitchCase) continue;
+	    next_node = stmt;
+	    break;
+	  }
+	 return;
        }
       execution_stack.push(sv);
     }
@@ -1047,35 +1047,35 @@ private void visit(SwitchStatement s,ASTNode after)
       int idx = 0;
       if (after != s.getExpression()) idx = stmts.indexOf(after)+1;
       while (idx < stmts.size()) {
-         Statement stmt = (Statement) stmts.get(idx);
-         if (stmt instanceof SwitchCase) {
-            SwitchCase sc = (SwitchCase) stmt;
-            if (!sc.isDefault()) {
-               next_node = stmt;
-               return;
-             }
-          }
+	 Statement stmt = (Statement) stmts.get(idx);
+	 if (stmt instanceof SwitchCase) {
+	    SwitchCase sc = (SwitchCase) stmt;
+	    if (!sc.isDefault()) {
+	       next_node = stmt;
+	       return;
+	     }
+	  }
        }
       execution_stack.pop();
       idx = 0;
       while (idx < stmts.size()) {
-         Statement stmt = (Statement) stmts.get(idx);
-         if (stmt instanceof SwitchCase) {
-            SwitchCase sc = (SwitchCase) stmt;
-            if (sc.isDefault()) {
-               ++idx;
-               while (idx < stmts.size()) {
-                  stmt = (Statement) stmts.get(idx);
-                  if (stmt instanceof SwitchCase) continue;
-                  next_node = stmt;
-                  return;
-                }
-             }
-          } 
+	 Statement stmt = (Statement) stmts.get(idx);
+	 if (stmt instanceof SwitchCase) {
+	    SwitchCase sc = (SwitchCase) stmt;
+	    if (sc.isDefault()) {
+	       ++idx;
+	       while (idx < stmts.size()) {
+		  stmt = (Statement) stmts.get(idx);
+		  if (stmt instanceof SwitchCase) continue;
+		  next_node = stmt;
+		  return;
+		}
+	     }
+	  }
        }
       return;
     }
-   
+
    int next = stmts.indexOf(after)+1;
    while (next < stmts.size()) {
       Statement ns = (Statement) stmts.get(next);
@@ -1092,10 +1092,10 @@ private void visitThrow(SwitchStatement s,CuminRunError r)
    String lbl = r.getMessage();
    switch (r.getReason()) {
       case BREAK :
-         if (checkLabel(s,lbl)) return;
-         else throw r;
+	 if (checkLabel(s,lbl)) return;
+	 else throw r;
       default :
-         throw r;
+	 throw r;
     }
 }
 
@@ -1136,12 +1136,12 @@ private void visitThrow(TryStatement s,CuminRunError r)
       SingleVariableDeclaration svd = cc.getException();
       JcompType ctype = JcompAst.getJavaType(svd.getType());
       if (etyp.isCompatibleWith(ctype)) {
-         execution_stack.push(r.getValue());
-         next_node = cc;
-         return;
+	 execution_stack.push(r.getValue());
+	 next_node = cc;
+	 return;
        }
     }
-   throw r;  
+   throw r;
 }
 
 
@@ -1162,13 +1162,14 @@ private void visitThrow(WhileStatement s,CuminRunError r)
    String lbl = r.getMessage();
    switch (r.getReason()) {
       case BREAK :
-         if (checkLabel(s,lbl)) return;
-         else throw r;
-         case CONTINUE :
-         if (checkLabel(s,lbl)) next_node = s.getExpression();
-         else throw r;
+	 if (checkLabel(s,lbl)) return;
+	 else throw r;
+      case CONTINUE :
+	 if (checkLabel(s,lbl)) next_node = s.getExpression();
+	 else throw r;
+	 break;
       default :
-         throw r;
+	 throw r;
     }
 }
 
@@ -1176,9 +1177,9 @@ private void visitThrow(WhileStatement s,CuminRunError r)
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Declaration handling                                                    */
-/*                                                                              */
+/*										*/
+/*	Declaration handling							*/
+/*										*/
 /********************************************************************************/
 
 private void visit(ArrayInitializer n,ASTNode after)
@@ -1191,11 +1192,11 @@ private void visit(ArrayInitializer n,ASTNode after)
     }
    else {
       int dim = exprs.size();
-      JcompType typ = JcompAst.getExprType(n); 
+      JcompType typ = JcompAst.getExprType(n);
       CashewValue arrval = CashewValue.arrayValue(typ,dim);
       for (int i = dim-1; i >= 0; --i) {
-         CashewValue cv = execution_stack.pop();
-         arrval.setIndexValue(execution_clock,i,cv);         
+	 CashewValue cv = execution_stack.pop();
+	 arrval.setIndexValue(execution_clock,i,cv);	
        }
       execution_stack.push(arrval);
     }
@@ -1214,19 +1215,19 @@ private void visit(FieldDeclaration n,ASTNode after)
 
 
 private void visit(SingleVariableDeclaration n,ASTNode after)
-{  
+{
    if (after == null && n.getInitializer() != null) next_node = n.getInitializer();
    else {
       ASTNode par = n.getParent();
       if (par instanceof MethodDeclaration) {
-         // handle formal parameters
+	 // handle formal parameters
        }
       else if (par instanceof CatchClause) {
-         // handle exception
+	 // handle exception
        }
       else {
-         JcompSymbol js = JcompAst.getDefinition(n.getName());
-         handleInitialization(js,n.getInitializer());
+	 JcompSymbol js = JcompAst.getDefinition(n.getName());
+	 handleInitialization(js,n.getInitializer());
        }
     }
 }
@@ -1245,9 +1246,9 @@ private void visit(VariableDeclarationFragment n,ASTNode after)
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Utility methods                                                         */
-/*                                                                              */
+/*										*/
+/*	Utility methods 							*/
+/*										*/
 /********************************************************************************/
 
 private boolean checkLabel(Statement s,String lbl)
@@ -1277,7 +1278,7 @@ private void handleInitialization(JcompSymbol js,ASTNode init)
 
 
 
-}       // end of class CuminRunnerAst
+}	// end of class CuminRunnerAst
 
 
 
