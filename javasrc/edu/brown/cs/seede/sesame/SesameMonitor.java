@@ -27,11 +27,14 @@ package edu.brown.cs.seede.sesame;
 import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 
+import org.eclipse.jdt.core.dom.ASTNode;
 import org.w3c.dom.Element;
 
+import edu.brown.cs.ivy.jcomp.JcompSymbol;
 import edu.brown.cs.ivy.mint.MintArguments;
 import edu.brown.cs.ivy.mint.MintControl;
 import edu.brown.cs.ivy.mint.MintDefaultReply;
@@ -42,6 +45,8 @@ import edu.brown.cs.ivy.mint.MintConstants.MintSyncMode;
 import edu.brown.cs.ivy.mint.MintConstants;
 import edu.brown.cs.ivy.xml.IvyXml;
 import edu.brown.cs.ivy.xml.IvyXmlWriter;
+import edu.brown.cs.seede.cashew.CashewValue;
+import edu.brown.cs.seede.cumin.CuminRunner;
 
 
 
@@ -58,6 +63,7 @@ class SesameMonitor implements SesameConstants
 private SesameMain		sesame_control;
 private MintControl		mint_control;
 private boolean 		is_done;
+private Map<String,SesameSession> session_map;
 private Map<String,EvalData>	eval_handlers;
 
 
@@ -74,6 +80,7 @@ SesameMonitor(SesameMain sm)
    sesame_control = sm;
    is_done = false;
    eval_handlers = new HashMap<String,EvalData>();
+   session_map = new HashMap<String,SesameSession>();
 
    mint_control = MintControl.create(sm.getMintId(),MintSyncMode.ONLY_REPLIES
    );
@@ -228,6 +235,24 @@ private void handleBegin(String sid,Element xml,IvyXmlWriter xw) throws SesameEx
    xw.begin("SESSION");
    xw.field("ID",ss.getSessionId());
    xw.end();
+   session_map.put(sid,ss);
+}
+
+
+private void handleExec(String sid,IvyXmlWriter xw) throws SesameException
+{
+   SesameSession ss = session_map.get(sid);
+   if (ss == null) throw new SesameException("Session " + sid + " not found");
+   ASTNode mthd = ss.getCallMethod();
+   List<CashewValue> args = ss.getCallArgs();
+   CuminRunner cr = CuminRunner.createRunner(ss.getProject(),mthd,args);
+}
+
+
+private void handleRemove(String sid) throws SesameException
+{
+   SesameSession ss = session_map.remove(sid);
+   if (ss == null) throw new SesameException("Session " + sid + " not found");
 }
 
 
@@ -345,6 +370,12 @@ private String processCommand(String cmd,String sid,Element e) throws SesameExce
          break;
       case "BEGIN" :
          handleBegin(sid,IvyXml.getChild(e,"SESSION"),xw);
+         break;
+      case "EXEC" :
+         handleExec(sid,xw);
+         break;
+      case "REMOVE" :
+         handleRemove(sid);
          break;
       case "ADDFILE" :
          break;

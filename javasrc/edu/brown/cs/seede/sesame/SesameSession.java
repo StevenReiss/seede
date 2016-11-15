@@ -25,14 +25,19 @@
 package edu.brown.cs.seede.sesame;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import org.eclipse.jdt.core.dom.ASTNode;
 import org.w3c.dom.Element;
 
+import edu.brown.cs.ivy.jcomp.JcompAst;
+import edu.brown.cs.ivy.jcomp.JcompSymbol;
 import edu.brown.cs.ivy.xml.IvyXml;
+import edu.brown.cs.seede.cashew.CashewValue;
 
-abstract class SesameSession implements SesameConstants
+public abstract class SesameSession implements SesameConstants
 {
 
 
@@ -107,9 +112,26 @@ protected SesameSession(SesameMain sm,String sid,Element xml)
 /*                                                                              */
 /********************************************************************************/
 
-String getSessionId()                   { return session_id; }
+public String getSessionId()                    { return session_id; }
 
-SesameProject getProject()              { return for_project; }
+public SesameProject getProject()               { return for_project; }
+
+public ASTNode getCallMethod()   
+{
+   for (SesameLocation loc : location_map.values()) {
+      if (loc.isActive()) {
+         // need to find AST for the method
+         // need to find JcompSymbol for the method
+         SesameFile sf = loc.getFile();
+         ASTNode root = sf.getResolvedAst(for_project);
+         ASTNode mnode = JcompAst.findNodeAtOffset(root,loc.getStartPositiion().getOffset());
+         return mnode;
+       }
+    }
+   return null;
+}
+
+public List<CashewValue> getCallArgs()          { return null; }
 
 
 

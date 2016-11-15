@@ -37,10 +37,11 @@ class CuminRunError extends Error
 /********************************************************************************/
 
 enum Reason { ERROR, EXCEPTION, BREAKPOINT, TIMEOUT, 
-   STEP_END, BREAK, CONTINUE, RETURN };
+   STEP_END, BREAK, CONTINUE, RETURN, CALL };
 
 private Reason          throw_reason;
 private CashewValue     associated_value;
+private CuminRunner     call_value;
 
 private final static long serialVersionUID = 1;
 
@@ -58,6 +59,7 @@ CuminRunError(Reason r,String msg,Throwable cause,CashewValue v)
    
    throw_reason = r;
    associated_value = v;
+   call_value = null;
 }
 
 CuminRunError(Reason r)
@@ -84,6 +86,13 @@ CuminRunError(Reason r,CashewValue v)
 }
 
 
+CuminRunError(CuminRunner r)
+{
+   this(Reason.CALL);
+   call_value = r;
+}
+
+
 /********************************************************************************/
 /*                                                                              */
 /*      Access methods                                                          */
@@ -93,6 +102,9 @@ CuminRunError(Reason r,CashewValue v)
 Reason getReason()                      { return throw_reason; }
 
 CashewValue getValue()                  { return associated_value; }
+
+CuminRunner getCallRunner()             { return call_value; }
+
 
 
 }       // end of class CuminRunError

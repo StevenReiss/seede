@@ -97,6 +97,10 @@ SesameLocation(SesameMain sm,SesameProject sp,Element xml)
 
 String getId()                  { return location_id; }
 SesameFile getFile()            { return sesame_file; }
+boolean isActive()              { return is_active; }
+String getMethodName()          { return method_name;} 
+int getLineNumber()             { return line_number; }
+Position getStartPositiion()    { return start_position; }
 
 
 /********************************************************************************/

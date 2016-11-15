@@ -67,6 +67,20 @@ SesameSessionTest(SesameMain sm,String sid,Element xml) throws SesameException
 
 /********************************************************************************/
 /*                                                                              */
+/*      Access methods                                                          */
+/*                                                                              */
+/********************************************************************************/
+
+@Override public List<CashewValue> getCallArgs()
+{
+   return test_case.getArgs();
+}
+
+
+
+
+/********************************************************************************/
+/*                                                                              */
 /*      Holder of the test case                                                 */
 /*                                                                              */
 /********************************************************************************/
@@ -89,6 +103,8 @@ private class TestCase {
          throw new SesameException("Illebal value",e);
        }
     }
+   
+   List<CashewValue> getArgs()          { return test_args; }
    
 }       // end of inner class TestCase
 
