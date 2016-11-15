@@ -40,6 +40,7 @@ import edu.brown.cs.ivy.jcomp.JcompControl;
 import edu.brown.cs.ivy.jcomp.JcompProject;
 import edu.brown.cs.ivy.jcomp.JcompSemantics;
 import edu.brown.cs.ivy.jcomp.JcompSource;
+import edu.brown.cs.seede.acorn.AcornLog;
 
 
 class SesameFile implements SesameConstants, JcompSource
@@ -56,8 +57,6 @@ private IDocument               edit_document;
 private File                    for_file;
 private Map<String,ASTNode>     ast_roots;
 
-
-private static JcompControl     jcomp_base = new JcompControl();
 
 private static final String NO_PROJECT = "*NOPROJECT*";
 
@@ -91,7 +90,7 @@ void editFile(int len,int off,String txt,boolean complete)
       edit_document.replace(off,len,txt);
     }
    catch (BadLocationException e) {
-      SesameLog.logE("Problem doing file edit",e);
+      AcornLog.logE("Problem doing file edit",e);
     }
    
    synchronized (ast_roots) {
@@ -141,7 +140,7 @@ synchronized ASTNode getResolvedAst(SesameProject sp)
    
    JcompProject proj = sp.getJcompProject();
    proj.resolve();
-   JcompSemantics semdata = jcomp_base.getSemanticData(this);
+   JcompSemantics semdata = SesameMain.getJcompBase().getSemanticData(this);
    an = semdata.getAstNode();
    
    synchronized (ast_roots) {

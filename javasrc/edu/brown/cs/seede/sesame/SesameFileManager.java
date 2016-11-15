@@ -29,6 +29,7 @@ import java.util.Map;
 import org.w3c.dom.Element;
 
 import edu.brown.cs.ivy.xml.IvyXml;
+import edu.brown.cs.seede.acorn.AcornLog;
 
 
 
@@ -79,7 +80,7 @@ SesameFile openFile(File f)
    
    Element filerslt = sesame_control.getXmlReply("STARTFILE",null,args,null,0);
    if (!IvyXml.isElement(filerslt,"RESULT")) {
-      SesameLog.logE("Can't open file " + f);
+      AcornLog.logE("Can't open file " + f);
       return null;
     }
    String linesep = IvyXml.getAttrString(filerslt,"LINESEP");

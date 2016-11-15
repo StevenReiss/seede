@@ -26,7 +26,6 @@ package edu.brown.cs.seede.cumin;
 
 import java.util.Stack;
 
-import edu.brown.cs.seede.cashew.CashewContext;
 import edu.brown.cs.seede.cashew.CashewValue;
 
 class CuminStack implements CuminConstants
@@ -40,7 +39,6 @@ class CuminStack implements CuminConstants
 /********************************************************************************/
 
 private Stack<Object>       execution_stack;
-private CashewContext       lookup_context;
 
 /********************************************************************************/
 /*                                                                              */
@@ -51,7 +49,6 @@ private CashewContext       lookup_context;
 CuminStack()
 {
    execution_stack = new Stack<>();
-   lookup_context = null;
 }
 
 

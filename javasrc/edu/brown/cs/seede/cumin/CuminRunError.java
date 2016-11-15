@@ -26,7 +26,7 @@ package edu.brown.cs.seede.cumin;
 
 import edu.brown.cs.seede.cashew.CashewValue;
 
-class CuminRunError extends Error
+public class CuminRunError extends Error
 {
 
 
@@ -99,11 +99,11 @@ CuminRunError(CuminRunner r)
 /*                                                                              */
 /********************************************************************************/
 
-Reason getReason()                      { return throw_reason; }
+public Reason getReason()               { return throw_reason; }
 
-CashewValue getValue()                  { return associated_value; }
+public CashewValue getValue()           { return associated_value; }
 
-CuminRunner getCallRunner()             { return call_value; }
+public CuminRunner getCallRunner()      { return call_value; }
 
 
 

@@ -35,6 +35,7 @@ import edu.brown.cs.ivy.mint.MintConstants;
 import edu.brown.cs.ivy.mint.MintDefaultReply;
 import edu.brown.cs.ivy.mint.MintReply;
 import edu.brown.cs.ivy.xml.IvyXmlWriter;
+import edu.brown.cs.seede.acorn.AcornLog;
 import edu.brown.cs.seede.cashew.CashewConstants;
 
 public class SesameMain implements SesameConstants, MintConstants 
@@ -68,7 +69,8 @@ private String                  message_id;
 private SesameFileManager       file_manager;
 private SesameMonitor           message_monitor;
 private Map<String,SesameProject> project_map;
-private JcompControl            jcomp_base;
+
+private static JcompControl     jcomp_base;
 
 
 
@@ -134,7 +136,7 @@ private void badArgs()
 /*                                                                              */
 /********************************************************************************/
 
-JcompControl getJcompBase()                     { return jcomp_base; }
+static JcompControl getJcompBase()              { return jcomp_base; }
 
 SesameFileManager getFileManager()              { return file_manager; }
 SesameMonitor getMonitor()                      { return message_monitor; }
@@ -214,7 +216,7 @@ private void sendMessage(String cmd,String proj,Map<String,Object> flds,String c
    String msg = xw.toString();
    xw.close();
    
-   SesameLog.logD("SEND: " + msg);
+   AcornLog.logD("SEND: " + msg);
    
    message_monitor.sendMessage(msg,rply,fgs);
 }

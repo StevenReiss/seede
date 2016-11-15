@@ -34,7 +34,6 @@ import java.util.HashMap;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.w3c.dom.Element;
 
-import edu.brown.cs.ivy.jcomp.JcompSymbol;
 import edu.brown.cs.ivy.mint.MintArguments;
 import edu.brown.cs.ivy.mint.MintControl;
 import edu.brown.cs.ivy.mint.MintDefaultReply;
@@ -45,8 +44,11 @@ import edu.brown.cs.ivy.mint.MintConstants.MintSyncMode;
 import edu.brown.cs.ivy.mint.MintConstants;
 import edu.brown.cs.ivy.xml.IvyXml;
 import edu.brown.cs.ivy.xml.IvyXmlWriter;
+import edu.brown.cs.seede.acorn.AcornLog;
 import edu.brown.cs.seede.cashew.CashewValue;
 import edu.brown.cs.seede.cumin.CuminRunner;
+import edu.brown.cs.seede.cumin.CuminConstants;
+import edu.brown.cs.seede.cumin.CuminRunError;
 
 
 
@@ -246,6 +248,17 @@ private void handleExec(String sid,IvyXmlWriter xw) throws SesameException
    ASTNode mthd = ss.getCallMethod();
    List<CashewValue> args = ss.getCallArgs();
    CuminRunner cr = CuminRunner.createRunner(ss.getProject(),mthd,args);
+   CuminRunError sts = null;
+   try {
+      cr.interpret(CuminConstants.EvalType.RUN);
+    }
+   catch (CuminRunError r) {
+      AcornLog.logE("EXECUTION RETURN",r);
+      sts = r;
+    }
+   
+   if (sts == null) xw.textElement("STATUS","OK");
+   else xw.textElement("STATUS",sts.toString());
 }
 
 
@@ -380,7 +393,7 @@ private String processCommand(String cmd,String sid,Element e) throws SesameExce
       case "ADDFILE" :
          break;
       default :
-         SesameLog.logE("Unknown command " + cmd);
+         AcornLog.logE("Unknown command " + cmd);
          break;
     }
    xw.end("RESULT");
@@ -403,7 +416,7 @@ private class CommandHandler implements MintHandler {
        }
       catch (SesameException t) {
          String xmsg = "BEDROCK: error in command " + cmd + ": " + t;
-         SesameLog.logE(xmsg,t);
+         AcornLog.logE(xmsg,t);
          IvyXmlWriter xw = new IvyXmlWriter();
          xw.cdataElement("ERROR",xmsg);
          rslt = xw.toString();
@@ -411,7 +424,7 @@ private class CommandHandler implements MintHandler {
        }
       catch (Throwable t) {
          String xmsg = "Problem processing command " + cmd + ": " + t;
-         SesameLog.logE(xmsg,t);
+         AcornLog.logE(xmsg,t);
          StringWriter sw = new StringWriter();
          PrintWriter pw = new PrintWriter(sw);
          t.printStackTrace(pw);
@@ -421,7 +434,7 @@ private class CommandHandler implements MintHandler {
             pw.println();
             xt.printStackTrace(pw);
           }
-         SesameLog.logE("TRACE: " + sw.toString());
+         AcornLog.logE("TRACE: " + sw.toString());
          IvyXmlWriter xw = new IvyXmlWriter();
          xw.begin("ERROR");
          xw.textElement("MESSAGE",xmsg);

@@ -32,12 +32,12 @@ import edu.brown.cs.seede.cashew.CashewClock;
 import edu.brown.cs.seede.cashew.CashewConstants;
 import edu.brown.cs.seede.cashew.CashewContext;
 import edu.brown.cs.seede.cashew.CashewValue;
-import edu.brown.cs.seede.sesame.SesameProject;
 
 import java.util.List;
 
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
+
 
 class CuminRunnerByteCode extends CuminRunner implements CuminConstants, 
         Opcodes, CashewConstants
@@ -61,7 +61,7 @@ private JcompTyper      type_converter;
 /*                                                                              */
 /********************************************************************************/
 
-CuminRunnerByteCode(SesameProject sp,CashewClock clock,
+CuminRunnerByteCode(CuminProject sp,CashewClock clock,
       JcodeMethod mthd,List<CashewValue> args)
 {
    super(sp,clock,args);

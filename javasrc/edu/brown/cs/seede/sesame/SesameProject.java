@@ -43,8 +43,9 @@ import edu.brown.cs.ivy.jcomp.JcompSource;
 import edu.brown.cs.ivy.jcomp.JcompTyper;
 
 import edu.brown.cs.ivy.xml.IvyXml;
+import edu.brown.cs.seede.cumin.CuminConstants.CuminProject;
 
-public class SesameProject implements SesameConstants
+public class SesameProject implements SesameConstants, CuminProject
 {
 
 
@@ -154,7 +155,7 @@ private synchronized void clearProject()
 }
 
 
-public synchronized JcompProject getJcompProject()
+@Override public synchronized JcompProject getJcompProject()
 {
    if (base_project != null) return base_project;
    
@@ -165,7 +166,7 @@ public synchronized JcompProject getJcompProject()
    return base_project;
 }
 
-public synchronized JcodeFactory getJcodeFactory()
+@Override public synchronized JcodeFactory getJcodeFactory()
 {
    if (binary_control != null) return binary_control;
    
@@ -186,7 +187,7 @@ public synchronized JcodeFactory getJcodeFactory()
 /*                                                                              */
 /********************************************************************************/
 
-public JcompTyper getTyper()
+@Override public JcompTyper getTyper()
 {
    getJcompProject();
    if (base_project == null) return null;

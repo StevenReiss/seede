@@ -6,9 +6,10 @@
    <property name='SEEDE' value='${basedir}/..' />
 
    <target name='all'>
+      <ant antfile="build.xml" dir="edu/brown/cs/seede/acorn" />
       <ant antfile="build.xml" dir="edu/brown/cs/seede/cashew" />
-      <ant antfile="build.xml" dir="edu/brown/cs/seede/sesame" />
       <ant antfile="build.xml" dir="edu/brown/cs/seede/cumin" />
+      <ant antfile="build.xml" dir="edu/brown/cs/seede/sesame" />
       <ant antfile="build.xml" dir="edu/brown/cs/seede/test" />
    </target>
 
@@ -22,9 +23,10 @@
 
    <target name='doc'>
       <javadoc sourcepathref='jdocsrc' classpathref='jdocsrc' destdir='${SEEDE}/doc'>
+	 <package name='edu.brown.cs.seede.acorn' />
 	 <package name='edu.brown.cs.seede.cashew' />
-	 <package name='edu.brown.cs.seede.sesame' />
 	 <package name='edu.brown.cs.seede.cumin' />
+	 <package name='edu.brown.cs.seede.sesame' />
       </javadoc>
    </target>
 

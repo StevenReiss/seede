@@ -34,6 +34,8 @@ import org.junit.Test;
 import org.junit.Assert;
 import org.w3c.dom.Element;
 
+import edu.brown.cs.seede.sesame.SesameConstants;
+import edu.brown.cs.seede.sesame.SesameMain;
 import edu.brown.cs.ivy.exec.IvyExec;
 import edu.brown.cs.ivy.mint.MintArguments;
 import edu.brown.cs.ivy.mint.MintControl;
@@ -44,9 +46,6 @@ import edu.brown.cs.ivy.mint.MintReply;
 import edu.brown.cs.ivy.mint.MintConstants;
 import edu.brown.cs.ivy.xml.IvyXml;
 import edu.brown.cs.ivy.xml.IvyXmlWriter;
-
-import edu.brown.cs.seede.sesame.SesameMain;
-import edu.brown.cs.seede.sesame.SesameConstants;
 
 
 public class TestSeede implements MintConstants, SesameConstants
@@ -282,6 +281,11 @@ private static class SeedeThread extends Thread {
    sendSeedeMessage("BEGIN",TEST_SID,null,cnts,rply);
    Element status = rply.waitForXml();
    Assert.assertTrue(IvyXml.isElement(status,"RESULT")); 
+   
+   rply = new MintDefaultReply();
+   sendSeedeMessage("EXEC",TEST_SID,null,cnts,rply);
+   String sstatus = rply.waitForString();
+   System.err.println("RESULT IS " + sstatus);
 }
 
 

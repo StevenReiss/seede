@@ -1,28 +1,28 @@
 /********************************************************************************/
-/*                                                                              */
-/*              SesameLog.java                                                  */
-/*                                                                              */
-/*      Logging methods                                                         */
-/*                                                                              */
+/*										*/
+/*		AcornLog.java							*/
+/*										*/
+/*	Logging methods 							*/
+/*										*/
 /********************************************************************************/
-/*      Copyright 2011 Brown University -- Steven P. Reiss                    */
+/*	Copyright 2011 Brown University -- Steven P. Reiss		      */
 /*********************************************************************************
- *  Copyright 2011, Brown University, Providence, RI.                            *
- *                                                                               *
- *                        All Rights Reserved                                    *
- *                                                                               *
- * This program and the accompanying materials are made available under the      *
+ *  Copyright 2011, Brown University, Providence, RI.				 *
+ *										 *
+ *			  All Rights Reserved					 *
+ *										 *
+ * This program and the accompanying materials are made available under the	 *
  * terms of the Eclipse Public License v1.0 which accompanies this distribution, *
- * and is available at                                                           *
- *      http://www.eclipse.org/legal/epl-v10.html                                *
- *                                                                               *
+ * and is available at								 *
+ *	http://www.eclipse.org/legal/epl-v10.html				 *
+ *										 *
  ********************************************************************************/
 
 /* SVN: $Id$ */
 
 
 
-package edu.brown.cs.seede.sesame;
+package edu.brown.cs.seede.acorn;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -31,15 +31,15 @@ import java.io.PrintWriter;
 
 
 
-public class SesameLog implements SesameConstants
+public class AcornLog implements AcornConstants
 {
 
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Internal classes                                                        */
-/*                                                                              */
+/*										*/
+/*	Internal classes							*/
+/*										*/
 /********************************************************************************/
 
 enum LogLevel {
@@ -48,13 +48,13 @@ enum LogLevel {
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Private Storage                                                         */
-/*                                                                              */
+/*										*/
+/*	Private Storage 							*/
+/*										*/
 /********************************************************************************/
 
 private static LogLevel log_level;
-private static boolean  use_stderr;
+private static boolean	use_stderr;
 private static PrintWriter log_writer;
 
 static {
@@ -65,9 +65,9 @@ static {
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Logging entries                                                         */
-/*                                                                              */
+/*										*/
+/*	Logging entries 							*/
+/*										*/
 /********************************************************************************/
 
 public static void logE(String msg,Throwable t)
@@ -108,9 +108,9 @@ public static void logD(String msg)
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Control methods                                                         */
-/*                                                                              */
+/*										*/
+/*	Control methods 							*/
+/*										*/
 /********************************************************************************/
 
 public static void setLogLevel(LogLevel lvl)
@@ -125,7 +125,7 @@ public static void setLogFile(File f)
       log_writer = new PrintWriter(new FileWriter(f));
     }
    catch (IOException e) {
-      
+
     }
 }
 
@@ -138,15 +138,15 @@ public static void useStdErr(boolean fg)
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Actual logging routines                                                 */
-/*                                                                              */
+/*										*/
+/*	Actual logging routines 						*/
+/*										*/
 /********************************************************************************/
 
 private static void log(LogLevel lvl,String msg,Throwable t)
 {
    if (lvl.ordinal() > log_level.ordinal()) return;
-   
+
    String s = lvl.toString().substring(0,1);
    String pfx = "SESAME:" + s + ": ";
    if (log_writer != null) {
@@ -164,10 +164,10 @@ private static void log(LogLevel lvl,String msg,Throwable t)
 
 
 
-}       // end of class SesameLog
+}	// end of class AcornLog
 
 
 
 
-/* end of SesameLog.java */
+/* end of AcornLog.java */
 

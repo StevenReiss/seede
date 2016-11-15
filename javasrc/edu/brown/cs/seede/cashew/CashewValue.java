@@ -101,9 +101,25 @@ public static CashewValue createValue(JcompTyper typer,Element xml) throws Cashe
 
 public static CashewValue createDefaultValue(JcompType type)
 {
+   if (type.isNumericType()) {
+      return CashewValue.numericValue(type,0);
+    }
+   else if (type.isBooleanType()) {
+      return CashewValue.booleanValue(false);
+    }
+   else if (type.getName().equals("char")) {
+      return CashewValue.characterValue(type,(char) 0);
+    }
    
-   return null;
+   return CashewValue.nullValue();
 }
+
+public static CashewValue createReference(CashewValue base)
+{
+   CashewRef cr = new CashewRef(base);
+   return cr;
+}
+
 
 
 /********************************************************************************/

@@ -30,10 +30,10 @@ import java.util.Map;
 import java.util.Random;
 
 import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.w3c.dom.Element;
 
 import edu.brown.cs.ivy.jcomp.JcompAst;
-import edu.brown.cs.ivy.jcomp.JcompSymbol;
 import edu.brown.cs.ivy.xml.IvyXml;
 import edu.brown.cs.seede.cashew.CashewValue;
 
@@ -125,6 +125,9 @@ public ASTNode getCallMethod()
          SesameFile sf = loc.getFile();
          ASTNode root = sf.getResolvedAst(for_project);
          ASTNode mnode = JcompAst.findNodeAtOffset(root,loc.getStartPositiion().getOffset());
+         while (!(mnode instanceof MethodDeclaration)) {
+            mnode = mnode.getParent();
+          }
          return mnode;
        }
     }

@@ -129,9 +129,7 @@ private CuminStack      execution_stack;
 private CashewClock     execution_clock;
 private CashewContext   execution_context;
 private CuminRunnerAst  ast_runner;
-private ASTNode         root_node;
 private ASTNode         current_node;
-private EvalType        eval_type;
 private Stack<EvalData> eval_stack;
 private int             stack_level;
 
@@ -191,9 +189,7 @@ CuminRunnerAstVisitor(CuminRunnerAst runner,ASTNode root)
    execution_stack = runner.getStack();
    execution_clock = runner.getClock();
    execution_context = runner.getLookupContext();
-   eval_type = EvalType.RUN;
    current_node = null;
-   root_node = root;
    eval_stack = new Stack<>();
    stack_level = -1;
 }
@@ -208,8 +204,6 @@ CuminRunnerAstVisitor(CuminRunnerAst runner,ASTNode root)
 /********************************************************************************/
 
 ASTNode getCurrentNode()                        { return current_node; }
-
-void setEvalType(EvalType et)                   { eval_type = et; }
 
 
 

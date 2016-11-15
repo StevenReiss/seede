@@ -25,6 +25,7 @@
 package edu.brown.cs.seede.cumin;
 
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -60,6 +61,7 @@ import org.eclipse.jdt.core.dom.ParenthesizedExpression;
 import org.eclipse.jdt.core.dom.PostfixExpression;
 import org.eclipse.jdt.core.dom.PrefixExpression;
 import org.eclipse.jdt.core.dom.QualifiedName;
+import org.eclipse.jdt.core.dom.ReturnStatement;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.Statement;
@@ -72,6 +74,9 @@ import org.eclipse.jdt.core.dom.ThrowStatement;
 import org.eclipse.jdt.core.dom.TryStatement;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.WhileStatement;
+
+import edu.brown.cs.seede.acorn.AcornLog;
+
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.TypeLiteral;
 import org.eclipse.jdt.core.dom.VariableDeclarationExpression;
@@ -82,8 +87,6 @@ import edu.brown.cs.ivy.jcomp.JcompType;
 import edu.brown.cs.seede.cashew.CashewClock;
 import edu.brown.cs.seede.cashew.CashewContext;
 import edu.brown.cs.seede.cashew.CashewValue;
-import edu.brown.cs.seede.sesame.SesameLog;
-import edu.brown.cs.seede.sesame.SesameProject;
 
 class CuminRunnerAst extends CuminRunner
 {
@@ -96,15 +99,13 @@ class CuminRunnerAst extends CuminRunner
 /********************************************************************************/
 
 private ASTNode 	method_node;
-private List<CashewValue> call_args;
-private CuminRunnerAstVisitor runner_visitor;
-private EvalType	eval_type;
 private ASTNode 	current_node;
 private ASTNode 	next_node;
 
 private static Map<Object,CuminOperator> op_map;
 
 static {
+   op_map = new HashMap<>();
    op_map.put(InfixExpression.Operator.AND,CuminOperator.AND);
    op_map.put(InfixExpression.Operator.DIVIDE,CuminOperator.DIV);
    op_map.put(InfixExpression.Operator.EQUALS,CuminOperator.EQL);
@@ -153,13 +154,12 @@ static {
 /*										*/
 /********************************************************************************/
 
-CuminRunnerAst(SesameProject sp,CashewClock cc,ASTNode method,List<CashewValue> args)
+CuminRunnerAst(CuminProject sp,CashewClock cc,ASTNode method,List<CashewValue> args)
 {
    super(sp,cc,args);
 
    method_node = method;
    current_node = method_node;
-   runner_visitor = new CuminRunnerAstVisitor(this,method);
 
    setupContext();
 }
@@ -218,6 +218,7 @@ private void setupContext()
    for (JcompSymbol lcl : lf.getLocalVars()) {
       JcompType lty = lcl.getType();
       CashewValue nv = CashewValue.createDefaultValue(lty);
+      nv = CashewValue.createReference(nv);
       ctx.define(lcl,nv);
     }
 
@@ -233,7 +234,9 @@ private void setupContext()
 	 JcompType ty = JcompAst.getJavaType(td);
 	 if (ty != cty && !sty.isStatic()) {
 	    String nm = sty.getFullName() + ".this";
-	    ctx.define(nm,CashewValue.nullValue());
+            CashewValue nv = CashewValue.nullValue();
+            nv = CashewValue.createReference(nv);
+	    ctx.define(nm,nv);
 	  }
        }
     }
@@ -262,7 +265,7 @@ private static class LocalFinder extends ASTVisitor {
 
    @Override public void endVisit(SingleVariableDeclaration n) {
       JcompSymbol js = JcompAst.getDefinition(n.getName());
-      local_vars.add(js);
+      if (js != null) local_vars.add(js);
     }
 
    @Override public void endVisit(VariableDeclarationFragment n) {
@@ -284,6 +287,7 @@ private static class LocalFinder extends ASTVisitor {
 private void evalNode(ASTNode node,ASTNode afterchild) throws CuminRunError
 {
    if (node instanceof Statement && afterchild == null) {
+      System.err.println("EVAL: " + node);
       // check for breakpoint
       // check for step
       // check for timeout
@@ -399,6 +403,7 @@ private void evalNode(ASTNode node,ASTNode afterchild) throws CuminRunError
 	 visit((LabeledStatement) node,afterchild);
 	 break;
       case ASTNode.METHOD_DECLARATION :
+         visit((MethodDeclaration) node,afterchild);
 	 break;
       case ASTNode.METHOD_INVOCATION :
 	 break;
@@ -421,6 +426,7 @@ private void evalNode(ASTNode node,ASTNode afterchild) throws CuminRunError
 	 visit((QualifiedName) node,afterchild);
 	 break;
       case ASTNode.RETURN_STATEMENT :
+         visit((ReturnStatement) node,afterchild);
 	 break;
       case ASTNode.SIMPLE_NAME :
 	 visit((SimpleName) node);
@@ -469,7 +475,7 @@ private void evalNode(ASTNode node,ASTNode afterchild) throws CuminRunError
 	 visit((WhileStatement) node,afterchild);
 	 break;
       default :
-	 SesameLog.logE("Unknown AST node " + current_node);
+	 AcornLog.logE("Unknown AST node " + current_node);
 	 break;
 
     }
@@ -589,11 +595,54 @@ private void evalThrow(ASTNode node,CuminRunError cause) throws CuminRunError
 	 break;
 
       default :
-	 SesameLog.logE("Unknown AST node " + current_node);
+	 AcornLog.logE("Unknown AST node " + current_node);
 	 break;
 
     }
 }
+
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Top level methods                                                       */
+/*                                                                              */
+/********************************************************************************/
+
+private void visit(MethodDeclaration md,ASTNode after)
+{
+   if (after == null) {
+      List<CashewValue> argvals = getCallArgs();
+      List<?> args = md.parameters();
+      int off = 0;
+      int idx = 0;
+      JcompSymbol vsym = JcompAst.getDefinition(md.getName());
+      if (!vsym.isStatic()) {
+         off = 1;
+         lookup_context.define("this",argvals.get(0));
+       } 
+      // need to handle nested this values as well
+      int nparm = args.size();
+      for (Object o : args) {
+         SingleVariableDeclaration svd = (SingleVariableDeclaration) o;
+         JcompSymbol psym = JcompAst.getDefinition(svd.getName());
+         if (idx == nparm-1 && md.isVarargs()) {
+            // handle var args
+          }
+         else {
+            CashewValue pv = lookup_context.findReference(psym);
+            pv.setValueAt(execution_clock,argvals.get(idx+off));
+          }
+         ++idx;
+       }
+      next_node = md.getBody();
+    }
+   else {
+      throw new CuminRunError(CuminRunError.Reason.RETURN);
+    }
+}
+
 
 
 
@@ -1016,6 +1065,23 @@ private void visit(LabeledStatement s,ASTNode after)
 {
    if (after == null) next_node = s.getBody();
 }
+
+
+private void visit(ReturnStatement s,ASTNode after)
+{
+   if (after == null && s.getExpression() != null) {
+      next_node = s.getExpression();
+    }
+   else {
+      CashewValue rval = null;
+      if (s.getExpression() != null) {
+         rval = execution_stack.pop();
+         rval = rval.getActualValue(execution_clock);
+       }
+      throw new CuminRunError(CuminRunError.Reason.RETURN,rval);
+    }
+}
+
 
 
 private void visit(SwitchStatement s,ASTNode after)

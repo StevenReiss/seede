@@ -24,10 +24,28 @@
 
 package edu.brown.cs.seede.cumin;
 
-
+import edu.brown.cs.ivy.jcode.JcodeFactory;
+import edu.brown.cs.ivy.jcomp.JcompProject;
+import edu.brown.cs.ivy.jcomp.JcompTyper;
 
 public interface CuminConstants
 {
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Information needed about a project                                      */
+/*                                                                              */
+/********************************************************************************/
+
+interface CuminProject {
+   
+   JcompTyper getTyper();
+   JcodeFactory getJcodeFactory();
+   JcompProject getJcompProject();
+   
+}
 
 
 

@@ -110,6 +110,8 @@ public void define(JcompSymbol sym,CashewValue addr)
 }
 
 
+
+
 public void define(Object var,CashewValue addr)
 {
    context_map.put(var,addr);

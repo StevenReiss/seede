@@ -44,11 +44,24 @@ import edu.brown.cs.ivy.jcomp.JcompType;
 import edu.brown.cs.seede.cashew.CashewClock;
 import edu.brown.cs.seede.cashew.CashewContext;
 import edu.brown.cs.seede.cashew.CashewValue;
-import edu.brown.cs.seede.sesame.SesameProject;
 
 
 public abstract class CuminRunner implements CuminConstants
 {
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Factory methods                                                         */
+/*                                                                              */
+/********************************************************************************/
+
+public static CuminRunner createRunner(CuminProject cp,ASTNode method,List<CashewValue> args)
+{
+   return new CuminRunnerAst(cp,null,method,args);
+}
+
 
 
 /********************************************************************************/
@@ -57,7 +70,7 @@ public abstract class CuminRunner implements CuminConstants
 /*                                                                              */
 /********************************************************************************/
 
-private SesameProject   base_project;
+private CuminProject    base_project;
 private CuminRunner     nested_call;
 
 protected CuminStack    execution_stack;
@@ -73,7 +86,7 @@ protected List<CashewValue> call_args;
 /*                                                                              */
 /********************************************************************************/
 
-protected CuminRunner(SesameProject sp,CashewClock cc,List<CashewValue> args)
+protected CuminRunner(CuminProject sp,CashewClock cc,List<CashewValue> args)
 {
    base_project = sp;
    nested_call = null;

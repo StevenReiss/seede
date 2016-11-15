@@ -34,6 +34,8 @@ package edu.brown.cs.seede.cashew;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import edu.brown.cs.ivy.jcomp.JcompType;
+
 class CashewRef extends CashewValue implements CashewConstants
 {
 
@@ -62,6 +64,13 @@ CashewRef()
    value_map = null;
    last_update = -1;
    last_value = null;
+}
+
+
+CashewRef(CashewValue v)
+{
+   last_update = 0;
+   last_value = v;
 }
 
 
@@ -159,6 +168,14 @@ CashewRef()
 }
 
 
+@Override public JcompType getDataType(CashewClock cc)
+{
+   CashewValue cv = getValueAt(cc);
+   if (cv == null) return null;
+   return cv.getDataType(cc);
+}
+
+
 
 
 /********************************************************************************/
@@ -187,7 +204,8 @@ CashewValue getValueAt(CashewClock cc)
 
 @Override public CashewValue setValueAt(CashewClock cc,CashewValue cv)
 {
-   long tv = cc.getTimeValue();
+   long tv = 0;
+   if (cc != null) tv = cc.getTimeValue();
    
    if (last_update < 0) {
       // first time -- just record value
@@ -206,8 +224,8 @@ CashewValue getValueAt(CashewClock cc)
       last_value = cv;
     }
    
-   value_map.put(cc.getTimeValue(),cv);
-   cc.tick();
+   value_map.put(tv,cv);
+   if (cc != null) cc.tick();
    
    return this;
 }
