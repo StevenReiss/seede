@@ -81,7 +81,7 @@ CuminRunError(Throwable t)
 
 CuminRunError(Reason r,CashewValue v)
 {
-   this(r,r.toString(),null,null);
+   this(r,r.toString(),null,v);
    // v can be an throwable value (r = EXCEPTION) or a return value (r = RETURN)
 }
 

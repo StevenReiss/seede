@@ -77,6 +77,7 @@ protected CuminStack    execution_stack;
 protected CashewClock   execution_clock;
 protected CashewContext lookup_context;
 protected List<CashewValue> call_args;
+protected long          start_clock;
 
 
 
@@ -95,6 +96,7 @@ protected CuminRunner(CuminProject sp,CashewClock cc,List<CashewValue> args)
    else execution_clock = cc;
    call_args = args;
    lookup_context = null;
+   start_clock = execution_clock.getTimeValue();
 }
 
 
@@ -132,7 +134,7 @@ CashewClock getClock()                  { return execution_clock; }
 
 CuminStack getStack()                   { return execution_stack; }
 
-CashewContext getLookupContext()        { return lookup_context; }   
+public CashewContext getLookupContext()         { return lookup_context; }   
 List<CashewValue> getCallArgs()         { return call_args; }
 
 protected void setLoockupContext(CashewContext ctx)
@@ -152,20 +154,32 @@ public void interpret(EvalType et) throws CuminRunError
 {
    CuminRunError ret = null;
    
-   if (nested_call != null) {
+   for ( ; ; ) {
+      if (nested_call != null) {
+         try {
+            nested_call.interpret(et);
+          }
+         catch (CuminRunError r) {
+            if (r.getReason() == CuminRunError.Reason.RETURN || 
+                  r.getReason() == CuminRunError.Reason.EXCEPTION) {
+               ret = r;
+             }
+            else throw r;
+          }
+       }
+      
       try {
-         nested_call.interpret(et);
+         interpretRun(ret);
+         throw new CuminRunError(CuminRunError.Reason.RETURN);
        }
       catch (CuminRunError r) {
-         if (r.getReason() == CuminRunError.Reason.RETURN || 
-              r.getReason() == CuminRunError.Reason.EXCEPTION) {
-            ret = r;
+         if (r.getReason() == CuminRunError.Reason.CALL) {
+            nested_call = r.getCallRunner();
+            continue;
           }
-         else throw r;
+         throw r;
        }
     }
-   
-   interpretRun(ret);
 }
 
 

@@ -31,10 +31,12 @@
 
 package edu.brown.cs.seede.cashew;
 
+import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
 import edu.brown.cs.ivy.jcomp.JcompType;
+import edu.brown.cs.ivy.xml.IvyXmlWriter;
 
 class CashewRef extends CashewValue implements CashewConstants
 {
@@ -204,6 +206,9 @@ CashewValue getValueAt(CashewClock cc)
 
 @Override public CashewValue setValueAt(CashewClock cc,CashewValue cv)
 {
+   if (cv == null) return this;
+   cv = cv.getActualValue(cc);
+   
    long tv = 0;
    if (cc != null) tv = cc.getTimeValue();
    
@@ -219,7 +224,7 @@ CashewValue getValueAt(CashewClock cc)
       value_map.put(last_update,last_value);
     }
    
-   if (tv > last_update) {
+   if (tv >= last_update) {
       last_update = tv;
       last_value = cv;
     }
@@ -230,6 +235,57 @@ CashewValue getValueAt(CashewClock cc)
    return this;
 }
    
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Output Methods                                                          */
+/*                                                                              */
+/********************************************************************************/
+
+@Override public void outputXml(IvyXmlWriter xw)
+{
+   if (value_map == null) {
+      last_value.outputXml(xw);
+    }
+   else {
+      for (Map.Entry<Long,CashewValue> ent : value_map.entrySet()) {
+         long when = ent.getKey();
+         xw.begin("VALUE");
+         xw.field("TIME",when);
+         ent.getValue().outputLocalXml(xw);
+         xw.end("VALUE");
+       }
+    }
+}
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Debugging methods                                                       */
+/*                                                                              */
+/********************************************************************************/
+
+@Override public String toString()
+{
+   if (value_map != null) {
+      StringBuffer buf = new StringBuffer();
+      buf.append("[");
+      int idx = 0;
+      for (Map.Entry<Long,CashewValue> ent : value_map.entrySet()) {
+         if (idx++ > 0) buf.append(",");
+         buf.append(ent.getValue());
+         buf.append("@");
+         buf.append(ent.getKey());
+       }
+      buf.append("]");
+      return buf.toString();
+    }
+   else return "[" + last_value + "]";
+}
+
 
 
 }       // end of class CashewRef

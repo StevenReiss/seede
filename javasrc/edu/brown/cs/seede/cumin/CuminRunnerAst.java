@@ -25,6 +25,7 @@
 package edu.brown.cs.seede.cumin;
 
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -43,6 +44,7 @@ import org.eclipse.jdt.core.dom.BreakStatement;
 import org.eclipse.jdt.core.dom.CastExpression;
 import org.eclipse.jdt.core.dom.CatchClause;
 import org.eclipse.jdt.core.dom.CharacterLiteral;
+import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.ConditionalExpression;
 import org.eclipse.jdt.core.dom.ContinueStatement;
 import org.eclipse.jdt.core.dom.DoStatement;
@@ -55,6 +57,7 @@ import org.eclipse.jdt.core.dom.InfixExpression;
 import org.eclipse.jdt.core.dom.InstanceofExpression;
 import org.eclipse.jdt.core.dom.LabeledStatement;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
+import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.NullLiteral;
 import org.eclipse.jdt.core.dom.NumberLiteral;
 import org.eclipse.jdt.core.dom.ParenthesizedExpression;
@@ -73,6 +76,7 @@ import org.eclipse.jdt.core.dom.ThisExpression;
 import org.eclipse.jdt.core.dom.ThrowStatement;
 import org.eclipse.jdt.core.dom.TryStatement;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
+import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 import org.eclipse.jdt.core.dom.WhileStatement;
 
 import edu.brown.cs.seede.acorn.AcornLog;
@@ -85,6 +89,7 @@ import edu.brown.cs.ivy.jcomp.JcompAst;
 import edu.brown.cs.ivy.jcomp.JcompSymbol;
 import edu.brown.cs.ivy.jcomp.JcompType;
 import edu.brown.cs.seede.cashew.CashewClock;
+import edu.brown.cs.seede.cashew.CashewConstants;
 import edu.brown.cs.seede.cashew.CashewContext;
 import edu.brown.cs.seede.cashew.CashewValue;
 
@@ -101,6 +106,7 @@ class CuminRunnerAst extends CuminRunner
 private ASTNode 	method_node;
 private ASTNode 	current_node;
 private ASTNode 	next_node;
+private int             last_line;
 
 private static Map<Object,CuminOperator> op_map;
 
@@ -160,6 +166,7 @@ CuminRunnerAst(CuminProject sp,CashewClock cc,ASTNode method,List<CashewValue> a
 
    method_node = method;
    current_node = method_node;
+   last_line = 0;
 
    setupContext();
 }
@@ -241,6 +248,8 @@ private void setupContext()
        }
     }
 
+   CashewValue zv = CashewValue.numericValue(CashewConstants.INT_TYPE,0);
+   ctx.define("*LINE*",CashewValue.createReference(zv));
    setLoockupContext(ctx);
 }
 
@@ -287,7 +296,15 @@ private static class LocalFinder extends ASTVisitor {
 private void evalNode(ASTNode node,ASTNode afterchild) throws CuminRunError
 {
    if (node instanceof Statement && afterchild == null) {
-      System.err.println("EVAL: " + node);
+      CompilationUnit cu = (CompilationUnit) node.getRoot();
+      int lno = cu.getLineNumber(node.getStartPosition());
+      if (lno != last_line) {
+         last_line = lno;
+         CashewValue lvl = CashewValue.numericValue(CashewConstants.INT_TYPE,lno);
+         lookup_context.findReference("*LINE*").setValueAt(execution_clock,lvl);
+       }
+      
+      // System.err.println("EVAL: " + node);
       // check for breakpoint
       // check for step
       // check for timeout
@@ -406,6 +423,7 @@ private void evalNode(ASTNode node,ASTNode afterchild) throws CuminRunError
          visit((MethodDeclaration) node,afterchild);
 	 break;
       case ASTNode.METHOD_INVOCATION :
+         visit((MethodInvocation) node,afterchild);
 	 break;
       case ASTNode.NULL_LITERAL :
 	 visit((NullLiteral) node);
@@ -470,6 +488,7 @@ private void evalNode(ASTNode node,ASTNode afterchild) throws CuminRunError
 	 visit((VariableDeclarationFragment) node,afterchild);
 	 break;
       case ASTNode.VARIABLE_DECLARATION_STATEMENT :
+         visit((VariableDeclarationStatement) node,afterchild);
 	 break;
       case ASTNode.WHILE_STATEMENT :
 	 visit((WhileStatement) node,afterchild);
@@ -546,6 +565,7 @@ private void evalThrow(ASTNode node,CuminRunError cause) throws CuminRunError
       case ASTNode.INFIX_EXPRESSION :
       case ASTNode.INITIALIZER :
       case ASTNode.INSTANCEOF_EXPRESSION :
+      case ASTNode.METHOD_DECLARATION :
       case ASTNode.NULL_LITERAL :
       case ASTNode.NUMBER_LITERAL :
       case ASTNode.PARENTHESIZED_EXPRESSION :
@@ -573,8 +593,6 @@ private void evalThrow(ASTNode node,CuminRunError cause) throws CuminRunError
 	 break;
       case ASTNode.FOR_STATEMENT :
 	 visitThrow((ForStatement) node,cause);
-	 break;
-      case ASTNode.METHOD_DECLARATION :
 	 break;
       case ASTNode.METHOD_INVOCATION :
 	 break;
@@ -829,6 +847,45 @@ private void visit(InstanceofExpression v,ASTNode after)
 }
 
 
+private void visit(MethodInvocation v,ASTNode after)
+{
+   if (after == null && v.getExpression() != null) {
+      next_node = v.getExpression();
+      return;
+    }
+   int idx = 0;
+   List<?> args = v.arguments();
+   if (after != null) {
+      idx = args.indexOf(after)+1;      // will be 0 for v.getExpression()
+    }
+   if (idx < args.size()) {
+      next_node = (ASTNode) args.get(idx);
+      return;
+    }
+   
+   // need to handle varargs
+   
+   List<CashewValue> argv = new ArrayList<CashewValue>();
+   JcompSymbol js = JcompAst.getReference(v.getName());
+   CallType cty = CallType.VIRTUAL;
+   if (!js.isStatic()) {
+      CashewValue thisv = lookup_context.findReference("this");
+      thisv = thisv.getActualValue(execution_clock);
+      argv.add(thisv);
+      cty = CallType.STATIC;
+    }
+   for (int i = 0; i < args.size(); ++i) argv.add(null);
+   int off = argv.size();
+   for (int i = 0; i < args.size(); ++i) {
+      CashewValue cv = execution_stack.pop().getActualValue(execution_clock);
+      argv.set(args.size()-i-1+off,cv);
+    }
+   CuminRunner crun = handleCall(execution_clock,js,argv,cty);
+   throw new CuminRunError(crun);
+}
+
+
+
 private void visit(SimpleName v)
 {
    JcompSymbol js = JcompAst.getReference(v);
@@ -897,13 +954,19 @@ private void visit(ThisExpression v)
 
 private void visit(VariableDeclarationExpression v,ASTNode after)
 {
-   for (Object o : v.fragments()) {
-      if (after == null) {
-	 next_node = (ASTNode) o;
-	 return;
-       }
-      else if (after == o) after = null;
-    }
+   List<?> frags = v.fragments();
+   int idx = 0;
+   if (after != null) idx = frags.indexOf(after)+1;
+   if (idx < frags.size()) next_node = (ASTNode) frags.get(idx);
+}
+
+
+private void visit(VariableDeclarationStatement v,ASTNode after)
+{
+   List<?> frags = v.fragments();
+   int idx = 0;
+   if (after != null) idx = frags.indexOf(after)+1;
+   if (idx < frags.size()) next_node = (ASTNode) frags.get(idx);
 }
 
 
@@ -1218,7 +1281,8 @@ private void visit(WhileStatement s,ASTNode after)
    else if (after == s.getExpression()) {
       if (execution_stack.pop().getBoolean(execution_clock)) next_node = s.getBody();
     }
-   else if (after == s.getBody()) next_node = s.getExpression();
+   else if (after == s.getBody())
+      next_node = s.getExpression();
 }
 
 
@@ -1339,7 +1403,7 @@ private void handleInitialization(JcompSymbol js,ASTNode init)
       cv = CashewValue.createDefaultValue(js.getType());
     }
    CashewValue vv = lookup_context.findReference(js);
-   CuminEvaluator.evaluate(execution_clock,CuminOperator.ASG,vv,cv);
+   CuminEvaluator.evaluateAssign(execution_clock,CuminOperator.ASG,vv,cv,js.getType());
 }
 
 

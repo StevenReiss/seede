@@ -32,6 +32,7 @@ import org.w3c.dom.Element;
 import edu.brown.cs.ivy.jcomp.JcompType;
 import edu.brown.cs.ivy.jcomp.JcompTyper;
 import edu.brown.cs.ivy.xml.IvyXml;
+import edu.brown.cs.ivy.xml.IvyXmlWriter;
 
 public abstract class CashewValue implements CashewConstants
 {
@@ -388,6 +389,24 @@ public Boolean isCategory2(CashewClock cc)      { return false; }
 
 /********************************************************************************/
 /*                                                                              */
+/*      Output methods                                                          */
+/*                                                                              */
+/********************************************************************************/
+
+public void outputXml(IvyXmlWriter xw)
+{
+   xw.begin("VALUE");
+   outputLocalXml(xw);
+   xw.end("VALUE");
+}
+
+
+protected void outputLocalXml(IvyXmlWriter xw)  { }
+
+
+
+/********************************************************************************/
+/*                                                                              */
 /*      Numeric values                                                          */
 /*                                                                              */
 /********************************************************************************/
@@ -460,6 +479,14 @@ private static class ValueNumeric extends CashewValue {
        return v;
     }
    
+   @Override protected void outputLocalXml(IvyXmlWriter xw) {
+      xw.field("TYPE",getDataType());
+      xw.text(num_value.toString());
+    }
+
+   @Override public String toString() {
+      return "[[" + num_value + "]]";
+    }
 }       // end of inner class ValueNumber
 
 
@@ -481,6 +508,12 @@ private static class ValueString extends CashewValue
     }
    
    @Override public String getString(CashewClock cc)    { return string_value; }
+   
+   @Override protected void outputLocalXml(IvyXmlWriter xw) {
+      xw.field("TYPE",getDataType());
+      xw.text(string_value.toString());
+    }
+   
    
 }       // end of inner class ValueString
 
@@ -511,6 +544,9 @@ private static class ValueNull extends CashewValue
       return "null";
     }
    
+   @Override protected void outputLocalXml(IvyXmlWriter xw) {
+      xw.field("TYPE","NULL");
+    }
 }       // end of inner class ValueNull
 
 

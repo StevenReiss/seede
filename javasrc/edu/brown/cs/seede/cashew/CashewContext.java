@@ -27,7 +27,11 @@ package edu.brown.cs.seede.cashew;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jdt.core.dom.CompilationUnit;
+
 import edu.brown.cs.ivy.jcomp.JcompSymbol;
+import edu.brown.cs.ivy.xml.IvyXmlWriter;
 
 public class CashewContext implements CashewConstants
 {
@@ -117,6 +121,34 @@ public void define(Object var,CashewValue addr)
    context_map.put(var,addr);
 }
 
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Output methods                                                          */
+/*                                                                              */
+/********************************************************************************/
+
+public void outputXml(IvyXmlWriter xw) 
+{
+   xw.begin("CONTEXT");
+   for (Map.Entry<Object,CashewValue> ent : context_map.entrySet()) {
+      Object var = ent.getKey();
+      xw.begin("VARIABLE");
+      xw.field("NAME",var.toString());
+      if (var instanceof JcompSymbol) {
+         JcompSymbol js = (JcompSymbol) var;
+         ASTNode defn = js.getDefinitionNode();
+         CompilationUnit cu = (CompilationUnit) defn.getRoot();
+         int lno = cu.getLineNumber(defn.getStartPosition());
+         xw.field("LINE",lno);
+       }
+      CashewValue cv = ent.getValue();
+      cv.outputXml(xw);
+      xw.end("VARIABLE");
+    }
+   xw.end("CONTEXT");
+}
 
 
 

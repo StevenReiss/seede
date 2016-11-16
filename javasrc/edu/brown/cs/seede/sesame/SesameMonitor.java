@@ -45,6 +45,7 @@ import edu.brown.cs.ivy.mint.MintConstants;
 import edu.brown.cs.ivy.xml.IvyXml;
 import edu.brown.cs.ivy.xml.IvyXmlWriter;
 import edu.brown.cs.seede.acorn.AcornLog;
+import edu.brown.cs.seede.cashew.CashewContext;
 import edu.brown.cs.seede.cashew.CashewValue;
 import edu.brown.cs.seede.cumin.CuminRunner;
 import edu.brown.cs.seede.cumin.CuminConstants;
@@ -253,12 +254,19 @@ private void handleExec(String sid,IvyXmlWriter xw) throws SesameException
       cr.interpret(CuminConstants.EvalType.RUN);
     }
    catch (CuminRunError r) {
-      AcornLog.logE("EXECUTION RETURN",r);
       sts = r;
     }
    
    if (sts == null) xw.textElement("STATUS","OK");
-   else xw.textElement("STATUS",sts.toString());
+   else {
+      if (sts.getValue() != null) {
+         xw.begin("RETURN");
+         sts.getValue().outputXml(xw);
+         xw.end("RETURN");
+       }
+      CashewContext ctx = cr.getLookupContext();
+      ctx.outputXml(xw);
+    }
 }
 
 

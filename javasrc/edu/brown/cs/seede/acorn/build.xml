@@ -1,5 +1,5 @@
 <project name='seede.acorn' default='compile'>
-\
+
    <property file='../../../../../../build.properties' />
    <property name='PRO' value='/pro' />
    <available file="${PRO}/ivy" type="dir" property="ivy.present" />

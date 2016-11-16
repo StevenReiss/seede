@@ -25,6 +25,7 @@
 package edu.brown.cs.seede.cumin;
 
 import edu.brown.cs.ivy.jcomp.JcompType;
+import edu.brown.cs.seede.acorn.AcornLog;
 import edu.brown.cs.seede.cashew.CashewClock;
 import edu.brown.cs.seede.cashew.CashewConstants;
 import edu.brown.cs.seede.cashew.CashewValue;
@@ -324,6 +325,7 @@ static CashewValue evaluate(CashewClock cc,CuminOperator op,CashewValue v1,Cashe
           }
          return CashewValue.numericValue(INT_TYPE,irslt);
       default :
+         AcornLog.logE("Unknown operator " + op);
          // illegal binary operator
          break;
     }
@@ -387,7 +389,7 @@ static CashewValue evaluateAssign(CashewClock cc,CuminOperator op,CashewValue v1
    
    assignValue(cc,v1,rslt,tgt);
    
-   return null;
+   return rslt;
 }
 
 
@@ -395,6 +397,7 @@ static CashewValue evaluateAssign(CashewClock cc,CuminOperator op,CashewValue v1
 static void assignValue(CashewClock cc,CashewValue vr,CashewValue cv,JcompType tgt)
 {
    cv = castValue(cc,cv,tgt);
+   cv = cv.getActualValue(cc);
    vr.setValueAt(cc,cv);
 }
 
