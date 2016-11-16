@@ -92,9 +92,7 @@ public static CashewValue createValue(JcompTyper typer,Element xml) throws Cashe
    else {
       String val = IvyXml.getTextElement(xml,"VALUE");
       if (val != null && val.equals("null")) return nullValue();
-      CashewValueObject vo = new CashewValueObject.ComputedValueObject(jtype);
-      // set up contents of vo
-      return vo;
+      return objectValue(jtype);
     }
 }
 
@@ -241,7 +239,14 @@ public static CashewValue classValue(JcompType vtyp)
 
 public static CashewValue arrayValue(JcompType atyp,int dim)
 {
+   // might want to create multidimensional arrays here
    return new CashewValueArray.ComputedValueArray(atyp,dim);
+}
+
+public static CashewValue objectValue(JcompType otyp)
+{
+   CashewValueObject vo = new CashewValueObject.ComputedValueObject(otyp);
+   return vo;
 }
 
 
@@ -368,6 +373,11 @@ public CashewValue getIndexValue(CashewClock cc,int idx)
    throw new Error("Value is not an array");
 }
 
+public int getDimension(CashewClock cc)
+{
+   throw new Error("Value is not an array");
+}
+
 public CashewValue setIndexValue(CashewClock cc,int idx,CashewValue v)
 {
    throw new Error("Value is not an array");
@@ -396,6 +406,7 @@ public Boolean isCategory2(CashewClock cc)      { return false; }
 public void outputXml(IvyXmlWriter xw)
 {
    xw.begin("VALUE");
+   xw.field("TYPE",getDataType());
    outputLocalXml(xw);
    xw.end("VALUE");
 }
@@ -480,7 +491,6 @@ private static class ValueNumeric extends CashewValue {
     }
    
    @Override protected void outputLocalXml(IvyXmlWriter xw) {
-      xw.field("TYPE",getDataType());
       xw.text(num_value.toString());
     }
 
@@ -510,7 +520,6 @@ private static class ValueString extends CashewValue
    @Override public String getString(CashewClock cc)    { return string_value; }
    
    @Override protected void outputLocalXml(IvyXmlWriter xw) {
-      xw.field("TYPE",getDataType());
       xw.text(string_value.toString());
     }
    
@@ -545,7 +554,7 @@ private static class ValueNull extends CashewValue
     }
    
    @Override protected void outputLocalXml(IvyXmlWriter xw) {
-      xw.field("TYPE","NULL");
+      xw.field("NULL",true);
     }
 }       // end of inner class ValueNull
 

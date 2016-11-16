@@ -25,11 +25,13 @@
 package edu.brown.cs.seede.cashew;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 
+import edu.brown.cs.ivy.jcode.JcodeMethod;
 import edu.brown.cs.ivy.jcomp.JcompSymbol;
 import edu.brown.cs.ivy.xml.IvyXmlWriter;
 
@@ -45,6 +47,8 @@ public class CashewContext implements CashewConstants
 
 private Map<Object,CashewValue> context_map;
 private CashewContext parent_context;
+private String context_owner;
+private List<CashewContext> nested_contexts;
 
 
 
@@ -54,14 +58,20 @@ private CashewContext parent_context;
 /*                                                                              */
 /********************************************************************************/
 
-public CashewContext() 
+public CashewContext(JcompSymbol js) 
 {
-   this(null);
+   this(js.getFullName(),null);
+}
+
+public CashewContext(JcodeMethod jm)
+{
+   this(jm.getFullName(),null);
 }
 
 
-public CashewContext(CashewContext par)
+public CashewContext(String js,CashewContext par)
 { 
+   context_owner = js;
    context_map = new HashMap<>();
    parent_context = par;
 }
@@ -123,6 +133,13 @@ public void define(Object var,CashewValue addr)
 
 
 
+public void addNestedContext(CashewContext ctx)
+{
+   nested_contexts.add(ctx);
+}
+
+
+
 /********************************************************************************/
 /*                                                                              */
 /*      Output methods                                                          */
@@ -132,6 +149,9 @@ public void define(Object var,CashewValue addr)
 public void outputXml(IvyXmlWriter xw) 
 {
    xw.begin("CONTEXT");
+   if (context_owner != null) {
+      xw.field("METHOD",context_owner);
+    }
    for (Map.Entry<Object,CashewValue> ent : context_map.entrySet()) {
       Object var = ent.getKey();
       xw.begin("VARIABLE");
@@ -148,6 +168,9 @@ public void outputXml(IvyXmlWriter xw)
       xw.end("VARIABLE");
     }
    xw.end("CONTEXT");
+   for (CashewContext ctx : nested_contexts) {
+      ctx.outputXml(xw);
+    }
 }
 
 

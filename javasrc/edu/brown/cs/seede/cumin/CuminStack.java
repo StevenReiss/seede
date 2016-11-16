@@ -94,6 +94,16 @@ Object popMarker()
 }
 
 
+Object popUntil(Object marker)
+{
+   if (!execution_stack.contains(marker)) return null;
+   for ( ; ; ) {
+      Object o = execution_stack.pop();
+      if (o == marker) return o;
+    }
+}
+
+
 int size()                      { return execution_stack.size(); }
 
 

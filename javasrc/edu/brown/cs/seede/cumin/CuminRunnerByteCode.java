@@ -106,7 +106,7 @@ CuminRunnerByteCode(CuminProject sp,CashewClock clock,
 
 private void setupContext()
 {
-   CashewContext ctx = new CashewContext();
+   CashewContext ctx = new CashewContext(jcode_method);
    
    int nlcl = jcode_method.getLocalSize();
    for (int i = 0; i <= nlcl; ++i) {
@@ -525,64 +525,195 @@ private void evaluateInstruction() throws CuminRunError
          v1 = CashewValue.nullValue();
          v2 = CuminEvaluator.evaluate(execution_clock,CuminOperator.EQL,v0,v1);
          if (v2.getBoolean(execution_clock)) nextins = jins.getTargetInstruction();
-         break;   
-         
-         
-         
-         
+         break;  
          
       case AALOAD :
+         v0 = execution_stack.pop();
+         v1 = execution_stack.pop();
+         vstack = v1.getIndexValue(execution_clock,v0.getNumber(execution_clock).intValue());
          break;
-      case AASTORE :
-         break;
-      case ALOAD :
-         break;
-      case ANEWARRAY :
-         break;
-      case ARETURN :
-      case ARRAYLENGTH :
-      case ASTORE :
-      case ATHROW :
       case BALOAD :
-      case BASTORE :
       case CALOAD :
-      case CASTORE :
-      case CHECKCAST :
-
+      case SALOAD :
+         v0 = execution_stack.pop();
+         v1 = execution_stack.pop();
+         vstack = v1.getIndexValue(execution_clock,v0.getNumber(execution_clock).intValue());
+         vstack = CuminEvaluator.castValue(execution_clock,vstack,INT_TYPE);
+         break;
       case DALOAD :
-      case DASTORE :
-         break; 
-      case DLOAD :
-      case DRETURN :
-      case DSTORE :
+      case LALOAD :
+      case IALOAD :
       case FALOAD :
+         v0 = execution_stack.pop();
+         v1 = execution_stack.pop();
+         vstack = v1.getIndexValue(execution_clock,v0.getNumber(execution_clock).intValue());
+         break;
+         
+         
+      case AASTORE :
+         v0 = execution_stack.pop();
+         v1 = execution_stack.pop();
+         v2 = execution_stack.pop();
+         int idxv = v1.getNumber(execution_clock).intValue();
+         v2.setIndexValue(execution_clock,idxv,v0);
+         break;
+      case BASTORE :
+         v0 = execution_stack.pop();
+         v0 = CuminEvaluator.castValue(execution_clock,v0,BYTE_TYPE);
+         v1 = execution_stack.pop();
+         v2 = execution_stack.pop();
+         idxv = v1.getNumber(execution_clock).intValue();
+         v2.setIndexValue(execution_clock,idxv,v0);
+         break;
+      case CASTORE :
+         v0 = execution_stack.pop();
+         v0 = CuminEvaluator.castValue(execution_clock,v0,CHAR_TYPE);
+         v1 = execution_stack.pop();
+         v2 = execution_stack.pop();
+         idxv = v1.getNumber(execution_clock).intValue();
+         v2.setIndexValue(execution_clock,idxv,v0);
+         break;
+      case DASTORE :
+         v0 = execution_stack.pop();
+         v0 = CuminEvaluator.castValue(execution_clock,v0,DOUBLE_TYPE);
+         v1 = execution_stack.pop();
+         v2 = execution_stack.pop();
+         idxv = v1.getNumber(execution_clock).intValue();
+         v2.setIndexValue(execution_clock,idxv,v0);
+         break;
       case FASTORE :
+         v0 = execution_stack.pop();
+         v0 = CuminEvaluator.castValue(execution_clock,v0,FLOAT_TYPE);
+         v1 = execution_stack.pop();
+         v2 = execution_stack.pop();
+         idxv = v1.getNumber(execution_clock).intValue();
+         v2.setIndexValue(execution_clock,idxv,v0);
+         break;
+      case IASTORE :
+         v0 = execution_stack.pop();
+         v0 = CuminEvaluator.castValue(execution_clock,v0,INT_TYPE);
+         v1 = execution_stack.pop();
+         v2 = execution_stack.pop();
+         idxv = v1.getNumber(execution_clock).intValue();
+         v2.setIndexValue(execution_clock,idxv,v0);
+         break;
+      case LASTORE :
+         v0 = execution_stack.pop();
+         v0 = CuminEvaluator.castValue(execution_clock,v0,LONG_TYPE);
+         v1 = execution_stack.pop();
+         v2 = execution_stack.pop();
+         idxv = v1.getNumber(execution_clock).intValue();
+         v2.setIndexValue(execution_clock,idxv,v0);
+         break;
+      case SASTORE :
+         v0 = execution_stack.pop();
+         v0 = CuminEvaluator.castValue(execution_clock,v0,SHORT_TYPE);
+         v1 = execution_stack.pop();
+         v2 = execution_stack.pop();
+         idxv = v1.getNumber(execution_clock).intValue();
+         v2.setIndexValue(execution_clock,idxv,v0);
+         break;
+         
+      case ALOAD :
+         Integer vidx = jins.getIntValue();
+         vstack = lookup_context.findReference(vidx).getActualValue(execution_clock);
+         break;
+      case DLOAD :
+         vidx = jins.getIntValue();
+         vstack = lookup_context.findReference(vidx).getActualValue(execution_clock);
+         vstack = CuminEvaluator.castValue(execution_clock,vstack,DOUBLE_TYPE);
+         break;
       case FLOAD :
-      case FRETURN :
+         vidx = jins.getIntValue();
+         vstack = lookup_context.findReference(vidx).getActualValue(execution_clock);
+         vstack = CuminEvaluator.castValue(execution_clock,vstack,FLOAT_TYPE);
+         break;
+      case ILOAD :
+         vidx = jins.getIntValue();
+         vstack = lookup_context.findReference(vidx).getActualValue(execution_clock);
+         vstack = CuminEvaluator.castValue(execution_clock,vstack,INT_TYPE);
+         break;
+      case LLOAD :
+         vidx = jins.getIntValue();
+         vstack = lookup_context.findReference(vidx).getActualValue(execution_clock);
+         vstack = CuminEvaluator.castValue(execution_clock,vstack,LONG_TYPE);
+         break;
+         
+      case ASTORE :
+         vidx = jins.getIntValue();
+         v0 = lookup_context.findReference(vidx);
+         v1 = execution_stack.pop().getActualValue(execution_clock);
+         v0.setValueAt(execution_clock,v1);
+         break;
+      case DSTORE :
+         vidx = jins.getIntValue();
+         v0 = lookup_context.findReference(vidx);
+         v1 = execution_stack.pop().getActualValue(execution_clock);
+         v1 = CuminEvaluator.castValue(execution_clock,v1,DOUBLE_TYPE);
+         v0.setValueAt(execution_clock,v1);
+         break;
       case FSTORE :
+         vidx = jins.getIntValue();
+         v0 = lookup_context.findReference(vidx);
+         v1 = execution_stack.pop().getActualValue(execution_clock);
+         v1 = CuminEvaluator.castValue(execution_clock,v1,FLOAT_TYPE);
+         v0.setValueAt(execution_clock,v1);
+         break;
+      case LSTORE :
+         vidx = jins.getIntValue();
+         v0 = lookup_context.findReference(vidx);
+         v1 = execution_stack.pop().getActualValue(execution_clock);
+         v1 = CuminEvaluator.castValue(execution_clock,v1,LONG_TYPE);
+         v0.setValueAt(execution_clock,v1);
+         break;
+      case ISTORE :
+         vidx = jins.getIntValue();
+         v0 = lookup_context.findReference(vidx);
+         v1 = execution_stack.pop().getActualValue(execution_clock);
+         v1 = CuminEvaluator.castValue(execution_clock,v1,INT_TYPE);
+         v0.setValueAt(execution_clock,v1);
+         break;
+         
+      case ARETURN :
+      case DRETURN :
+      case FRETURN :
+      case IRETURN :
+      case LRETURN :
+         v0 = execution_stack.pop().getActualValue(execution_clock);
+         throw new CuminRunError(CuminRunError.Reason.RETURN,v0);
+      case RETURN :
+         throw new CuminRunError(CuminRunError.Reason.RETURN);
+      case ATHROW :
+         v0 = execution_stack.pop().getActualValue(execution_clock);
+         throw new CuminRunError(CuminRunError.Reason.EXCEPTION,v0);
+         
+      case ARRAYLENGTH :
+         v0 = execution_stack.pop();
+         vstack = CashewValue.numericValue(INT_TYPE,v0.getDimension(execution_clock));
+         break;
+    
+      case CHECKCAST :
+         // might want to actually do something here
+         break;
+  
+      case IINC :
+         vidx = jins.getIntValue();
+         v0 = lookup_context.findReference(vidx);
+         v1 = CashewValue.numericValue(INT_TYPE,v0.getNumber(execution_clock).intValue() + 1);
+         v0.setValueAt(execution_clock,v1);
+         break;
+         
       case GETFIELD :
       case GETSTATIC :
          break;
-         
-      case IALOAD :
-      case IASTORE :
-      case IINC :
-      case ILOAD :
       case INSTANCEOF :
       case INVOKEDYNAMIC :
       case INVOKEINTERFACE :
       case INVOKESPECIAL :
       case INVOKESTATIC :
       case INVOKEVIRTUAL :
-      case IRETURN :
-      case ISTORE :
       case JSR :
-      case LALOAD :
-      case LASTORE :
-      case LLOAD :
       case LOOKUPSWITCH :
-      case LRETURN :
-      case LSTORE :
       case MONITORENTER :
       case MONITOREXIT :
       case MULTIANEWARRAY :
@@ -591,11 +722,11 @@ private void evaluateInstruction() throws CuminRunError
       case PUTFIELD :
       case PUTSTATIC :
       case RET :
-      case RETURN :
-      case SALOAD :
-      case SASTORE :
       case TABLESWITCH :
          break;
+      case ANEWARRAY :
+         break;
+         
     }
    
    if (vstack != null) execution_stack.push(vstack);

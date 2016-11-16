@@ -142,6 +142,13 @@ CashewRef(CashewValue v)
    return cv.getIndexValue(cc,idx);
 }
 
+@Override public int getDimension(CashewClock cc)
+{
+   CashewValue cv = getValueAt(cc);
+   if (cv == null) throw new Error("Value is not an array");
+   return cv.getDimension(cc);
+}
+
 
 @Override public CashewValue setIndexValue(CashewClock cc,int idx,CashewValue v)
 {

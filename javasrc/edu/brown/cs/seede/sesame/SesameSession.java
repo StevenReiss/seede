@@ -25,9 +25,11 @@
 package edu.brown.cs.seede.sesame;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
@@ -75,6 +77,7 @@ protected SesameMain    sesame_control;
 private String          session_id;
 private SesameProject   for_project;
 private Map<String,SesameLocation> location_map; 
+private Set<Thread>     exec_runners;
 
 
 
@@ -102,6 +105,8 @@ protected SesameSession(SesameMain sm,String sid,Element xml)
       SesameLocation sloc = new SesameLocation(sm,for_project,locxml);
       location_map.put(sloc.getId(),sloc);
     }
+   
+   exec_runners = new HashSet<Thread>();
 }
 
 
@@ -116,7 +121,7 @@ public String getSessionId()                    { return session_id; }
 
 public SesameProject getProject()               { return for_project; }
 
-public ASTNode getCallMethod()   
+public MethodDeclaration getCallMethod()   
 {
    for (SesameLocation loc : location_map.values()) {
       if (loc.isActive()) {
@@ -128,13 +133,37 @@ public ASTNode getCallMethod()
          while (!(mnode instanceof MethodDeclaration)) {
             mnode = mnode.getParent();
           }
-         return mnode;
+         return (MethodDeclaration) mnode;
        }
     }
    return null;
 }
 
 public List<CashewValue> getCallArgs()          { return null; }
+
+
+synchronized void addRunner(Thread th)
+{
+   stopRunners();
+   
+   exec_runners.add(th);
+}
+
+
+
+synchronized void removeRunner(Thread th)
+{
+   exec_runners.remove(th);
+}
+
+
+synchronized void stopRunners()
+{
+   for (Thread run : exec_runners) {
+      run.interrupt();
+    }
+}
+
 
 
 

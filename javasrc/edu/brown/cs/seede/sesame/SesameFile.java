@@ -185,6 +185,12 @@ Position createPosition(int pos)
 }
 
 
+public File getFile()
+{
+   return for_file;
+}
+
+
 
 }	// end of class SesameFile
 

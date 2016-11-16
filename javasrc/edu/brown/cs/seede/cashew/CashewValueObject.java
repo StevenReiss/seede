@@ -25,6 +25,7 @@
 package edu.brown.cs.seede.cashew;
 
 import edu.brown.cs.ivy.jcomp.JcompType;
+import edu.brown.cs.ivy.xml.IvyXmlWriter;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -54,6 +55,7 @@ CashewValueObject(JcompType jt)
    super(jt);
    
    object_fields = jt.getFields();
+   //TODO:  handle adding this and super.this ... fields here?
 }
 
 
@@ -126,6 +128,16 @@ static class ComputedValueObject extends CashewValueObject {
       return this;
     }
    
+   @Override public void outputLocalXml(IvyXmlWriter xw) {
+      xw.field("OBJECT",true);
+      for (Map.Entry<String,CashewRef> ent : field_values.entrySet()) {
+         xw.begin("FIELD");
+         xw.field("NAME",ent.getKey());
+         ent.getValue().outputXml(xw);
+         xw.end("FIELD");
+       }
+    }
+   
 }       // end of inner class ComputedValueObject
 
 
@@ -148,7 +160,12 @@ static class ValueClass extends ComputedValueObject
    @Override public String getString(CashewClock cc) {
       return class_value.toString();
     }
-
+   
+   @Override public void outputLocalXml(IvyXmlWriter xw) {
+      xw.field("OBJECT",true);
+      xw.field("CLASS",class_value.toString());
+    }
+   
 }       // end of inner class ValueClass
 
 

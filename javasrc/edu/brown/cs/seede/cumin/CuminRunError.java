@@ -37,7 +37,7 @@ public class CuminRunError extends Error
 /********************************************************************************/
 
 enum Reason { ERROR, EXCEPTION, BREAKPOINT, TIMEOUT, 
-   STEP_END, BREAK, CONTINUE, RETURN, CALL };
+   STEP_END, BREAK, CONTINUE, RETURN, CALL, STOPED, HALTED };
 
 private Reason          throw_reason;
 private CashewValue     associated_value;
@@ -73,7 +73,7 @@ CuminRunError(Reason r,String label)
 }
 
 
-CuminRunError(Throwable t)
+public CuminRunError(Throwable t)
 {
    this(Reason.ERROR,t.getMessage(),t,null);
 }

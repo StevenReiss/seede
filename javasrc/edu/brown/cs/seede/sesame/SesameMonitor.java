@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 
-import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.w3c.dom.Element;
 
 import edu.brown.cs.ivy.mint.MintArguments;
@@ -194,6 +194,18 @@ private void handleEdit(String bid,File file,int len,int offset,boolean complete
       boolean remove,String txt)
 {
    sesame_control.getFileManager().handleEdit(file,len,offset,complete,txt);
+   
+   for (SesameSession ss : session_map.values()) {
+      SesameProject sp = ss.getProject();
+      boolean fnd = false;
+      for (SesameFile sf : sp.getActiveFiles()) {
+         if (sf.getFile().equals(file)) {
+            fnd = true;
+            break;
+          }
+       }
+      if (fnd) ss.stopRunners();
+    }
 }
 
 
@@ -242,13 +254,24 @@ private void handleBegin(String sid,Element xml,IvyXmlWriter xw) throws SesameEx
 }
 
 
-private void handleExec(String sid,IvyXmlWriter xw) throws SesameException
+private void handleExec(String sid,Element xml,IvyXmlWriter xw) 
+        throws SesameException
 {
+   String xid = IvyXml.getAttrString(xml,"EXECID");
+   
    SesameSession ss = session_map.get(sid);
    if (ss == null) throw new SesameException("Session " + sid + " not found");
-   ASTNode mthd = ss.getCallMethod();
+   MethodDeclaration mthd = ss.getCallMethod();
    List<CashewValue> args = ss.getCallArgs();
    CuminRunner cr = CuminRunner.createRunner(ss.getProject(),mthd,args);
+   
+   if (xid != null) {
+      ExecRunner execer = new ExecRunner(ss,xid,cr);
+      ss.addRunner(execer);
+      execer.start();
+      return;
+    }
+   
    CuminRunError sts = null;
    try {
       cr.interpret(CuminConstants.EvalType.RUN);
@@ -268,6 +291,61 @@ private void handleExec(String sid,IvyXmlWriter xw) throws SesameException
       ctx.outputXml(xw);
     }
 }
+
+
+
+private class ExecRunner extends Thread {
+   
+   private SesameSession for_session;
+   private CuminRunner cumin_runner;
+   private String      reply_id;
+   
+   ExecRunner(SesameSession ss,String rid,CuminRunner runner) {
+      super("SeedeExec_" + rid);
+      for_session = ss;
+      cumin_runner = runner;
+      reply_id = rid;
+    }
+   
+   @Override public void run() {
+      CuminRunError sts = null;
+      try {
+         cumin_runner.interpret(CuminConstants.EvalType.RUN);
+       }
+      catch (CuminRunError r) {
+         sts = r;
+       }
+      catch (Throwable t) {
+         sts = new CuminRunError(t);
+       }
+      
+      IvyXmlWriter xw = new IvyXmlWriter();
+      xw.begin("SEEDEEXEC");
+      xw.field("TYPE","EXEC");
+      if (reply_id != null) xw.field("ID",reply_id);
+      if (isInterrupted() || sts == null) xw.field("EMPTY",true);
+      else {
+         if (sts.getValue() != null) {
+            xw.begin("RETURN");
+            sts.getValue().outputXml(xw);
+            xw.end("RETURN");
+          }
+         CashewContext ctx = cumin_runner.getLookupContext();
+         ctx.outputXml(xw);
+       } 
+      xw.end("SEEDEEXEC");
+      if (reply_id != null) {
+         MintDefaultReply hdlr = new MintDefaultReply();
+         sendMessage(xw.toString(),hdlr,MintConstants.MINT_MSG_FIRST_REPLY);
+         hdlr.waitFor();
+       }
+      xw.close();
+    }
+   
+}       // end of inner class ExecRunner
+
+
+
 
 
 private void handleRemove(String sid) throws SesameException
@@ -393,7 +471,7 @@ private String processCommand(String cmd,String sid,Element e) throws SesameExce
          handleBegin(sid,IvyXml.getChild(e,"SESSION"),xw);
          break;
       case "EXEC" :
-         handleExec(sid,xw);
+         handleExec(sid,e,xw);
          break;
       case "REMOVE" :
          handleRemove(sid);

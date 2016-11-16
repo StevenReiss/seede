@@ -57,7 +57,7 @@ public abstract class CuminRunner implements CuminConstants
 /*                                                                              */
 /********************************************************************************/
 
-public static CuminRunner createRunner(CuminProject cp,ASTNode method,List<CashewValue> args)
+public static CuminRunner createRunner(CuminProject cp,MethodDeclaration method,List<CashewValue> args)
 {
    return new CuminRunnerAst(cp,null,method,args);
 }
@@ -78,6 +78,7 @@ protected CashewClock   execution_clock;
 protected CashewContext lookup_context;
 protected List<CashewValue> call_args;
 protected long          start_clock;
+
 
 
 
@@ -241,7 +242,7 @@ protected CuminRunner handleCall(CashewClock cc,JcodeMethod method,List<CashewVa
 private CuminRunner doCall(CashewClock cc,MethodDeclaration ast,List<CashewValue> args)
 {
    CuminRunnerAst rast = new CuminRunnerAst(base_project,cc,ast,args);
-   
+   lookup_context.addNestedContext(rast.getLookupContext());
    return rast;
 }
 

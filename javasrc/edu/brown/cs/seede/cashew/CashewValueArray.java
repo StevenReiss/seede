@@ -25,6 +25,7 @@
 package edu.brown.cs.seede.cashew;
 
 import edu.brown.cs.ivy.jcomp.JcompType;
+import edu.brown.cs.ivy.xml.IvyXmlWriter;
 
 public abstract class CashewValueArray extends CashewValue implements CashewConstants
 {
@@ -67,6 +68,11 @@ CashewValueArray(JcompType jt,int dim) {
 
 protected int getSize()                         { return dim_size; }
 
+@Override public int getDimension(CashewClock cc)
+{
+   return dim_size; 
+}
+
 @Override public abstract CashewValue getIndexValue(CashewClock cc,int idx);
 
 
@@ -107,6 +113,16 @@ static class ComputedValueArray extends CashewValueArray {
       if (idx < 0 || idx >= getSize()) throw new Error("IndexOutOfBounds");
       array_values[idx].setValueAt(cc,v);
       return this;
+    }
+   
+   @Override public void outputLocalXml(IvyXmlWriter xw) {
+      xw.field("ARRAY",true);
+      xw.field("SIZE",getSize());
+      for (int i = 0; i < array_values.length; ++i) {
+         xw.begin("ELEMENT");
+         xw.field("INDEX",i);
+         array_values[i].outputXml(xw);
+       }
     }
    
 }       // end of inner class ComputedValueArray
