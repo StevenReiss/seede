@@ -80,6 +80,16 @@ enum CuminOperator {
 }
 
 
+/********************************************************************************/
+/*                                                                              */
+/*      Special context names                                                   */
+/*                                                                              */
+/********************************************************************************/
+
+String LINE_NAME = "*LINE*";
+String THIS_NAME = "this";
+
+
 }       // end of interface CuminConstants
 
 

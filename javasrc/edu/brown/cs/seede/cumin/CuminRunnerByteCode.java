@@ -35,6 +35,8 @@ import edu.brown.cs.seede.cashew.CashewConstants;
 import edu.brown.cs.seede.cashew.CashewContext;
 import edu.brown.cs.seede.cashew.CashewValue;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.objectweb.asm.Opcodes;
@@ -55,6 +57,7 @@ class CuminRunnerByteCode extends CuminRunner implements CuminConstants,
 private JcodeMethod	jcode_method;
 private int		current_instruction;
 private JcompTyper	type_converter;
+private int             last_line;
 
 
 /********************************************************************************/
@@ -63,16 +66,17 @@ private JcompTyper	type_converter;
 /*										*/
 /********************************************************************************/
 
-CuminRunnerByteCode(CuminProject sp,CashewClock clock,
+CuminRunnerByteCode(CuminProject sp,CashewContext gblctx,CashewClock clock,
       JcodeMethod mthd,List<CashewValue> args)
 {
-   super(sp,clock,args);
+   super(sp,gblctx,clock,args);
 
    execution_stack = new CuminStack();
    execution_clock = clock;
    jcode_method = mthd;
    type_converter = sp.getTyper();
    current_instruction = 0;
+   last_line = 0;
 
    setupContext();
 }
@@ -108,13 +112,15 @@ CuminRunnerByteCode(CuminProject sp,CashewClock clock,
 
 private void setupContext()
 {
-   CashewContext ctx = new CashewContext(jcode_method);
+   CashewContext ctx = new CashewContext(jcode_method,global_context);
 
    int nlcl = jcode_method.getLocalSize();
    for (int i = 0; i <= nlcl; ++i) {
       ctx.define(Integer.valueOf(i),CashewValue.nullValue());
     }
-
+   
+   CashewValue zv = CashewValue.numericValue(CashewConstants.INT_TYPE,0); ctx.define(LINE_NAME,CashewValue.createReference(zv));
+   
    setLoockupContext(ctx);
 }
 
@@ -134,6 +140,14 @@ private void evaluateInstruction() throws CuminRunError
    int next = current_instruction+1;
 
    JcodeInstruction jins = jcode_method.getInstruction(current_instruction);
+   
+   int lno = jins.getLineNumber();
+   if (lno > 0 && lno != last_line) {
+      last_line = lno;
+      CashewValue lvl = CashewValue.numericValue(CashewConstants.INT_TYPE,lno);
+      lookup_context.findReference(LINE_NAME).setValueAt(execution_clock,lvl);
+    }
+   
    switch (jins.getOpcode()) {
 
 // Arithmetic operators
@@ -700,9 +714,23 @@ private void evaluateInstruction() throws CuminRunError
 	 v0.setValueAt(execution_clock,v1);
 	 break;
 
+      case INSTANCEOF :
+         JcompType jty = convertType(jins.getTypeReference());
+         v0 = execution_stack.pop();
+         if (v0.getDataType(execution_clock).isCompatibleWith(jty))
+            vstack = CashewValue.booleanValue(true);
+         else 
+            vstack = CashewValue.booleanValue(false);
+         break;
       case CHECKCAST :
-	 // might want to actually do something here
+         v0 = execution_stack.peek(0);
+         jty = convertType(jins.getTypeReference());
+         if (!v0.getDataType(execution_clock).isCompatibleWith(jty)) {
+            //TODO:  need to create an exception here for type conversion
+            throw new CuminRunError(CuminRunError.Reason.EXCEPTION);
+          }
 	 break;
+         
       case GETFIELD :
 	 v0 = execution_stack.pop();
 	 JcodeField fld = jins.getFieldReference();
@@ -711,8 +739,7 @@ private void evaluateInstruction() throws CuminRunError
 	 break;
       case GETSTATIC :
 	 fld = jins.getFieldReference();
-	 nm = fld.getDeclaringClass().getName() + "." + fld.getName();
-	 vstack = lookup_context.findReference(nm);
+	 vstack = lookup_context.findReference(fld);
 	 vstack = vstack.getActualValue(execution_clock);
 	 break;
       case PUTFIELD :
@@ -726,21 +753,29 @@ private void evaluateInstruction() throws CuminRunError
 	 v0 = execution_stack.pop();
 	 v0 = v0.getActualValue(execution_clock);
 	 fld = jins.getFieldReference();
-	 nm = fld.getDeclaringClass().getName() + "." + fld.getName();
-	 v1 = lookup_context.findReference(nm);
+	 v1 = lookup_context.findReference(fld);
 	 v1.setValueAt(execution_clock,v0);
 	 break;
+         
       case NEW :
 	 JcompType nty = convertType(jins.getTypeReference());
 	 vstack = CashewValue.objectValue(nty);
 	 break;
 
-
       case INVOKEDYNAMIC :
+         handleCall(jins.getMethodReference(),CallType.DYNAMIC);
+         break;
       case INVOKEINTERFACE :
+         handleCall(jins.getMethodReference(),CallType.INTERFACE);
+         break;
       case INVOKESPECIAL :
+         handleCall(jins.getMethodReference(),CallType.SPECIAL);
+         break;
       case INVOKESTATIC :
+         handleCall(jins.getMethodReference(),CallType.STATIC);
+         break;
       case INVOKEVIRTUAL :
+         handleCall(jins.getMethodReference(),CallType.VIRTUAL);
 	 break;
 
       case JSR :
@@ -752,13 +787,19 @@ private void evaluateInstruction() throws CuminRunError
 	 break;
 
       case LOOKUPSWITCH :
+      case TABLESWITCH :
+         v0 = execution_stack.pop();
+         nextins = jins.getTargetInstruction(v0.getNumber(execution_clock).intValue());
+         break;
+         
+         
       case MONITORENTER :
       case MONITOREXIT :
+         break;
+         
       case MULTIANEWARRAY :
       case NEWARRAY :
-      case TABLESWITCH :
 	 break;
-      case INSTANCEOF :
       case ANEWARRAY :
 	 break;
 
@@ -784,6 +825,16 @@ JcompType convertType(JcodeDataType cty)
 }
 
 
+
+void handleCall(JcodeMethod method,CallType cty)
+{
+  int act = method.getNumArguments();
+  if (!method.isStatic()) ++act;
+  List<CashewValue> args = new ArrayList<CashewValue>();
+  for (int i = 0; i < act; ++i) args.add(execution_stack.pop().getActualValue(execution_clock));
+  Collections.reverse(args);
+  handleCall(execution_clock,method,args,cty);
+}
 
 
 

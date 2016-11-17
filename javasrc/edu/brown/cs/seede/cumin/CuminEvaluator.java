@@ -87,6 +87,7 @@ static CashewValue evaluate(CashewClock cc,CuminOperator op,CashewValue v1,Cashe
           }
          break;  
       case DIV :
+         //TODO: check if v2 = 0 and provide exception
          if (isdbl) {
             double v0 = v1.getNumber(cc).doubleValue() / v2.getNumber(cc).doubleValue();
             rslt = CashewValue.numericValue(DOUBLE_TYPE,v0);
@@ -200,6 +201,7 @@ static CashewValue evaluate(CashewClock cc,CuminOperator op,CashewValue v1,Cashe
           }
          break;   
       case MOD :
+         //TODO: check for v2 = 0 and provide exception
          if (islng) {
             long v0 = v1.getNumber(cc).longValue() % v2.getNumber(cc).longValue();
             rslt = CashewValue.numericValue(LONG_TYPE,v0);

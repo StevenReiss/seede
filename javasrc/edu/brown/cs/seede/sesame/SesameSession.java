@@ -142,6 +142,14 @@ public MethodDeclaration getCallMethod()
 public List<CashewValue> getCallArgs()          { return null; }
 
 
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Runner management methods                                               */
+/*                                                                              */
+/********************************************************************************/
+
 synchronized void addRunner(Thread th)
 {
    stopRunners();
@@ -165,6 +173,17 @@ synchronized void stopRunners()
 }
 
 
+
+/********************************************************************************/
+/*                                                                              */
+/*      Methods to get global values from underlying execution                  */
+/*                                                                              */
+/********************************************************************************/
+
+CashewValue lookupValue(String name,String type)
+{ 
+   return null;
+}
 
 
 

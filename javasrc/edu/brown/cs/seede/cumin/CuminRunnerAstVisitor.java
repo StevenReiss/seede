@@ -539,9 +539,9 @@ ASTNode getCurrentNode()                        { return current_node; }
 
 @Override public void endVisit(ThisExpression v)
 {
-   String name = "this";
+   String name = THIS_NAME;
    if (v.getQualifier() != null) {
-      name = v.getQualifier().getFullyQualifiedName() + "." + name;
+      name = v.getQualifier().getFullyQualifiedName() + "." + THIS_NAME;
     }
    CashewValue cv = execution_context.findReference(name);
    execution_stack.push(cv);

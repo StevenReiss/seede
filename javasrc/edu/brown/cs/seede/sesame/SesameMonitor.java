@@ -263,7 +263,9 @@ private void handleExec(String sid,Element xml,IvyXmlWriter xw)
    if (ss == null) throw new SesameException("Session " + sid + " not found");
    MethodDeclaration mthd = ss.getCallMethod();
    List<CashewValue> args = ss.getCallArgs();
-   CuminRunner cr = CuminRunner.createRunner(ss.getProject(),mthd,args);
+   SesameContext gblctx = new SesameContext(ss);
+   CuminRunner cr = CuminRunner.createRunner(ss.getProject(),
+         gblctx,mthd,args);
    
    if (xid != null) {
       ExecRunner execer = new ExecRunner(ss,xid,cr);

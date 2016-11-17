@@ -57,9 +57,10 @@ public abstract class CuminRunner implements CuminConstants
 /*                                                                              */
 /********************************************************************************/
 
-public static CuminRunner createRunner(CuminProject cp,MethodDeclaration method,List<CashewValue> args)
+public static CuminRunner createRunner(CuminProject cp,CashewContext glblctx,
+      MethodDeclaration method,List<CashewValue> args)
 {
-   return new CuminRunnerAst(cp,null,method,args);
+   return new CuminRunnerAst(cp,glblctx,null,method,args);
 }
 
 
@@ -76,6 +77,7 @@ private CuminRunner     nested_call;
 protected CuminStack    execution_stack;
 protected CashewClock   execution_clock;
 protected CashewContext lookup_context;
+protected CashewContext global_context;
 protected List<CashewValue> call_args;
 protected long          start_clock;
 
@@ -88,14 +90,15 @@ protected long          start_clock;
 /*                                                                              */
 /********************************************************************************/
 
-protected CuminRunner(CuminProject sp,CashewClock cc,List<CashewValue> args)
+protected CuminRunner(CuminProject cp,CashewContext gblctx,CashewClock cc,List<CashewValue> args)
 {
-   base_project = sp;
+   base_project = cp;
    nested_call = null;
    execution_stack = new CuminStack();
    if (cc == null) execution_clock = new CashewClock();
    else execution_clock = cc;
    call_args = args;
+   global_context = gblctx;
    lookup_context = null;
    start_clock = execution_clock.getTimeValue();
 }
@@ -241,7 +244,7 @@ protected CuminRunner handleCall(CashewClock cc,JcodeMethod method,List<CashewVa
 
 private CuminRunner doCall(CashewClock cc,MethodDeclaration ast,List<CashewValue> args)
 {
-   CuminRunnerAst rast = new CuminRunnerAst(base_project,cc,ast,args);
+   CuminRunnerAst rast = new CuminRunnerAst(base_project,global_context,cc,ast,args);
    lookup_context.addNestedContext(rast.getLookupContext());
    return rast;
 }
@@ -249,7 +252,7 @@ private CuminRunner doCall(CashewClock cc,MethodDeclaration ast,List<CashewValue
 
 private CuminRunner doCall(CashewClock cc,JcodeMethod mthd,List<CashewValue> args)
 {
-   CuminRunnerByteCode rbyt = new CuminRunnerByteCode(base_project,cc,mthd,args);
+   CuminRunnerByteCode rbyt = new CuminRunnerByteCode(base_project,global_context,cc,mthd,args);
    
    return rbyt;
 }

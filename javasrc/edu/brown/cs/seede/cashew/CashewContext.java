@@ -31,9 +31,12 @@ import java.util.Map;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 
+import edu.brown.cs.ivy.jcode.JcodeField;
 import edu.brown.cs.ivy.jcode.JcodeMethod;
 import edu.brown.cs.ivy.jcomp.JcompSymbol;
+import edu.brown.cs.ivy.jcomp.JcompType;
 import edu.brown.cs.ivy.xml.IvyXmlWriter;
+import edu.brown.cs.seede.cumin.CuminRunError;
 
 public class CashewContext implements CashewConstants
 {
@@ -58,14 +61,14 @@ private List<CashewContext> nested_contexts;
 /*                                                                              */
 /********************************************************************************/
 
-public CashewContext(JcompSymbol js) 
+public CashewContext(JcompSymbol js,CashewContext par) 
 {
-   this(js.getFullName(),null);
+   this(js.getFullName(),par);
 }
 
-public CashewContext(JcodeMethod jm)
+public CashewContext(JcodeMethod jm,CashewContext par)
 {
-   this(jm.getFullName(),null);
+   this(jm.getFullName(),par);
 }
 
 
@@ -77,44 +80,72 @@ public CashewContext(String js,CashewContext par)
 }
 
 
+
+/********************************************************************************/
+/*                                                                              */
+/*      High-level access methods                                               */
+/*                                                                              */
+/********************************************************************************/
+
+public CashewValue findReference(JcompSymbol js)
+{
+   CashewValue cv = null;
+   
+   if (js.isFieldSymbol() && js.isStatic()) {
+      String nm = js.getFullName();
+      cv = findReference(nm);
+      if (cv != null) return cv;
+    }
+   
+   cv = findReference(js);
+   if (cv != null) return null;
+   
+   return cv;
+}
+
+
+public CashewValue findReference(JcodeField jf)
+{
+   CashewValue cv = null;
+   if (jf.isStatic()) {
+      String nm = jf.getDeclaringClass().getName() + "." + jf.getName();
+      cv = findReference(nm);
+      if (cv != null) return cv;
+    }
+   
+   cv = findReference(jf);
+   if (cv != null) return null;
+     
+   return cv;
+}
+
+
+
+public CashewValue findReference(Integer lv)
+{
+   CashewValue cv = findReference(((Object) lv));
+   if (cv != null) return cv;
+   
+   return null;
+}
+
+
 /********************************************************************************/
 /*                                                                              */
 /*      Context Operators                                                       */
 /*                                                                              */
 /********************************************************************************/
 
-public CashewValue findReference(JcompSymbol sym)
-{
-   // for AST-based lookup
-   return findReference(sym,true);
-}
-
-
 public CashewValue findReference(Object var)
-{
-   return findReference(var,true);
-}
-
-
-public CashewValue findReference(Object var,boolean create)
 {
    // for byte-code based lookup
    CashewValue cv = context_map.get(var);
    if (cv != null) return cv;
    if (parent_context != null) {
-      cv = parent_context.findReference(var,false);
-    }
-   if (cv == null && create) {
-      // create new value here
+      cv = parent_context.findReference(var);
     }
    
    return cv;
-}
-
-
-public CashewContext pop() throws CashewException
-{
-   throw new CashewException("Can't pop a non-stack context");
 }
 
 
@@ -133,18 +164,18 @@ public void define(Object var,CashewValue addr)
 
 
 
+/********************************************************************************/
+/*                                                                              */
+/*      Output methods                                                          */
+/*                                                                              */
+/********************************************************************************/
+
 public void addNestedContext(CashewContext ctx)
 {
    nested_contexts.add(ctx);
 }
 
 
-
-/********************************************************************************/
-/*                                                                              */
-/*      Output methods                                                          */
-/*                                                                              */
-/********************************************************************************/
 
 public void outputXml(IvyXmlWriter xw) 
 {
