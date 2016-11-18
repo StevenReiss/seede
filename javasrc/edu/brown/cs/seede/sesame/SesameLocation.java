@@ -63,7 +63,7 @@ private boolean         is_active;
 /*                                                                              */
 /********************************************************************************/
 
-SesameLocation(SesameMain sm,SesameProject sp,Element xml)
+SesameLocation(SesameMain sm,Element xml)
 {
    location_id = IvyXml.getAttrString(xml,"ID");
    if (location_id == null) {
@@ -83,8 +83,19 @@ SesameLocation(SesameMain sm,SesameProject sp,Element xml)
    start_position = null;
    if (sesame_file == null) return;
    setupPosition();
-   
-   if (sesame_file != null && sp != null) sp.addFile(sesame_file);
+}
+
+
+
+SesameLocation(SesameFile sf,String method,int lno)
+{
+   location_id =  "L_" + new Random().nextInt(10000000);
+   sesame_file = sf;
+   line_number = lno;
+   method_name = method;
+   is_active = true;
+   start_position = null;
+   setupPosition();
 }
 
 

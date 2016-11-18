@@ -185,12 +185,35 @@ public static CashewValue numericValue(JcompType t,long v)
 }
 
 
+public static CashewValue numericValue(JcompType t,double v)
+{
+   return new ValueNumeric(t,v);
+}
+
+public static CashewValue numericValue(JcompType t,String v)
+{
+   if (t == DOUBLE_TYPE || t == FLOAT_TYPE) {
+      double dv = Double.parseDouble(v);
+      return numericValue(t,dv);
+    }
+   else {
+      long lv = Long.parseLong(v);
+      return numericValue(t,lv);
+    }
+}
+
+
 public static CashewValue booleanValue(boolean v)
 {
    return (v ? true_value : false_value);
 }
 
-
+public static CashewValue booleanValue(String v)
+{
+   if (v == null || v.length() == 0) return booleanValue(false);
+   if ("Tt1Yy".indexOf(v.charAt(0)) >= 0) return booleanValue(true);
+   return booleanValue(false);
+}
 
 public static CashewValue characterValue(JcompType t,char v)
 {
@@ -202,12 +225,6 @@ public static CashewValue characterValue(JcompType t,char v)
        }
       return vn;
     }
-}
-
-
-public static CashewValue numericValue(JcompType t,double v)
-{
-   return new ValueNumeric(t,v);
 }
 
 
@@ -245,8 +262,14 @@ public static CashewValue arrayValue(JcompType atyp,int dim)
 
 public static CashewValue objectValue(JcompType otyp)
 {
-   CashewValueObject vo = new CashewValueObject.ComputedValueObject(otyp);
-   return vo;
+   return objectValue(otyp,null);
+}
+
+
+public static CashewValue objectValue(JcompType otyp,Map<String,Object> inits)
+{
+   CashewValueObject vo = new CashewValueObject.ComputedValueObject(otyp,inits);
+   return vo;  
 }
 
 

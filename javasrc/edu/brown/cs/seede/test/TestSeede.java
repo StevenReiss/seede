@@ -60,10 +60,13 @@ public class TestSeede implements MintConstants, SesameConstants
 
 private static final String		MINT_NAME = "SEEDE_TEST_spr";
 private static final String		SOURCE_ID = "SEED_12345";
-private static final String             TEST_SID = "SEED_12346";
+private static final String             TEST1_SID = "SEED_12346";
+private static final String             TEST2_SID = "SEED_12347";
+private static final String             TEST3_SID = "SEED_12348";
 
 private static final String             TEST_PROJECT = "sample1";      
-private static final String             LAUNCH_NAME = "test1";
+private static final String             LAUNCH1_NAME = "test1";
+private static final String             LAUNCH2_NAME = "test2";
 private static final String             REL_PATH1 = "src/edu/brown/cs/seede/sample/Tester.java";
 
 
@@ -207,7 +210,7 @@ private static class SeedeThread extends Thread {
 {
    System.err.println("Start TEST1");
    stopped_thread = null;
-   CommandArgs args = new CommandArgs("NAME",LAUNCH_NAME,"MODE","debug","BUILD","TRUE",
+   CommandArgs args = new CommandArgs("NAME",LAUNCH1_NAME,"MODE","debug","BUILD","TRUE",
          "REGISTER","TRUE");
    MintDefaultReply rply = new MintDefaultReply();
    sendBubblesMessage("START",TEST_PROJECT,args,null,rply);
@@ -230,7 +233,25 @@ private static class SeedeThread extends Thread {
    Assert.assertNotNull(x);
    String threadid = waitForStop();
    Assert.assertNotNull(threadid);
-   // do something here
+ 
+   IvyXmlWriter xw = new IvyXmlWriter();
+ ; xw.begin("SESSION");
+   xw.field("TYPE","LAUNCH");
+   xw.field("PROJECT",TEST_PROJECT);
+   xw.field("LAUNCHID",launchid);
+   xw.field("THREADID",threadid);
+   xw.end("SESSION");
+   String cnts = xw.toString();
+   xw.close();
+   rply = new MintDefaultReply();
+   sendSeedeMessage("BEGIN",TEST1_SID,null,cnts,rply);
+   Element status = rply.waitForXml();
+   Assert.assertTrue(IvyXml.isElement(status,"RESULT"));
+
+   rply = new MintDefaultReply();
+   sendSeedeMessage("EXEC",TEST1_SID,null,cnts,rply);
+   String sstatus = rply.waitForString();
+   System.err.println("RESULT IS " + sstatus);
 }
 
 
@@ -278,16 +299,59 @@ private static class SeedeThread extends Thread {
    xw.close();
    
    rply = new MintDefaultReply();
-   sendSeedeMessage("BEGIN",TEST_SID,null,cnts,rply);
+   sendSeedeMessage("BEGIN",TEST2_SID,null,cnts,rply);
    Element status = rply.waitForXml();
    Assert.assertTrue(IvyXml.isElement(status,"RESULT")); 
    
    rply = new MintDefaultReply();
-   sendSeedeMessage("EXEC",TEST_SID,null,cnts,rply);
+   sendSeedeMessage("EXEC",TEST2_SID,null,cnts,rply);
    String sstatus = rply.waitForString();
    System.err.println("RESULT IS " + sstatus);
 }
 
+
+
+
+
+@Test public void test3()
+{
+   System.err.println("Start TEST3");
+   stopped_thread = null;
+   CommandArgs args = new CommandArgs("NAME",LAUNCH2_NAME,"MODE","debug","BUILD","TRUE",
+         "REGISTER","TRUE");
+   MintDefaultReply rply = new MintDefaultReply();
+   sendBubblesMessage("START",TEST_PROJECT,args,null,rply);
+   Element xml = rply.waitForXml();
+   Element ldata = IvyXml.getChild(xml,"LAUNCH");
+   Assert.assertNotNull(ldata);
+   String launchid = IvyXml.getAttrString(ldata,"ID");
+   Assert.assertNotNull(launchid);
+   String targetid = IvyXml.getAttrString(ldata,"TARGET");
+   Assert.assertNotNull(targetid);
+   String processid = IvyXml.getAttrString(ldata,"PROCESS");
+   Assert.assertNotNull(processid);
+   String threadid = waitForStop();
+   Assert.assertNotNull(threadid);
+   
+   IvyXmlWriter xw = new IvyXmlWriter();
+   xw.begin("SESSION");
+   xw.field("TYPE","LAUNCH");
+   xw.field("PROJECT",TEST_PROJECT);
+   xw.field("LAUNCHID",launchid);
+   xw.field("THREADID",threadid);
+   xw.end("SESSION");
+   String cnts = xw.toString();
+   xw.close();
+   rply = new MintDefaultReply();
+   sendSeedeMessage("BEGIN",TEST3_SID,null,cnts,rply);
+   Element status = rply.waitForXml();
+   Assert.assertTrue(IvyXml.isElement(status,"RESULT"));
+   
+   rply = new MintDefaultReply();
+   sendSeedeMessage("EXEC",TEST3_SID,null,cnts,rply);
+   String sstatus = rply.waitForString();
+   System.err.println("RESULT IS " + sstatus);
+}
 
 
 

@@ -103,11 +103,21 @@ static class ComputedValueObject extends CashewValueObject {
    
    private final Map<String,CashewRef> field_values;
    
-   ComputedValueObject(JcompType jt) {
+   ComputedValueObject(JcompType jt,Map<String,Object> inits) {
       super(jt);
       field_values = new HashMap<String,CashewRef>();
       for (Map.Entry<String,JcompType> ent : getAllFields().entrySet()) {
-         field_values.put(ent.getKey(),new CashewRef());
+         CashewValue cv = CashewValue.createDefaultValue(ent.getValue());
+         if (inits != null) {
+            Object ival = inits.get(ent.getKey());
+            if (ival instanceof CashewValue) cv = (CashewValue) ival;
+            else if (ival instanceof CashewDeferredValue) {
+               CashewDeferredValue cdv = (CashewDeferredValue) ival;
+               field_values.put(ent.getKey(),new CashewRef(cdv));
+               continue;
+             }
+          }
+         field_values.put(ent.getKey(),new CashewRef(cv));
        }
     }
    
@@ -153,7 +163,7 @@ static class ValueClass extends ComputedValueObject
    private JcompType     class_value;
 
    ValueClass(JcompType c) {
-      super(CLASS_TYPE);
+      super(CLASS_TYPE,null);
       class_value = c;
     }
 

@@ -24,6 +24,7 @@
 
 package edu.brown.cs.seede.cashew;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,9 +35,7 @@ import org.eclipse.jdt.core.dom.CompilationUnit;
 import edu.brown.cs.ivy.jcode.JcodeField;
 import edu.brown.cs.ivy.jcode.JcodeMethod;
 import edu.brown.cs.ivy.jcomp.JcompSymbol;
-import edu.brown.cs.ivy.jcomp.JcompType;
 import edu.brown.cs.ivy.xml.IvyXmlWriter;
-import edu.brown.cs.seede.cumin.CuminRunError;
 
 public class CashewContext implements CashewConstants
 {
@@ -77,6 +76,7 @@ public CashewContext(String js,CashewContext par)
    context_owner = js;
    context_map = new HashMap<>();
    parent_context = par;
+   nested_contexts = new ArrayList<CashewContext>();
 }
 
 
@@ -97,8 +97,8 @@ public CashewValue findReference(JcompSymbol js)
       if (cv != null) return cv;
     }
    
-   cv = findReference(js);
-   if (cv != null) return null;
+   cv = findReference((Object) js);
+   if (cv != null) return cv;
    
    return cv;
 }

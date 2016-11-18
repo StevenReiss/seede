@@ -81,7 +81,7 @@ SesameProject(SesameMain sm,String name)
 
    // compute class path for project
    CommandArgs args = new CommandArgs("PATHS",true);
-   Element xml = sm.getXmlReply("OPENPROJECT",name,args,null,0);
+   Element xml = sm.getXmlReply("OPENPROJECT",this,args,null,0);
    if (IvyXml.isElement(xml,"RESULT")) xml = IvyXml.getChild(xml,"PROJECT");
    Element cp = IvyXml.getChild(xml,"CLASSPATH");
    String ignore = null;

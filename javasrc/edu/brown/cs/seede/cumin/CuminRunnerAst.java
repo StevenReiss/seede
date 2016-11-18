@@ -1086,8 +1086,8 @@ private void visit(MethodInvocation v,ASTNode after)
       else thisv = lookup_context.findReference(THIS_NAME);
       thisv = thisv.getActualValue(execution_clock);
       argv.add(thisv);
-      cty = CallType.STATIC;
     }
+   else cty = CallType.STATIC;
    for (int i = 0; i < args.size(); ++i) argv.add(null);
    int off = argv.size();
    for (int i = 0; i < args.size(); ++i) {

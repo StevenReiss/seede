@@ -187,8 +187,11 @@ String getStringReply(String cmd,String proj,Map<String,Object> flds,String cnts
 }
 
 
-Element getXmlReply(String cmd,String proj,Map<String,Object> flds,String cnts,long delay)
+Element getXmlReply(String cmd,SesameProject sproj,Map<String,Object> flds,String cnts,long delay)
 {
+   String proj = null;
+   if (sproj != null) proj = sproj.getName();
+   
    MintDefaultReply rply = new MintDefaultReply();
    sendMessage(cmd,proj,flds,cnts,rply,MINT_MSG_FIRST_REPLY);
    return rply.waitForXml(delay);

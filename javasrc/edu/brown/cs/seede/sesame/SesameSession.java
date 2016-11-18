@@ -102,8 +102,8 @@ protected SesameSession(SesameMain sm,String sid,Element xml)
    
    location_map = new HashMap<String,SesameLocation>();
    for (Element locxml : IvyXml.children(xml,"LOCATION")) {
-      SesameLocation sloc = new SesameLocation(sm,for_project,locxml);
-      location_map.put(sloc.getId(),sloc);
+      SesameLocation sloc = new SesameLocation(sm,locxml);
+      addLocation(sloc);
     }
    
    exec_runners = new HashSet<Thread>();
@@ -140,6 +140,16 @@ public MethodDeclaration getCallMethod()
 }
 
 public List<CashewValue> getCallArgs()          { return null; }
+
+
+
+SesameMain getControl()                         { return sesame_control; }
+
+protected void addLocation(SesameLocation sl)
+{
+   location_map.put(sl.getId(),sl);
+   for_project.addFile(sl.getFile());
+}
 
 
 
