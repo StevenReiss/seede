@@ -268,7 +268,7 @@ private CashewValue getValueAt(CashewClock cc)
 @Override public void outputXml(IvyXmlWriter xw)
 {
    if (value_map == null) {
-      last_value.outputXml(xw);
+      if (last_value != null) last_value.outputXml(xw);
     }
    else {
       for (Map.Entry<Long,CashewValue> ent : value_map.entrySet()) {
@@ -304,6 +304,7 @@ private CashewValue getValueAt(CashewClock cc)
       buf.append("]");
       return buf.toString();
     }
+   else if (deferred_value != null) return "[***]";
    else return "[" + last_value + "]";
 }
 

@@ -30,6 +30,7 @@ import edu.brown.cs.ivy.jcode.JcodeInstruction;
 import edu.brown.cs.ivy.jcode.JcodeMethod;
 import edu.brown.cs.ivy.jcomp.JcompType;
 import edu.brown.cs.ivy.jcomp.JcompTyper;
+import edu.brown.cs.seede.acorn.AcornLog;
 import edu.brown.cs.seede.cashew.CashewClock;
 import edu.brown.cs.seede.cashew.CashewConstants;
 import edu.brown.cs.seede.cashew.CashewContext;
@@ -78,7 +79,7 @@ CuminRunnerByteCode(CuminProject sp,CashewContext gblctx,CashewClock clock,
    current_instruction = 0;
    last_line = 0;
 
-   setupContext();
+   setupContext(args);
 }
 
 
@@ -93,12 +94,14 @@ CuminRunnerByteCode(CuminProject sp,CashewContext gblctx,CashewClock clock,
 {
    current_instruction = 0;
    try {
-      while (current_instruction > 0) {
+      while (current_instruction >= 0) {
 	 evaluateInstruction();
        }
     }
    catch (Throwable t) {
-
+       if (t instanceof CuminRunError) throw t;
+       CuminRunError re = new CuminRunError(t);
+       throw re;
     }
 }
 
@@ -110,18 +113,21 @@ CuminRunnerByteCode(CuminProject sp,CashewContext gblctx,CashewClock clock,
 /*										*/
 /********************************************************************************/
 
-private void setupContext()
+private void setupContext(List<CashewValue> args)
 {
    CashewContext ctx = new CashewContext(jcode_method,global_context);
 
    int nlcl = jcode_method.getLocalSize();
    for (int i = 0; i <= nlcl; ++i) {
-      ctx.define(Integer.valueOf(i),CashewValue.nullValue());
+      if (i < args.size()) {
+         ctx.define(Integer.valueOf(i),args.get(i));
+       }
+      else ctx.define(Integer.valueOf(i),CashewValue.nullValue());
     }
    
    CashewValue zv = CashewValue.numericValue(CashewConstants.INT_TYPE,0); ctx.define(LINE_NAME,CashewValue.createReference(zv));
    
-   setLoockupContext(ctx);
+   setLookupContext(ctx);
 }
 
 
@@ -147,6 +153,8 @@ private void evaluateInstruction() throws CuminRunError
       CashewValue lvl = CashewValue.numericValue(CashewConstants.INT_TYPE,lno);
       lookup_context.findReference(LINE_NAME).setValueAt(execution_clock,lvl);
     }
+   
+   AcornLog.logD("EXEC: " + jins);
    
    switch (jins.getOpcode()) {
 
@@ -734,8 +742,12 @@ private void evaluateInstruction() throws CuminRunError
       case GETFIELD :
 	 v0 = execution_stack.pop();
 	 JcodeField fld = jins.getFieldReference();
-	 String nm = fld.getDeclaringClass().getName() + "." + fld.getName();
+         String nm = fld.getName();
+         if (!nm.contains(".")) {
+            nm = fld.getDeclaringClass().getName() + "." + fld.getName();
+          }
 	 vstack = v0.getFieldValue(execution_clock,nm);
+         vstack = vstack.getActualValue(execution_clock);
 	 break;
       case GETSTATIC :
 	 fld = jins.getFieldReference();

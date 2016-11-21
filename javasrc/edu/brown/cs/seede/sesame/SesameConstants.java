@@ -32,6 +32,8 @@ public interface SesameConstants {
 
 String	  SOURCE_ID = "SEEDE_" + (new Random().nextInt(1000000));
 
+String BOARD_MINT_NAME = "BUBBLES_" + System.getProperty("user.name").replace(" ","_");
+
 
 
 /********************************************************************************/

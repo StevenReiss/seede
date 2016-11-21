@@ -29,7 +29,6 @@ import java.util.Map;
 
 import org.w3c.dom.Element;
 
-import edu.brown.cs.bubbles.board.BoardConstants;
 import edu.brown.cs.ivy.jcomp.JcompControl;
 import edu.brown.cs.ivy.mint.MintConstants;
 import edu.brown.cs.ivy.mint.MintDefaultReply;
@@ -115,7 +114,7 @@ private void scanArgs(String [] args)
   if (message_id == null) {
      message_id = System.getProperty("edu.brown.cs.bubbles.MINT");
      if (message_id == null) message_id = System.getProperty("edu.brown.cs.bubbles.mint");
-     if (message_id == null) message_id = BoardConstants.BOARD_MINT_NAME;
+     if (message_id == null) message_id = BOARD_MINT_NAME;
    }
 }
 

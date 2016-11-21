@@ -84,6 +84,10 @@ SesameSessionLaunch(SesameMain sm,String sid,Element xml)
 /*                                                                              */
 /********************************************************************************/
 
+String getFrameId()                     { return frame_id; }
+
+String getThreadId()                    { return thread_id; }
+
 @Override public List<CashewValue> getCallArgs()
 {
    MethodDeclaration md = getCallMethod();
@@ -139,7 +143,7 @@ private void loadInitialValues()
       line_number = IvyXml.getAttrInt(frm,"LINENO");
       for (Element var : IvyXml.children(frm,"VALUE")) {
          String nm = IvyXml.getAttrString(var,"NAME");
-         SesameValueData svd = new SesameValueData(this,frame_id,var);
+         SesameValueData svd = new SesameValueData(this,var);
          svd = getUniqueValue(svd);
          value_map.put(nm,svd);
        }

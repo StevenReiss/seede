@@ -36,8 +36,6 @@ import edu.brown.cs.ivy.jcode.JcodeMethod;
 import edu.brown.cs.ivy.jcomp.JcompAst;
 import edu.brown.cs.ivy.jcomp.JcompProject;
 import edu.brown.cs.ivy.jcomp.JcompSearcher;
-import edu.brown.cs.ivy.jcomp.JcompSemantics;
-import edu.brown.cs.ivy.jcomp.JcompSource;
 import edu.brown.cs.ivy.jcomp.JcompSymbol;
 import edu.brown.cs.ivy.jcomp.JcompTyper;
 import edu.brown.cs.ivy.jcomp.JcompType;
@@ -141,7 +139,7 @@ CuminStack getStack()                   { return execution_stack; }
 public CashewContext getLookupContext()         { return lookup_context; }   
 List<CashewValue> getCallArgs()         { return call_args; }
 
-protected void setLoockupContext(CashewContext ctx)
+protected void setLookupContext(CashewContext ctx)
 {
    lookup_context = ctx;
 }
@@ -207,18 +205,20 @@ protected CuminRunner handleCall(CashewClock cc,JcompSymbol method,List<CashewVa
       CallType ctyp)
 {
    CashewValue thisarg = null;
-   if (args != null && args.size() > 0) thisarg = args.get(1);
+   if (args != null && args.size() > 0) thisarg = args.get(0);
    
    method = findTargetMethod(cc,method,thisarg,ctyp); 
    
    JcompType type = method.getClassType();
-   if (type.isKnownType()) {
+   if (!type.isKnownType()) {
       MethodDeclaration md = findAstForMethod(method.getFullName());
       if (md != null) return doCall(cc,md,args);
     }
    
    JcodeClass mcls = getCodeFactory().findClass(type.getName());
-   JcodeMethod mthd = mcls.findMethod(method.getName(),method.getType().getName());
+   String jtyp = method.getType().getJavaTypeName();
+   JcodeMethod mthd = mcls.findMethod(method.getName(),jtyp
+   );
    return doCall(cc,mthd,args);
 }
 
@@ -293,17 +293,10 @@ private MethodDeclaration findAstForMethod(String nm)
 {
    JcompProject jp = base_project.getJcompProject();
    JcompSearcher js = jp.findSymbols(nm,"METHOD");
-   for (JcompSearcher.SearchResult sr : js.getMatches()) {
-      JcompSource src = sr.getFile();
-      if (src == null) continue;
-      for (JcompSemantics jsem : jp.getSources()) {
-         if (jsem.getFile() == src) {
-            ASTNode n = jsem.getAstNode();
-            MethodFinder mf = new MethodFinder(sr.getSymbol());
-            n.accept(mf);
-            MethodDeclaration md = mf.getMethodAst();
-            if (md != null) return md;
-          }
+   for (JcompSymbol sr : js.getSymbols()) {
+      ASTNode an = sr.getDefinitionNode();
+      if (an != null && an instanceof MethodDeclaration) {
+         return ((MethodDeclaration) an);
        }
     }
    

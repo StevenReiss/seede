@@ -208,6 +208,11 @@ CuminRunnerAst(CuminProject cp,CashewContext gblctx,CashewClock cc,
        }
       catch (CuminRunError r) {
 	 if (current_node == method_node) throw r;
+         if (r.getReason() == CuminRunError.Reason.CALL) throw r;
+         if (r.getReason() == CuminRunError.Reason.RETURN) {
+            current_node = null;
+            throw r;
+          }
 	 passerror = r;
 	 current_node = current_node.getParent();
 	 afternode = null;
@@ -259,7 +264,7 @@ private void setupContext()
 
    CashewValue zv = CashewValue.numericValue(CashewConstants.INT_TYPE,0);
    ctx.define(LINE_NAME,CashewValue.createReference(zv));
-   setLoockupContext(ctx);
+   setLookupContext(ctx);
 }
 
 
@@ -614,6 +619,7 @@ private void evalThrow(ASTNode node,CuminRunError cause) throws CuminRunError
 	 visitThrow((ForStatement) node,cause);
 	 break;
       case ASTNode.METHOD_INVOCATION :
+         visitThrow((MethodInvocation) node,cause);
 	 break;
       case ASTNode.SUPER_CONSTRUCTOR_INVOCATION :
 	 break;
@@ -1078,6 +1084,10 @@ private void visit(MethodInvocation v,ASTNode after)
    // need to handle varargs
    
    List<CashewValue> argv = new ArrayList<CashewValue>();
+   for (int i = 0; i < args.size(); ++i) {
+      CashewValue cv = execution_stack.pop().getActualValue(execution_clock);
+      argv.add(cv);
+    }
    JcompSymbol js = JcompAst.getReference(v.getName());
    CallType cty = CallType.VIRTUAL;
    if (!js.isStatic()) {
@@ -1088,14 +1098,19 @@ private void visit(MethodInvocation v,ASTNode after)
       argv.add(thisv);
     }
    else cty = CallType.STATIC;
-   for (int i = 0; i < args.size(); ++i) argv.add(null);
-   int off = argv.size();
-   for (int i = 0; i < args.size(); ++i) {
-      CashewValue cv = execution_stack.pop().getActualValue(execution_clock);
-      argv.set(args.size()-i-1+off,cv);
-    }
+   Collections.reverse(argv);
    CuminRunner crun = handleCall(execution_clock,js,argv,cty);
    throw new CuminRunError(crun);
+}
+
+
+private void visitThrow(MethodInvocation n,CuminRunError cause)
+{
+   if (cause.getReason() == CuminRunError.Reason.RETURN) {
+      CashewValue cv = cause.getValue();
+      if (cv != null) execution_stack.push(cv);
+    }
+   else throw cause;
 }
 
 

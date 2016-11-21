@@ -175,6 +175,7 @@ private synchronized void clearProject()
       jf.addToClassPath(s);
     }
    jf.load();
+   binary_control = jf;
 
    return binary_control;
 }

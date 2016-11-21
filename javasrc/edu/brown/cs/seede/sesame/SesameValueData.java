@@ -33,6 +33,7 @@ import java.util.Map;
 import org.w3c.dom.Element;
 
 import edu.brown.cs.ivy.jcomp.JcompType;
+import edu.brown.cs.ivy.jcomp.JcompTyper;
 import edu.brown.cs.ivy.xml.IvyXml;
 import edu.brown.cs.seede.acorn.AcornLog;
 import edu.brown.cs.seede.cashew.CashewConstants;
@@ -49,7 +50,6 @@ class SesameValueData implements SesameConstants
 /********************************************************************************/
 
 private SesameSessionLaunch sesame_session;
-private String for_frame;
 private ValueKind val_kind;
 private String val_name;
 private String val_type;
@@ -65,17 +65,15 @@ private CashewValue result_value;
 
 
 
-
 /********************************************************************************/
 /*                                                                              */
 /*      Constructors                                                            */
 /*                                                                              */
 /********************************************************************************/
 
-SesameValueData(SesameSessionLaunch sm,String frm,Element xml) 
+SesameValueData(SesameSessionLaunch sm,Element xml) 
 {
    sesame_session = sm;
-   for_frame = frm;
    val_name = IvyXml.getAttrString(xml,"NAME");
    initialize(xml);
 }
@@ -83,7 +81,6 @@ SesameValueData(SesameSessionLaunch sm,String frm,Element xml)
 SesameValueData(SesameValueData par,Element xml) 
 {
    sesame_session = par.sesame_session;
-   for_frame = par.for_frame;
    val_name = par.val_name + "?" + IvyXml.getAttrString(xml,"NAME");
    initialize(xml);
 }
@@ -105,16 +102,28 @@ String getActualType()	        { return null; }
 boolean hasContents()	        { return has_values; }
 boolean isLocal()		{ return is_local; }
 boolean isStatic()		{ return is_static; }
-String getFrame()	        { return for_frame; }
+String getFrame()	        { return sesame_session.getFrameId(); }
+String getThread()              { return sesame_session.getThreadId(); }
 int getLength()		{ return array_length; }
+
 
 
 CashewValue getCashewValue()
 {
-   JcompType typ = sesame_session.getProject().getTyper().findType(val_type);
+   JcompTyper typer = sesame_session.getProject().getTyper();
+   String vtype = val_type;
+   int idx = vtype.indexOf("<");
+   if (idx >= 0) {
+      vtype = val_type.substring(0,idx);
+    }
+   
+   JcompType typ = typer.findType(val_type);
    if (typ == null) {
       String ityp = val_type.replace("$",".");
-      typ = sesame_session.getProject().getTyper().findType(ityp);
+      typ = typer.findType(ityp);
+    }
+   if (typ == null) {
+      typ = typer.findType(vtype);
     }
    
    if (result_value == null) {
@@ -132,6 +141,7 @@ CashewValue getCashewValue()
             break;
          case OBJECT :
             Map<String,Object> inits = new HashMap<String,Object>();
+            typ.defineAll(typer);
             for (Map.Entry<String,JcompType> ent : typ.getFields().entrySet()) {
                String fnm = ent.getKey();
                if (sub_values != null && sub_values.get(fnm) != null) {
@@ -177,7 +187,7 @@ SesameValueData getValue(String var)
 String getDetail() 
 {
    if (var_detail == null) {
-      CommandArgs args = new CommandArgs("FRAME",for_frame);
+      CommandArgs args = new CommandArgs("FRAME",getFrame(),"THREAD",getThread());
       String varxml = "<VAR>" + IvyXml.xmlSanitize(val_name) + "</VAR>";
       Element xml = sesame_session.getControl().getXmlReply("VARDETAIL",sesame_session.getProject(),args,varxml,0);
       Element val = IvyXml.getChild(xml,"VALUE");
@@ -228,7 +238,7 @@ private void addValues(Element xml)
 private synchronized void computeValues() 
 {
    if (!has_values || sub_values != null) return;
-   CommandArgs args = new CommandArgs("FRAME",for_frame,"DEPTH",1);
+   CommandArgs args = new CommandArgs("FRAME",getFrame(),"THREAD",getThread(),"DEPTH",1);
    String var = "<VAR>" + IvyXml.xmlSanitize(val_name) + "</VAR>";
    Element xml = sesame_session.getControl().getXmlReply("VARVAL",sesame_session.getProject(),args,var,0);
    if (IvyXml.isElement(xml,"RESULT")) {
