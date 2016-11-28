@@ -24,6 +24,11 @@
 
 package edu.brown.cs.seede.cumin;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import edu.brown.cs.ivy.jcode.JcodeClass;
+import edu.brown.cs.ivy.jcode.JcodeMethod;
 import edu.brown.cs.ivy.jcomp.JcompType;
 import edu.brown.cs.seede.acorn.AcornLog;
 import edu.brown.cs.seede.cashew.CashewClock;
@@ -343,8 +348,9 @@ static CashewValue evaluate(CashewClock cc,CuminOperator op,CashewValue v1,Cashe
 
 
 
-static CashewValue evaluateAssign(CashewClock cc,CuminOperator op,CashewValue v1,CashewValue v2,JcompType tgt)
+static CashewValue evaluateAssign(CuminRunner cr,CuminOperator op,CashewValue v1,CashewValue v2,JcompType tgt)
 {
+   CashewClock cc = cr.getClock();
    CashewValue rslt = null;
    
    switch (op) {
@@ -389,27 +395,109 @@ static CashewValue evaluateAssign(CashewClock cc,CuminOperator op,CashewValue v1
          break;
     }
    
-   assignValue(cc,v1,rslt,tgt);
+   assignValue(cr,v1,rslt,tgt);
    
    return rslt;
 }
 
 
 
-static void assignValue(CashewClock cc,CashewValue vr,CashewValue cv,JcompType tgt)
+static void assignValue(CuminRunner cr,CashewValue vr,CashewValue cv,JcompType tgt)
 {
-   cv = castValue(cc,cv,tgt);
+   CashewClock cc = cr.getClock();
+   cv = castValue(cr,cv,tgt);
    cv = cv.getActualValue(cc);
    vr.setValueAt(cc,cv);
 }
 
 
-static CashewValue castValue(CashewClock cc,CashewValue cv,JcompType target) 
+static CashewValue castValue(CuminRunner cr,CashewValue cv,JcompType target) 
 {
-   // handle casting
-   // handle boxing
+   CashewClock cc = cr.getClock();
+   JcompType styp = cv.getDataType(cc);
+   
+   if (styp == target) return cv;
+   
+   if (target.isNumericType()) {
+      if (styp == LONG_TYPE || styp == SHORT_TYPE || styp == BYTE_TYPE ||
+            styp == INT_TYPE || styp == CHAR_TYPE) {
+         cv = CashewValue.numericValue(target,cv.getNumber(cc).longValue());
+       }
+      else if (styp == DOUBLE_TYPE || styp == FLOAT_TYPE) {
+         cv = CashewValue.numericValue(target,cv.getNumber(cc).doubleValue());
+       }
+      else {
+         switch (styp.getName()) {
+            case "java.lang.Long" :
+            case "java.lang.Integer" :
+            case "java.lang.Short" :
+            case "java.lang.Byte" :
+               break;
+            case "java.lang.Character" :
+               break;
+            case "java.lang.Float" :
+            case "java.lang.Double" :
+               break;
+          }
+       }
+    }
+   else if (target.isBooleanType()) {
+      if (styp.getName().equals("java.lang.Boolean")) {
+         
+       }
+    }
+   else if (styp.isNumericType()) {
+      switch (target.getName()) {
+         case "java.lang.Long" :
+            break;
+         case "java.lang.Integer" :
+            cv = castValue(cr,cv,INT_TYPE);
+            cv = invokeConverter(cr,"java.lang.Integer","valueOf","(I)Ljava/lang/Integer;",cv);
+            break;
+         case "java.lang.Short" :
+         case "java.lang.Byte" :
+            break;
+         case "java.lang.Character" :
+            break;
+         case "java.lang.Float" :
+         case "java.lang.Double" :
+            break;
+         default :
+            break;
+       }
+    }
+   else if (styp.isBooleanType()) {
+      if (target.getName().equals("java.lang.Boolean")) {
+       }
+    }
+   else {
+      // other special casts here
+    }
    
    return cv;
+}
+
+
+
+private static CashewValue invokeConverter(CuminRunner runner,String cls,String mthd,String sgn,
+      CashewValue arg)
+{
+   JcodeClass mcls = runner.getCodeFactory().findClass(cls);
+   JcodeMethod mmthd = mcls.findMethod(mthd,sgn);
+   List<CashewValue> args = new ArrayList<CashewValue>();
+   args.add(arg);
+   CuminRunner cr = runner.doCall(runner.getClock(),mmthd,args);
+   try {
+      cr.interpret(EvalType.RUN);
+    }
+   catch (CuminRunError r) {
+      if (r.getReason() == CuminRunError.Reason.RETURN) {
+         return r.getValue();
+       }
+      else throw r;
+    }
+
+   return arg;
 }
 
 

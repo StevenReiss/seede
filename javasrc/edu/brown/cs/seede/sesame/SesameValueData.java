@@ -157,6 +157,21 @@ CashewValue getCashewValue()
             result_value = CashewValue.objectValue(typ,inits);
             break;
          case ARRAY :
+            if (array_length <= 1024) computeValues();
+            Map<Integer,Object> ainits = new HashMap<Integer,Object>();
+            for (int i = 0; i < array_length; ++i) {
+               String key = "[" + i + "]";
+               if (sub_values != null && sub_values.get(key) != null) {
+                  SesameValueData fsvd = sub_values.get(key);
+                  fsvd = sesame_session.getUniqueValue(fsvd);
+                  ainits.put(i,fsvd.getCashewValue());
+                }
+               else {
+                  DeferredLookup def = new DeferredLookup(key);
+                  ainits.put(i,def);
+                }
+             }
+            result_value = CashewValue.arrayValue(typ,array_length,ainits);
             break;
          case CLASS :
             break;

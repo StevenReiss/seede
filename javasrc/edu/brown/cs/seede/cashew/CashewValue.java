@@ -82,8 +82,9 @@ public static CashewValue createValue(JcompTyper typer,Element xml) throws Cashe
     }
    else if (jtype.getName().endsWith("[]")) {
       int dim = IvyXml.getAttrInt(xml,"DIM");
-      CashewValueArray va = new CashewValueArray.ComputedValueArray(jtype,dim);
-      // set up contents of va
+      Map<Integer,Object> inits = new HashMap<Integer,Object>();
+      //TODO: set up contents of va
+      CashewValueArray va = new CashewValueArray.ComputedValueArray(jtype,dim,inits);
       return va;
     }
    else if (jtype.isPrimitiveType()) {
@@ -257,7 +258,13 @@ public static CashewValue classValue(JcompType vtyp)
 public static CashewValue arrayValue(JcompType atyp,int dim)
 {
    // might want to create multidimensional arrays here
-   return new CashewValueArray.ComputedValueArray(atyp,dim);
+   return new CashewValueArray.ComputedValueArray(atyp,dim,null);
+}
+
+
+public static CashewValue arrayValue(JcompType atyp,int dim,Map<Integer,Object> inits)
+{
+   return new CashewValueArray.ComputedValueArray(atyp,dim,inits);
 }
 
 public static CashewValue objectValue(JcompType otyp)

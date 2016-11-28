@@ -24,6 +24,8 @@
 
 package edu.brown.cs.seede.cashew;
 
+import java.util.Map;
+
 import edu.brown.cs.ivy.jcomp.JcompType;
 import edu.brown.cs.ivy.xml.IvyXmlWriter;
 
@@ -99,9 +101,22 @@ static class ComputedValueArray extends CashewValueArray {
    
    private CashewRef[] array_values;
 
-   ComputedValueArray(JcompType jt,int dim) {
+   ComputedValueArray(JcompType jt,int dim,Map<Integer,Object> inits) {
       super(jt,dim);
       array_values = new CashewRef[dim];
+      for (int i = 0; i < dim; ++i) {
+         CashewValue cv = CashewValue.createDefaultValue(jt.getBaseType());
+         if (inits != null) {
+            Object ival = inits.get(i);
+            if (ival instanceof CashewValue) cv = (CashewValue) ival;
+            else if (ival instanceof CashewDeferredValue) {
+               CashewDeferredValue dcv = (CashewDeferredValue) ival;
+               array_values[i] = new CashewRef(dcv);
+               continue;
+             }
+          }
+         array_values[i] = new CashewRef(cv);
+       }
     }
   
    @Override public CashewValue getIndexValue(CashewClock cc,int idx) {
@@ -122,6 +137,7 @@ static class ComputedValueArray extends CashewValueArray {
          xw.begin("ELEMENT");
          xw.field("INDEX",i);
          array_values[i].outputXml(xw);
+         xw.end("ELEMENT");
        }
     }
    

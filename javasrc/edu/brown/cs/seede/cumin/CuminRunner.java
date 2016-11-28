@@ -207,18 +207,17 @@ protected CuminRunner handleCall(CashewClock cc,JcompSymbol method,List<CashewVa
    CashewValue thisarg = null;
    if (args != null && args.size() > 0) thisarg = args.get(0);
    
-   method = findTargetMethod(cc,method,thisarg,ctyp); 
+   JcompSymbol cmethod = findTargetMethod(cc,method,thisarg,ctyp); 
    
-   JcompType type = method.getClassType();
+   JcompType type = cmethod.getClassType();
    if (!type.isKnownType()) {
-      MethodDeclaration md = findAstForMethod(method.getFullName());
+      MethodDeclaration md = findAstForMethod(cmethod.getFullName());
       if (md != null) return doCall(cc,md,args);
     }
    
    JcodeClass mcls = getCodeFactory().findClass(type.getName());
-   String jtyp = method.getType().getJavaTypeName();
-   JcodeMethod mthd = mcls.findMethod(method.getName(),jtyp
-   );
+   String jtyp = cmethod.getType().getJavaTypeName();
+   JcodeMethod mthd = mcls.findMethod(cmethod.getName(),jtyp);
    return doCall(cc,mthd,args);
 }
 
@@ -228,12 +227,12 @@ protected CuminRunner handleCall(CashewClock cc,JcodeMethod method,List<CashewVa
       CallType ctyp)
 {
    CashewValue thisarg = null;
-   if (args != null && args.size() > 0) thisarg = args.get(1);
+   if (args != null && args.size() > 0 && !method.isStatic()) thisarg = args.get(0);
    
    method = findTargetMethod(cc,method,thisarg,ctyp);
    
    JcompType type = getTyper().findType(method.getDeclaringClass().getName());
-   if (type.isKnownType()) {
+   if (!type.isKnownType()) {
       MethodDeclaration md = findAstForMethod(method.getFullName());
       if (md != null) return doCall(cc,md,args);
     }
@@ -250,7 +249,7 @@ private CuminRunner doCall(CashewClock cc,MethodDeclaration ast,List<CashewValue
 }
 
 
-private CuminRunner doCall(CashewClock cc,JcodeMethod mthd,List<CashewValue> args)
+CuminRunner doCall(CashewClock cc,JcodeMethod mthd,List<CashewValue> args)
 {
    CuminRunnerByteCode rbyt = new CuminRunnerByteCode(base_project,global_context,cc,mthd,args);
    

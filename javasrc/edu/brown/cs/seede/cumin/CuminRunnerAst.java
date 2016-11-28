@@ -326,6 +326,8 @@ private void evalNode(ASTNode node,ASTNode afterchild) throws CuminRunError
       // check for step
       // check for timeout
     }
+   
+   AcornLog.logD("EXEC: " + node.getClass());
 
    next_node = null;
 
@@ -531,6 +533,7 @@ private void evalThrow(ASTNode node,CuminRunError cause) throws CuminRunError
 {
    next_node = null;
 
+   AcornLog.logD("EXECT: " + node.getClass() + " " + cause.getReason());
    // need to restore stack in each of these
 
    switch (node.getNodeType()) {
@@ -810,7 +813,7 @@ private void visit(Assignment v,ASTNode after)
       CashewValue v1 = execution_stack.pop();
       CuminOperator op = op_map.get(v.getOperator());
       JcompType tgt = JcompAst.getExprType(v.getLeftHandSide());
-      CashewValue v0 = CuminEvaluator.evaluateAssign(execution_clock,op,v1,v2,tgt);
+      CashewValue v0 = CuminEvaluator.evaluateAssign(this,op,v1,v2,tgt);
       execution_stack.push(v0);
     }
 }
@@ -822,7 +825,7 @@ private void visit(CastExpression v,ASTNode after)
    else {
       JcompType tgt = JcompAst.getJavaType(v.getType());
       CashewValue cv = execution_stack.pop();
-      cv = CuminEvaluator.castValue(execution_clock,cv,tgt);
+      cv = CuminEvaluator.castValue(this,cv,tgt);
       execution_stack.push(cv);
     }
 }
@@ -915,7 +918,7 @@ private void visit(InstanceofExpression v,ASTNode after)
    if (after == null) next_node = v.getLeftOperand();
    else {
       JcompType rt = JcompAst.getJavaType(v.getRightOperand());
-      CashewValue nv = CuminEvaluator.castValue(execution_clock,execution_stack.pop(),rt);
+      CashewValue nv = CuminEvaluator.castValue(this,execution_stack.pop(),rt);
       execution_stack.push(nv);
     }
 }
@@ -1083,12 +1086,17 @@ private void visit(MethodInvocation v,ASTNode after)
    
    // need to handle varargs
    
+   JcompSymbol js = JcompAst.getReference(v.getName());
+   JcompType ctyp = js.getType();
+   List<JcompType> atyps = ctyp.getComponents();
+   
    List<CashewValue> argv = new ArrayList<CashewValue>();
    for (int i = 0; i < args.size(); ++i) {
       CashewValue cv = execution_stack.pop().getActualValue(execution_clock);
+      JcompType argtyp = atyps.get(args.size()-1-i);
+      cv = CuminEvaluator.castValue(this,cv,argtyp);
       argv.add(cv);
     }
-   JcompSymbol js = JcompAst.getReference(v.getName());
    CallType cty = CallType.VIRTUAL;
    if (!js.isStatic()) {
       CashewValue thisv = null;
@@ -1259,7 +1267,9 @@ private void visit(ExpressionStatement s,ASTNode after)
 {
    if (after == null) next_node = s.getExpression();
    else {
-      execution_stack.pop();
+      JcompType typ = JcompAst.getJavaType(s.getExpression());
+      if (typ != null && !typ.isVoidType()) 
+         execution_stack.pop();
     }
 }
 
@@ -1274,7 +1284,7 @@ private void visit(ForStatement s,ASTNode after)
       if (execution_stack.pop().getBoolean(execution_clock)) {
 	 next_node = s.getBody();
        }
-      else return;
+      return;
     }
 
    if (after == null || spd == ForStatement.INITIALIZERS_PROPERTY) {
@@ -1661,7 +1671,7 @@ private void handleInitialization(JcompSymbol js,ASTNode init)
       cv = CashewValue.createDefaultValue(js.getType());
     }
    CashewValue vv = lookup_context.findReference(js);
-   CuminEvaluator.evaluateAssign(execution_clock,CuminOperator.ASG,vv,cv,js.getType());
+   CuminEvaluator.evaluateAssign(this,CuminOperator.ASG,vv,cv,js.getType());
 }
 
 

@@ -371,7 +371,7 @@ ASTNode getCurrentNode()                        { return current_node; }
    CashewValue v1 = execution_stack.pop();
    CuminOperator op = op_map.get(v.getOperator());
    JcompType tgt = JcompAst.getExprType(v.getLeftHandSide());
-   CashewValue v0 = CuminEvaluator.evaluateAssign(execution_clock,op,v1,v2,tgt);
+   CashewValue v0 = CuminEvaluator.evaluateAssign(null,op,v1,v2,tgt);
    execution_stack.push(v0);
 }
 
@@ -381,7 +381,7 @@ ASTNode getCurrentNode()                        { return current_node; }
 {
    JcompType tgt = JcompAst.getJavaType(v.getType());
    CashewValue cv = execution_stack.pop();
-   cv = CuminEvaluator.castValue(execution_clock,cv,tgt);
+   cv = CuminEvaluator.castValue(null,cv,tgt);
    execution_stack.push(cv);
 }
 
@@ -459,7 +459,7 @@ ASTNode getCurrentNode()                        { return current_node; }
 {
    v.getLeftOperand().accept(this);
    JcompType rt = JcompAst.getJavaType(v.getRightOperand());
-   CashewValue nv = CuminEvaluator.castValue(execution_clock,execution_stack.pop(),rt);
+   CashewValue nv = CuminEvaluator.castValue(null,execution_stack.pop(),rt);
    execution_stack.push(nv);
    
    return false;

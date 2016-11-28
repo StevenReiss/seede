@@ -284,11 +284,22 @@ private void handleExec(String sid,Element xml,IvyXmlWriter xw)
    
    if (sts == null) xw.textElement("STATUS","OK");
    else {
-      if (sts.getValue() != null) {
-         xw.begin("RETURN");
-         sts.getValue().outputXml(xw);
-         xw.end("RETURN");
+      xw.begin("RETURN");
+      xw.field("REASON",sts.getReason());
+      xw.field("MESSAGE",sts.getMessage());
+      if (sts.getCause() != null) {
+         StringWriter sw = new StringWriter();
+         PrintWriter pw = new PrintWriter(sw);
+         sts.getCause().printStackTrace(pw);
+         xw.textElement("STACK",sw.toString());
+         pw.close();
        }
+      if (sts.getValue() != null) {
+         xw.begin("VALUE");
+         sts.getValue().outputXml(xw);
+         xw.end("VALUE");
+       }
+      xw.end("RETURN");
       CashewContext ctx = cr.getLookupContext();
       ctx.outputXml(xw);
     }
