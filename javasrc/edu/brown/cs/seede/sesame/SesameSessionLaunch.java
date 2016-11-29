@@ -118,7 +118,7 @@ String getThreadId()                    { return thread_id; }
    if (cv != null) return null;
    
    cv = evaluate(name);
-   if (cv != null) return null;
+   if (cv != null) return cv;
    
    return cv;
 }

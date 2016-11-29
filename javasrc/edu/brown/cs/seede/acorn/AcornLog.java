@@ -148,7 +148,7 @@ private static void log(LogLevel lvl,String msg,Throwable t)
    if (lvl.ordinal() > log_level.ordinal()) return;
 
    String s = lvl.toString().substring(0,1);
-   String pfx = "SESAME:" + s + ": ";
+   String pfx = "SEEDE:" + s + ": ";
    if (log_writer != null) {
       log_writer.println(pfx + msg);
       if (t != null) t.printStackTrace(log_writer);

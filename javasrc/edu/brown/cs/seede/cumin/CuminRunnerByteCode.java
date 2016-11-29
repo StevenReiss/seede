@@ -124,7 +124,8 @@ private void setupContext(List<CashewValue> args)
    int nlcl = jcode_method.getLocalSize();
    for (int i = 0; i <= nlcl; ++i) {
       if (i < args.size()) {
-         ctx.define(Integer.valueOf(i),args.get(i));
+         CashewValue ref = CashewValue.createReference(args.get(i));
+         ctx.define(Integer.valueOf(i),ref);
        }
       else {
          CashewValue ref = CashewValue.createReference(CashewValue.nullValue());
@@ -818,7 +819,12 @@ private void evaluateInstruction() throws CuminRunError
          break;
          
       case MULTIANEWARRAY :
+         break;
       case NEWARRAY :
+         JcodeDataType dty = jins.getTypeReference();
+         JcompType arrtyp = convertType(dty);
+         int dim = execution_stack.pop().getNumber(execution_clock).intValue();
+         vstack = CashewValue.arrayValue(arrtyp,dim);
 	 break;
       case ANEWARRAY :
 	 break;

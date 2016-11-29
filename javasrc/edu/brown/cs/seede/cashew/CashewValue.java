@@ -184,6 +184,9 @@ public static CashewValue numericValue(JcompType t,long v)
    else if (t == BOOLEAN_TYPE) {
       return booleanValue(v != 0);
     }
+   else if (t == CHAR_TYPE) {
+      return characterValue(t,(char) v);
+    }
    
    return vn;
 }

@@ -111,19 +111,29 @@ int getLength()		{ return array_length; }
 CashewValue getCashewValue()
 {
    JcompTyper typer = sesame_session.getProject().getTyper();
+   
+   if (val_type != null && val_type.equals("null")) {
+      return CashewValue.nullValue();
+    }
+   
    String vtype = val_type;
-   int idx = vtype.indexOf("<");
-   if (idx >= 0) {
-      vtype = val_type.substring(0,idx);
+   if (vtype != null) {
+      int idx = vtype.indexOf("<");
+      if (idx >= 0) {
+         vtype = val_type.substring(0,idx);
+       }
     }
    
    JcompType typ = typer.findType(val_type);
-   if (typ == null) {
+   if (typ == null && val_type != null) {
       String ityp = val_type.replace("$",".");
       typ = typer.findType(ityp);
     }
-   if (typ == null) {
+   if (typ == null && vtype != null) {
       typ = typer.findType(vtype);
+    }
+   if (typ == null) {
+      return CashewValue.nullValue();
     }
    
    if (result_value == null) {
@@ -179,6 +189,14 @@ CashewValue getCashewValue()
             result_value = CashewValue.arrayValue(typ,array_length,ainits);
             break;
          case CLASS :
+            int idx2 = val_value.lastIndexOf("(");
+            String tnm = val_value.substring(0,idx2);
+            if (tnm.startsWith("(")) {
+               idx2 = tnm.lastIndexOf(")");
+               tnm = tnm.substring(1,idx2).trim();
+             }
+            JcompType ctyp = typer.findType(tnm);
+            result_value = CashewValue.classValue(ctyp);
             break;
        }
       if (result_value == null) {
