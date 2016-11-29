@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
@@ -57,6 +58,8 @@ private String          method_name;
 private SesameFile      source_file;
 private int             line_number;
 private Map<String,SesameValueData> value_map;
+
+private static AtomicInteger eval_counter = new AtomicInteger();
 
 
 
@@ -111,7 +114,31 @@ String getThreadId()                    { return thread_id; }
 
 @Override CashewValue lookupValue(String name,String type)
 {
-   return super.lookupValue(name,type);
+   CashewValue cv = super.lookupValue(name,type);
+   if (cv != null) return null;
+   
+   cv = evaluate(name);
+   if (cv != null) return null;
+   
+   return cv;
+}
+
+
+@Override CashewValue evaluate(String expr)
+{
+   String eid = "E_" + eval_counter.incrementAndGet();
+   CommandArgs args = new CommandArgs("THREAD",thread_id,
+         "FRAME",frame_id,"BREAK",false,"EXPR",expr,
+         "LEVEL",4,"REPLYID",eid);
+   Element xml = getControl().getXmlReply("EVALUATE",getProject(),args,null,0);
+   if (IvyXml.isElement(xml,"RESULT")) {
+      Element root = getControl().waitForEvaluation(eid);
+      Element v = IvyXml.getChild(root,"EVAL");
+      Element v1 = IvyXml.getChild(v,"VALUE");
+      SesameValueData svd = new SesameValueData(this,v1);
+      return svd.getCashewValue();
+    }
+   return null;
 }
 
 

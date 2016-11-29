@@ -429,14 +429,25 @@ static CashewValue castValue(CuminRunner cr,CashewValue cv,JcompType target)
       else {
          switch (styp.getName()) {
             case "java.lang.Long" :
+               cv = invokeConverter(cr,"java.lang.Number","longValue","()L",cv);
+               break;
             case "java.lang.Integer" :
+               cv = invokeConverter(cr,"java.lang.Number","intValue","()I",cv);
+               break;
             case "java.lang.Short" :
+               cv = invokeConverter(cr,"java.lang.Number","shortValue","()S",cv);
+               break;
             case "java.lang.Byte" :
+               cv = invokeConverter(cr,"java.lang.Number","byteValue","()B",cv);
                break;
             case "java.lang.Character" :
+               
                break;
             case "java.lang.Float" :
+               cv = invokeConverter(cr,"java.lang.Number","floatValue","()F",cv);
+               break;
             case "java.lang.Double" :
+               cv = invokeConverter(cr,"java.lang.Number","doubleValue","()D",cv);
                break;
           }
        }
@@ -452,26 +463,68 @@ static CashewValue castValue(CuminRunner cr,CashewValue cv,JcompType target)
             break;
          case "java.lang.Integer" :
             cv = castValue(cr,cv,INT_TYPE);
-            cv = invokeConverter(cr,"java.lang.Integer","valueOf","(I)Ljava/lang/Integer;",cv);
             break;
          case "java.lang.Short" :
+            cv = castValue(cr,cv,SHORT_TYPE);
+            break;
          case "java.lang.Byte" :
+            cv = castValue(cr,cv,BYTE_TYPE);
             break;
          case "java.lang.Character" :
+            cv = castValue(cr,cv,CHAR_TYPE);
             break;
          case "java.lang.Float" :
-         case "java.lang.Double" :
+            cv = castValue(cr,cv,FLOAT_TYPE);
             break;
+         case "java.lang.Double" :
+            cv = castValue(cr,cv,DOUBLE_TYPE);
+            break;
+         case "java.lang.Number" :
+         case "java.lang.Object" :
          default :
             break;
        }
+      cv = boxValue(cr,cv);
     }
    else if (styp.isBooleanType()) {
       if (target.getName().equals("java.lang.Boolean")) {
+         cv = boxValue(cr,cv);
        }
     }
    else {
       // other special casts here
+    }
+   
+   return cv;
+}
+
+
+
+static private CashewValue boxValue(CuminRunner cr,CashewValue cv)
+{
+   CashewClock cc = cr.getClock();
+   JcompType typ = cv.getDataType(cc);
+   
+   if (typ == INT_TYPE) {
+      cv = invokeEvalConverter(cr,"java.lang.Integer","valueOf","(I)Ljava/lang/Integer;",cv);
+    }
+   else if (typ == SHORT_TYPE) {
+      cv = invokeEvalConverter(cr,"java.lang.Short","valueOf","(IS)Ljava/lang/Short;",cv);
+    }
+   else if (typ == BYTE_TYPE) {
+      cv = invokeEvalConverter(cr,"java.lang.Byte","valueOf","(B)Ljava/lang/Byte;",cv);
+    }
+   else if (typ == CHAR_TYPE) {
+      cv = invokeEvalConverter(cr,"java.lang.Character","valueOf","(C)Ljava/lang/Character;",cv);
+    }
+   else if (typ == FLOAT_TYPE) {
+      cv = invokeEvalConverter(cr,"java.lang.Float","valueOf","(F)Ljava/lang/Float;",cv);
+    }
+   else if (typ == DOUBLE_TYPE) {
+      cv = invokeEvalConverter(cr,"java.lang.Double","valueOf","(D)Ljava/lang/Double;",cv);
+    }
+   else if (typ == BOOLEAN_TYPE) {
+      cv = invokeEvalConverter(cr,"java.lang.Boolean","valueOf","(Z)Ljava/lang/Boolean;",cv);
     }
    
    return cv;
@@ -498,6 +551,20 @@ private static CashewValue invokeConverter(CuminRunner runner,String cls,String 
     }
 
    return arg;
+}
+
+
+
+private static CashewValue invokeEvalConverter(CuminRunner runner,String cls,String mthd,String sgn,
+      CashewValue arg)
+{
+   String cast = arg.getDataType(runner.getClock()).getName();
+   String argv = arg.getString(runner.getClock());
+   String expr = cls + "." + mthd + "( (" + cast + ") " + argv + ")";
+   CashewValue cv = runner.getLookupContext().evaluate(expr);
+   if (cv != null) return cv;
+   
+   return invokeConverter(runner,cls,mthd,sgn,arg);
 }
 
 

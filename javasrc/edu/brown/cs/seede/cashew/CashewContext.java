@@ -93,8 +93,7 @@ public CashewValue findReference(JcompSymbol js)
    
    if (js.isFieldSymbol() && js.isStatic()) {
       String nm = js.getFullName();
-      cv = findReference(nm);
-      if (cv != null) return cv;
+      return findStaticFieldReference(nm,js.getType().getName());
     }
    
    cv = findReference((Object) js);
@@ -107,15 +106,26 @@ public CashewValue findReference(JcompSymbol js)
 public CashewValue findReference(JcodeField jf)
 {
    CashewValue cv = null;
+   String nm = jf.getDeclaringClass().getName() + "." + jf.getName();
    if (jf.isStatic()) {
-      String nm = jf.getDeclaringClass().getName() + "." + jf.getName();
-      cv = findReference(nm);
-      if (cv != null) return cv;
+      return findStaticFieldReference(nm,jf.getType().getName());
     }
    
-   cv = findReference(jf);
-   if (cv != null) return null;
+   cv = findReference((Object) jf);
      
+   return cv;
+}
+
+
+
+protected CashewValue findStaticFieldReference(String name,String type)
+{
+   CashewValue cv = findReference(name);
+   
+   if (cv == null && parent_context != null) {
+      cv = parent_context.findStaticFieldReference(name,type);
+    }
+   
    return cv;
 }
 
@@ -161,6 +171,22 @@ public void define(Object var,CashewValue addr)
 {
    context_map.put(var,addr);
 }
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Evaluation methods                                                      */
+/*                                                                              */
+/********************************************************************************/
+
+public CashewValue evaluate(String expr)
+{
+   if (parent_context != null) return parent_context.evaluate(expr);
+   
+   return null;
+}
+
 
 
 

@@ -144,8 +144,12 @@ CashewValue getCashewValue()
             typ.defineAll(typer);
             for (Map.Entry<String,JcompType> ent : typ.getFields().entrySet()) {
                String fnm = ent.getKey();
-               if (sub_values != null && sub_values.get(fnm) != null) {
-                  SesameValueData fsvd = sub_values.get(fnm);
+               String key = fnm;
+               int idx1 = fnm.lastIndexOf(".");
+               if (idx1 >= 0) key = fnm.substring(idx1+1);
+               key = getName() + "?" + key;
+               if (sub_values != null && sub_values.get(key) != null) {
+                  SesameValueData fsvd = sub_values.get(key);
                   fsvd = sesame_session.getUniqueValue(fsvd);
                   inits.put(fnm,fsvd.getCashewValue());
                 }
@@ -161,6 +165,7 @@ CashewValue getCashewValue()
             Map<Integer,Object> ainits = new HashMap<Integer,Object>();
             for (int i = 0; i < array_length; ++i) {
                String key = "[" + i + "]";
+               key = getName() + "?" + key;
                if (sub_values != null && sub_values.get(key) != null) {
                   SesameValueData fsvd = sub_values.get(key);
                   fsvd = sesame_session.getUniqueValue(fsvd);

@@ -64,30 +64,25 @@ SesameContext(SesameSession ss)
 /*                                                                              */
 /********************************************************************************/
 
-public CashewValue findReference(JcompSymbol js)
+@Override protected CashewValue findStaticFieldReference(String name,String type)
 {
-   CashewValue cv = super.findReference(js);
+   CashewValue cv = super.findStaticFieldReference(name,type);
    if (cv != null) return cv;
-   
-   cv = for_session.lookupValue(js.getFullName(),js.getType().getName());
-   if (cv != null) define(js.getFullName(),cv);
+   cv = for_session.lookupValue(name,type);
+   if (cv != null) define(name,cv);
    
    return cv;
 }
 
 
-public CashewValue findReference(JcodeField jf)
+@Override public CashewValue evaluate(String expr)
 {
-   CashewValue cv = super.findReference(jf);
-   if (cv != null) return cv;
-   
-   String nm = jf.getDeclaringClass().getName() + "." + jf.getName();
-   String tnm = jf.getType().getName();
-   cv = for_session.lookupValue(nm,tnm);
-   if (cv != null) define(nm,cv);
-   
-   return cv;
+   return for_session.evaluate(expr);
 }
+
+
+
+
 
 
 

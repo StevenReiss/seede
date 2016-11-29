@@ -126,7 +126,10 @@ private void setupContext(List<CashewValue> args)
       if (i < args.size()) {
          ctx.define(Integer.valueOf(i),args.get(i));
        }
-      else ctx.define(Integer.valueOf(i),CashewValue.nullValue());
+      else {
+         CashewValue ref = CashewValue.createReference(CashewValue.nullValue());
+         ctx.define(Integer.valueOf(i),ref);
+       }
     }
    
    CashewValue zv = CashewValue.numericValue(CashewConstants.INT_TYPE,0); ctx.define(LINE_NAME,CashewValue.createReference(zv));

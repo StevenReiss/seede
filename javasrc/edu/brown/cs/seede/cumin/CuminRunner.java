@@ -39,6 +39,7 @@ import edu.brown.cs.ivy.jcomp.JcompSearcher;
 import edu.brown.cs.ivy.jcomp.JcompSymbol;
 import edu.brown.cs.ivy.jcomp.JcompTyper;
 import edu.brown.cs.ivy.jcomp.JcompType;
+import edu.brown.cs.seede.acorn.AcornLog;
 import edu.brown.cs.seede.cashew.CashewClock;
 import edu.brown.cs.seede.cashew.CashewContext;
 import edu.brown.cs.seede.cashew.CashewValue;
@@ -245,6 +246,9 @@ private CuminRunner doCall(CashewClock cc,MethodDeclaration ast,List<CashewValue
 {
    CuminRunnerAst rast = new CuminRunnerAst(base_project,global_context,cc,ast,args);
    lookup_context.addNestedContext(rast.getLookupContext());
+   
+   AcornLog.logD("Start ast call to " + ast.getName());
+   
    return rast;
 }
 
@@ -252,6 +256,8 @@ private CuminRunner doCall(CashewClock cc,MethodDeclaration ast,List<CashewValue
 CuminRunner doCall(CashewClock cc,JcodeMethod mthd,List<CashewValue> args)
 {
    CuminRunnerByteCode rbyt = new CuminRunnerByteCode(base_project,global_context,cc,mthd,args);
+   
+   AcornLog.logD("Start binary call to " + mthd);
    
    return rbyt;
 }

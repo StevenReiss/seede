@@ -196,6 +196,12 @@ CashewValue lookupValue(String name,String type)
 }
 
 
+CashewValue evaluate(String expr)
+{
+   return null;
+}
+
+
 
 }       // end of class SesameSession
 

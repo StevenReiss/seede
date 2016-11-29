@@ -380,6 +380,7 @@ private class EclipseHandler implements MintHandler {
    @Override public void receive(MintMessage msg,MintArguments args) {
       String cmd = args.getArgument(0);
       Element e = msg.getXml();
+      AcornLog.logD("Eclipse Message: " + msg.getText());
       switch (cmd) {
          case "PING" :
             msg.replyTo("<PONG/>");
@@ -424,10 +425,11 @@ private class EclipseHandler implements MintHandler {
             String bid = IvyXml.getAttrString(e,"BID");
             String id = IvyXml.getAttrString(e,"ID");
             if ((bid == null || bid.equals(SOURCE_ID)) && id != null) {
-               EvalData ed = eval_handlers.remove(id);
-               if (ed != null) {
-        	  ed.handleResult(e);
-        	}
+               EvalData ed = new EvalData(e);
+               synchronized (eval_handlers) {
+                  eval_handlers.put(id,ed);
+                  eval_handlers.notifyAll();
+                }
              }
             msg.replyTo("<OK/>");
             break;
@@ -471,6 +473,7 @@ private class BubblesHandler implements MintHandler {
 
 private String processCommand(String cmd,String sid,Element e) throws SesameException
 {
+   
    IvyXmlWriter xw = new IvyXmlWriter();
    xw.begin("RESULT");
    switch (cmd) {
@@ -506,12 +509,14 @@ private String processCommand(String cmd,String sid,Element e) throws SesameExce
 private class CommandHandler implements MintHandler {
 
    @Override public void receive(MintMessage msg,MintArguments args) {
+      AcornLog.logD("PROCESS COMMAND: " + msg.getText());
       String cmd = args.getArgument(0);
       String sid = args.getArgument(1);
       Element e = msg.getXml();
       String rslt = null;
       try {
          rslt = processCommand(cmd,sid,e);
+         AcornLog.logD("COMMAND RESULT: " + rslt);
        }
       catch (SesameException t) {
          String xmsg = "BEDROCK: error in command " + cmd + ": " + t;
@@ -559,14 +564,36 @@ private class CommandHandler implements MintHandler {
 /*										*/
 /********************************************************************************/
 
+Element waitForEvaluation(String id)
+{
+   synchronized (eval_handlers) {
+      for ( ; ; ) {
+         EvalData ed = eval_handlers.remove(id);
+         if (ed != null) {
+            return ed.getResult();
+          }
+         try {
+            eval_handlers.wait(5000);
+          }
+         catch (InterruptedException e) { }
+       }
+    }
+}
+
+
+
 private class EvalData {
 
-   EvalData() {
+   private Element eval_result;
+   
+   EvalData(Element rslt) {
+      eval_result = rslt;
     }
 
-   void handleResult(Element xml) {
+   Element getResult() {
+      return eval_result;
     }
-
+   
 }	// end of inner class EvalData
 
 

@@ -58,7 +58,7 @@ private static boolean	use_stderr;
 private static PrintWriter log_writer;
 
 static {
-   use_stderr = false;
+   use_stderr = true;
    log_level = LogLevel.DEBUG;
    log_writer = null;
 }

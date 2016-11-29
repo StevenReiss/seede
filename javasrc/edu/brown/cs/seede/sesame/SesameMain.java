@@ -24,6 +24,7 @@
 
 package edu.brown.cs.seede.sesame;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -33,6 +34,7 @@ import edu.brown.cs.ivy.jcomp.JcompControl;
 import edu.brown.cs.ivy.mint.MintConstants;
 import edu.brown.cs.ivy.mint.MintDefaultReply;
 import edu.brown.cs.ivy.mint.MintReply;
+import edu.brown.cs.ivy.xml.IvyXml;
 import edu.brown.cs.ivy.xml.IvyXmlWriter;
 import edu.brown.cs.seede.acorn.AcornLog;
 import edu.brown.cs.seede.cashew.CashewConstants;
@@ -55,7 +57,7 @@ public static void main(String [] args)
    SesameMain sm = new SesameMain(args);
    sm.process();
 }
-
+ 
 
 
 /********************************************************************************/
@@ -84,6 +86,8 @@ private SesameMain(String [] args)
    message_id = null;
    project_map = new HashMap<String,SesameProject>();
    jcomp_base = CashewConstants.JCOMP_BASE;
+   
+   AcornLog.setLogFile(new File("seede.log"));
    
    scanArgs(args);
    
@@ -182,7 +186,11 @@ String getStringReply(String cmd,String proj,Map<String,Object> flds,String cnts
 {
    MintDefaultReply rply = new MintDefaultReply();
    sendMessage(cmd,proj,flds,cnts,rply,MINT_MSG_FIRST_REPLY);
-   return rply.waitForString(delay);
+   String rslt = rply.waitForString(delay);
+   
+   AcornLog.logD("Reply: " + rslt);
+   
+   return rslt;
 }
 
 
@@ -193,7 +201,17 @@ Element getXmlReply(String cmd,SesameProject sproj,Map<String,Object> flds,Strin
    
    MintDefaultReply rply = new MintDefaultReply();
    sendMessage(cmd,proj,flds,cnts,rply,MINT_MSG_FIRST_REPLY);
-   return rply.waitForXml(delay);
+   Element rslt = rply.waitForXml(delay);
+   
+   AcornLog.logD("Reply: " + IvyXml.convertXmlToString(rslt));
+   
+   return rslt;
+}
+
+
+Element waitForEvaluation(String id)
+{
+   return message_monitor.waitForEvaluation(id);
 }
 
 
