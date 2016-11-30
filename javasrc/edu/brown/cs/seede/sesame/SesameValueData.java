@@ -115,6 +115,7 @@ CashewValue getCashewValue()
    if (val_type != null && val_type.equals("null")) {
       return CashewValue.nullValue();
     }
+   if (val_type != null && val_type.equals("void")) return null;
    
    String vtype = val_type;
    if (vtype != null) {

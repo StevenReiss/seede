@@ -539,7 +539,7 @@ private static CashewValue invokeConverter(CuminRunner runner,String cls,String 
    JcodeMethod mmthd = mcls.findMethod(mthd,sgn);
    List<CashewValue> args = new ArrayList<CashewValue>();
    args.add(arg);
-   CuminRunner cr = runner.doCall(runner.getClock(),mmthd,args);
+   CuminRunner cr = runner.handleCall(runner.getClock(),mmthd,args,CallType.VIRTUAL);
    try {
       cr.interpret(EvalType.RUN);
     }

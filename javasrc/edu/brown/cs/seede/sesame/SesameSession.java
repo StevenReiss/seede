@@ -202,6 +202,9 @@ CashewValue evaluate(String expr)
 }
 
 
+void enableAccess(String type)          { }
+
+
 
 }       // end of class SesameSession
 

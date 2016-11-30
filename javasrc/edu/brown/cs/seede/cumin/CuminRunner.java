@@ -224,7 +224,7 @@ protected CuminRunner handleCall(CashewClock cc,JcompSymbol method,List<CashewVa
 
 
 
-protected CuminRunner handleCall(CashewClock cc,JcodeMethod method,List<CashewValue> args,
+CuminRunner handleCall(CashewClock cc,JcodeMethod method,List<CashewValue> args,
       CallType ctyp)
 {
    CashewValue thisarg = null;
@@ -297,7 +297,13 @@ private JcodeMethod findTargetMethod(CashewClock cc,JcodeMethod method,
 private MethodDeclaration findAstForMethod(String nm)
 {
    JcompProject jp = base_project.getJcompProject();
-   JcompSearcher js = jp.findSymbols(nm,"METHOD");
+   String typ = "METHOD";
+   if (nm.endsWith(".<init>")) {
+      int idx = nm.lastIndexOf(".<init>");
+      nm = nm.substring(0,idx);
+      typ = "CONSTRUCTOR";
+    }
+   JcompSearcher js = jp.findSymbols(nm,typ);
    for (JcompSymbol sr : js.getSymbols()) {
       ASTNode an = sr.getDefinitionNode();
       if (an != null && an instanceof MethodDeclaration) {

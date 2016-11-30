@@ -90,7 +90,10 @@ CuminRunnerByteCode(CuminProject sp,CashewContext gblctx,CashewClock clock,
 
 @Override protected void interpretRun(CuminRunError r)
 {
-   if (r == null) current_instruction = 0;
+   if (r == null) {
+      current_instruction = 0;
+      lookup_context.enableAccess(jcode_method.getDeclaringClass().getName());
+    }   
    else if (r.getReason() == CuminRunError.Reason.RETURN) {
       current_instruction = current_instruction+1;
       CashewValue rv = r.getValue();
@@ -767,7 +770,8 @@ private void evaluateInstruction() throws CuminRunError
 	 v0 = execution_stack.pop();
 	 v1 = execution_stack.pop();
 	 fld = jins.getFieldReference();
-	 nm = fld.getDeclaringClass().getName() + "." + fld.getName();
+         String dcname = fld.getDeclaringClass().getName();
+	 nm = dcname + "." + fld.getName();
 	 v1.setFieldValue(execution_clock,nm,v0);
 	 break;
       case PUTSTATIC :
@@ -873,7 +877,7 @@ private void handleCall(JcodeMethod method,CallType cty)
          // build string from arguments
          // pop stack
          // push new string on stack
-         return;
+        //  return;
        }
    }
   
@@ -889,7 +893,7 @@ private CashewValue handleNew()
    JcompType nty = convertType(jins.getTypeReference());
    
    if (nty == STRING_TYPE) {
-      return CashewValue.stringValue("");
+      // return CashewValue.stringValue("");
     }
    
    return null;

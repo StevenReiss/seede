@@ -1,0 +1,69 @@
+<project name='seede.poppy' default='compile'>
+
+   <property file='../../../../../../build.properties' />
+   <property name='PRO' value='/pro' />
+   <available file="${PRO}/ivy" type="dir" property="ivy.present" />
+   <available file="${PRO}/bubbles" type="dir" property="bubbles.present" />
+   <property name='IVYBIN' value='${PRO}/ivy/java' />
+   <property name='BUBBLESBIN' value='${PRO}/bubbles/java' />
+   <property name='SEEDE' value='${basedir}/../../../../../..' />
+
+   <target name='init'>
+      <path id='seede.classpath'>
+	 <pathelement location='${SEEDE}/java' />
+	 <pathelement location='${IVYBIN}' />
+	 <pathelement location='${BUBBLESBIN}' />
+	 <fileset dir='${SEEDE}/lib/' includes='asm*.jar' />
+	 <pathelement location='${PRO}/bubbles/lib/junit.jar' />
+	 <fileset dir='${PRO}/ivy/lib/eclipsejar' includes='*.jar' />
+      </path>
+      <path id='test.classpath'>
+	 <pathelement location='${SEEDE}/java' />
+	 <pathelement location='${IVYBIN}' />
+	 <pathelement location='${BUBBLESBIN}' />
+	 <fileset dir='${SEEDE}/lib/' includes='asm*.jar' />
+	 <pathelement location='${PRO}/bubbles/lib/junit.jar' />
+	 <fileset dir='${PRO}/ivy/lib/eclipsejar' includes='*.jar' />
+      </path>
+   </target>
+
+   <target name='compile' depends='init'>
+      <javac srcdir='.' destdir='${SEEDE}/java' debug='on' deprecation='on'
+		includeantruntime='false' excludes='scan/**' >
+	 <classpath refid='seede.classpath' />
+	 <compilerarg value='-Xlint:all' />
+      </javac>
+   </target>
+
+   <target name='clean'>
+      <delete dir='${FAIT}/java/edu/brown/cs/seede/poppy' />
+   </target>
+
+   <target name='test' depends='compile'>
+      <junit fork='true' printsummary='on'>
+	 <classpath refid='test.classpath' />
+	 <assertions><enable/></assertions>
+	 <formatter type='plain' />
+	 <test name='edu.brown.cs.seede.poppy.PoppyTest' />
+      </junit>
+   </target>
+
+   <target name='jar' depends='compile'>
+      <jar destfile='bandaid.jar'>
+	 <manifest>
+	    <attribute name='Premain-Class' value='edu.brown.cs.seede.poppy.PoppyController' />
+	    <attribute name='Agent-Class' value='edu.brown.cs.seede.poppy.PoppyController' />
+	    <attribute name='Can-Redefine-Classes' value='true' />
+	    <attribute name='Can-Retransform-Classes' value='true' />
+	    <attribute name='Can-Set-Native-Method-Prefix' value='false' />
+	    <attribute name='Sealed' value='false' />
+	    <attribute name="Boot-Class-Path" value='poppy.jar' />
+	 </manifest>
+	 <fileset dir='${SEEDE}/java' includes='**/poppy/*.class' />
+      </jar>
+      <copy file='poppy.jar' tofile='${SEEDE}/lib/poppy.jar' />
+   </target>
+
+</project>
+
+

@@ -188,6 +188,14 @@ public CashewValue evaluate(String expr)
 }
 
 
+public void enableAccess(String type)
+{
+   if (parent_context != null) {
+      parent_context.enableAccess(type);
+    }
+}
+
+
 
 
 /********************************************************************************/

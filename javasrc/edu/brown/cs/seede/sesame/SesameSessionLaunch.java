@@ -27,8 +27,10 @@ package edu.brown.cs.seede.sesame;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.eclipse.jdt.core.dom.MethodDeclaration;
@@ -58,6 +60,7 @@ private String          method_name;
 private SesameFile      source_file;
 private int             line_number;
 private Map<String,SesameValueData> value_map;
+private Set<String>     accessible_types;
 
 private static AtomicInteger eval_counter = new AtomicInteger();
 
@@ -76,6 +79,7 @@ SesameSessionLaunch(SesameMain sm,String sid,Element xml)
    launch_id = IvyXml.getAttrString(xml,"LAUNCHID");
    thread_id = IvyXml.getAttrString(xml,"THREADID");
    value_map = new HashMap<String,SesameValueData>();
+   accessible_types = new HashSet<String>();
    
    loadInitialValues();
 }
@@ -140,6 +144,19 @@ String getThreadId()                    { return thread_id; }
     }
    return null;
 }
+
+
+@Override void enableAccess(String type)
+{
+   if (accessible_types.contains(type)) return;
+  
+   String expr = "java.lang.reflect.AccessibleObject.setAccessible(Class.forName(\"" + type + "\")";
+   expr += ".getDeclaredFields(),true)";
+   evaluate(expr);
+   
+   accessible_types.add(type);
+}
+
 
 
 

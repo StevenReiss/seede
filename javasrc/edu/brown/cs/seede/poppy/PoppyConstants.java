@@ -1,8 +1,8 @@
 /********************************************************************************/
 /*                                                                              */
-/*              SesameContext.java                                              */
+/*              PoppyConstants.java                                             */
 /*                                                                              */
-/*      description of class                                                    */
+/*      Constants for code to be included in user program to aid evaluation     */
 /*                                                                              */
 /********************************************************************************/
 /*      Copyright 2011 Brown University -- Steven P. Reiss                    */
@@ -22,14 +22,11 @@
 
 
 
-package edu.brown.cs.seede.sesame;
+package edu.brown.cs.seede.poppy;
 
-import edu.brown.cs.ivy.jcode.JcodeField;
-import edu.brown.cs.ivy.jcomp.JcompSymbol;
-import edu.brown.cs.seede.cashew.CashewContext;
-import edu.brown.cs.seede.cashew.CashewValue;
 
-public class SesameContext extends CashewContext implements SesameConstants
+
+public interface PoppyConstants
 {
 
 
@@ -39,7 +36,6 @@ public class SesameContext extends CashewContext implements SesameConstants
 /*                                                                              */
 /********************************************************************************/
 
-private SesameSession   for_session;
 
 
 /********************************************************************************/
@@ -48,56 +44,12 @@ private SesameSession   for_session;
 /*                                                                              */
 /********************************************************************************/
 
-SesameContext(SesameSession ss)
-{
-   super("GLOBAL_CONTEXT",null);
-   
-   for_session = ss;
-}
+
+
+}       // end of interface PoppyConstants
 
 
 
 
-/********************************************************************************/
-/*                                                                              */
-/*      Overridden methods                                                      */
-/*                                                                              */
-/********************************************************************************/
-
-@Override protected CashewValue findStaticFieldReference(String name,String type)
-{
-   CashewValue cv = super.findStaticFieldReference(name,type);
-   if (cv != null) return cv;
-   cv = for_session.lookupValue(name,type);
-   if (cv != null) define(name,cv);
-   
-   return cv;
-}
-
-
-@Override public CashewValue evaluate(String expr)
-{
-   return for_session.evaluate(expr);
-}
-
-
-@Override public void enableAccess(String type)
-{
-   for_session.enableAccess(type);
-}
-
-
-
-
-
-
-
-
-
-}       // end of class SesameContext
-
-
-
-
-/* end of SesameContext.java */
+/* end of PoppyConstants.java */
 
