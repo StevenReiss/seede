@@ -780,7 +780,10 @@ private void evaluateInstruction() throws CuminRunError
          
       case NEW :
 	 JcompType nty = convertType(jins.getTypeReference());
-	 vstack = CashewValue.objectValue(nty);
+         vstack = handleNew();
+         if (vstack == null) {
+            vstack = CashewValue.objectValue(nty);
+          }
 	 break;
 
       case INVOKEDYNAMIC :
@@ -845,23 +848,53 @@ private void evaluateInstruction() throws CuminRunError
 /*										*/
 /********************************************************************************/
 
-JcompType convertType(JcodeDataType cty)
+private JcompType convertType(JcodeDataType cty)
 {
-   return type_converter.findType(cty.getName());
+   String tnm = cty.getName();
+   JcompType rslt = type_converter.findType(tnm);
+   if (rslt != null) return rslt;
+   rslt = type_converter.findSystemType(tnm);
+   
+   return rslt;
 }
 
 
 
-void handleCall(JcodeMethod method,CallType cty)
+private void handleCall(JcodeMethod method,CallType cty)
 {
   int act = method.getNumArguments();
   if (!method.isStatic()) ++act;
   List<CashewValue> args = new ArrayList<CashewValue>();
   for (int i = 0; i < act; ++i) args.add(execution_stack.pop().getActualValue(execution_clock));
   Collections.reverse(args);
+  if (method.getName().equals("<init>")) {
+      JcompType jty = convertType(method.getDeclaringClass());
+      if (jty == STRING_TYPE) {
+         // build string from arguments
+         // pop stack
+         // push new string on stack
+         return;
+       }
+   }
+  
   CuminRunner cr = handleCall(execution_clock,method,args,cty);
   throw new CuminRunError(cr);
 }
+
+
+
+private CashewValue handleNew()
+{
+   JcodeInstruction jins = jcode_method.getInstruction(current_instruction);
+   JcompType nty = convertType(jins.getTypeReference());
+   
+   if (nty == STRING_TYPE) {
+      return CashewValue.stringValue("");
+    }
+   
+   return null;
+}
+
 
 
 
