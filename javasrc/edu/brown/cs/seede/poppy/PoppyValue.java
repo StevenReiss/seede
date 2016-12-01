@@ -1,8 +1,8 @@
 /********************************************************************************/
 /*                                                                              */
-/*              SesameContext.java                                              */
+/*              PoppyValue.java                                                 */
 /*                                                                              */
-/*      description of class                                                    */
+/*      Provide named access to run time values                                 */
 /*                                                                              */
 /********************************************************************************/
 /*      Copyright 2011 Brown University -- Steven P. Reiss                    */
@@ -22,12 +22,12 @@
 
 
 
-package edu.brown.cs.seede.sesame;
+package edu.brown.cs.seede.poppy;
 
-import edu.brown.cs.seede.cashew.CashewContext;
-import edu.brown.cs.seede.cashew.CashewValue;
+import java.util.HashMap;
+import java.util.Map;
 
-public class SesameContext extends CashewContext implements SesameConstants
+public class PoppyValue implements PoppyConstants
 {
 
 
@@ -37,20 +37,33 @@ public class SesameContext extends CashewContext implements SesameConstants
 /*                                                                              */
 /********************************************************************************/
 
-private SesameSession   for_session;
+private static Map<String,Object>       value_map;
+
+
+static {
+   value_map = new HashMap<String,Object>();
+}
 
 
 /********************************************************************************/
 /*                                                                              */
-/*      Constructors                                                            */
+/*      Registration methods                                                    */
 /*                                                                              */
 /********************************************************************************/
 
-SesameContext(SesameSession ss)
+public Object register(String id,Object v)
 {
-   super("GLOBAL_CONTEXT",null);
+   if (v != null && id != null) value_map.put(id,v);
+   return v; 
+}
+
+
+
+public Object unregister(String id)
+{
+   if (id == null) return null;
    
-   for_session = ss;
+   return value_map.remove(id);
 }
 
 
@@ -58,44 +71,21 @@ SesameContext(SesameSession ss)
 
 /********************************************************************************/
 /*                                                                              */
-/*      Overridden methods                                                      */
+/*      Access methods                                                          */
 /*                                                                              */
 /********************************************************************************/
 
-@Override protected CashewValue findStaticFieldReference(String name,String type)
+public Object getValue(String id)
 {
-   CashewValue cv = super.findStaticFieldReference(name,type);
-   if (cv != null) return cv;
-   cv = for_session.lookupValue(name,type);
-   if (cv != null) define(name,cv);
-   
-   return cv;
+   if (id == null) return null;
+   return value_map.get(id);
 }
 
 
-@Override public CashewValue evaluate(String expr)
-{
-   return for_session.evaluate(expr);
-}
-
-
-@Override public void enableAccess(String type)
-{
-   for_session.enableAccess(type);
-}
+}       // end of class PoppyValue
 
 
 
 
-
-
-
-
-
-}       // end of class SesameContext
-
-
-
-
-/* end of SesameContext.java */
+/* end of PoppyValue.java */
 

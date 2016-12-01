@@ -90,6 +90,25 @@ protected int getSize()                         { return dim_size; }
 }
 
 
+@Override public String getInternalRepresentation(CashewClock cc) 
+{
+   String rslt = super.getInternalRepresentation(cc);
+   if (rslt != null) return rslt;
+   
+   StringBuffer buf = new StringBuffer();
+   buf.append("new " + getDataType(cc).getBaseType().getName() + "[" + dim_size + "|");
+   buf.append("{");
+   for (int i = 0; i < dim_size; ++i) {
+      String r = getIndexValue(cc,i).getInternalRepresentation(cc);
+      if (i > 0) buf.append(",");
+      buf.append(r);
+    }
+   buf.append("}");
+   
+   return buf.toString();
+}
+
+
 
 /********************************************************************************/
 /*                                                                              */

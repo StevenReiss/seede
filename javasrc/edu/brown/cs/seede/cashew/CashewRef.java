@@ -219,12 +219,27 @@ CashewRef(CashewDeferredValue deferred)
 }
 
 
+@Override public String getExternalId(CashewClock cc) 
+{
+   CashewValue cv = getValueAt(cc);
+   if (cv == null) return null;
+   return cv.getExternalId(cc);
+}
+
+
+@Override public String getInternalRepresentation(CashewClock cc)
+{
+   CashewValue cv = getValueAt(cc);
+   if (cv == null) return null;
+   return cv.getInternalRepresentation(cc);
+}
+
+
 
 
 /********************************************************************************/
 /*                                                                              */
-/*      Access methods                                                          */
-/*                                                                              */
+/*      Integern access methods                                                 *//*                                                                              */
 /********************************************************************************/
 
 private CashewValue getValueAt(CashewClock cc)

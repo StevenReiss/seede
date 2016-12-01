@@ -27,13 +27,11 @@ package edu.brown.cs.seede.cumin;
 import java.util.List;
 
 import org.eclipse.jdt.core.dom.ASTNode;
-import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 
 import edu.brown.cs.ivy.jcode.JcodeClass;
 import edu.brown.cs.ivy.jcode.JcodeFactory;
 import edu.brown.cs.ivy.jcode.JcodeMethod;
-import edu.brown.cs.ivy.jcomp.JcompAst;
 import edu.brown.cs.ivy.jcomp.JcompProject;
 import edu.brown.cs.ivy.jcomp.JcompSearcher;
 import edu.brown.cs.ivy.jcomp.JcompSymbol;
@@ -317,28 +315,7 @@ private MethodDeclaration findAstForMethod(String nm)
 
 
 
-private static class MethodFinder extends ASTVisitor {
-   
-   private JcompSymbol look_for;
-   private MethodDeclaration found_method;
-   
-   MethodFinder(JcompSymbol js) {
-      look_for = js;
-      found_method = null;
-    }
-   
-   MethodDeclaration getMethodAst()             { return found_method; }
-   
-   @Override public boolean visit(MethodDeclaration n) {
-      JcompSymbol js = JcompAst.getDefinition(n);
-      if (js == null) js = JcompAst.getDefinition(n.getName());
-      if (js == look_for) {
-         found_method = n;
-       }
-      return false;
-    }
-   
-}       // end of inner class MethodFinder
+
 
 
 

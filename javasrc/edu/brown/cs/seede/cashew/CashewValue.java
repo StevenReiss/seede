@@ -26,6 +26,7 @@ package edu.brown.cs.seede.cashew;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.w3c.dom.Element;
 
@@ -291,6 +292,10 @@ public static CashewValue objectValue(JcompType otyp,Map<String,Object> inits)
 }
 
 
+public static String getNewExternalId()
+{
+   return "X_" + extern_counter.incrementAndGet();
+}
 
 
 /********************************************************************************/
@@ -334,6 +339,9 @@ static {
 /********************************************************************************/
 
 private JcompType       decl_type;
+private String          external_id;
+
+private static AtomicInteger extern_counter = new AtomicInteger();
 
 
 
@@ -345,7 +353,16 @@ private JcompType       decl_type;
 
 protected CashewValue(JcompType jt)
 { 
+   this(jt,null);
+}
+
+
+protected CashewValue(JcompType jt,String eid)
+{
    decl_type = jt;
+   if (jt.isPrimitiveType()) external_id = null;
+   else if (eid != null) external_id = eid;
+   else external_id = getNewExternalId();
 }
 
 
@@ -368,6 +385,7 @@ protected JcompType getDataType()
    return decl_type;
 }
 
+public String getExternalId(CashewClock cc)     { return external_id; }
 
 public Number getNumber(CashewClock cc)
 {
@@ -436,6 +454,17 @@ public Boolean isNull(CashewClock cc)           { return false; }
 
 public Boolean isCategory2(CashewClock cc)      { return false; }
 
+public String getInternalRepresentation(CashewClock cc)      
+{
+   if (external_id != null) {
+      String val = "edu.brown.cs.seede.poppy.PoppyValue.getValue(\"" + external_id + "\")";
+      return "((" + getDataType(cc).getName() + ") " + val + ")";
+    }
+   
+   return null;
+}
+
+
 
 
 /********************************************************************************/
@@ -501,6 +530,15 @@ private static class ValueNumeric extends CashewValue {
       throw new Error("Illegal value conversion");
     }
    
+   @Override public String getInternalRepresentation(CashewClock cc) {
+      if (getDataType() == null) return num_value.toString();
+      else if (getDataType() == BOOLEAN_TYPE) {
+         if (num_value.intValue() != 0) return "true";
+         else return "false";
+       }
+      return "((" + getDataType().getName() + ") " + num_value.toString() + ")";
+    }
+   
    private Number fixValue(Number v) {
        if (getDataType() == null) return v;
        switch (getDataType().getName()) {
@@ -560,6 +598,53 @@ private static class ValueString extends CashewValue
    
    @Override public String getString(CashewClock cc)    { return string_value; }
    
+   @Override public String getInternalRepresentation(CashewClock cc) {
+      if (string_value == null) return "null";
+      String rslt = super.getInternalRepresentation(cc);
+      if (rslt != null) return rslt;
+      
+      StringBuffer buf = new StringBuffer();
+      buf.append("\"");
+      for (int i = 0; i < string_value.length(); ++i) {
+         char c = string_value.charAt(i);
+         switch (c) {
+            case '\\' :
+               buf.append("\\\\");
+               break;
+            case '\"' :
+               buf.append("\\");
+               break;
+            case '\n' :
+               buf.append("\\n");
+               break;
+            case '\t' :
+               buf.append("\\t");
+               break;
+            case '\b' :
+               buf.append("\\b");
+               break; 
+            case '\f' :
+               buf.append("\\f");
+               break; 
+            case '\r' :
+               buf.append("\\r");
+               break;
+            default :
+               if (c < 32 || c >= 128) {
+                  buf.append("\\u");
+                  buf.append(Integer.toHexString(c/16/16/16));
+                  buf.append(Integer.toHexString((c/16/16)%16));
+                  buf.append(Integer.toHexString((c/16)%16));
+                  buf.append(Integer.toHexString(c%16));
+                }
+               else buf.append(c);
+               break;
+          }
+       }
+      buf.append("\"");
+      return buf.toString();
+    }
+   
    @Override protected void outputLocalXml(IvyXmlWriter xw) {
       xw.text(string_value.toString());
     }
@@ -594,9 +679,14 @@ private static class ValueNull extends CashewValue
       return "null";
     }
    
+   @Override public String getInternalRepresentation(CashewClock cc) {
+      return "null";
+    }
+   
    @Override protected void outputLocalXml(IvyXmlWriter xw) {
       xw.field("NULL",true);
     }
+   
 }       // end of inner class ValueNull
 
 
