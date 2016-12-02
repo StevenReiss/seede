@@ -1,8 +1,8 @@
 /********************************************************************************/
 /*                                                                              */
-/*              CashewValueArray.java                                           */
+/*              CashewValueString.java                                          */
 /*                                                                              */
-/*      description of class                                                    */
+/*      Internal representation of string                                       */
 /*                                                                              */
 /********************************************************************************/
 /*      Copyright 2011 Brown University -- Steven P. Reiss                    */
@@ -24,12 +24,12 @@
 
 package edu.brown.cs.seede.cashew;
 
+import java.util.HashMap;
 import java.util.Map;
 
-import edu.brown.cs.ivy.jcomp.JcompType;
-import edu.brown.cs.ivy.xml.IvyXmlWriter;
 
-public class CashewValueArray extends CashewValue implements CashewConstants
+
+class CashewValueString extends CashewValue implements CashewConstants
 {
 
 
@@ -39,9 +39,10 @@ public class CashewValueArray extends CashewValue implements CashewConstants
 /*                                                                              */
 /********************************************************************************/
 
-private int dim_size;
-private CashewRef [] array_values;
-
+private final String string_value;
+private CashewValue value_field;
+private CashewValue hash_field;
+private CashewValue hash32_field;
 
 
 
@@ -51,24 +52,15 @@ private CashewRef [] array_values;
 /*                                                                              */
 /********************************************************************************/
 
-CashewValueArray(JcompType jt,int dim,Map<Integer,Object> inits) {
-   super(jt);
-   dim_size = dim;
-   array_values = new CashewRef[dim];
-   for (int i = 0; i < dim; ++i) {
-      CashewValue cv = CashewValue.createDefaultValue(jt.getBaseType());
-      if (inits != null) {
-         Object ival = inits.get(i);
-         if (ival instanceof CashewValue) cv = (CashewValue) ival;
-         else if (ival instanceof CashewDeferredValue) {
-            CashewDeferredValue dcv = (CashewDeferredValue) ival;
-            array_values[i] = new CashewRef(dcv);
-            continue;
-          }
-       }
-      array_values[i] = new CashewRef(cv);
-    }
+CashewValueString(String s) 
+{
+   super(STRING_TYPE);
+   string_value = s;
+   value_field = null;
+   hash_field = null;
+   hash32_field = null;
 }
+
 
 
 /********************************************************************************/
@@ -77,57 +69,90 @@ CashewValueArray(JcompType jt,int dim,Map<Integer,Object> inits) {
 /*                                                                              */
 /********************************************************************************/
 
-@Override public CashewValue getFieldValue(CashewClock cc,String nm) {
-   if (nm == "length") {
-      return CashewValue.numericValue(null,dim_size);
-    }
-   return super.getFieldValue(cc,nm);
+@Override public String getString(CashewClock cc)    
+{ 
+   return string_value; 
 }
 
-@Override public int getDimension(CashewClock cc)
-{
-   return dim_size; 
-}
-
-@Override public CashewValue getIndexValue(CashewClock cc,int idx) {
-   if (idx < 0 || idx >= dim_size) throw new Error("IndexOutOfBounds");
-   return array_values[idx];
-}
-
-@Override public CashewValue setIndexValue(CashewClock cc,int idx,CashewValue v) {
-   if (idx < 0 || idx >= dim_size) throw new Error("IndexOutOfBounds");
-   array_values[idx].setValueAt(cc,v);
-   return this;
-}
-
-@Override public String getString(CashewClock cc) {
-   StringBuffer buf = new StringBuffer();
-   buf.append("[");
-   for (int i = 0; i < dim_size; ++i) {
-      if (i != 0) buf.append(",");
-      buf.append(getIndexValue(cc,i).toString());
-    }
-   buf.append("]");
-   return buf.toString();
-}
 
 
 @Override public String getInternalRepresentation(CashewClock cc) 
 {
+   if (string_value == null) return "null";
    String rslt = super.getInternalRepresentation(cc);
    if (rslt != null) return rslt;
    
    StringBuffer buf = new StringBuffer();
-   buf.append("new " + getDataType(cc).getBaseType().getName() + "[" + dim_size + "|");
-   buf.append("{");
-   for (int i = 0; i < dim_size; ++i) {
-      String r = getIndexValue(cc,i).getInternalRepresentation(cc);
-      if (i > 0) buf.append(",");
-      buf.append(r);
+   buf.append("\"");
+   for (int i = 0; i < string_value.length(); ++i) {
+      char c = string_value.charAt(i);
+      switch (c) {
+         case '\\' :
+            buf.append("\\\\");
+            break;
+         case '\"' :
+            buf.append("\\");
+            break;
+         case '\n' :
+            buf.append("\\n");
+            break;
+         case '\t' :
+            buf.append("\\t");
+            break;
+         case '\b' :
+            buf.append("\\b");
+            break; 
+         case '\f' :
+            buf.append("\\f");
+            break; 
+         case '\r' :
+            buf.append("\\r");
+            break;
+         default :
+            if (c < 32 || c >= 128) {
+               buf.append("\\u");
+               buf.append(Integer.toHexString(c/16/16/16));
+               buf.append(Integer.toHexString((c/16/16)%16));
+               buf.append(Integer.toHexString((c/16)%16));
+               buf.append(Integer.toHexString(c%16));
+             }
+            else buf.append(c);
+            break;
+       }
     }
-   buf.append("}");
-   
+   buf.append("\"");
    return buf.toString();
+}
+
+
+
+
+@Override synchronized public CashewValue getFieldValue(CashewClock cc,String name) 
+{
+   switch ("name") {
+      case "value" :
+         if (value_field == null) {
+            Map<Integer,Object> inits = new HashMap<Integer,Object>();
+            for (int i = 0; i < string_value.length(); ++i) {
+               char c = string_value.charAt(i);
+               inits.put(i,CashewValue.characterValue(CHAR_TYPE,c));
+             }
+            value_field = CashewValue.arrayValue(CHAR_TYPE,string_value.length(),inits);
+          }
+         return value_field;
+      case "hash" :
+         if (hash_field == null) {
+            hash_field = CashewValue.numericValue(INT_TYPE,string_value.hashCode());
+          }
+         return hash_field;
+      case "hash32" :
+         if (hash32_field == null) {
+            hash32_field = CashewValue.numericValue(INT_TYPE,0);
+          }
+         return hash32_field;
+      default :
+         throw new Error("Illegal string field access for " + name);
+    }
 }
 
 
@@ -138,28 +163,31 @@ CashewValueArray(JcompType jt,int dim,Map<Integer,Object> inits) {
 /*                                                                              */
 /********************************************************************************/
 
-@Override public void outputLocalXml(IvyXmlWriter xw,CashewOutputContext outctx) {
-   xw.field("ARRAY",true);
-   if (outctx.noteValue(this)) {
-      xw.field("REF",true);
+@Override public CashewValue setFieldValue(CashewClock cc,String name,CashewValue v) {
+   switch (name) {
+      case "value" :
+         value_field = v;
+         break;
+      case "hash" :
+         hash_field = v;
+         break;
+      case "hash32" :
+         hash32_field = v;
+         break;
+      default :
+         throw new Error("Illegal string field access for " + name);
+         
     }
-   else {
-      xw.field("SIZE",dim_size);
-      for (int i = 0; i < array_values.length; ++i) {
-         xw.begin("ELEMENT");
-         xw.field("INDEX",i);
-         array_values[i].outputXml(outctx);
-         xw.end("ELEMENT");
-       }
-    }
+   return v;
 }
 
 
 
-}       // end of class CashewValueArray
+
+}       // end of class CashewValueString
 
 
 
 
-/* end of CashewValueArray.java */
+/* end of CashewValueString.java */
 

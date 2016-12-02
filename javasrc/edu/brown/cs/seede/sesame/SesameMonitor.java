@@ -46,6 +46,7 @@ import edu.brown.cs.ivy.xml.IvyXml;
 import edu.brown.cs.ivy.xml.IvyXmlWriter;
 import edu.brown.cs.seede.acorn.AcornLog;
 import edu.brown.cs.seede.cashew.CashewContext;
+import edu.brown.cs.seede.cashew.CashewOutputContext;
 import edu.brown.cs.seede.cashew.CashewValue;
 import edu.brown.cs.seede.cumin.CuminRunner;
 import edu.brown.cs.seede.cumin.CuminConstants;
@@ -284,6 +285,7 @@ private void handleExec(String sid,Element xml,IvyXmlWriter xw)
    
    if (sts == null) xw.textElement("STATUS","OK");
    else {
+      CashewOutputContext outctx = new CashewOutputContext(xw);
       xw.begin("RETURN");
       xw.field("REASON",sts.getReason());
       xw.field("MESSAGE",sts.getMessage());
@@ -296,12 +298,12 @@ private void handleExec(String sid,Element xml,IvyXmlWriter xw)
        }
       if (sts.getValue() != null) {
          xw.begin("VALUE");
-         sts.getValue().outputXml(xw);
+         sts.getValue().outputXml(outctx);
          xw.end("VALUE");
        }
       xw.end("RETURN");
       CashewContext ctx = cr.getLookupContext();
-      ctx.outputXml(xw);
+      ctx.outputXml(outctx);
     }
 }
 
@@ -309,13 +311,11 @@ private void handleExec(String sid,Element xml,IvyXmlWriter xw)
 
 private class ExecRunner extends Thread {
    
-   private SesameSession for_session;
    private CuminRunner cumin_runner;
    private String      reply_id;
    
    ExecRunner(SesameSession ss,String rid,CuminRunner runner) {
       super("SeedeExec_" + rid);
-      for_session = ss;
       cumin_runner = runner;
       reply_id = rid;
     }
@@ -332,7 +332,8 @@ private class ExecRunner extends Thread {
          sts = new CuminRunError(t);
        }
       
-      IvyXmlWriter xw = new IvyXmlWriter();
+      CashewOutputContext outctx = new CashewOutputContext();
+      IvyXmlWriter xw = outctx.getXmlWriter();
       xw.begin("SEEDEEXEC");
       xw.field("TYPE","EXEC");
       if (reply_id != null) xw.field("ID",reply_id);
@@ -340,11 +341,11 @@ private class ExecRunner extends Thread {
       else {
          if (sts.getValue() != null) {
             xw.begin("RETURN");
-            sts.getValue().outputXml(xw);
+            sts.getValue().outputXml(outctx);
             xw.end("RETURN");
           }
          CashewContext ctx = cumin_runner.getLookupContext();
-         ctx.outputXml(xw);
+         ctx.outputXml(outctx);
        } 
       xw.end("SEEDEEXEC");
       if (reply_id != null) {

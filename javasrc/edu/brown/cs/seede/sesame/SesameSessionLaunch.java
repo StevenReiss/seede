@@ -55,7 +55,6 @@ class SesameSessionLaunch extends SesameSession
 private String          launch_id;
 private String          thread_id;
 private String          frame_id;
-private String          class_name;
 private String          method_name;
 private SesameFile      source_file;
 private int             line_number;
@@ -179,7 +178,6 @@ private void loadInitialValues()
       if (!teid.equals(thread_id)) continue;
       Element frm = IvyXml.getChild(telt,"STACKFRAME"); 
       frame_id = IvyXml.getAttrString(frm,"ID");
-      class_name = IvyXml.getAttrString(frm,"RECEIVER");
       method_name = IvyXml.getAttrString(frm,"METHOD");
       String fnm = IvyXml.getAttrString(frm,"FILE");
       File sf = new File(fnm);

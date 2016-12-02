@@ -1,8 +1,8 @@
 /********************************************************************************/
 /*                                                                              */
-/*              CashewValueArray.java                                           */
+/*              CashewOutputContext.java                                        */
 /*                                                                              */
-/*      description of class                                                    */
+/*      Information for providing concise outputs                               */
 /*                                                                              */
 /********************************************************************************/
 /*      Copyright 2011 Brown University -- Steven P. Reiss                    */
@@ -24,12 +24,14 @@
 
 package edu.brown.cs.seede.cashew;
 
-import java.util.Map;
+import java.util.HashSet;
+import java.util.Set;
 
-import edu.brown.cs.ivy.jcomp.JcompType;
 import edu.brown.cs.ivy.xml.IvyXmlWriter;
 
-public class CashewValueArray extends CashewValue implements CashewConstants
+
+
+public class CashewOutputContext implements CashewConstants
 {
 
 
@@ -39,9 +41,9 @@ public class CashewValueArray extends CashewValue implements CashewConstants
 /*                                                                              */
 /********************************************************************************/
 
-private int dim_size;
-private CashewRef [] array_values;
-
+private IvyXmlWriter xml_writer;
+private Set<CashewValue> values_output;
+private Set<String> fields_output;
 
 
 
@@ -51,24 +53,22 @@ private CashewRef [] array_values;
 /*                                                                              */
 /********************************************************************************/
 
-CashewValueArray(JcompType jt,int dim,Map<Integer,Object> inits) {
-   super(jt);
-   dim_size = dim;
-   array_values = new CashewRef[dim];
-   for (int i = 0; i < dim; ++i) {
-      CashewValue cv = CashewValue.createDefaultValue(jt.getBaseType());
-      if (inits != null) {
-         Object ival = inits.get(i);
-         if (ival instanceof CashewValue) cv = (CashewValue) ival;
-         else if (ival instanceof CashewDeferredValue) {
-            CashewDeferredValue dcv = (CashewDeferredValue) ival;
-            array_values[i] = new CashewRef(dcv);
-            continue;
-          }
-       }
-      array_values[i] = new CashewRef(cv);
-    }
+public CashewOutputContext() 
+{
+   values_output = new HashSet<CashewValue>();
+   fields_output = new HashSet<String>();
+   xml_writer = new IvyXmlWriter();
 }
+
+
+
+public CashewOutputContext(IvyXmlWriter xw)
+{
+   values_output = new HashSet<CashewValue>();
+   fields_output = new HashSet<String>();
+   xml_writer = xw;
+}
+
 
 
 /********************************************************************************/
@@ -77,89 +77,46 @@ CashewValueArray(JcompType jt,int dim,Map<Integer,Object> inits) {
 /*                                                                              */
 /********************************************************************************/
 
-@Override public CashewValue getFieldValue(CashewClock cc,String nm) {
-   if (nm == "length") {
-      return CashewValue.numericValue(null,dim_size);
-    }
-   return super.getFieldValue(cc,nm);
-}
-
-@Override public int getDimension(CashewClock cc)
+public IvyXmlWriter getXmlWriter()
 {
-   return dim_size; 
-}
-
-@Override public CashewValue getIndexValue(CashewClock cc,int idx) {
-   if (idx < 0 || idx >= dim_size) throw new Error("IndexOutOfBounds");
-   return array_values[idx];
-}
-
-@Override public CashewValue setIndexValue(CashewClock cc,int idx,CashewValue v) {
-   if (idx < 0 || idx >= dim_size) throw new Error("IndexOutOfBounds");
-   array_values[idx].setValueAt(cc,v);
-   return this;
-}
-
-@Override public String getString(CashewClock cc) {
-   StringBuffer buf = new StringBuffer();
-   buf.append("[");
-   for (int i = 0; i < dim_size; ++i) {
-      if (i != 0) buf.append(",");
-      buf.append(getIndexValue(cc,i).toString());
-    }
-   buf.append("]");
-   return buf.toString();
+   return xml_writer;
 }
 
 
-@Override public String getInternalRepresentation(CashewClock cc) 
+public String getContents() 
 {
-   String rslt = super.getInternalRepresentation(cc);
-   if (rslt != null) return rslt;
-   
-   StringBuffer buf = new StringBuffer();
-   buf.append("new " + getDataType(cc).getBaseType().getName() + "[" + dim_size + "|");
-   buf.append("{");
-   for (int i = 0; i < dim_size; ++i) {
-      String r = getIndexValue(cc,i).getInternalRepresentation(cc);
-      if (i > 0) buf.append(",");
-      buf.append(r);
-    }
-   buf.append("}");
-   
-   return buf.toString();
+   return xml_writer.toString();
 }
 
 
 
 /********************************************************************************/
 /*                                                                              */
-/*      Output methods                                                          */
+/*      Processing methods                                                      */
 /*                                                                              */
 /********************************************************************************/
 
-@Override public void outputLocalXml(IvyXmlWriter xw,CashewOutputContext outctx) {
-   xw.field("ARRAY",true);
-   if (outctx.noteValue(this)) {
-      xw.field("REF",true);
-    }
-   else {
-      xw.field("SIZE",dim_size);
-      for (int i = 0; i < array_values.length; ++i) {
-         xw.begin("ELEMENT");
-         xw.field("INDEX",i);
-         array_values[i].outputXml(outctx);
-         xw.end("ELEMENT");
-       }
-    }
+public boolean noteValue(CashewValue cv)
+{
+   // return true if the value has been previously output
+   if (values_output.add(cv)) return false;
+   return true;
+}
+
+
+public boolean noteField(String name)
+{
+   // return true if the field has been previously output
+   if (fields_output.add(name)) return false;
+   return true;
 }
 
 
 
-}       // end of class CashewValueArray
+}       // end of class CashewOutputContext
 
 
 
 
-/* end of CashewValueArray.java */
+/* end of CashewOutputContext.java */
 

@@ -55,7 +55,6 @@ public class SesameProject implements SesameConstants, CuminProject
 /*										*/
 /********************************************************************************/
 
-private SesameMain	sesame_control; 
 private String		project_name;
 private List<String>	class_paths;
 private Set<SesameFile> active_files;
@@ -72,7 +71,6 @@ private JcodeFactory	binary_control;
 
 SesameProject(SesameMain sm,String name)
 {
-   sesame_control = sm;
    project_name = name;
    base_project = null;
    class_paths = new ArrayList<String>();

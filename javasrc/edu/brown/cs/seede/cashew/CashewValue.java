@@ -85,7 +85,7 @@ public static CashewValue createValue(JcompTyper typer,Element xml) throws Cashe
       int dim = IvyXml.getAttrInt(xml,"DIM");
       Map<Integer,Object> inits = new HashMap<Integer,Object>();
       //TODO: set up contents of va
-      CashewValueArray va = new CashewValueArray.ComputedValueArray(jtype,dim,inits);
+      CashewValueArray va = new CashewValueArray(jtype,dim,inits);
       return va;
     }
    else if (jtype.isPrimitiveType()) {
@@ -244,9 +244,9 @@ public static CashewValue characterValue(JcompType t,char v)
 public static CashewValue stringValue(String s)
 {
    synchronized (string_values) {
-      ValueString vs = string_values.get(s);
+      CashewValueString vs = string_values.get(s);
       if (vs == null) {
-         vs = new ValueString(s);
+         vs = new CashewValueString(s);
          string_values.put(s,vs);
        }
       return vs;
@@ -270,13 +270,13 @@ public static CashewValue classValue(JcompType vtyp)
 public static CashewValue arrayValue(JcompType atyp,int dim)
 {
    // might want to create multidimensional arrays here
-   return new CashewValueArray.ComputedValueArray(atyp,dim,null);
+   return new CashewValueArray(atyp,dim,null);
 }
 
 
 public static CashewValue arrayValue(JcompType atyp,int dim,Map<Integer,Object> inits)
 {
-   return new CashewValueArray.ComputedValueArray(atyp,dim,inits);
+   return new CashewValueArray(atyp,dim,inits);
 }
 
 public static CashewValue objectValue(JcompType otyp)
@@ -287,7 +287,7 @@ public static CashewValue objectValue(JcompType otyp)
 
 public static CashewValue objectValue(JcompType otyp,Map<String,Object> inits)
 {
-   CashewValueObject vo = new CashewValueObject.ComputedValueObject(otyp,inits);
+   CashewValueObject vo = new CashewValueObject(otyp,inits);
    return vo;  
 }
 
@@ -310,7 +310,7 @@ private static Map<Byte,ValueNumeric> byte_values;
 private static Map<Short,ValueNumeric> short_values;
 private static Map<Integer,ValueNumeric> int_values;
 private static Map<Character,ValueNumeric> char_values;
-private static Map<String,ValueString> string_values;
+private static Map<String,CashewValueString> string_values;
 private static Map<JcompType,CashewValueObject> class_values;
 private static CashewValue      true_value;
 private static CashewValue      false_value;
@@ -324,7 +324,7 @@ static {
    short_values = new HashMap<Short,ValueNumeric>();
    byte_values = new HashMap<Byte,ValueNumeric>();
    char_values = new HashMap<Character,ValueNumeric>();
-   string_values = new HashMap<String,ValueString>();
+   string_values = new HashMap<String,CashewValueString>();
    class_values = new HashMap<JcompType,CashewValueObject>();
    true_value = new ValueNumeric(BOOLEAN_TYPE,1);
    false_value = new ValueNumeric(BOOLEAN_TYPE,0);
@@ -473,16 +473,18 @@ public String getInternalRepresentation(CashewClock cc)
 /*                                                                              */
 /********************************************************************************/
 
-public void outputXml(IvyXmlWriter xw)
+public void outputXml(CashewOutputContext ctx)
 {
+   IvyXmlWriter xw = ctx.getXmlWriter();
    xw.begin("VALUE");
+   xw.field("UID",external_id);
    xw.field("TYPE",getDataType());
-   outputLocalXml(xw);
+   outputLocalXml(xw,ctx);
    xw.end("VALUE");
 }
 
 
-protected void outputLocalXml(IvyXmlWriter xw)  { }
+protected void outputLocalXml(IvyXmlWriter xw,CashewOutputContext outctx)  { }
 
 
 
@@ -569,7 +571,7 @@ private static class ValueNumeric extends CashewValue {
        return v;
     }
    
-   @Override protected void outputLocalXml(IvyXmlWriter xw) {
+   @Override protected void outputLocalXml(IvyXmlWriter xw,CashewOutputContext outctx) {
       xw.text(num_value.toString());
     }
 
@@ -581,76 +583,7 @@ private static class ValueNumeric extends CashewValue {
 
 
 
-/********************************************************************************/
-/*                                                                              */
-/*      String values                                                           */
-/*                                                                              */
-/********************************************************************************/
 
-private static class ValueString extends CashewValue
-{
-   private final String string_value;
-   
-   ValueString(String s) {
-      super(STRING_TYPE);
-      string_value = s;
-    }
-   
-   @Override public String getString(CashewClock cc)    { return string_value; }
-   
-   @Override public String getInternalRepresentation(CashewClock cc) {
-      if (string_value == null) return "null";
-      String rslt = super.getInternalRepresentation(cc);
-      if (rslt != null) return rslt;
-      
-      StringBuffer buf = new StringBuffer();
-      buf.append("\"");
-      for (int i = 0; i < string_value.length(); ++i) {
-         char c = string_value.charAt(i);
-         switch (c) {
-            case '\\' :
-               buf.append("\\\\");
-               break;
-            case '\"' :
-               buf.append("\\");
-               break;
-            case '\n' :
-               buf.append("\\n");
-               break;
-            case '\t' :
-               buf.append("\\t");
-               break;
-            case '\b' :
-               buf.append("\\b");
-               break; 
-            case '\f' :
-               buf.append("\\f");
-               break; 
-            case '\r' :
-               buf.append("\\r");
-               break;
-            default :
-               if (c < 32 || c >= 128) {
-                  buf.append("\\u");
-                  buf.append(Integer.toHexString(c/16/16/16));
-                  buf.append(Integer.toHexString((c/16/16)%16));
-                  buf.append(Integer.toHexString((c/16)%16));
-                  buf.append(Integer.toHexString(c%16));
-                }
-               else buf.append(c);
-               break;
-          }
-       }
-      buf.append("\"");
-      return buf.toString();
-    }
-   
-   @Override protected void outputLocalXml(IvyXmlWriter xw) {
-      xw.text(string_value.toString());
-    }
-   
-   
-}       // end of inner class ValueString
 
 
 
@@ -683,7 +616,7 @@ private static class ValueNull extends CashewValue
       return "null";
     }
    
-   @Override protected void outputLocalXml(IvyXmlWriter xw) {
+   @Override protected void outputLocalXml(IvyXmlWriter xw,CashewOutputContext outctx) {
       xw.field("NULL",true);
     }
    

@@ -280,17 +280,18 @@ private CashewValue getValueAt(CashewClock cc)
 /*                                                                              */
 /********************************************************************************/
 
-@Override public void outputXml(IvyXmlWriter xw)
+@Override public void outputXml(CashewOutputContext outctx)
 {
+   IvyXmlWriter xw = outctx.getXmlWriter();  
    if (value_map == null) {
-      if (last_value != null) last_value.outputXml(xw);
+      if (last_value != null) last_value.outputXml(outctx);
     }
    else {
       for (Map.Entry<Long,CashewValue> ent : value_map.entrySet()) {
          long when = ent.getKey();
          xw.begin("VALUE");
          xw.field("TIME",when);
-         ent.getValue().outputLocalXml(xw);
+         ent.getValue().outputLocalXml(xw,outctx);
          xw.end("VALUE");
        }
     }

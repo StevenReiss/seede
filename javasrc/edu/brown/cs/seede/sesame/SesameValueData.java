@@ -199,6 +199,8 @@ CashewValue getCashewValue()
             JcompType ctyp = typer.findType(tnm);
             result_value = CashewValue.classValue(ctyp);
             break;
+         case UNKNOWN :
+            break;
        }
       if (result_value == null) {
          AcornLog.logE("Unknown conversion to cashew value from bubbles");

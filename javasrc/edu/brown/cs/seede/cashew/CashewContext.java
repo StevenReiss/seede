@@ -211,8 +211,9 @@ public void addNestedContext(CashewContext ctx)
 
 
 
-public void outputXml(IvyXmlWriter xw) 
+public void outputXml(CashewOutputContext outctx) 
 {
+   IvyXmlWriter xw = outctx.getXmlWriter();
    xw.begin("CONTEXT");
    if (context_owner != null) {
       xw.field("METHOD",context_owner);
@@ -229,12 +230,12 @@ public void outputXml(IvyXmlWriter xw)
          xw.field("LINE",lno);
        }
       CashewValue cv = ent.getValue();
-      cv.outputXml(xw);
+      cv.outputXml(outctx);
       xw.end("VARIABLE");
     }
    xw.end("CONTEXT");
    for (CashewContext ctx : nested_contexts) {
-      ctx.outputXml(xw);
+      ctx.outputXml(outctx);
     }
 }
 

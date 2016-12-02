@@ -406,18 +406,6 @@ private static void sendBubblesMessage(String cmd,String proj,Map<String,Object>
 /*										*/
 /********************************************************************************/
 
-private static void sendSeedeMessage(String cmd)
-{
-   sendSeedeMessage(cmd,null,null,null);
-}
-
-
-private static void sendSeedeMessage(String cmd,String sess,Map<String,Object> flds,String cnts)
-{
-   sendSeedeMessage(cmd,sess,flds,cnts,null);
-}
-
-
 private static void sendSeedeMessage(String cmd,String sess,Map<String,Object> flds,String cnts,
       MintReply rply)
 {
