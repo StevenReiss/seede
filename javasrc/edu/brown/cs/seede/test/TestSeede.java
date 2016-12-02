@@ -34,6 +34,7 @@ import org.junit.Test;
 import org.junit.Assert;
 import org.w3c.dom.Element;
 
+import edu.brown.cs.seede.acorn.AcornLog;
 import edu.brown.cs.seede.sesame.SesameConstants;
 import edu.brown.cs.seede.sesame.SesameMain;
 import edu.brown.cs.ivy.exec.IvyExec;
@@ -185,6 +186,90 @@ private static boolean pingSeede()
 }
 
 
+/********************************************************************************/
+/*                                                                              */
+/*      Handle launches                                                         */
+/*                                                                              */
+/********************************************************************************/
+
+private LaunchData startLaunch(String name)
+{
+   stopped_thread = null;
+   
+   File lib = new File("/pro/seede/lib");
+   if (!lib.exists()) lib = new File("/research/people/spr/seede/lib");
+   File f1 = new File(lib,"poppy.jar");
+   String dargs = "-javaagent:" + f1.getPath();
+   
+   stopped_thread = null;
+   CommandArgs args = new CommandArgs("NAME",name,"MODE","debug","BUILD","TRUE",
+         "REGISTER","TRUE","VMARG",dargs);
+   MintDefaultReply rply = new MintDefaultReply();
+   sendBubblesMessage("START",TEST_PROJECT,args,null,rply);
+   Element xml = rply.waitForXml();
+   Element ldata = IvyXml.getChild(xml,"LAUNCH");
+   Assert.assertNotNull(ldata);
+   String launchid = IvyXml.getAttrString(ldata,"ID");
+   Assert.assertNotNull(launchid);
+   String targetid = IvyXml.getAttrString(ldata,"TARGET");
+   Assert.assertNotNull(targetid);
+   String processid = IvyXml.getAttrString(ldata,"PROCESS");
+   Assert.assertNotNull(processid);
+   String threadid = waitForStop();
+   Assert.assertNotNull(threadid);  
+   
+   return new LaunchData(launchid,targetid,processid,threadid);
+}
+
+
+private void continueLaunch(LaunchData ld)
+{
+   stopped_thread = null;
+   
+   CommandArgs args = new CommandArgs("LAUNCH",ld.getLaunchId(),
+         "TARGET",ld.getTargetId(),
+         "PROCESS",ld.getProcessId(),"ACTION","RESUME");
+   MintDefaultReply rply = new MintDefaultReply();
+   sendBubblesMessage("DEBUGACTION",TEST_PROJECT,args,null,rply);
+   String x = rply.waitForString();
+   Assert.assertNotNull(x);
+   String threadid = waitForStop();
+   Assert.assertNotNull(threadid); 
+   
+   ld.setThreadId(threadid);
+}
+
+
+
+private static class LaunchData {
+
+   private String lanuch_id;
+   private String target_id;
+   private String process_id;
+   private String thread_id;
+   
+   LaunchData(String launch,String target,String process,String thread) {
+      lanuch_id = launch;
+      target_id = target;
+      process_id = process;
+      thread_id = thread;
+    }
+   
+   String getLaunchId()                         { return lanuch_id; }
+   String getTargetId()                         { return target_id; }
+   String getProcessId()                        { return process_id; }
+   String getThreadId()                         { return thread_id; }
+   
+   void setThreadId(String id)                  { thread_id = id; }
+
+}       // end of inner class LaunchData
+
+/********************************************************************************/
+/*                                                                              */
+/*      Handle messages coming back                                             */
+/*                                                                              */
+/********************************************************************************/
+
 private static class SeedeThread extends Thread {
 
    SeedeThread() {
@@ -209,41 +294,19 @@ private static class SeedeThread extends Thread {
 @Test public void test1()
 {
    System.err.println("Start TEST1");
-   stopped_thread = null;
-   CommandArgs args = new CommandArgs("NAME",LAUNCH1_NAME,"MODE","debug","BUILD","TRUE",
-         "REGISTER","TRUE");
-   MintDefaultReply rply = new MintDefaultReply();
-   sendBubblesMessage("START",TEST_PROJECT,args,null,rply);
-   Element xml = rply.waitForXml();
-   Element ldata = IvyXml.getChild(xml,"LAUNCH");
-   Assert.assertNotNull(ldata);
-   String launchid = IvyXml.getAttrString(ldata,"ID");
-   Assert.assertNotNull(launchid);
-   String targetid = IvyXml.getAttrString(ldata,"TARGET");
-   Assert.assertNotNull(targetid);
-   String processid = IvyXml.getAttrString(ldata,"PROCESS");
-   Assert.assertNotNull(processid);
-   waitForStop();
-   stopped_thread = null;
-   
-   args = new CommandArgs("LAUNCH",launchid,"TARGET",targetid,"PROCESS",processid,"ACTION","RESUME");
-   rply = new MintDefaultReply();
-   sendBubblesMessage("DEBUGACTION",TEST_PROJECT,args,null,rply);
-   String x = rply.waitForString();
-   Assert.assertNotNull(x);
-   String threadid = waitForStop();
-   Assert.assertNotNull(threadid);
+   LaunchData ld = startLaunch(LAUNCH1_NAME);
+   continueLaunch(ld);
  
    IvyXmlWriter xw = new IvyXmlWriter();
  ; xw.begin("SESSION");
    xw.field("TYPE","LAUNCH");
    xw.field("PROJECT",TEST_PROJECT);
-   xw.field("LAUNCHID",launchid);
-   xw.field("THREADID",threadid);
+   xw.field("LAUNCHID",ld.getLaunchId());
+   xw.field("THREADID",ld.getThreadId());
    xw.end("SESSION");
    String cnts = xw.toString();
    xw.close();
-   rply = new MintDefaultReply();
+   MintDefaultReply rply = new MintDefaultReply();
    sendSeedeMessage("BEGIN",TEST1_SID,null,cnts,rply);
    Element status = rply.waitForXml();
    Assert.assertTrue(IvyXml.isElement(status,"RESULT"));
@@ -316,33 +379,18 @@ private static class SeedeThread extends Thread {
 @Test public void test3()
 {
    System.err.println("Start TEST3");
-   stopped_thread = null;
-   CommandArgs args = new CommandArgs("NAME",LAUNCH2_NAME,"MODE","debug","BUILD","TRUE",
-         "REGISTER","TRUE");
-   MintDefaultReply rply = new MintDefaultReply();
-   sendBubblesMessage("START",TEST_PROJECT,args,null,rply);
-   Element xml = rply.waitForXml();
-   Element ldata = IvyXml.getChild(xml,"LAUNCH");
-   Assert.assertNotNull(ldata);
-   String launchid = IvyXml.getAttrString(ldata,"ID");
-   Assert.assertNotNull(launchid);
-   String targetid = IvyXml.getAttrString(ldata,"TARGET");
-   Assert.assertNotNull(targetid);
-   String processid = IvyXml.getAttrString(ldata,"PROCESS");
-   Assert.assertNotNull(processid);
-   String threadid = waitForStop();
-   Assert.assertNotNull(threadid);
+   LaunchData ld = startLaunch(LAUNCH2_NAME);
    
    IvyXmlWriter xw = new IvyXmlWriter();
    xw.begin("SESSION");
    xw.field("TYPE","LAUNCH");
    xw.field("PROJECT",TEST_PROJECT);
-   xw.field("LAUNCHID",launchid);
-   xw.field("THREADID",threadid);
+   xw.field("LAUNCHID",ld.getLaunchId());
+   xw.field("THREADID",ld.getThreadId());
    xw.end("SESSION");
    String cnts = xw.toString();
    xw.close();
-   rply = new MintDefaultReply();
+   MintDefaultReply rply = new MintDefaultReply();
    sendSeedeMessage("BEGIN",TEST3_SID,null,cnts,rply);
    Element status = rply.waitForXml();
    Assert.assertTrue(IvyXml.isElement(status,"RESULT"));
@@ -392,6 +440,8 @@ private static void sendBubblesMessage(String cmd,String proj,Map<String,Object>
    
    String xml = xw.toString();
    xw.close();
+   
+   AcornLog.logD("SEND to BUBBLES: " + xml);
    
    int fgs = MINT_MSG_NO_REPLY;
    if (rply != null) fgs = MINT_MSG_FIRST_NON_NULL;

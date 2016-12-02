@@ -148,7 +148,9 @@ String getThreadId()                    { return thread_id; }
 @Override void enableAccess(String type)
 {
    if (accessible_types.contains(type)) return;
-  
+   
+   // CashewValue test0 = evaluate("edu.brown.cs.seede.poppy.PoppyValue.register(\"X\",\"Y\")");
+   
    String expr = "java.lang.reflect.AccessibleObject.setAccessible(Class.forName(\"" + type + "\")";
    expr += ".getDeclaredFields(),true)";
    evaluate(expr);
@@ -193,6 +195,7 @@ private void loadInitialValues()
    
    SesameLocation loc = new SesameLocation(source_file,method_name,line_number);
    addLocation(loc);
+   
 }
 
 

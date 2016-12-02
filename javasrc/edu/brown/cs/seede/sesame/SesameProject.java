@@ -24,6 +24,7 @@
 
 package edu.brown.cs.seede.sesame;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -41,8 +42,11 @@ import edu.brown.cs.ivy.jcomp.JcompProject;
 import edu.brown.cs.ivy.jcomp.JcompSemantics;
 import edu.brown.cs.ivy.jcomp.JcompSource;
 import edu.brown.cs.ivy.jcomp.JcompTyper;
-
+import edu.brown.cs.ivy.mint.MintDefaultReply;
+import edu.brown.cs.ivy.mint.MintConstants;
 import edu.brown.cs.ivy.xml.IvyXml;
+import edu.brown.cs.ivy.xml.IvyXmlWriter;
+import edu.brown.cs.seede.acorn.AcornLog;
 import edu.brown.cs.seede.cumin.CuminConstants.CuminProject;
 
 public class SesameProject implements SesameConstants, CuminProject
@@ -60,6 +64,7 @@ private List<String>	class_paths;
 private Set<SesameFile> active_files;
 private JcompProject	base_project;
 private JcodeFactory	binary_control;
+private SesameMain      sesame_control;
 
 
 
@@ -72,11 +77,14 @@ private JcodeFactory	binary_control;
 SesameProject(SesameMain sm,String name)
 {
    project_name = name;
+   sesame_control = sm;
    base_project = null;
    class_paths = new ArrayList<String>();
 
    active_files = new HashSet<SesameFile>();
 
+   boolean havepoppy = false;
+   
    // compute class path for project
    CommandArgs args = new CommandArgs("PATHS",true);
    Element xml = sm.getXmlReply("OPENPROJECT",this,args,null,0);
@@ -97,12 +105,37 @@ SesameProject(SesameMain sm,String name)
 	 int idx = bn.lastIndexOf("rt.jar");
 	 ignore = bn.substring(0,idx);
        }
+      if (bn.contains("poppy.jar")) havepoppy = true;
       class_paths.add(bn);
     }
    if (ignore != null) {
       for (Iterator<String> it = class_paths.iterator(); it.hasNext(); ) {
 	 String nm = it.next();
 	 if (nm.startsWith(ignore)) it.remove();
+       }
+    }
+   if (!havepoppy) {
+      File poppylib = new File("/pro/seede/lib");
+      if (!poppylib.exists()) poppylib = new File("/research/people/spr/seede/lib");
+      File poppyjar = new File(poppylib,"poppy.jar");
+      
+      CommandArgs args2 = new CommandArgs("LOCAL",true);
+      IvyXmlWriter xwp = new IvyXmlWriter();
+      xwp.begin("PROJECT");
+      xwp.field("NAME",getName());
+      xwp.begin("PATH");
+      xwp.field("TYPE","LIBRARY");
+      xwp.field("NEW",true);
+      xwp.field("BINARY",poppyjar.getPath());
+      xwp.field("EXPORTED",false);
+      xwp.field("OPTIONAL",true);
+      xwp.end("PATH");
+      xwp.end("PROJECT");
+      String cnts = xwp.toString();
+      xwp.close();
+      Element rslt = sesame_control.getXmlReply("EDITPROJECT",this,args2,cnts,0);
+      if (!IvyXml.isElement(rslt,"RESULT")) {
+         AcornLog.logE("Problem adding poppy to path");
        }
     }
 }

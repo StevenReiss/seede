@@ -1,8 +1,8 @@
 /********************************************************************************/
 /*                                                                              */
-/*              PoppyValue.java                                                 */
+/*              PoppyController.java                                            */
 /*                                                                              */
-/*      Provide named access to run time values                                 */
+/*      Java Agent class for poppy                                              */
 /*                                                                              */
 /********************************************************************************/
 /*      Copyright 2011 Brown University -- Steven P. Reiss                    */
@@ -24,11 +24,36 @@
 
 package edu.brown.cs.seede.poppy;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.lang.instrument.Instrumentation;
+import java.lang.management.ManagementFactory;
+import java.lang.management.RuntimeMXBean;
 
-public class PoppyValue implements PoppyConstants
+public class PoppyController implements PoppyConstants
 {
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Agent entry points                                                      */
+/*                                                                              */
+/********************************************************************************/
+
+public static void premain(String args,Instrumentation inst)
+{
+   the_control = new PoppyController(args,inst);
+}
+
+
+public static void agentmain(String args,Instrumentation inst)
+{
+   if (the_control == null) the_control = new PoppyController(args,inst);
+}
+
 
 
 /********************************************************************************/
@@ -37,55 +62,44 @@ public class PoppyValue implements PoppyConstants
 /*                                                                              */
 /********************************************************************************/
 
-private static Map<String,Object>       value_map;
+private static PoppyController  the_control = null;
 
 
-static {
-   value_map = new HashMap<String,Object>();
-}
 
 
 /********************************************************************************/
 /*                                                                              */
-/*      Registration methods                                                    */
+/*      Constructors                                                            */
 /*                                                                              */
 /********************************************************************************/
 
-public static Object register(String id,Object v)
+private PoppyController(String args,Instrumentation inst)
 {
-   if (v != null && id != null) value_map.put(id,v);
-   return v; 
+   System.err.println("POPPY: Start");
+   System.err.println("POPPY: CP: " + System.getProperty("java.class.path"));
+   RuntimeMXBean rmx = ManagementFactory.getRuntimeMXBean();
+   System.err.println("POPPY: BCP: " + rmx.getBootClassPath());
+   System.err.println("POPPY: CP: " + rmx.getClassPath());
+   System.err.println("POPPY: BBPS: " + rmx.isBootClassPathSupported());
+   File f1 = new File("/u/spr/poppy.out");
+   try {
+      PrintWriter p1 = new PrintWriter(new FileWriter(f1));
+      p1.println("POPPY: Start");
+      p1.println("POPPY: CP: " + System.getProperty("java.class.path"));
+      p1.println("POPPY: BCP: " + rmx.getBootClassPath());
+      p1.println("POPPY: CP: " + rmx.getClassPath());
+      p1.println("POPPY: BBPS: " + rmx.isBootClassPathSupported()); 
+      p1.close();
+    }
+   catch (IOException e) { }
 }
 
 
 
-public static Object unregister(String id)
-{
-   if (id == null) return null;
-   
-   return value_map.remove(id);
-}
+}       // end of class PoppyController
 
 
 
 
-/********************************************************************************/
-/*                                                                              */
-/*      Access methods                                                          */
-/*                                                                              */
-/********************************************************************************/
-
-public static Object getValue(String id)
-{
-   if (id == null) return null;
-   return value_map.get(id);
-}
-
-
-}       // end of class PoppyValue
-
-
-
-
-/* end of PoppyValue.java */
+/* end of PoppyController.java */
 

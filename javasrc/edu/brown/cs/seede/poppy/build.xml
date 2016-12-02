@@ -49,7 +49,7 @@
    </target>
 
    <target name='jar' depends='compile'>
-      <jar destfile='bandaid.jar'>
+      <jar destfile='poppy.jar'>
 	 <manifest>
 	    <attribute name='Premain-Class' value='edu.brown.cs.seede.poppy.PoppyController' />
 	    <attribute name='Agent-Class' value='edu.brown.cs.seede.poppy.PoppyController' />

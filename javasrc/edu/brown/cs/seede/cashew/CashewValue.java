@@ -287,6 +287,7 @@ public static CashewValue objectValue(JcompType otyp)
 
 public static CashewValue objectValue(JcompType otyp,Map<String,Object> inits)
 {
+   if (otyp.isParameterizedType()) otyp = otyp.getBaseType();
    CashewValueObject vo = new CashewValueObject(otyp,inits);
    return vo;  
 }

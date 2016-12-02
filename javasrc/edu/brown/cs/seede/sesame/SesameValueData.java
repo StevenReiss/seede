@@ -112,6 +112,10 @@ CashewValue getCashewValue()
 {
    JcompTyper typer = sesame_session.getProject().getTyper();
    
+   if (val_kind == ValueKind.UNKNOWN && val_type == null) {
+      return null;
+    }
+   
    if (val_type != null && val_type.equals("null")) {
       return CashewValue.nullValue();
     }
