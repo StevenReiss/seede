@@ -79,6 +79,16 @@ SesameContext(SesameSession ss)
 }
 
 
+@Override public CashewValue evaluateVoid(String expr)
+{
+   for_session.evaluateVoid(expr);
+   
+   return null;
+}
+
+
+
+
 @Override public void enableAccess(String type)
 {
    for_session.enableAccess(type);

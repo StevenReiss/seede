@@ -130,6 +130,8 @@ String getThreadId()                    { return thread_id; }
 @Override CashewValue evaluate(String expr)
 {
    String eid = "E_" + eval_counter.incrementAndGet();
+   expr = "edu.brown.cs.seede.poppy.PoppyValue.register(" + expr + ")";
+   
    CommandArgs args = new CommandArgs("THREAD",thread_id,
          "FRAME",frame_id,"BREAK",false,"EXPR",expr,
          "LEVEL",4,"REPLYID",eid);
@@ -145,15 +147,31 @@ String getThreadId()                    { return thread_id; }
 }
 
 
+
+@Override void evaluateVoid(String expr)
+{
+   String eid = "E_" + eval_counter.incrementAndGet();
+   CommandArgs args = new CommandArgs("THREAD",thread_id,
+         "FRAME",frame_id,"BREAK",false,"EXPR",expr,
+         "LEVEL",4,"REPLYID",eid);
+   Element xml = getControl().getXmlReply("EVALUATE",getProject(),args,null,0);
+   if (IvyXml.isElement(xml,"RESULT")) {
+      Element root = getControl().waitForEvaluation(eid);
+      Element v = IvyXml.getChild(root,"EVAL");
+      Element v1 = IvyXml.getChild(v,"VALUE");
+      SesameValueData svd = new SesameValueData(this,v1);
+      return;
+    }
+}
+
+
 @Override void enableAccess(String type)
 {
    if (accessible_types.contains(type)) return;
    
-   // CashewValue test0 = evaluate("edu.brown.cs.seede.poppy.PoppyValue.register(\"X\",\"Y\")");
-   
    String expr = "java.lang.reflect.AccessibleObject.setAccessible(Class.forName(\"" + type + "\")";
    expr += ".getDeclaredFields(),true)";
-   evaluate(expr);
+   evaluateVoid(expr);
    
    accessible_types.add(type);
 }

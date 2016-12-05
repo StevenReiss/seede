@@ -133,7 +133,6 @@ CashewValueObject(JcompType jt,Map<String,Object> inits)
 }
 
 
-
 /********************************************************************************/
 /*                                                                              */
 /*      Output methods                                                          */

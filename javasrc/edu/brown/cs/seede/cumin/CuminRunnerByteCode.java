@@ -85,6 +85,19 @@ CuminRunnerByteCode(CuminProject sp,CashewContext gblctx,CashewClock clock,
 
 
 /********************************************************************************/
+/*                                                                              */
+/*      Access methods                                                          */
+/*                                                                              */
+/********************************************************************************/
+
+JcodeMethod getCodeMethod()             { return jcode_method; }
+JcompTyper getTyper()                   { return type_converter; }
+int getNumArg()                         { return num_arg; }
+
+
+
+
+/********************************************************************************/
 /*										*/
 /*     Entry methods								*/
 /*										*/
@@ -93,8 +106,7 @@ CuminRunnerByteCode(CuminProject sp,CashewContext gblctx,CashewClock clock,
 @Override protected void interpretRun(CuminRunError r)
 {
    if (r == null) {
-      if (checkSpecial()) return;
-      
+      checkSpecial();
       current_instruction = 0;
       lookup_context.enableAccess(jcode_method.getDeclaringClass().getName());
     }   
@@ -872,15 +884,6 @@ private void handleCall(JcodeMethod method,CallType cty)
   List<CashewValue> args = new ArrayList<CashewValue>();
   for (int i = 0; i < act; ++i) args.add(execution_stack.pop().getActualValue(execution_clock));
   Collections.reverse(args);
-  if (method.getName().equals("<init>")) {
-      JcompType jty = convertType(method.getDeclaringClass());
-      if (jty == STRING_TYPE) {
-         // build string from arguments
-         // pop stack
-         // push new string on stack
-        //  return;
-       }
-   }
   
   CuminRunner cr = handleCall(execution_clock,method,args,cty);
   throw new CuminRunError(cr);
@@ -910,147 +913,58 @@ private CashewValue handleNew(JcompType nty)
 /*                                                                              */
 /********************************************************************************/
 
-private boolean checkSpecial()
+private void checkSpecial()
 {
-   if (jcode_method.getDeclaringClass().getName().equals("java.lang.String")) {
-      return checkStringMethods();
-    }
+   String cls = jcode_method.getDeclaringClass().getName();
    
-   return false;
+   switch (cls) {
+      case "java.lang.String" :
+         CuminDirectEvaluation cde = new CuminDirectEvaluation(this);
+         cde.checkStringMethods();
+         break;
+      case "java.lang.StrictMath" :
+         cde = new CuminDirectEvaluation(this);
+         cde.checkStrictMathMethods();
+         break;
+      case "java.lang.Runtime" :
+         cde = new CuminDirectEvaluation(this);
+         cde.checkRuntimeMethods();
+         break;
+      case "java.lang.Float" :
+         cde = new CuminDirectEvaluation(this);
+         cde.checkFloatMethods();
+         break;
+      case "java.lang.Double" :
+         cde = new CuminDirectEvaluation(this);
+         cde.checkDoubleMethods();
+         break;
+      case "java.lang.ClassLoader" :
+         // handle class loader methods
+         break;
+      case "java.lang.Class" :
+         // handle class methods
+         break;
+      case "java.lang.Object" :
+         cde = new CuminDirectEvaluation(this);
+         cde.checkObjectMethods();
+         break;
+      case "java.lang.System" :
+         cde = new CuminDirectEvaluation(this);
+         cde.checkSystemMethods();
+         break;
+      case "java.lang.Thread" :
+         cde = new CuminDirectEvaluation(this);
+         cde.checkThreadMethods();
+         break;
+      case "java.io.Console" :
+         // handle console methods
+         break;
+      // also want to handle Random, I/O methods
+    }
 }
 
 
-private boolean checkStringMethods()
-{
-   CashewValue rslt = null;
-   
-   if (jcode_method.isStatic()) {
-      return false;
-    }
-   else if (jcode_method.isConstructor()) {
-      return false;
-    }
-   else {
-      CashewValue thisarg = lookup_context.findReference(0).getActualValue(execution_clock);
-      String thisstr = thisarg.getString(execution_clock);
-      switch (jcode_method.getName()) {
-         case "charAt" :
-            int iarg1 = lookup_context.findReference(1).getNumber(execution_clock).intValue();
-            rslt = CashewValue.characterValue(CHAR_TYPE,thisstr.charAt(iarg1));
-            break;
-         case "codePointAt" :
-            iarg1 = lookup_context.findReference(1).getNumber(execution_clock).intValue();
-            rslt = CashewValue.numericValue(INT_TYPE,thisstr.codePointAt(iarg1));
-            break;
-         case "codePointBefore" :
-            iarg1 = lookup_context.findReference(1).getNumber(execution_clock).intValue();
-            rslt = CashewValue.numericValue(INT_TYPE,thisstr.codePointBefore(iarg1));
-            break;
-         case "codePointCount" :
-            iarg1 = lookup_context.findReference(1).getNumber(execution_clock).intValue();
-            int iarg2 = lookup_context.findReference(2).getNumber(execution_clock).intValue();
-            rslt = CashewValue.numericValue(INT_TYPE,thisstr.codePointCount(iarg1,iarg2));
-            break;
-         case "compartTo" :
-            String sarg1 = lookup_context.findReference(1).getString(execution_clock);
-            rslt = CashewValue.numericValue(INT_TYPE,thisstr.compareTo(sarg1));
-            break;
-         case "compareToIgnoreCase" :
-            sarg1 = lookup_context.findReference(1).getString(execution_clock);
-            rslt = CashewValue.numericValue(INT_TYPE,thisstr.compareToIgnoreCase(sarg1));
-            break;
-         case "concat" :
-            sarg1 = lookup_context.findReference(1).getString(execution_clock);
-            rslt = CashewValue.stringValue(thisstr.concat(sarg1));
-            break;
-         case "endsWith" :
-            sarg1 = lookup_context.findReference(1).getString(execution_clock);
-            rslt = CashewValue.booleanValue(thisstr.endsWith(sarg1));
-            break;
-         case "equals" :
-            CashewValue varg1 = lookup_context.findReference(1).getActualValue(execution_clock);
-            if (varg1.getDataType(execution_clock) != STRING_TYPE) 
-               rslt = CashewValue.booleanValue(false);
-            else 
-               rslt = CashewValue.booleanValue(thisstr.equals(varg1.getString(execution_clock)));
-            break;
-         case "equalsIgnoreCase" :
-            sarg1 = lookup_context.findReference(1).getString(execution_clock);
-            rslt = CashewValue.booleanValue(thisstr.equalsIgnoreCase(sarg1));
-            break;
-         case "hashCode" :
-            rslt = CashewValue.numericValue(INT_TYPE,thisstr.hashCode());
-            break;
-         case "indexOf" :
-            JcompType typ = lookup_context.findReference(1).getDataType(execution_clock);
-            if (typ == INT_TYPE) {
-               iarg1 = lookup_context.findReference(1).getNumber(execution_clock).intValue();
-               if (num_arg == 2) {
-                  rslt = CashewValue.numericValue(INT_TYPE,thisstr.indexOf(iarg1));
-                }
-               else {
-                  iarg2 = lookup_context.findReference(2).getNumber(execution_clock).intValue();
-                  rslt = CashewValue.numericValue(INT_TYPE,thisstr.indexOf(iarg1,iarg2));
-                }
-             }
-            else if (typ == STRING_TYPE) {
-               sarg1 = lookup_context.findReference(1).getString(execution_clock);
-               if (num_arg == 2) {
-                  rslt = CashewValue.numericValue(INT_TYPE,thisstr.indexOf(sarg1));
-                }
-               else {
-                  iarg2 = lookup_context.findReference(2).getNumber(execution_clock).intValue();
-                  rslt = CashewValue.numericValue(INT_TYPE,thisstr.indexOf(sarg1,iarg2));
-                }   
-             }
-            break;
-         case "isEmpty" :
-            rslt = CashewValue.booleanValue(thisstr.isEmpty());
-            break;
-         case "lastIndexOf" :
-            typ = lookup_context.findReference(1).getDataType(execution_clock);
-            if (typ == INT_TYPE) {
-               iarg1 = lookup_context.findReference(1).getNumber(execution_clock).intValue();
-               if (num_arg == 2) {
-                  rslt = CashewValue.numericValue(INT_TYPE,thisstr.lastIndexOf(iarg1));
-                }
-               else {
-                  iarg2 = lookup_context.findReference(2).getNumber(execution_clock).intValue();
-                  rslt = CashewValue.numericValue(INT_TYPE,thisstr.lastIndexOf(iarg1,iarg2));
-                }
-             }
-            else if (typ == STRING_TYPE) {
-               sarg1 = lookup_context.findReference(1).getString(execution_clock);
-               if (num_arg == 2) {
-                  rslt = CashewValue.numericValue(INT_TYPE,thisstr.lastIndexOf(sarg1));
-                }
-               else {
-                  iarg2 = lookup_context.findReference(2).getNumber(execution_clock).intValue();
-                  rslt = CashewValue.numericValue(INT_TYPE,thisstr.lastIndexOf(sarg1,iarg2));
-                }   
-             }
-            break;
-         case "length" :
-            rslt = CashewValue.numericValue(INT_TYPE,thisstr.length());
-            break;
-            
-            
-         case "contains" :
-         case "contextEquals" :
-         case "copyValueOf" :
-         case "format" :
-         case "getBytes" :
-         case "getChars" :
-         case "intern" :
-            return false;
-            
-         default :
-            return false;
-       }
-    }
-   
-   throw new CuminRunError(CuminRunError.Reason.RETURN,rslt);
-}
+
 
 }	// end of class CuminRunnerByteCode
 

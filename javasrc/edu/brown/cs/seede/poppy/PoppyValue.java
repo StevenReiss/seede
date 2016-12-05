@@ -26,6 +26,7 @@ package edu.brown.cs.seede.poppy;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class PoppyValue implements PoppyConstants
 {
@@ -37,11 +38,15 @@ public class PoppyValue implements PoppyConstants
 /*                                                                              */
 /********************************************************************************/
 
-private static Map<String,Object>       value_map;
+private static Map<Integer,Return>      value_map;
+private static Map<Object,Return>       id_map;
+private static AtomicInteger            id_counter;
 
 
 static {
-   value_map = new HashMap<String,Object>();
+   value_map = new HashMap<Integer,Return>();
+   id_map = new HashMap<Object,Return>();
+   id_counter = new AtomicInteger();
 }
 
 
@@ -51,19 +56,76 @@ static {
 /*                                                                              */
 /********************************************************************************/
 
-public static Object register(String id,Object v)
+public static byte register(byte v)
 {
-   if (v != null && id != null) value_map.put(id,v);
-   return v; 
+   return v;
+}
+
+
+public static char register(char v)
+{
+   return v;
+}
+
+
+public static short register(short v)
+{
+   return v;
+}
+
+
+public static int register(int v)
+{
+   return v;
+}
+
+
+public static long register(long v)
+{
+   return v;
+}
+
+
+public static float register(float v)
+{
+   return v;
+}
+
+
+public static double register(double v)
+{
+   return v;
+}
+
+
+public static boolean register(boolean v)
+{
+   return v;
 }
 
 
 
-public static Object unregister(String id)
+public static Object register(Object v)
 {
-   if (id == null) return null;
+   if (v == null) return v;
+   Return r = id_map.get(v);
+   if (r != null) return r;
    
-   return value_map.remove(id);
+   r = new Return(v);
+   value_map.put(r.ref_id,r);
+   id_map.put(v,r);
+   
+   return r; 
+}
+
+
+
+public static void unregister(int id)
+{
+   if (id == 0) return;
+   
+   Return r = value_map.remove(id);
+   if (r != null) id_map.remove(r.for_object);
 }
 
 
@@ -75,11 +137,34 @@ public static Object unregister(String id)
 /*                                                                              */
 /********************************************************************************/
 
-public static Object getValue(String id)
+public static Object getValue(int id)
 {
-   if (id == null) return null;
+   if (id == 0) return null;
    return value_map.get(id);
 }
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Value to return with additional information                             */
+/*                                                                              */
+/********************************************************************************/
+
+public static class Return {
+   
+   public Object for_object;
+   public int ref_id;
+   public int hash_code;
+   
+   Return(Object o) {
+      for_object = o;
+      ref_id = id_counter.incrementAndGet();
+      hash_code = System.identityHashCode(o);
+    }
+   
+}       // end of inner class Return
+
 
 
 }       // end of class PoppyValue

@@ -293,12 +293,6 @@ public static CashewValue objectValue(JcompType otyp,Map<String,Object> inits)
 }
 
 
-public static String getNewExternalId()
-{
-   return "X_" + extern_counter.incrementAndGet();
-}
-
-
 /********************************************************************************/
 /*                                                                              */
 /*      Private Static Sotrage for creation methods                             */
@@ -340,9 +334,9 @@ static {
 /********************************************************************************/
 
 private JcompType       decl_type;
-private String          external_id;
+private int             external_id;
+private int             hash_code;
 
-private static AtomicInteger extern_counter = new AtomicInteger();
 
 
 
@@ -354,16 +348,9 @@ private static AtomicInteger extern_counter = new AtomicInteger();
 
 protected CashewValue(JcompType jt)
 { 
-   this(jt,null);
-}
-
-
-protected CashewValue(JcompType jt,String eid)
-{
    decl_type = jt;
-   if (jt.isPrimitiveType()) external_id = null;
-   else if (eid != null) external_id = eid;
-   else external_id = getNewExternalId();
+   external_id = 0;
+   hash_code = 0;
 }
 
 
@@ -386,7 +373,15 @@ protected JcompType getDataType()
    return decl_type;
 }
 
-public String getExternalId(CashewClock cc)     { return external_id; }
+public int getExternalId(CashewClock cc)        { return external_id; }
+public int getHashCode(CashewClock cc)          { return 0; }
+public void setExternalData(CashewClock cc,int id,int hc) 
+{
+   if (id != 0) external_id = id;
+   if (hc != 0) hash_code = hc;
+}
+
+
 
 public Number getNumber(CashewClock cc)
 {
@@ -457,9 +452,9 @@ public Boolean isCategory2(CashewClock cc)      { return false; }
 
 public String getInternalRepresentation(CashewClock cc)      
 {
-   if (external_id != null) {
-      String val = "edu.brown.cs.seede.poppy.PoppyValue.getValue(\"" + external_id + "\")";
-      return "((" + getDataType(cc).getName() + ") " + val + ")";
+   if (external_id != 0) {
+      String val = "edu.brown.cs.seede.poppy.PoppyValue.getValue(" + external_id + ")";
+      return val;
     }
    
    return null;

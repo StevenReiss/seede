@@ -201,6 +201,10 @@ CashewValue evaluate(String expr)
    return null;
 }
 
+void evaluateVoid(String expr)
+{ 
+}
+
 
 void enableAccess(String type)          { }
 

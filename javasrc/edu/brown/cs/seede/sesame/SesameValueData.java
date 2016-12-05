@@ -110,6 +110,8 @@ int getLength()		{ return array_length; }
 
 CashewValue getCashewValue()
 {
+   if (result_value != null) return result_value;
+   
    JcompTyper typer = sesame_session.getProject().getTyper();
    
    if (val_kind == ValueKind.UNKNOWN && val_type == null) {
@@ -138,78 +140,95 @@ CashewValue getCashewValue()
       typ = typer.findType(vtype);
     }
    if (typ == null) {
+      typ = typer.findSystemType(val_type);
+    }
+   if (typ == null) {
       return CashewValue.nullValue();
     }
    
-   if (result_value == null) {
-      switch (val_kind) {
-         case PRIMITIVE :
-            if (typ.isBooleanType()) {
-               result_value = CashewValue.booleanValue(val_value);
+   switch (val_kind) {
+      case PRIMITIVE :
+         if (typ.isBooleanType()) {
+            result_value = CashewValue.booleanValue(val_value);
+          }
+         else if (typ.isNumericType()) {
+            result_value = CashewValue.numericValue(typ,val_value);
+          }
+         break;
+      case STRING :
+         result_value = CashewValue.stringValue(val_value);
+         break;
+      case OBJECT :
+         Map<String,Object> inits = new HashMap<String,Object>();
+         typ.defineAll(typer);
+         for (Map.Entry<String,JcompType> ent : typ.getFields().entrySet()) {
+            String fnm = ent.getKey();
+            String key = fnm;
+            int idx1 = fnm.lastIndexOf(".");
+            if (idx1 >= 0) key = fnm.substring(idx1+1);
+            key = getName() + "?" + key;
+            if (sub_values != null && sub_values.get(key) != null) {
+               SesameValueData fsvd = sub_values.get(key);
+               fsvd = sesame_session.getUniqueValue(fsvd);
+               inits.put(fnm,fsvd.getCashewValue());
              }
-            else if (typ.isNumericType()) {
-               result_value = CashewValue.numericValue(typ,val_value);
+            else {
+               DeferredLookup def = new DeferredLookup(fnm);
+               inits.put(fnm,def);
              }
-            break;
-         case STRING :
-            result_value = CashewValue.stringValue(val_value);
-            break;
-         case OBJECT :
-            Map<String,Object> inits = new HashMap<String,Object>();
-            typ.defineAll(typer);
-            for (Map.Entry<String,JcompType> ent : typ.getFields().entrySet()) {
-               String fnm = ent.getKey();
-               String key = fnm;
-               int idx1 = fnm.lastIndexOf(".");
-               if (idx1 >= 0) key = fnm.substring(idx1+1);
-               key = getName() + "?" + key;
-               if (sub_values != null && sub_values.get(key) != null) {
-                  SesameValueData fsvd = sub_values.get(key);
-                  fsvd = sesame_session.getUniqueValue(fsvd);
-                  inits.put(fnm,fsvd.getCashewValue());
-                }
-               else {
-                  DeferredLookup def = new DeferredLookup(fnm);
-                  inits.put(fnm,def);
-                }
+          }
+         if (typ.getName().equals("edu.brown.cs.seede.poppy.PoppyValue.Return")) {
+            Object ov = inits.get("edu.brown.cs.seede.poppy.PoppyValue.Return.for_object");
+            CashewValue hv = (CashewValue) inits.get("edu.brown.cs.seede.poppy.PoppyValue.Return.hash_code");
+            CashewValue rv = (CashewValue) inits.get("edu.brown.cs.seede.poppy.PoppyValue.Return.ref_id");
+            if (ov instanceof SesameValueData) {
+               SesameValueData osvd = (SesameValueData) ov;
+               result_value = osvd.getCashewValue();
              }
-            result_value = CashewValue.objectValue(typ,inits);
-            break;
-         case ARRAY :
-            if (array_length <= 1024) computeValues();
-            Map<Integer,Object> ainits = new HashMap<Integer,Object>();
-            for (int i = 0; i < array_length; ++i) {
-               String key = "[" + i + "]";
-               key = getName() + "?" + key;
-               if (sub_values != null && sub_values.get(key) != null) {
-                  SesameValueData fsvd = sub_values.get(key);
-                  fsvd = sesame_session.getUniqueValue(fsvd);
-                  ainits.put(i,fsvd.getCashewValue());
-                }
-               else {
-                  DeferredLookup def = new DeferredLookup(key);
-                  ainits.put(i,def);
-                }
+            else if (ov instanceof CashewValue) {
+               CashewValue cv = (CashewValue) ov;
+               result_value = cv;
              }
-            result_value = CashewValue.arrayValue(typ,array_length,ainits);
-            break;
-         case CLASS :
-            int idx2 = val_value.lastIndexOf("(");
-            String tnm = val_value.substring(0,idx2);
-            if (tnm.startsWith("(")) {
-               idx2 = tnm.lastIndexOf(")");
-               tnm = tnm.substring(1,idx2).trim();
+            result_value.setExternalData(null,rv.getNumber(null).intValue(),hv.getNumber(null).intValue());
+          }
+         result_value = CashewValue.objectValue(typ,inits);
+         break;
+      case ARRAY :
+         if (array_length <= 1024) computeValues();
+         Map<Integer,Object> ainits = new HashMap<Integer,Object>();
+         for (int i = 0; i < array_length; ++i) {
+            String key = "[" + i + "]";
+            key = getName() + "?" + key;
+            if (sub_values != null && sub_values.get(key) != null) {
+               SesameValueData fsvd = sub_values.get(key);
+               fsvd = sesame_session.getUniqueValue(fsvd);
+               ainits.put(i,fsvd.getCashewValue());
              }
-            JcompType ctyp = typer.findType(tnm);
-            result_value = CashewValue.classValue(ctyp);
-            break;
-         case UNKNOWN :
-            break;
-       }
-      if (result_value == null) {
-         AcornLog.logE("Unknown conversion to cashew value from bubbles");
-       }
+            else {
+               DeferredLookup def = new DeferredLookup(key);
+               ainits.put(i,def);
+             }
+          }
+         result_value = CashewValue.arrayValue(typ,array_length,ainits);
+         break;
+      case CLASS :
+         int idx2 = val_value.lastIndexOf("(");
+         String tnm = val_value.substring(0,idx2);
+         if (tnm.startsWith("(")) {
+            idx2 = tnm.lastIndexOf(")");
+            tnm = tnm.substring(1,idx2).trim();
+          }
+         JcompType ctyp = typer.findType(tnm);
+         result_value = CashewValue.classValue(ctyp);
+         break;
+      case UNKNOWN :
+         break;
     }
+   
+   if (result_value == null) {
+      AcornLog.logE("Unknown conversion to cashew value from bubbles");
+    }
+   
    return result_value;
 }
 

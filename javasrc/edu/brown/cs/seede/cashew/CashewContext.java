@@ -188,6 +188,14 @@ public CashewValue evaluate(String expr)
 }
 
 
+public CashewValue evaluateVoid(String expr)
+{
+   if (parent_context != null) return parent_context.evaluateVoid(expr);
+   
+   return null;
+}
+
+
 public void enableAccess(String type)
 {
    if (parent_context != null) {
