@@ -26,7 +26,6 @@ package edu.brown.cs.seede.cashew;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.w3c.dom.Element;
 
@@ -334,8 +333,6 @@ static {
 /********************************************************************************/
 
 private JcompType       decl_type;
-private int             external_id;
-private int             hash_code;
 
 
 
@@ -349,8 +346,6 @@ private int             hash_code;
 protected CashewValue(JcompType jt)
 { 
    decl_type = jt;
-   external_id = 0;
-   hash_code = 0;
 }
 
 
@@ -373,13 +368,8 @@ protected JcompType getDataType()
    return decl_type;
 }
 
-public int getExternalId(CashewClock cc)        { return external_id; }
-public int getHashCode(CashewClock cc)          { return 0; }
 public void setExternalData(CashewClock cc,int id,int hc) 
-{
-   if (id != 0) external_id = id;
-   if (hc != 0) hash_code = hc;
-}
+{ }
 
 
 
@@ -450,16 +440,26 @@ public Boolean isNull(CashewClock cc)           { return false; }
 
 public Boolean isCategory2(CashewClock cc)      { return false; }
 
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Access methods                                                          */
+/*                                                                              */
+/********************************************************************************/
+
 public String getInternalRepresentation(CashewClock cc)      
 {
-   if (external_id != 0) {
-      String val = "edu.brown.cs.seede.poppy.PoppyValue.getValue(" + external_id + ")";
-      return val;
-    }
-   
    return null;
 }
 
+
+
+public int getHashCode(CashewClock cc,CashewContext ctx)
+{
+   return 0;
+}
 
 
 
@@ -473,7 +473,6 @@ public void outputXml(CashewOutputContext ctx)
 {
    IvyXmlWriter xw = ctx.getXmlWriter();
    xw.begin("VALUE");
-   xw.field("UID",external_id);
    xw.field("TYPE",getDataType());
    outputLocalXml(xw,ctx);
    xw.end("VALUE");

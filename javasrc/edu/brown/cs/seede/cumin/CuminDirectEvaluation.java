@@ -166,6 +166,16 @@ void checkStringMethods()
                return;
              }
             break;
+         case "copyValueOf" :
+            if (getNumArgs() == 1) {
+               rslt = CashewValue.stringValue(String.copyValueOf(getCharArray(0)));
+             }
+            else {
+               rslt = CashewValue.stringValue(String.copyValueOf(getCharArray(0),getInt(1),getInt(2)));
+             }
+            break;
+         case "format" :
+            return;
          default :
             return;
        }
@@ -199,11 +209,22 @@ void checkStringMethods()
          case "concat" :
             rslt = CashewValue.stringValue(thisstr.concat(getString(1)));
             break;
+         case "contains" :
+            if (getDataType(1) == STRING_TYPE) {
+               rslt = CashewValue.booleanValue(thisstr.contains(getString(1)));
+             }
+            else return;
+            break;
+         case "contentEquals" :
+            if (getDataType(1) == STRING_TYPE) {
+               rslt = CashewValue.booleanValue(thisstr.contentEquals(getString(1)));
+             }
+            else return;
+            break;
          case "endsWith" :
             rslt = CashewValue.booleanValue(thisstr.endsWith(getString(1)));
             break;
          case "equals" :
-            CashewValue varg1 = getContext().findReference(1).getActualValue(getClock());
             if (getDataType(1) != STRING_TYPE) 
                rslt = CashewValue.booleanValue(false);
             else 
@@ -266,6 +287,15 @@ void checkStringMethods()
          case "regionMatches" :
             rslt = CashewValue.booleanValue(thisstr.regionMatches(getInt(1),getString(2),getInt(3),getInt(4)));
             break;
+         case "replace" :
+            if (getDataType(0) == CHAR_TYPE) {
+               rslt = CashewValue.stringValue(thisstr.replace(getChar(1),getChar(2)));
+             }
+            else if (getDataType(1) == STRING_TYPE && getDataType(2) == STRING_TYPE) {
+               rslt = CashewValue.stringValue(thisstr.replace(getString(1),getString(2)));
+             }
+            else return;
+            break;
          case "replaceAll" :
             rslt = CashewValue.stringValue(thisstr.replaceAll(getString(1),getString(2)));
             break;
@@ -280,6 +310,7 @@ void checkStringMethods()
                rslt = CashewValue.booleanValue(thisstr.startsWith(getString(1),getInt(2)));
              }
             break;
+         case "subSequence" :
          case "substring" :
             if (getNumArgs() == 1) {
                rslt = CashewValue.stringValue(thisstr.substring(getInt(1)));
@@ -313,17 +344,10 @@ void checkStringMethods()
             rslt = CashewValue.stringValue(thisstr.trim());
             break;
             
-            
-         case "contains" :
-         case "contextEquals" :
-         case "copyValueOf" :
-         case "format" :
          case "getBytes" :
          case "getChars" :
          case "intern": 
-         case "replace" :
          case "split" :
-         case "subSequence" :
          case "toCharArray" :
             return;
             
@@ -561,19 +585,14 @@ void checkRuntimeMethods()
          rslt = CashewValue.numericValue(INT_TYPE,rt.freeMemory());
          break;
       case "gc" :
-         rt.gc();
+      case "traceInstructions" :
+      case "traceMethodCalls" :
          break;
       case "maxMemory" :
          rslt = CashewValue.numericValue(INT_TYPE,rt.maxMemory());
          break; 
       case "totalMemory" :
          rslt = CashewValue.numericValue(INT_TYPE,rt.totalMemory());
-         break;
-      case "traceInstructions" :
-         rt.traceInstructions(getBoolean(1));
-         break;
-      case "traceMethodCalls" :
-         rt.traceMethodCalls(getBoolean(1));
          break;
       case "halt" :
       case "exit" :
@@ -583,7 +602,7 @@ void checkRuntimeMethods()
       case "load" :
       case "loadLibrary" :
       case "runFinalization" :
-         // handle the various exec and load calls
+         //TODO: handle the various exec and load calls
          return;
       default :
          return;
@@ -635,7 +654,14 @@ void checkFloatMethods()
       return;
     }
    else {
-      return;
+      switch (getMethod().getName()) {
+         case "hashCode" :
+            Float f = Float.valueOf(getFloat(0));
+            rslt = CashewValue.numericValue(INT_TYPE,f.hashCode());
+            break;
+         default :
+            return;
+       }
     }
    
    throw new CuminRunError(CuminRunError.Reason.RETURN,rslt);
@@ -678,7 +704,14 @@ void checkDoubleMethods()
       return;
     }
    else {
-      return;
+      switch (getMethod().getName()) {
+         case "hashCode" :
+            Double d = Double.valueOf(getDouble(0));
+            rslt = CashewValue.numericValue(INT_TYPE,d.hashCode());
+            break;
+         default :
+            return;
+       }
     }
    
    throw new CuminRunError(CuminRunError.Reason.RETURN,rslt);
@@ -707,7 +740,6 @@ void checkSystemMethods()
       case "exit" :
          throw new CuminRunError(CuminRunError.Reason.HALTED);
       case "gc" :
-         System.gc();
          break;
       case "identityHashCode" :
          // handle identity hash code
@@ -746,8 +778,6 @@ void checkObjectMethods()
 {
    CashewValue rslt = null;
    
-   CashewValue thisarg = getContext().findReference(0).getActualValue(getClock());
-   
    switch (getMethod().getName()) {
       case "<init>" :
          break;
@@ -761,12 +791,12 @@ void checkObjectMethods()
          // handle hashCode
          return;
       case "clone" :
-         // handle clone
+         // TODO: handle clone
          return;
       case "notify" :
       case "notifyAll" :
       case "wait" :
-         // handle synchronization
+         // TODO: handle synchronization
          break;
       default :
          return;
@@ -790,7 +820,7 @@ void checkThreadMethods()
    if (getMethod().isStatic()) {
       switch (getMethod().getName()) {
          case "currentThread" :
-            // handle currentThread
+            // TODO: handle currentThread
             return;
          default :
             return;
@@ -801,19 +831,37 @@ void checkThreadMethods()
       switch (getMethod().getName()) {
          case "yield" :
          case "sleep" :
-         case "isInterrupted" :
-         case "isAlive" :
-         case "countStackFrames" :
+            break;
+         case "start0" :
+            // start a thread here
+            break;
+         case "getStackTrace" :
+         case "getAllStackTraces" :
+            // These should be handled by calling code
+            break;
          case "holdsLock" :
-         case "dumpThreads" :
-         case "getThreads" :
-            // at least these must be handled
+            // TODO: interact with locking here
+            rslt = CashewValue.booleanValue(false);
+            break;
+         case "isInterrupted" :
+            rslt = CashewValue.booleanValue(false);
+            break;
+         case "isAlive" :
+            rslt = CashewValue.booleanValue(true);
+            break;
+         case "countStackFrames" :
+            rslt = CashewValue.numericValue(INT_TYPE,1);
             break;
        }
     }
    
    throw new CuminRunError(CuminRunError.Reason.RETURN,rslt);
 }
+
+
+
+
+
 
 
 
