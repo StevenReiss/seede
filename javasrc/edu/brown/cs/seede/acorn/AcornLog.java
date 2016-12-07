@@ -121,6 +121,7 @@ public static void setLogLevel(LogLevel lvl)
 
 public static void setLogFile(File f)
 {
+   f = f.getAbsoluteFile();
    try {
       log_writer = new PrintWriter(new FileWriter(f));
     }

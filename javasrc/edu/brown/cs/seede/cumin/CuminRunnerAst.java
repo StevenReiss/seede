@@ -79,6 +79,7 @@ import org.eclipse.jdt.core.dom.SuperFieldAccess;
 import org.eclipse.jdt.core.dom.SuperMethodInvocation;
 import org.eclipse.jdt.core.dom.SwitchCase;
 import org.eclipse.jdt.core.dom.SwitchStatement;
+import org.eclipse.jdt.core.dom.SynchronizedStatement;
 import org.eclipse.jdt.core.dom.ThisExpression;
 import org.eclipse.jdt.core.dom.ThrowStatement;
 import org.eclipse.jdt.core.dom.TryStatement;
@@ -494,6 +495,7 @@ private void evalNode(ASTNode node,ASTNode afterchild) throws CuminRunError
 	 visit((SwitchStatement) node,afterchild);
 	 break;
       case ASTNode.SYNCHRONIZED_STATEMENT :
+         visit((SynchronizedStatement) node,afterchild);
 	 break;
       case ASTNode.THIS_EXPRESSION :
 	 visit((ThisExpression) node);
@@ -852,10 +854,8 @@ private void visit(FieldAccess v,ASTNode after)
 {
    if (after == null) next_node = v.getExpression();
    else {
-      CashewValue obj = execution_stack.pop();
       JcompSymbol sym = JcompAst.getReference(v.getName());
-      CashewValue rslt = obj.getFieldValue(execution_clock,sym.getFullName());
-      execution_stack.push(rslt);
+      execution_stack.push(handleFieldAccess(sym));
     }
 }
 
@@ -868,6 +868,9 @@ private void visit(SuperFieldAccess v)
       var = qtyp.getName() + ",this";
     }
    CashewValue obj = lookup_context.findReference(var);
+   if (obj.isNull(execution_clock))
+      CuminEvaluator.throwException(CashewConstants.NULL_PTR_EXC);
+   
    JcompSymbol sym = JcompAst.getReference(v.getName());
    CashewValue rslt = obj.getFieldValue(execution_clock,sym.getFullName());
    execution_stack.push(rslt);
@@ -1463,6 +1466,22 @@ private void visit(SwitchCase s,ASTNode after)
 
 
 
+private void visit(SynchronizedStatement s,ASTNode after)
+{
+   if (after == null) {
+      next_node = s.getExpression();
+    }
+   else if (after == s.getExpression()) {
+      execution_stack.peek(0).getActualValue(execution_clock);
+      // do sync start
+      next_node = s.getBody();
+    }
+   else {
+      execution_stack.pop().getActualValue(execution_clock);
+      // do syn end
+    }
+}
+
 
 private void visit(ThrowStatement s,ASTNode after)
 {
@@ -1677,8 +1696,11 @@ private void handleInitialization(JcompSymbol js,ASTNode init)
 
 private CashewValue handleFieldAccess(JcompSymbol sym)
 {
-   CashewValue obj = execution_stack.pop();
+   CashewValue obj = execution_stack.pop().getActualValue(execution_clock);
    if (sym.isStatic()) return handleStaticFieldAccess(sym);
+   if (obj.isNull(execution_clock))
+      CuminEvaluator.throwException(CashewConstants.NULL_PTR_EXC);
+   
    CashewValue rslt = obj.getFieldValue(execution_clock,sym.getFullName());
    return rslt;
 }

@@ -94,19 +94,27 @@ static CashewValue evaluate(CashewClock cc,CuminOperator op,CashewValue v1,Cashe
       case DIV :
          //TODO: check if v2 = 0 and provide exception
          if (isdbl) {
-            double v0 = v1.getNumber(cc).doubleValue() / v2.getNumber(cc).doubleValue();
+            double vx = v2.getNumber(cc).doubleValue();
+            if (vx == 0) throwException(ARITH_EXC);
+            double v0 = v1.getNumber(cc).doubleValue() / vx;
             rslt = CashewValue.numericValue(DOUBLE_TYPE,v0);
           }
          else if (isflt) {
-            double v0 = v1.getNumber(cc).doubleValue() / v2.getNumber(cc).doubleValue();
-            rslt = CashewValue.numericValue(DOUBLE_TYPE,v0);
+            float vx = v2.getNumber(cc).floatValue();
+            if (vx == 0) throwException(ARITH_EXC);
+            float v0 = v1.getNumber(cc).floatValue() / vx;
+            rslt = CashewValue.numericValue(FLOAT_TYPE,v0);
           }
          else if (islng) {
-            long v0 = v1.getNumber(cc).longValue() / v2.getNumber(cc).longValue();
+            long vx = v2.getNumber(cc).longValue();
+            if (vx == 0) throwException(ARITH_EXC);
+            long v0 = v1.getNumber(cc).longValue() / vx;
             rslt = CashewValue.numericValue(LONG_TYPE,v0);
           }
          else {
-            int v0 = v1.getNumber(cc).intValue() / v2.getNumber(cc).intValue();
+            int vx = v2.getNumber(cc).intValue();
+            if (vx == 0) throwException(ARITH_EXC);
+            int v0 = v1.getNumber(cc).intValue() / vx;
             rslt = CashewValue.numericValue(INT_TYPE,v0);
           }
          break;
@@ -208,11 +216,15 @@ static CashewValue evaluate(CashewClock cc,CuminOperator op,CashewValue v1,Cashe
       case MOD :
          //TODO: check for v2 = 0 and provide exception
          if (islng) {
-            long v0 = v1.getNumber(cc).longValue() % v2.getNumber(cc).longValue();
+            long vx = v2.getNumber(cc).longValue();
+            if (vx == 0) throwException(ARITH_EXC);
+            long v0 = v1.getNumber(cc).longValue() % vx;
             rslt = CashewValue.numericValue(LONG_TYPE,v0);
           }
          else {
-            int v0 = v1.getNumber(cc).intValue() % v2.getNumber(cc).intValue();
+            int vx = v2.getNumber(cc).intValue();
+            if (vx == 0) throwException(ARITH_EXC);
+            int v0 = v1.getNumber(cc).intValue() % vx;
             rslt = CashewValue.numericValue(INT_TYPE,v0);
           }
          break; 
@@ -704,6 +716,18 @@ static CashewValue evaluate(CashewClock cc,CuminOperator op,CashewValue v1)
 }
 
 
+
+/********************************************************************************/
+/*                                                                              */
+/*      Throw exception                                                         */
+/*                                                                              */
+/********************************************************************************/
+
+static void throwException(JcompType typ)
+{
+   CashewValue cv = CashewValue.objectValue(typ);
+   throw new CuminRunError(CuminRunError.Reason.EXCEPTION,cv);
+}
 
 
 

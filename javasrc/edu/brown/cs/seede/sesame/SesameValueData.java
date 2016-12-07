@@ -52,9 +52,9 @@ class SesameValueData implements SesameConstants
 private SesameSessionLaunch sesame_session;
 private ValueKind val_kind;
 private String val_name;
+private String val_expr;
 private String val_type;
 private String val_value;
-private String decl_type;
 private boolean has_values;
 private boolean is_local;
 private boolean is_static;
@@ -62,6 +62,7 @@ private int array_length;
 private Map<String,SesameValueData> sub_values;
 private String var_detail;
 private CashewValue result_value;
+private int hash_code;
 
 
 
@@ -75,14 +76,18 @@ SesameValueData(SesameSessionLaunch sm,Element xml)
 {
    sesame_session = sm;
    val_name = IvyXml.getAttrString(xml,"NAME");
-   initialize(xml);
+   val_expr = null;
+   initialize(xml,null);
 }
 
 SesameValueData(SesameValueData par,Element xml) 
 {
    sesame_session = par.sesame_session;
+   if (par.val_expr != null) {
+      val_expr = par.val_expr + "." + IvyXml.getAttrString(xml,"NAME");
+    }
    val_name = par.val_name + "?" + IvyXml.getAttrString(xml,"NAME");
-   initialize(xml);
+   initialize(xml,val_expr);
 }
 
 
@@ -94,10 +99,10 @@ SesameValueData(SesameValueData par,Element xml)
 /********************************************************************************/
 
 ValueKind getKind()	        { return val_kind; }
-String getName()		{ return val_name; }
+
 String getType()		{ return val_type; }
 String getValue()		{ return val_value; }
-String getDeclaredType()	{ return decl_type; }
+
 String getActualType()	        { return null; }
 boolean hasContents()	        { return has_values; }
 boolean isLocal()		{ return is_local; }
@@ -166,7 +171,7 @@ CashewValue getCashewValue()
             String key = fnm;
             int idx1 = fnm.lastIndexOf(".");
             if (idx1 >= 0) key = fnm.substring(idx1+1);
-            key = getName() + "?" + key;
+            key = getKey(key);
             if (sub_values != null && sub_values.get(key) != null) {
                SesameValueData fsvd = sub_values.get(key);
                fsvd = sesame_session.getUniqueValue(fsvd);
@@ -177,19 +182,12 @@ CashewValue getCashewValue()
                inits.put(fnm,def);
              }
           }
-         if (typ.getName().equals("edu.brown.cs.seede.poppy.PoppyValue.Return")) {
-            Object ov = inits.get("edu.brown.cs.seede.poppy.PoppyValue.Return.for_object");
-            CashewValue hv = (CashewValue) inits.get("edu.brown.cs.seede.poppy.PoppyValue.Return.hash_code");
-            CashewValue rv = (CashewValue) inits.get("edu.brown.cs.seede.poppy.PoppyValue.Return.ref_id");
-            if (ov instanceof SesameValueData) {
-               SesameValueData osvd = (SesameValueData) ov;
-               result_value = osvd.getCashewValue();
-             }
-            else if (ov instanceof CashewValue) {
-               CashewValue cv = (CashewValue) ov;
-               result_value = cv;
-             }
-            result_value.setExternalData(null,rv.getNumber(null).intValue(),hv.getNumber(null).intValue());
+         if (hash_code == 0) {
+            inits.put(CashewConstants.HASH_CODE_FIELD,new DeferredLookup(CashewConstants.HASH_CODE_FIELD));
+          }
+         else {
+            CashewValue hvl = CashewValue.numericValue(CashewConstants.INT_TYPE,hash_code);
+            inits.put(CashewConstants.HASH_CODE_FIELD,hvl);
           }
          result_value = CashewValue.objectValue(typ,inits);
          break;
@@ -198,7 +196,7 @@ CashewValue getCashewValue()
          Map<Integer,Object> ainits = new HashMap<Integer,Object>();
          for (int i = 0; i < array_length; ++i) {
             String key = "[" + i + "]";
-            key = getName() + "?" + key;
+            key = getKey(key);
             if (sub_values != null && sub_values.get(key) != null) {
                SesameValueData fsvd = sub_values.get(key);
                fsvd = sesame_session.getUniqueValue(fsvd);
@@ -230,6 +228,12 @@ CashewValue getCashewValue()
     }
    
    return result_value;
+}
+
+
+private String getKey(String fnm)
+{
+   return val_name + "?" + fnm;
 }
 
 
@@ -271,19 +275,45 @@ String getDetail()
 /*                                                                              */
 /********************************************************************************/
 
-private void initialize(Element xml)
+private void initialize(Element xml,String expr)
 {
-   val_kind = IvyXml.getAttrEnum(xml,"KIND",ValueKind.UNKNOWN);
    val_type = IvyXml.getAttrString(xml,"TYPE");
+   if (val_type != null && val_type.equals("edu.brown.cs.seede.poppy.PoppyValue$Return")) {
+      Element objxml = null;
+      int refid = 0;
+      int hashcode = 0;
+      for (Element celt : IvyXml.children(xml,"VALUE")) {
+         switch (IvyXml.getAttrString(celt,"NAME")) {
+            case "for_object" :
+               objxml = celt;
+               break;
+            case "ref_id" :
+               refid = Integer.parseInt(IvyXml.getTextElement(celt,"DESCRIPTION"));
+               break;
+            case "hash_code" :
+               hashcode = Integer.parseInt(IvyXml.getTextElement(celt,"DESCRIPTION"));
+               break;
+          }
+       }
+      val_type = IvyXml.getAttrString(objxml,"TYPE");
+      String nexpr = "edu.brown.cs.seede.poppy.PoppyValue.getValue(" + refid + ")";
+      nexpr = "((" + val_type + ") " + nexpr + ")";
+      initialize(objxml,nexpr);
+      hash_code = hashcode;
+      return;
+    }
+   
+   val_kind = IvyXml.getAttrEnum(xml,"KIND",ValueKind.UNKNOWN);
    val_value = IvyXml.getTextElement(xml,"DESCRIPTION");
    if (val_value == null) val_value = "";
    has_values = IvyXml.getAttrBool(xml,"HASVARS");
    is_local = IvyXml.getAttrBool(xml,"LOCAL");
    is_static = IvyXml.getAttrBool(xml,"STATIC");
-   decl_type = IvyXml.getAttrString(xml,"DECLTYPE");
    array_length = IvyXml.getAttrInt(xml,"LENGTH",0);
    sub_values = null;
    var_detail = null;
+   hash_code = 0;
+   val_expr = expr;
    addValues(xml);
 }
 
@@ -295,19 +325,25 @@ private void addValues(Element xml)
       if (sub_values == null) sub_values = new HashMap<String,SesameValueData>();
       SesameValueData vd = new SesameValueData(this,e);
       vd = sesame_session.getUniqueValue(vd);
-      sub_values.put(vd.getName(),vd);
+      sub_values.put(vd.val_name,vd);
     }
 }
 
 private synchronized void computeValues() 
 {
    if (!has_values || sub_values != null) return;
-   CommandArgs args = new CommandArgs("FRAME",getFrame(),"THREAD",getThread(),"DEPTH",1);
-   String var = "<VAR>" + IvyXml.xmlSanitize(val_name) + "</VAR>";
-   Element xml = sesame_session.getControl().getXmlReply("VARVAL",sesame_session.getProject(),args,var,0);
-   if (IvyXml.isElement(xml,"RESULT")) {
-      Element root = IvyXml.getChild(xml,"VALUE");
-      addValues(root);
+   if (val_expr == null) {
+      CommandArgs args = new CommandArgs("FRAME",getFrame(),"THREAD",getThread(),"DEPTH",2);
+      String var = "<VAR>" + IvyXml.xmlSanitize(val_name) + "</VAR>";
+      Element xml = sesame_session.getControl().getXmlReply("VARVAL",sesame_session.getProject(),args,var,0);
+      if (IvyXml.isElement(xml,"RESULT")) {
+         Element root = IvyXml.getChild(xml,"VALUE");
+         addValues(root);
+       }
+    }
+   else {
+      SesameValueData svd = sesame_session.evaluateData(val_expr);
+      sub_values = svd.sub_values;
     }
 }
 
@@ -330,11 +366,29 @@ private class DeferredLookup implements CashewConstants.CashewDeferredValue {
    
    @Override public CashewValue getValue() {
       computeValues();
+      if (field_name.equals(CashewConstants.HASH_CODE_FIELD)) {
+         if (sub_values == null) sub_values = new HashMap<String,SesameValueData>();
+         if (sub_values.get(field_name) == null) {
+            SesameValueData svd = null;
+            if (val_expr != null) {
+               svd = sesame_session.evaluateData("System.identityHashCode(" + val_expr + ")");
+             }
+            else {
+               CommandArgs args = new CommandArgs("FRAME",getFrame(),"THREAD",getThread(),"DEPTH",1);
+               String var = "<VAR>" + IvyXml.xmlSanitize(val_name) + "?@hashCode</VAR>";
+               Element xml = sesame_session.getControl().getXmlReply("VARVAL",sesame_session.getProject(),args,var,0);
+               if (IvyXml.isElement(xml,"RESULT")) {
+                  svd = new SesameValueData(sesame_session,xml);
+                }
+             }
+            if (svd != null) sub_values.put(field_name,svd);
+          }
+       }
       if (sub_values == null) return null;
       String fnm = field_name;
       int idx = fnm.lastIndexOf(".");
       if (idx >= 0) fnm = fnm.substring(idx+1);
-      String lookup = val_name + "?" + fnm;
+      String lookup = getKey(fnm);
       SesameValueData svd = sub_values.get(lookup);
       svd = sesame_session.getUniqueValue(svd);
       if (svd == null) return null;

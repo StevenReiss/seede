@@ -28,6 +28,7 @@ import edu.brown.cs.ivy.jcode.JcodeDataType;
 import edu.brown.cs.ivy.jcode.JcodeField;
 import edu.brown.cs.ivy.jcode.JcodeInstruction;
 import edu.brown.cs.ivy.jcode.JcodeMethod;
+import edu.brown.cs.ivy.jcode.JcodeTryCatchBlock;
 import edu.brown.cs.ivy.jcomp.JcompType;
 import edu.brown.cs.ivy.jcomp.JcompTyper;
 import edu.brown.cs.seede.acorn.AcornLog;
@@ -118,7 +119,36 @@ int getNumArg()                         { return num_arg; }
    
    try {
       while (current_instruction >= 0) {
-	 evaluateInstruction();
+         try {
+            evaluateInstruction();
+          }
+         catch (CuminRunError cr) {
+            if (cr.getReason() == CuminRunError.Reason.EXCEPTION) {
+               CashewValue ev = cr.getValue();
+               JcodeTryCatchBlock tcb = null;
+               int len = 0;
+               for (JcodeTryCatchBlock jtcb : jcode_method.getTryCatchBlocks()) {
+                  JcodeDataType jdt = jtcb.getException();
+                  JcompType cdt = convertType(jdt);
+                  if (cdt.isCompatibleWith(ev.getDataType(execution_clock))) {
+                     int sidx = tcb.getStart().getIndex();
+                     int eidx = tcb.getEnd().getIndex();
+                     if (current_instruction >= sidx &&  current_instruction <= eidx) {
+                        if (tcb != null && len <= eidx - sidx) continue;
+                        tcb = jtcb;
+                        len = eidx - sidx;
+                      }
+                   }
+                }
+               if (tcb == null) throw cr;
+               while (execution_stack.size() > 0) {
+                  execution_stack.pop();
+                }
+               execution_stack.push(ev);
+               current_instruction = tcb.getHandler().getIndex();
+             }
+            else throw cr;
+          }
        }
     }
    catch (Throwable t) {
@@ -774,6 +804,8 @@ private void evaluateInstruction() throws CuminRunError
          if (!nm.contains(".")) {
             nm = fld.getDeclaringClass().getName() + "." + fld.getName();
           }
+         if (v0.isNull(execution_clock)) 
+            CuminEvaluator.throwException(CashewConstants.NULL_PTR_EXC);
 	 vstack = v0.getFieldValue(execution_clock,nm);
          vstack = vstack.getActualValue(execution_clock);
 	 break;
@@ -788,6 +820,8 @@ private void evaluateInstruction() throws CuminRunError
 	 fld = jins.getFieldReference();
          String dcname = fld.getDeclaringClass().getName();
 	 nm = dcname + "." + fld.getName();
+         if (v1.isNull(execution_clock)) 
+            CuminEvaluator.throwException(CashewConstants.NULL_PTR_EXC);
 	 v1.setFieldValue(execution_clock,nm,v0);
 	 break;
       case PUTSTATIC :
@@ -833,22 +867,35 @@ private void evaluateInstruction() throws CuminRunError
          nextins = jins.getTargetInstruction(v0.getNumber(execution_clock).intValue());
          break;
          
-         
-      case MONITORENTER :
-      case MONITOREXIT :
-         break;
-         
-      case MULTIANEWARRAY :
-         break;
       case NEWARRAY :
+      case ANEWARRAY :
          JcodeDataType dty = jins.getTypeReference();
          JcompType arrtyp = convertType(dty);
          int dim = execution_stack.pop().getNumber(execution_clock).intValue();
          vstack = CashewValue.arrayValue(arrtyp,dim);
 	 break;
-      case ANEWARRAY :
-	 break;
-
+         
+      case MULTIANEWARRAY :
+         dty = jins.getTypeReference();
+         arrtyp = convertType(dty);
+         int mnact = jins.getIntValue();
+         int [] bnds = new int[mnact];
+         for (int i = 0; i < mnact; ++i) {
+            bnds[i] = execution_stack.pop().getNumber(execution_clock).intValue();
+          }
+         vstack = buildArray(0,bnds,arrtyp);
+         break;
+         
+      case MONITORENTER :
+         v0 = execution_stack.pop();
+         break;
+      case MONITOREXIT :
+         v0 = execution_stack.pop();
+         break;
+         
+      default :
+         AcornLog.logE("Unknown instruction: " + jins);
+         throw new CuminRunError(CuminRunError.Reason.ERROR,"Unknown instruction");
     }
 
    if (vstack != null) execution_stack.push(vstack);
@@ -899,10 +946,28 @@ private CashewValue handleNew(JcompType nty)
       rslt = CashewValue.stringValue("");
     }
    else {
+      nty.defineAll(type_converter);
       rslt = CashewValue.objectValue(nty);
     }
    
    return rslt;
+}
+
+
+private CashewValue buildArray(int idx,int [] bnds,JcompType base)
+{
+   JcompType atyp = base;
+   for (int i = idx; i < bnds.length; ++i) {
+      atyp = type_converter.findArrayType(atyp);
+    }
+   CashewValue cv = CashewValue.arrayValue(atyp,bnds[idx]);
+   if (idx+1 < bnds.length) {
+      for (int i = 0; i < bnds[idx]; ++i) {
+         cv.setIndexValue(execution_clock,i,buildArray(idx+1,bnds,base));
+       }
+    }
+   
+   return cv;
 }
 
 

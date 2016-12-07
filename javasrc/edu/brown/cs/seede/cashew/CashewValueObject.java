@@ -109,7 +109,8 @@ CashewValueObject(JcompType jt,Map<String,Object> inits)
    CashewRef ov = field_values.get(nm);
    if (ov == null) {
       ov = static_values.get(nm);
-      if (ov == null) throw new Error("UndefinedField");
+      if (ov == null) 
+         throw new Error("UndefinedField");
     }
    ov.setValueAt(cc,cv);
    return this;

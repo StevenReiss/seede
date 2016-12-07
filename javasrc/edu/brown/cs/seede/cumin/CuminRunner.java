@@ -229,6 +229,7 @@ CuminRunner handleCall(CashewClock cc,JcodeMethod method,List<CashewValue> args,
    if (args != null && args.size() > 0 && !method.isStatic()) thisarg = args.get(0);
    
    method = findTargetMethod(cc,method,thisarg,ctyp);
+  //  if (method == null) throw new CuminRunError(CuminRunError.Reason.ERROR);
    
    JcompType type = getTyper().findType(method.getDeclaringClass().getName());
    if (!type.isKnownType()) {

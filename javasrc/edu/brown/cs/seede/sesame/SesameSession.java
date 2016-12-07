@@ -198,6 +198,17 @@ CashewValue lookupValue(String name,String type)
 
 CashewValue evaluate(String expr)
 {
+   SesameValueData svd = evaluateData(expr);
+   
+   if (svd == null) return null;
+   
+   return svd.getCashewValue();
+}
+
+
+
+SesameValueData evaluateData(String expr)
+{
    return null;
 }
 

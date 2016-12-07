@@ -52,6 +52,17 @@ enum CashewValueKind {
 
 /********************************************************************************/
 /*                                                                              */
+/*      Special fields                                                          */
+/*                                                                              */
+/********************************************************************************/
+
+String HASH_CODE_FIELD = "@hashCode";
+
+
+
+
+/********************************************************************************/
+/*                                                                              */
 /*      Deferred value interface                                                */
 /*                                                                              */
 /********************************************************************************/
@@ -88,6 +99,10 @@ JcompType ERROR_TYPE = JCOMP_BASE.getSystemType("*ERROR*");
 JcompType STRING_TYPE = JCOMP_BASE.getSystemType("java.lang.String");
 JcompType OBJECT_TYPE = JCOMP_BASE.getSystemType("java.lang.Object");
 JcompType CLASS_TYPE = JCOMP_BASE.getSystemType("java.lang.Class");
+JcompType NULL_PTR_EXC = JCOMP_BASE.getSystemType("java.lang.NullPointerException");
+JcompType IDX_BNDS_EXC = JCOMP_BASE.getSystemType("java.lang.IndexOutOfBoundsException");
+JcompType ARITH_EXC = JCOMP_BASE.getSystemType("java.lang.ArithmeticException");
+JcompType CAST_EXC = JCOMP_BASE.getSystemType("java.lang.ClassCastException");
 
 JcompType INT_BOX_TYPE = JCOMP_BASE.getSystemType("java.lang.Integer");
 JcompType SHORT_BOX_TYPE = JCOMP_BASE.getSystemType("java.lang.Short");

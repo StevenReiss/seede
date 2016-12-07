@@ -742,8 +742,9 @@ void checkSystemMethods()
       case "gc" :
          break;
       case "identityHashCode" :
-         // handle identity hash code
-         return;
+         rslt = CashewValue.numericValue(INT_TYPE,getValue(0).getFieldValue(getClock(),HASH_CODE_FIELD).
+               getNumber(getClock()).intValue());
+         break;
       case "load" :
       case "loadLibrary" :
          break;
@@ -788,8 +789,9 @@ void checkObjectMethods()
          rslt = CashewValue.booleanValue(getValue(0) == getValue(1));
          break;
       case "hashCode" :
-         // handle hashCode
-         return;
+         rslt = CashewValue.numericValue(INT_TYPE,getValue(0).getFieldValue(getClock(),HASH_CODE_FIELD).
+               getNumber(getClock()).intValue());
+         break;
       case "clone" :
          // TODO: handle clone
          return;

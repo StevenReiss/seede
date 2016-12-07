@@ -1,21 +1,21 @@
 /********************************************************************************/
-/*                                                                              */
-/*              CuminRunError.java                                              */
-/*                                                                              */
-/*      description of class                                                    */
-/*                                                                              */
+/*										*/
+/*		CuminRunError.java						*/
+/*										*/
+/*	description of class							*/
+/*										*/
 /********************************************************************************/
-/*      Copyright 2011 Brown University -- Steven P. Reiss                    */
+/*	Copyright 2011 Brown University -- Steven P. Reiss		      */
 /*********************************************************************************
- *  Copyright 2011, Brown University, Providence, RI.                            *
- *                                                                               *
- *                        All Rights Reserved                                    *
- *                                                                               *
- * This program and the accompanying materials are made available under the      *
+ *  Copyright 2011, Brown University, Providence, RI.				 *
+ *										 *
+ *			  All Rights Reserved					 *
+ *										 *
+ * This program and the accompanying materials are made available under the	 *
  * terms of the Eclipse Public License v1.0 which accompanies this distribution, *
- * and is available at                                                           *
- *      http://www.eclipse.org/legal/epl-v10.html                                *
- *                                                                               *
+ * and is available at								 *
+ *	http://www.eclipse.org/legal/epl-v10.html				 *
+ *										 *
  ********************************************************************************/
 
 /* SVN: $Id$ */
@@ -31,32 +31,32 @@ public class CuminRunError extends Error
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Private Storage                                                         */
-/*                                                                              */
+/*										*/
+/*	Private Storage 							*/
+/*										*/
 /********************************************************************************/
 
-enum Reason { ERROR, EXCEPTION, BREAKPOINT, TIMEOUT, 
+public enum Reason { ERROR, EXCEPTION, BREAKPOINT, TIMEOUT,
    STEP_END, BREAK, CONTINUE, RETURN, CALL, STOPED, HALTED };
 
-private Reason          throw_reason;
-private CashewValue     associated_value;
-private CuminRunner     call_value;
+private Reason		throw_reason;
+private CashewValue	associated_value;
+private CuminRunner	call_value;
 
 private final static long serialVersionUID = 1;
 
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Constructors                                                            */
-/*                                                                              */
+/*										*/
+/*	Constructors								*/
+/*										*/
 /********************************************************************************/
 
-CuminRunError(Reason r,String msg,Throwable cause,CashewValue v) 
+CuminRunError(Reason r,String msg,Throwable cause,CashewValue v)
 {
    super(msg,cause);
-   
+
    throw_reason = r;
    associated_value = v;
    call_value = null;
@@ -77,12 +77,11 @@ public CuminRunError(Throwable t)
 {
    this(Reason.ERROR,t.getMessage(),t,null);
 }
-   
+
 
 CuminRunError(Reason r,CashewValue v)
 {
    this(r,r.toString(),null,v);
-   // v can be an throwable value (r = EXCEPTION) or a return value (r = RETURN)
 }
 
 
@@ -94,20 +93,20 @@ CuminRunError(CuminRunner r)
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Access methods                                                          */
-/*                                                                              */
+/*										*/
+/*	Access methods								*/
+/*										*/
 /********************************************************************************/
 
-public Reason getReason()               { return throw_reason; }
+public Reason getReason()		{ return throw_reason; }
 
-public CashewValue getValue()           { return associated_value; }
+public CashewValue getValue()		{ return associated_value; }
 
-public CuminRunner getCallRunner()      { return call_value; }
+public CuminRunner getCallRunner()	{ return call_value; }
 
 
 
-}       // end of class CuminRunError
+}	// end of class CuminRunError
 
 
 
