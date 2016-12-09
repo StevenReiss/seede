@@ -181,6 +181,18 @@ public static CashewValue numericValue(JcompType t,long v)
 	  }
        }
     }
+   else if (t == FLOAT_TYPE || t == DOUBLE_TYPE) {
+      return numericValue(t,((double) v));
+    }
+   else if (t == LONG_TYPE) {
+      synchronized (long_values) {
+	 vn = long_values.get(v);
+	 if (vn == null) {
+	    vn = new ValueNumeric(t,v);
+	    long_values.put(v,vn);
+	  }
+       }
+    }
    else if (t == BOOLEAN_TYPE) {
       return booleanValue(v != 0);
     }
@@ -196,6 +208,7 @@ public static CashewValue numericValue(JcompType t,double v)
 {
    return new ValueNumeric(t,v);
 }
+
 
 public static CashewValue numericValue(JcompType t,String v)
 {

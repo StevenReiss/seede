@@ -61,20 +61,20 @@ public class TestSeede implements MintConstants, SesameConstants
 
 private static final String		MINT_NAME = "SEEDE_TEST_spr";
 private static final String		SOURCE_ID = "SEED_12345";
-private static final String             TEST1_SID = "SEED_12346";
-private static final String             TEST2_SID = "SEED_12347";
-private static final String             TEST3_SID = "SEED_12348";
+private static final String		TEST1_SID = "SEED_12346";
+private static final String		TEST2_SID = "SEED_12347";
+private static final String		TEST3_SID = "SEED_12348";
 
-private static final String             TEST_PROJECT = "sample1";      
-private static final String             LAUNCH1_NAME = "test1";
-private static final String             LAUNCH2_NAME = "test2";
-private static final String             REL_PATH1 = "src/edu/brown/cs/seede/sample/Tester.java";
+private static final String		TEST_PROJECT = "sample1";
+private static final String		LAUNCH1_NAME = "test1";
+private static final String		LAUNCH2_NAME = "test2";
+private static final String		REL_PATH1 = "src/edu/brown/cs/seede/sample/Tester.java";
 
 
 private static MintControl mint_control;
-private static File        project_directory;
+private static File	   project_directory;
 
-private String          stopped_thread;
+private String		stopped_thread;
 
 
 static {
@@ -117,20 +117,20 @@ public TestSeede()
 
    try {
       for (int i = 0; i < 250; ++i) {
-         try { Thread.sleep(1000); } catch (InterruptedException e) { }
+	 try { Thread.sleep(1000); } catch (InterruptedException e) { }
 	 if (pingEclipse()) {
-            CommandArgs args = new CommandArgs("LEVEL","DEBUG");
-            sendBubblesMessage("LOGLEVEL",null,args,null);
-            sendBubblesMessage("ENTER");
-            MintDefaultReply rply = new MintDefaultReply();
-            sendBubblesMessage("OPENPROJECT",TEST_PROJECT,null,null,rply);
-            Element pxml = rply.waitForXml();
-            if (!IvyXml.isElement(pxml,"PROJECT")) pxml = IvyXml.getChild(pxml,"PROJECT");
-            String dirs = IvyXml.getAttrString(pxml,"PATH");
-            if (dirs != null) project_directory = new File(dirs);
-            return;
-          }
-         if (i == 0) new IvyExec(cmd);
+	    CommandArgs args = new CommandArgs("LEVEL","DEBUG");
+	    sendBubblesMessage("LOGLEVEL",null,args,null);
+	    sendBubblesMessage("ENTER");
+	    MintDefaultReply rply = new MintDefaultReply();
+	    sendBubblesMessage("OPENPROJECT",TEST_PROJECT,null,null,rply);
+	    Element pxml = rply.waitForXml();
+	    if (!IvyXml.isElement(pxml,"PROJECT")) pxml = IvyXml.getChild(pxml,"PROJECT");
+	    String dirs = IvyXml.getAttrString(pxml,"PATH");
+	    if (dirs != null) project_directory = new File(dirs);
+	    return;
+	  }
+	 if (i == 0) new IvyExec(cmd);
        }
     }
    catch (IOException e) { }
@@ -140,9 +140,9 @@ public TestSeede()
 
 
 @BeforeClass public static void startSeede()
-{ 
+{
    System.err.println("Setting Up Sesame");
-   
+
    SeedeThread st = new SeedeThread();
    for (int i = 0; i < 100; ++i) {
       if (pingSeede()) return;
@@ -187,23 +187,23 @@ private static boolean pingSeede()
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Handle launches                                                         */
-/*                                                                              */
+/*										*/
+/*	Handle launches 							*/
+/*										*/
 /********************************************************************************/
 
 private LaunchData startLaunch(String name)
 {
    stopped_thread = null;
-   
+
    File lib = new File("/pro/seede/lib");
    if (!lib.exists()) lib = new File("/research/people/spr/seede/lib");
    File f1 = new File(lib,"poppy.jar");
    String dargs = "-javaagent:" + f1.getPath();
-   
+
    stopped_thread = null;
    CommandArgs args = new CommandArgs("NAME",name,"MODE","debug","BUILD","TRUE",
-         "REGISTER","TRUE","VMARG",dargs);
+	 "REGISTER","TRUE","VMARG",dargs);
    MintDefaultReply rply = new MintDefaultReply();
    sendBubblesMessage("START",TEST_PROJECT,args,null,rply);
    Element xml = rply.waitForXml();
@@ -216,8 +216,8 @@ private LaunchData startLaunch(String name)
    String processid = IvyXml.getAttrString(ldata,"PROCESS");
    Assert.assertNotNull(processid);
    String threadid = waitForStop();
-   Assert.assertNotNull(threadid);  
-   
+   Assert.assertNotNull(threadid);
+
    return new LaunchData(launchid,targetid,processid,threadid);
 }
 
@@ -225,17 +225,17 @@ private LaunchData startLaunch(String name)
 private void continueLaunch(LaunchData ld)
 {
    stopped_thread = null;
-   
+
    CommandArgs args = new CommandArgs("LAUNCH",ld.getLaunchId(),
-         "TARGET",ld.getTargetId(),
-         "PROCESS",ld.getProcessId(),"ACTION","RESUME");
+	 "TARGET",ld.getTargetId(),
+	 "PROCESS",ld.getProcessId(),"ACTION","RESUME");
    MintDefaultReply rply = new MintDefaultReply();
    sendBubblesMessage("DEBUGACTION",TEST_PROJECT,args,null,rply);
    String x = rply.waitForString();
    Assert.assertNotNull(x);
    String threadid = waitForStop();
-   Assert.assertNotNull(threadid); 
-   
+   Assert.assertNotNull(threadid);
+
    ld.setThreadId(threadid);
 }
 
@@ -247,27 +247,27 @@ private static class LaunchData {
    private String target_id;
    private String process_id;
    private String thread_id;
-   
+
    LaunchData(String launch,String target,String process,String thread) {
       lanuch_id = launch;
       target_id = target;
       process_id = process;
       thread_id = thread;
     }
-   
-   String getLaunchId()                         { return lanuch_id; }
-   String getTargetId()                         { return target_id; }
-   String getProcessId()                        { return process_id; }
-   String getThreadId()                         { return thread_id; }
-   
-   void setThreadId(String id)                  { thread_id = id; }
 
-}       // end of inner class LaunchData
+   String getLaunchId() 			{ return lanuch_id; }
+   String getTargetId() 			{ return target_id; }
+   String getProcessId()			{ return process_id; }
+   String getThreadId() 			{ return thread_id; }
+
+   void setThreadId(String id)			{ thread_id = id; }
+
+}	// end of inner class LaunchData
 
 /********************************************************************************/
-/*                                                                              */
-/*      Handle messages coming back                                             */
-/*                                                                              */
+/*										*/
+/*	Handle messages coming back						*/
+/*										*/
 /********************************************************************************/
 
 private static class SeedeThread extends Thread {
@@ -275,20 +275,20 @@ private static class SeedeThread extends Thread {
    SeedeThread() {
       super("SeedeMain");
     }
-   
+
    @Override public void run() {
       SesameMain.main(new String [] { "-m", MINT_NAME });
     }
-   
-}       // end of inner class SeedeThread
+
+}	// end of inner class SeedeThread
 
 
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Basic Tests                                                             */
-/*                                                                              */
+/*										*/
+/*	Basic Tests								*/
+/*										*/
 /********************************************************************************/
 
 @Test public void test1()
@@ -296,7 +296,7 @@ private static class SeedeThread extends Thread {
    System.err.println("Start TEST1");
    LaunchData ld = startLaunch(LAUNCH1_NAME);
    continueLaunch(ld);
- 
+
    IvyXmlWriter xw = new IvyXmlWriter();
  ; xw.begin("SESSION");
    xw.field("TYPE","LAUNCH");
@@ -323,14 +323,14 @@ private static class SeedeThread extends Thread {
 {
    System.err.println("START TEST2");
    System .err.flush();
-   
+
    MintDefaultReply rply = new MintDefaultReply();
    sendSeedeMessage("PING",null,null,null,rply);
    String srply = rply.waitForString();
    Assert.assertTrue(srply.contains("PONG"));
-   
+
    File srcf = new File(project_directory,REL_PATH1);
-   
+
    IvyXmlWriter xw = new IvyXmlWriter();
    xw.begin("SESSION");
    xw.field("TYPE","TEST");
@@ -360,12 +360,12 @@ private static class SeedeThread extends Thread {
    xw.end("SESSION");
    String cnts = xw.toString();
    xw.close();
-   
+
    rply = new MintDefaultReply();
    sendSeedeMessage("BEGIN",TEST2_SID,null,cnts,rply);
    Element status = rply.waitForXml();
-   Assert.assertTrue(IvyXml.isElement(status,"RESULT")); 
-   
+   Assert.assertTrue(IvyXml.isElement(status,"RESULT"));
+
    rply = new MintDefaultReply();
    sendSeedeMessage("EXEC",TEST2_SID,null,cnts,rply);
    String sstatus = rply.waitForString();
@@ -380,7 +380,7 @@ private static class SeedeThread extends Thread {
 {
    System.err.println("Start TEST3");
    LaunchData ld = startLaunch(LAUNCH2_NAME);
-   
+
    IvyXmlWriter xw = new IvyXmlWriter();
    xw.begin("SESSION");
    xw.field("TYPE","LAUNCH");
@@ -394,7 +394,7 @@ private static class SeedeThread extends Thread {
    sendSeedeMessage("BEGIN",TEST3_SID,null,cnts,rply);
    Element status = rply.waitForXml();
    Assert.assertTrue(IvyXml.isElement(status,"RESULT"));
-   
+
    rply = new MintDefaultReply();
    sendSeedeMessage("EXEC",TEST3_SID,null,cnts,rply);
    String sstatus = rply.waitForString();
@@ -431,18 +431,18 @@ private static void sendBubblesMessage(String cmd,String proj,Map<String,Object>
    if (proj != null && proj.length() > 0) xw.field("PROJECT",proj);
    if (flds != null) {
       for (Map.Entry<String,Object> ent : flds.entrySet()) {
-         xw.field(ent.getKey(),ent.getValue());
+	 xw.field(ent.getKey(),ent.getValue());
        }
     }
    xw.field("LANG","eclipse");
    if (cnts != null) xw.xmlText(cnts);
    xw.end("BUBBLES");
-   
+
    String xml = xw.toString();
    xw.close();
-   
+
    AcornLog.logD("SEND to BUBBLES: " + xml);
-   
+
    int fgs = MINT_MSG_NO_REPLY;
    if (rply != null) fgs = MINT_MSG_FIRST_NON_NULL;
    mint_control.send(xml,rply,fgs);
@@ -466,15 +466,15 @@ private static void sendSeedeMessage(String cmd,String sess,Map<String,Object> f
    xw.field("SID",sess);
    if (flds != null) {
       for (Map.Entry<String,Object> ent : flds.entrySet()) {
-         xw.field(ent.getKey(),ent.getValue());
+	 xw.field(ent.getKey(),ent.getValue());
        }
     }
    if (cnts != null) xw.xmlText(cnts);
    xw.end("SEEDE");
-   
+
    String xml = xw.toString();
    xw.close();
-   
+
    int fgs = MINT_MSG_NO_REPLY;
    if (rply != null) fgs = MINT_MSG_FIRST_NON_NULL;
    mint_control.send(xml,rply,fgs);
@@ -484,9 +484,9 @@ private static void sendSeedeMessage(String cmd,String sess,Map<String,Object> f
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Handle messages from Eclipse                                            */
-/*                                                                              */
+/*										*/
+/*	Handle messages from Eclipse						*/
+/*										*/
 /********************************************************************************/
 
 private class IDEHandler implements MintHandler {
@@ -495,61 +495,61 @@ private class IDEHandler implements MintHandler {
       String cmd = args.getArgument(0);
       Element e = msg.getXml();
       if (cmd == null) return;
-      
+
       switch (cmd) {
-         case "ELISIION" :
-            break;
-         case "EDITERROR" :
-            break;
-         case "FILEERROR" :
-            break;
-         case "PRIVATEERROR" :
-            break;
-         case "EDIT" :
-            break;
-         case "BREAKEVENT" :
-            break;
-         case "LAUNCHCONFIGEVENT" :
-            break;
-         case "RUNEVENT" :
-            long when = IvyXml.getAttrLong(e,"TIME");
-            for (Element re : IvyXml.children(e,"RUNEVENT")) {
-               handleRunEvent(re,when);
-             }
-            msg.replyTo("<OK/>");
-            break;
-         case "NAMES" :
-         case "ENDNAMES" :
-            break;
-         case "PING" :
-            msg.replyTo("<PONG/>");
-            break;
-         case "PROGRESS" :
-            msg.replyTo("<OK/>");
-            break;
-         case "RESOURCE" :
-            break;
-         case "CONSOLE" :
-            msg.replyTo("<OK/>");
-            break;
-         case "OPENEDITOR" :
-            break;
-         case "EVALUATION" :
-            msg.replyTo("<OK/>");
-            break;
-         case "BUILDDONE" :
-         case "FILECHANGE" :
-         case "PROJECTDATA" :
-         case "PROJECTOPEN" :
-            break;
-         case "STOP" :
-            break;
-         default :
-            break;
+	 case "ELISIION" :
+	    break;
+	 case "EDITERROR" :
+	    break;
+	 case "FILEERROR" :
+	    break;
+	 case "PRIVATEERROR" :
+	    break;
+	 case "EDIT" :
+	    break;
+	 case "BREAKEVENT" :
+	    break;
+	 case "LAUNCHCONFIGEVENT" :
+	    break;
+	 case "RUNEVENT" :
+	    long when = IvyXml.getAttrLong(e,"TIME");
+	    for (Element re : IvyXml.children(e,"RUNEVENT")) {
+	       handleRunEvent(re,when);
+	     }
+	    msg.replyTo("<OK/>");
+	    break;
+	 case "NAMES" :
+	 case "ENDNAMES" :
+	    break;
+	 case "PING" :
+	    msg.replyTo("<PONG/>");
+	    break;
+	 case "PROGRESS" :
+	    msg.replyTo("<OK/>");
+	    break;
+	 case "RESOURCE" :
+	    break;
+	 case "CONSOLE" :
+	    msg.replyTo("<OK/>");
+	    break;
+	 case "OPENEDITOR" :
+	    break;
+	 case "EVALUATION" :
+	    msg.replyTo("<OK/>");
+	    break;
+	 case "BUILDDONE" :
+	 case "FILECHANGE" :
+	 case "PROJECTDATA" :
+	 case "PROJECTOPEN" :
+	    break;
+	 case "STOP" :
+	    break;
+	 default :
+	    break;
        }
     }
-   
-}       // end of innerclass IDEHandler
+
+}	// end of innerclass IDEHandler
 
 
 
@@ -559,14 +559,14 @@ private void handleRunEvent(Element xml,long when)
    if (type == null) return;
    switch (type) {
       case "PROCESS" :
-         break;
+	 break;
       case "THREAD" :
-         handleThreadEvent(xml,when);
-         break;
+	 handleThreadEvent(xml,when);
+	 break;
       case "TARGET" :
-         break;
+	 break;
       default :
-         break;
+	 break;
     }
 }
 
@@ -579,11 +579,11 @@ private void handleThreadEvent(Element xml,long when)
    if (thread == null) return;
    switch (kind) {
       case "SUSPEND" :
-         synchronized (this) {
-            stopped_thread = IvyXml.getAttrString(thread,"ID");
-            notifyAll();
-          }
-         break;   
+	 synchronized (this) {
+	    stopped_thread = IvyXml.getAttrString(thread,"ID");
+	    notifyAll();
+	  }
+	 break; 
     }
 }
 
@@ -593,10 +593,10 @@ private String waitForStop()
 {
    synchronized (this) {
       while (stopped_thread == null) {
-         try {
-            wait(3000);
-          }
-         catch (InterruptedException e) { }
+	 try {
+	    wait(3000);
+	  }
+	 catch (InterruptedException e) { }
        }
       return stopped_thread;
     }
@@ -615,41 +615,3 @@ private String waitForStop()
 
 
 /* end of TestSeede.java */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

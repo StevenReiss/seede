@@ -1,21 +1,21 @@
 /********************************************************************************/
-/*                                                                              */
-/*              SesameSessionLaunch.java                                        */
-/*                                                                              */
-/*      Session based on a debugger launch                                      */
-/*                                                                              */
+/*										*/
+/*		SesameSessionLaunch.java					*/
+/*										*/
+/*	Session based on a debugger launch					*/
+/*										*/
 /********************************************************************************/
-/*      Copyright 2011 Brown University -- Steven P. Reiss                    */
+/*	Copyright 2011 Brown University -- Steven P. Reiss		      */
 /*********************************************************************************
- *  Copyright 2011, Brown University, Providence, RI.                            *
- *                                                                               *
- *                        All Rights Reserved                                    *
- *                                                                               *
- * This program and the accompanying materials are made available under the      *
+ *  Copyright 2011, Brown University, Providence, RI.				 *
+ *										 *
+ *			  All Rights Reserved					 *
+ *										 *
+ * This program and the accompanying materials are made available under the	 *
  * terms of the Eclipse Public License v1.0 which accompanies this distribution, *
- * and is available at                                                           *
- *      http://www.eclipse.org/legal/epl-v10.html                                *
- *                                                                               *
+ * and is available at								 *
+ *	http://www.eclipse.org/legal/epl-v10.html				 *
+ *										 *
  ********************************************************************************/
 
 /* SVN: $Id$ */
@@ -31,6 +31,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.StringTokenizer;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.eclipse.jdt.core.dom.MethodDeclaration;
@@ -47,52 +48,63 @@ class SesameSessionLaunch extends SesameSession
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Private Storage                                                         */
-/*                                                                              */
+/*										*/
+/*	Private Storage 							*/
+/*										*/
 /********************************************************************************/
 
-private String          launch_id;
-private String          thread_id;
-private String          frame_id;
-private String          method_name;
-private SesameFile      source_file;
-private int             line_number;
+private String		launch_id;
+private Set<String>	thread_ids;
+private String		frame_id;
+private String		method_name;
+private SesameFile	source_file;
+private int		line_number;
 private Map<String,SesameValueData> value_map;
-private Set<String>     accessible_types;
+private Set<String>	accessible_types;
 
 private static AtomicInteger eval_counter = new AtomicInteger();
 
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Constructors                                                            */
-/*                                                                              */
+/*										*/
+/*	Constructors								*/
+/*										*/
 /********************************************************************************/
 
 SesameSessionLaunch(SesameMain sm,String sid,Element xml)
 {
    super(sm,sid,xml);
-   
+
    launch_id = IvyXml.getAttrString(xml,"LAUNCHID");
-   thread_id = IvyXml.getAttrString(xml,"THREADID");
+   thread_ids = new HashSet<String>();
+   String s = IvyXml.getAttrString(xml,"THREADID");
+   for (StringTokenizer tok = new StringTokenizer(s," ,;\t\n"); tok.hasMoreTokens(); ) {
+      thread_ids.add(tok.nextToken());
+    }
    value_map = new HashMap<String,SesameValueData>();
    accessible_types = new HashSet<String>();
-   
+
    loadInitialValues();
 }
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Access methods                                                          */
-/*                                                                              */
+/*										*/
+/*	Access methods								*/
+/*										*/
 /********************************************************************************/
 
-String getFrameId()                     { return frame_id; }
+String getFrameId()			{ return frame_id; }
 
-String getThreadId()                    { return thread_id; }
+String getAnyThread()		
+{
+   for (String s : thread_ids) {
+      return s;
+    }
+   return null;
+}
+
 
 @Override public List<CashewValue> getCallArgs()
 {
@@ -110,7 +122,7 @@ String getThreadId()                    { return thread_id; }
       SesameValueData val = value_map.get(psym.getName());
       args.add(val.getCashewValue());
     }
-   
+
    return args;
 }
 
@@ -119,10 +131,10 @@ String getThreadId()                    { return thread_id; }
 {
    CashewValue cv = super.lookupValue(name,type);
    if (cv != null) return null;
-   
+
    cv = evaluate(name);
    if (cv != null) return cv;
-   
+
    return cv;
 }
 
@@ -130,17 +142,18 @@ String getThreadId()                    { return thread_id; }
 @Override SesameValueData evaluateData(String expr)
 {
    String eid = "E_" + eval_counter.incrementAndGet();
-   expr = "edu.brown.cs.seede.poppy.PoppyValue.register(" + expr + ")";
-   
-   CommandArgs args = new CommandArgs("THREAD",thread_id,
-         "FRAME",frame_id,"BREAK",false,"EXPR",expr,
-         "LEVEL",5,"REPLYID",eid);
+   // expr = "edu.brown.cs.seede.poppy.PoppyValue.register(" + expr + ")";
+
+   String thread = getAnyThread();
+   CommandArgs args = new CommandArgs("THREAD",thread,
+	 "FRAME",frame_id,"BREAK",false,"EXPR",expr,
+	 "LEVEL",5,"SAVEID",eid,"REPLYID",eid);
    Element xml = getControl().getXmlReply("EVALUATE",getProject(),args,null,0);
    if (IvyXml.isElement(xml,"RESULT")) {
       Element root = getControl().waitForEvaluation(eid);
       Element v = IvyXml.getChild(root,"EVAL");
       Element v1 = IvyXml.getChild(v,"VALUE");
-      SesameValueData svd = new SesameValueData(this,v1);
+      SesameValueData svd = new SesameValueData(this,thread,v1,"*" + eid);
       return svd;
     }
    return null;
@@ -151,9 +164,9 @@ String getThreadId()                    { return thread_id; }
 @Override void evaluateVoid(String expr)
 {
    String eid = "E_" + eval_counter.incrementAndGet();
-   CommandArgs args = new CommandArgs("THREAD",thread_id,
-         "FRAME",frame_id,"BREAK",false,"EXPR",expr,
-         "LEVEL",4,"REPLYID",eid);
+   CommandArgs args = new CommandArgs("THREAD",getAnyThread(),
+	 "FRAME",frame_id,"BREAK",false,"EXPR",expr,
+	 "LEVEL",4,"REPLYID",eid);
    Element xml = getControl().getXmlReply("EVALUATE",getProject(),args,null,0);
    if (IvyXml.isElement(xml,"RESULT")) {
       getControl().waitForEvaluation(eid);
@@ -169,11 +182,11 @@ String getThreadId()                    { return thread_id; }
 @Override void enableAccess(String type)
 {
    if (accessible_types.contains(type)) return;
-   
+
    String expr = "java.lang.reflect.AccessibleObject.setAccessible(Class.forName(\"" + type + "\")";
    expr += ".getDeclaredFields(),true)";
    evaluateVoid(expr);
-   
+
    accessible_types.add(type);
 }
 
@@ -181,23 +194,23 @@ String getThreadId()                    { return thread_id; }
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Launch access methods                                                   */
-/*                                                                              */
+/*										*/
+/*	Launch access methods							*/
+/*										*/
 /********************************************************************************/
 
 private void loadInitialValues()
 {
    CommandArgs cargs = new CommandArgs("LAUNCH",launch_id,"THREAD",null,"COUNT",1);
-   
+
    Element stack = sesame_control.getXmlReply("GETSTACKFRAMES",getProject(),cargs,
-         null,0);
+	 null,0);
    stack = IvyXml.getChild(stack,"STACKFRAMES");
-   
+
    for (Element telt : IvyXml.children(stack,"THREAD")) {
       String teid = IvyXml.getAttrString(telt,"ID");
-      if (!teid.equals(thread_id)) continue;
-      Element frm = IvyXml.getChild(telt,"STACKFRAME"); 
+      if (!thread_ids.contains(teid)) continue;
+      Element frm = IvyXml.getChild(telt,"STACKFRAME");
       frame_id = IvyXml.getAttrString(frm,"ID");
       method_name = IvyXml.getAttrString(frm,"METHOD");
       String fnm = IvyXml.getAttrString(frm,"FILE");
@@ -205,17 +218,16 @@ private void loadInitialValues()
       source_file = sesame_control.getFileManager().openFile(sf);
       line_number = IvyXml.getAttrInt(frm,"LINENO");
       for (Element var : IvyXml.children(frm,"VALUE")) {
-         String nm = IvyXml.getAttrString(var,"NAME");
-         SesameValueData svd = new SesameValueData(this,var);
-         svd = getUniqueValue(svd);
-         value_map.put(nm,svd);
+	 String nm = IvyXml.getAttrString(var,"NAME");
+	 SesameValueData svd = new SesameValueData(this,teid,var,null);
+	 svd = getUniqueValue(svd);
+	 value_map.put(nm,svd);
        }
+      SesameLocation loc = new SesameLocation(source_file,method_name,line_number);
+      addLocation(loc);
     }
-   
-   SesameLocation loc = new SesameLocation(source_file,method_name,line_number);
-   addLocation(loc);
-   
 }
+
 
 
 SesameValueData getUniqueValue(SesameValueData svd)
@@ -229,9 +241,9 @@ SesameValueData getUniqueValue(SesameValueData svd)
     }
    return svd;
 }
-      
 
-}       // end of class SesameSessionLaunch
+
+}	// end of class SesameSessionLaunch
 
 
 

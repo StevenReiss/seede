@@ -1,21 +1,21 @@
 /********************************************************************************/
-/*                                                                              */
-/*              CashewValueObject.java                                          */
-/*                                                                              */
-/*      Object Value representation                                             */
-/*                                                                              */
+/*										*/
+/*		CashewValueObject.java						*/
+/*										*/
+/*	Object Value representation						*/
+/*										*/
 /********************************************************************************/
-/*      Copyright 2011 Brown University -- Steven P. Reiss                    */
+/*	Copyright 2011 Brown University -- Steven P. Reiss		      */
 /*********************************************************************************
- *  Copyright 2011, Brown University, Providence, RI.                            *
- *                                                                               *
- *                        All Rights Reserved                                    *
- *                                                                               *
- * This program and the accompanying materials are made available under the      *
+ *  Copyright 2011, Brown University, Providence, RI.				 *
+ *										 *
+ *			  All Rights Reserved					 *
+ *										 *
+ * This program and the accompanying materials are made available under the	 *
  * terms of the Eclipse Public License v1.0 which accompanies this distribution, *
- * and is available at                                                           *
- *      http://www.eclipse.org/legal/epl-v10.html                                *
- *                                                                               *
+ * and is available at								 *
+ *	http://www.eclipse.org/legal/epl-v10.html				 *
+ *										 *
  ********************************************************************************/
 
 /* SVN: $Id$ */
@@ -37,9 +37,9 @@ public class CashewValueObject extends CashewValue implements CashewConstants
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Private storage                                                         */
-/*                                                                              */
+/*										*/
+/*	Private storage 							*/
+/*										*/
 /********************************************************************************/
 
 private Map<String,CashewRef> field_values;
@@ -52,36 +52,36 @@ static {
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Constructors                                                            */
-/*                                                                              */
+/*										*/
+/*	Constructors								*/
+/*										*/
 /********************************************************************************/
 
-CashewValueObject(JcompType jt,Map<String,Object> inits) 
+CashewValueObject(JcompType jt,Map<String,Object> inits)
 {
    super(jt);
-   
+
    field_values = new HashMap<String,CashewRef>();
    for (JcompScope tscp = jt.getScope(); tscp != null; tscp = tscp.getParent()) {
       for (JcompSymbol fsym : tscp.getDefinedFields()) {
-         String key = fsym.getFullName();
-         
-         CashewValue cv = CashewValue.createDefaultValue(fsym.getType());
-         CashewRef cr = null;
-         if (inits != null) {
-            Object ival = inits.get(key);
-            if (ival instanceof CashewValue) cv = (CashewValue) ival;
-            else if (ival instanceof CashewDeferredValue) {
-               CashewDeferredValue dv = (CashewDeferredValue) ival;
-               cr = new CashewRef(dv);
-             }
-          }
-         if (cr == null) cr = new CashewRef(cv);
-         
-         if (fsym.isStatic()) {
-            if (!static_values.containsKey(key)) static_values.put(key,cr);
-          }
-         else field_values.put(key,cr);
+	 String key = fsym.getFullName();
+	
+	 CashewValue cv = CashewValue.createDefaultValue(fsym.getType());
+	 CashewRef cr = null;
+	 if (inits != null) {
+	    Object ival = inits.get(key);
+	    if (ival instanceof CashewValue) cv = (CashewValue) ival;
+	    else if (ival instanceof CashewDeferredValue) {
+	       CashewDeferredValue dv = (CashewDeferredValue) ival;
+	       cr = new CashewRef(dv);
+	     }
+	  }
+	 if (cr == null) cr = new CashewRef(cv);
+	
+	 if (fsym.isStatic()) {
+	    if (!static_values.containsKey(key)) static_values.put(key,cr);
+	  }
+	 else field_values.put(key,cr);
        }
     }
 }
@@ -89,9 +89,9 @@ CashewValueObject(JcompType jt,Map<String,Object> inits)
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Access methods                                                          */
-/*                                                                              */
+/*										*/
+/*	Access methods								*/
+/*										*/
 /********************************************************************************/
 
 @Override public CashewValue getFieldValue(CashewClock cc,String nm)
@@ -109,8 +109,8 @@ CashewValueObject(JcompType jt,Map<String,Object> inits)
    CashewRef ov = field_values.get(nm);
    if (ov == null) {
       ov = static_values.get(nm);
-      if (ov == null) 
-         throw new Error("UndefinedField");
+      if (ov == null)
+	 throw new Error("UndefinedField");
     }
    ov.setValueAt(cc,cv);
    return this;
@@ -118,13 +118,13 @@ CashewValueObject(JcompType jt,Map<String,Object> inits)
 
 
 
-@Override public String getString(CashewClock cc) 
+@Override public String getString(CashewClock cc)
 {
    StringBuffer buf = new StringBuffer();
    buf.append("{");
    int ctr = 0;
    for (String fldname : field_values.keySet()) {
-      if (ctr++ == 0) buf.append(",");
+      if (ctr++ != 0) buf.append(",");
       buf.append(fldname);
       buf.append(":");
       buf.append(getFieldValue(cc,fldname));
@@ -135,12 +135,12 @@ CashewValueObject(JcompType jt,Map<String,Object> inits)
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Output methods                                                          */
-/*                                                                              */
+/*										*/
+/*	Output methods								*/
+/*										*/
 /********************************************************************************/
 
-@Override public void outputLocalXml(IvyXmlWriter xw,CashewOutputContext outctx) 
+@Override public void outputLocalXml(IvyXmlWriter xw,CashewOutputContext outctx)
 {
    xw.field("OBJECT",true);
    if (outctx.noteValue(this)) {
@@ -148,18 +148,18 @@ CashewValueObject(JcompType jt,Map<String,Object> inits)
     }
    else {
       for (Map.Entry<String,CashewRef> ent : field_values.entrySet()) {
-         xw.begin("FIELD");
-         xw.field("NAME",ent.getKey());
-         ent.getValue().outputXml(outctx);
-         xw.end("FIELD");
+	 xw.begin("FIELD");
+	 xw.field("NAME",ent.getKey());
+	 ent.getValue().outputXml(outctx);
+	 xw.end("FIELD");
        }
       for (Map.Entry<String,CashewRef> ent : static_values.entrySet()) {
-         if (!outctx.noteField(ent.getKey())) {
-            xw.begin("FIELD");
-            xw.field("NAME",ent.getKey());
-            ent.getValue().outputXml(outctx);
-            xw.end("FIELD");
-          }
+	 if (!outctx.noteField(ent.getKey())) {
+	    xw.begin("FIELD");
+	    xw.field("NAME",ent.getKey());
+	    ent.getValue().outputXml(outctx);
+	    xw.end("FIELD");
+	  }
        }
     }
 }
@@ -167,14 +167,14 @@ CashewValueObject(JcompType jt,Map<String,Object> inits)
 
 
 /********************************************************************************/
-/*                                                                              */
-/*     Class Object value                                                       */
-/*                                                                              */
+/*										*/
+/*     Class Object value							*/
+/*										*/
 /********************************************************************************/
 
-static class ValueClass extends CashewValueObject  
+static class ValueClass extends CashewValueObject
 {
-   private JcompType     class_value;
+   private JcompType	 class_value;
 
    ValueClass(JcompType c) {
       super(CLASS_TYPE,null);
@@ -184,19 +184,19 @@ static class ValueClass extends CashewValueObject
    @Override public String getString(CashewClock cc) {
       return class_value.toString();
     }
-   
+
    @Override public void outputLocalXml(IvyXmlWriter xw,CashewOutputContext outctx) {
       xw.field("OBJECT",true);
       xw.field("CLASS",class_value.toString());
     }
-   
-}       // end of inner class ValueClass
+
+}	// end of inner class ValueClass
 
 
 
 
 
-}       // end of class CashewValueObject
+}	// end of class CashewValueObject
 
 
 

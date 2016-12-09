@@ -62,7 +62,7 @@ private List<String>	class_paths;
 private Set<SesameFile> active_files;
 private JcompProject	base_project;
 private JcodeFactory	binary_control;
-private SesameMain      sesame_control;
+private SesameMain	sesame_control;
 
 
 
@@ -82,7 +82,7 @@ SesameProject(SesameMain sm,String name)
    active_files = new HashSet<SesameFile>();
 
    boolean havepoppy = false;
-   
+
    // compute class path for project
    CommandArgs args = new CommandArgs("PATHS",true);
    Element xml = sm.getXmlReply("OPENPROJECT",this,args,null,0);
@@ -116,7 +116,7 @@ SesameProject(SesameMain sm,String name)
       File poppylib = new File("/pro/seede/lib");
       if (!poppylib.exists()) poppylib = new File("/research/people/spr/seede/lib");
       File poppyjar = new File(poppylib,"poppy.jar");
-      
+
       CommandArgs args2 = new CommandArgs("LOCAL",true);
       IvyXmlWriter xwp = new IvyXmlWriter();
       xwp.begin("PROJECT");
@@ -133,7 +133,7 @@ SesameProject(SesameMain sm,String name)
       xwp.close();
       Element rslt = sesame_control.getXmlReply("EDITPROJECT",this,args2,cnts,0);
       if (!IvyXml.isElement(rslt,"RESULT")) {
-         AcornLog.logE("Problem adding poppy to path");
+	 AcornLog.logE("Problem adding poppy to path");
        }
     }
 }
@@ -199,7 +199,9 @@ private synchronized void clearProject()
 {
    if (binary_control != null) return binary_control;
 
-   JcodeFactory jf = new JcodeFactory();
+   int ct = Runtime.getRuntime().availableProcessors();
+   ct = Math.max(1,ct/2);
+   JcodeFactory jf = new JcodeFactory(ct);
    for (String s : class_paths) {
       jf.addToClassPath(s);
     }

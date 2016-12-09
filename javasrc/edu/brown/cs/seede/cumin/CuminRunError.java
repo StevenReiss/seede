@@ -37,7 +37,7 @@ public class CuminRunError extends Error
 /********************************************************************************/
 
 public enum Reason { ERROR, EXCEPTION, BREAKPOINT, TIMEOUT,
-   STEP_END, BREAK, CONTINUE, RETURN, CALL, STOPED, HALTED };
+   STEP_END, BREAK, CONTINUE, RETURN, CALL, STOPPED, HALTED };
 
 private Reason		throw_reason;
 private CashewValue	associated_value;

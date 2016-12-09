@@ -1,21 +1,21 @@
 /********************************************************************************/
-/*                                                                              */
-/*              SesameSession.java                                              */
-/*                                                                              */
-/*      Abstarct representation of a evaluation session                         */
-/*                                                                              */
+/*										*/
+/*		SesameSession.java						*/
+/*										*/
+/*	Abstarct representation of a evaluation session 			*/
+/*										*/
 /********************************************************************************/
-/*      Copyright 2011 Brown University -- Steven P. Reiss                    */
+/*	Copyright 2011 Brown University -- Steven P. Reiss		      */
 /*********************************************************************************
- *  Copyright 2011, Brown University, Providence, RI.                            *
- *                                                                               *
- *                        All Rights Reserved                                    *
- *                                                                               *
- * This program and the accompanying materials are made available under the      *
+ *  Copyright 2011, Brown University, Providence, RI.				 *
+ *										 *
+ *			  All Rights Reserved					 *
+ *										 *
+ * This program and the accompanying materials are made available under the	 *
  * terms of the Eclipse Public License v1.0 which accompanies this distribution, *
- * and is available at                                                           *
- *      http://www.eclipse.org/legal/epl-v10.html                                *
- *                                                                               *
+ * and is available at								 *
+ *	http://www.eclipse.org/legal/epl-v10.html				 *
+ *										 *
  ********************************************************************************/
 
 /* SVN: $Id$ */
@@ -44,106 +44,109 @@ public abstract class SesameSession implements SesameConstants
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Factory methods                                                         */
-/*                                                                              */
+/*										*/
+/*	Factory methods 							*/
+/*										*/
 /********************************************************************************/
 
 static SesameSession createSession(SesameMain sm,String sid,Element xml) throws SesameException
 {
    SesameSession ss = null;
-   
+
+   Element celt = IvyXml.getChild(xml,"SESSION");
+   if (celt != null) xml = celt;
+
    String typ = IvyXml.getAttrString(xml,"TYPE");
-   
+
    if (typ.equals("LAUNCH")) {
       ss = new SesameSessionLaunch(sm,sid,xml);
     }
    else if (typ.equals("TEST")) {
       ss = new SesameSessionTest(sm,sid,xml);
     }
-   
+
    return ss;
 }
 
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Private Storage                                                         */
-/*                                                                              */
+/*										*/
+/*	Private Storage 							*/
+/*										*/
 /********************************************************************************/
 
-protected SesameMain    sesame_control;
-private String          session_id;
-private SesameProject   for_project;
-private Map<String,SesameLocation> location_map; 
-private Set<Thread>     exec_runners;
+protected SesameMain	sesame_control;
+private String		session_id;
+private SesameProject	for_project;
+private Map<String,SesameLocation> location_map;
+private Set<SesameExecRunner> exec_runners;
 
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Constructors                                                            */
-/*                                                                              */
+/*										*/
+/*	Constructors								*/
+/*										*/
 /********************************************************************************/
 
 protected SesameSession(SesameMain sm,String sid,Element xml)
 {
    sesame_control = sm;
-   
+
    String proj = IvyXml.getAttrString(xml,"PROJECT");
    for_project = sm.getProject(proj);
-   
+
    if (sid == null) {
       Random r = new Random();
       sid = "SESAME_" + r.nextInt(10000000);
     }
    session_id = sid;
-   
+
    location_map = new HashMap<String,SesameLocation>();
    for (Element locxml : IvyXml.children(xml,"LOCATION")) {
       SesameLocation sloc = new SesameLocation(sm,locxml);
       addLocation(sloc);
     }
-   
-   exec_runners = new HashSet<Thread>();
+
+   exec_runners = new HashSet<SesameExecRunner>();
 }
 
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Access methods                                                          */
-/*                                                                              */
+/*										*/
+/*	Access methods								*/
+/*										*/
 /********************************************************************************/
 
-public String getSessionId()                    { return session_id; }
+public String getSessionId()			{ return session_id; }
 
-public SesameProject getProject()               { return for_project; }
+public SesameProject getProject()		{ return for_project; }
 
-public MethodDeclaration getCallMethod()   
+public MethodDeclaration getCallMethod()
 {
    for (SesameLocation loc : location_map.values()) {
       if (loc.isActive()) {
-         // need to find AST for the method
-         // need to find JcompSymbol for the method
-         SesameFile sf = loc.getFile();
-         ASTNode root = sf.getResolvedAst(for_project);
-         ASTNode mnode = JcompAst.findNodeAtOffset(root,loc.getStartPositiion().getOffset());
-         while (!(mnode instanceof MethodDeclaration)) {
-            mnode = mnode.getParent();
-          }
-         return (MethodDeclaration) mnode;
+	 // need to find AST for the method
+	 // need to find JcompSymbol for the method
+	 SesameFile sf = loc.getFile();
+	 ASTNode root = sf.getResolvedAst(for_project);
+	 ASTNode mnode = JcompAst.findNodeAtOffset(root,loc.getStartPositiion().getOffset());
+	 while (!(mnode instanceof MethodDeclaration)) {
+	    mnode = mnode.getParent();
+	  }
+	 return (MethodDeclaration) mnode;
        }
     }
    return null;
 }
 
-public List<CashewValue> getCallArgs()          { return null; }
+public List<CashewValue> getCallArgs()		{ return null; }
 
 
 
-SesameMain getControl()                         { return sesame_control; }
+SesameMain getControl() 			{ return sesame_control; }
 
 protected void addLocation(SesameLocation sl)
 {
@@ -155,16 +158,15 @@ protected void addLocation(SesameLocation sl)
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Runner management methods                                               */
-/*                                                                              */
+/*										*/
+/*	Runner management methods						*/
+/*										*/
 /********************************************************************************/
 
-synchronized void addRunner(Thread th)
+synchronized void addRunner(SesameExecRunner th)
 {
-   stopRunners();
-   
    exec_runners.add(th);
+   th.startExecution();
 }
 
 
@@ -177,21 +179,37 @@ synchronized void removeRunner(Thread th)
 
 synchronized void stopRunners()
 {
-   for (Thread run : exec_runners) {
-      run.interrupt();
+   for (SesameExecRunner run : exec_runners) {
+      run.stopExecution();
+    }
+}
+
+
+synchronized void restartRunners()
+{
+   for (SesameExecRunner run : exec_runners) {
+      run.restartExecution();
+    }
+}
+
+
+synchronized void startRunners()
+{
+   for (SesameExecRunner run : exec_runners) {
+      run.startExecution();
     }
 }
 
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Methods to get global values from underlying execution                  */
-/*                                                                              */
+/*										*/
+/*	Methods to get global values from underlying execution			*/
+/*										*/
 /********************************************************************************/
 
 CashewValue lookupValue(String name,String type)
-{ 
+{
    return null;
 }
 
@@ -199,9 +217,9 @@ CashewValue lookupValue(String name,String type)
 CashewValue evaluate(String expr)
 {
    SesameValueData svd = evaluateData(expr);
-   
+
    if (svd == null) return null;
-   
+
    return svd.getCashewValue();
 }
 
@@ -213,15 +231,15 @@ SesameValueData evaluateData(String expr)
 }
 
 void evaluateVoid(String expr)
-{ 
+{
 }
 
 
-void enableAccess(String type)          { }
+void enableAccess(String type)		{ }
 
 
 
-}       // end of class SesameSession
+}	// end of class SesameSession
 
 
 

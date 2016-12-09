@@ -1,28 +1,28 @@
 /********************************************************************************/
-/*                                                                              */
-/*              CashewRef.java                                                  */
-/*                                                                              */
-/*      Holds a reference to a value                                            */
-/*                                                                              */
-/*      This holds a set of values that is time dependent.  It can be used      */
-/*      to represent variables or objects.  An object value (or array value)    */
-/*      contains a pointer to its reference and all access to it from other     */
-/*      variables or objects will point to the reference.  All access to        */
-/*      vvalues needs to be time-based when computing an expression.  The       */
-/*      result of the computation is a value however.                           */
-/*                                                                              */
+/*										*/
+/*		CashewRef.java							*/
+/*										*/
+/*	Holds a reference to a value						*/
+/*										*/
+/*	This holds a set of values that is time dependent.  It can be used	*/
+/*	to represent variables or objects.  An object value (or array value)	*/
+/*	contains a pointer to its reference and all access to it from other	*/
+/*	variables or objects will point to the reference.  All access to	*/
+/*	vvalues needs to be time-based when computing an expression.  The	*/
+/*	result of the computation is a value however.				*/
+/*										*/
 /********************************************************************************/
-/*      Copyright 2011 Brown University -- Steven P. Reiss                    */
+/*	Copyright 2011 Brown University -- Steven P. Reiss		      */
 /*********************************************************************************
- *  Copyright 2011, Brown University, Providence, RI.                            *
- *                                                                               *
- *                        All Rights Reserved                                    *
- *                                                                               *
- * This program and the accompanying materials are made available under the      *
+ *  Copyright 2011, Brown University, Providence, RI.				 *
+ *										 *
+ *			  All Rights Reserved					 *
+ *										 *
+ * This program and the accompanying materials are made available under the	 *
  * terms of the Eclipse Public License v1.0 which accompanies this distribution, *
- * and is available at                                                           *
- *      http://www.eclipse.org/legal/epl-v10.html                                *
- *                                                                               *
+ * and is available at								 *
+ *	http://www.eclipse.org/legal/epl-v10.html				 *
+ *										 *
  ********************************************************************************/
 
 /* SVN: $Id$ */
@@ -43,13 +43,13 @@ class CashewRef extends CashewValue implements CashewConstants
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Private Storage                                                         */
-/*                                                                              */
+/*										*/
+/*	Private Storage 							*/
+/*										*/
 /********************************************************************************/
 
-private SortedMap<Long,CashewValue>     value_map;
-private long    last_update;
+private SortedMap<Long,CashewValue>	value_map;
+private long	last_update;
 private CashewValue last_value;
 private CashewDeferredValue deferred_value;
 
@@ -57,9 +57,9 @@ private CashewDeferredValue deferred_value;
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Constructors                                                            */
-/*                                                                              */
+/*										*/
+/*	Constructors								*/
+/*										*/
 /********************************************************************************/
 
 CashewRef(CashewValue v)
@@ -79,9 +79,9 @@ CashewRef(CashewDeferredValue deferred)
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Access methods                                                          */
-/*                                                                              */
+/*										*/
+/*	Access methods								*/
+/*										*/
 /********************************************************************************/
 
 @Override public Number getNumber(CashewClock cc)
@@ -120,30 +120,30 @@ CashewRef(CashewDeferredValue deferred)
 {
    if (cv == null) return this;
    cv = cv.getActualValue(cc);
-   
+
    long tv = 0;
    if (cc != null) tv = cc.getTimeValue();
-   
+
    if (last_update < 0) {
       // first time -- just record value
       last_update = tv;
       last_value = cv;
       return this;
     }
-   
+
    if (value_map == null) {
       value_map = new TreeMap<Long,CashewValue>();
       value_map.put(last_update,last_value);
     }
-   
+
    if (tv >= last_update) {
       last_update = tv;
       last_value = cv;
     }
-   
+
    value_map.put(tv,cv);
    if (cc != null) cc.tick();
-   
+
    return this;
 }
 
@@ -233,34 +233,35 @@ CashewRef(CashewDeferredValue deferred)
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Integern access methods                                                 *//*                                                                              */
+/*										*/
+/*	Internal access methods 						*/
+/*										*/
 /********************************************************************************/
 
 private CashewValue getValueAt(CashewClock cc)
 {
    long tv = cc.getTimeValue();
-   
+
    if (last_update >= 0) {
       if (tv > last_update) return last_value;
     }
-   
+
    if (value_map == null) {
       if (deferred_value != null) {
-         CashewValue cv = deferred_value.getValue();
-         if (cv != null) {
-            last_update = 0;
-            last_value = cv;
-            deferred_value = null;
-            return cv;
-          }
+	 CashewValue cv = deferred_value.getValue();
+	 if (cv != null) {
+	    last_update = 0;
+	    last_value = cv;
+	    deferred_value = null;
+	    return cv;
+	  }
        }
       return null;
     }
-   
+
    SortedMap<Long,CashewValue> head = value_map.headMap(tv);
    if (head.isEmpty()) return null;
-   
+
    return value_map.get(head.lastKey());
 }
 
@@ -270,24 +271,26 @@ private CashewValue getValueAt(CashewClock cc)
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Output Methods                                                          */
-/*                                                                              */
+/*										*/
+/*	Output Methods								*/
+/*										*/
 /********************************************************************************/
 
 @Override public void outputXml(CashewOutputContext outctx)
 {
-   IvyXmlWriter xw = outctx.getXmlWriter();  
+   IvyXmlWriter xw = outctx.getXmlWriter();
    if (value_map == null) {
       if (last_value != null) last_value.outputXml(outctx);
     }
    else {
       for (Map.Entry<Long,CashewValue> ent : value_map.entrySet()) {
-         long when = ent.getKey();
-         xw.begin("VALUE");
-         xw.field("TIME",when);
-         ent.getValue().outputLocalXml(xw,outctx);
-         xw.end("VALUE");
+	 long when = ent.getKey();
+	 xw.begin("VALUE");
+	 xw.field("TIME",when);
+	 if (ent.getValue() != null) {
+	    ent.getValue().outputLocalXml(xw,outctx);
+	  }
+	 xw.end("VALUE");
        }
     }
 }
@@ -295,9 +298,9 @@ private CashewValue getValueAt(CashewClock cc)
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Debugging methods                                                       */
-/*                                                                              */
+/*										*/
+/*	Debugging methods							*/
+/*										*/
 /********************************************************************************/
 
 @Override public String toString()
@@ -307,10 +310,10 @@ private CashewValue getValueAt(CashewClock cc)
       buf.append("[");
       int idx = 0;
       for (Map.Entry<Long,CashewValue> ent : value_map.entrySet()) {
-         if (idx++ > 0) buf.append(",");
-         buf.append(ent.getValue());
-         buf.append("@");
-         buf.append(ent.getKey());
+	 if (idx++ > 0) buf.append(",");
+	 buf.append(ent.getValue());
+	 buf.append("@");
+	 buf.append(ent.getKey());
        }
       buf.append("]");
       return buf.toString();
@@ -321,7 +324,7 @@ private CashewValue getValueAt(CashewClock cc)
 
 
 
-}       // end of class CashewRef
+}	// end of class CashewRef
 
 
 
