@@ -59,7 +59,9 @@ private String		frame_id;
 private String		method_name;
 private SesameFile	source_file;
 private int		line_number;
-private Map<String,SesameValueData> value_map;
+private Map<String,Map<String,SesameValueData>> thread_values;
+private Map<String,SesameValueData> unique_values;
+private Map<String,String> thread_frame;
 private Set<String>	accessible_types;
 
 private static AtomicInteger eval_counter = new AtomicInteger();
@@ -78,11 +80,13 @@ SesameSessionLaunch(SesameMain sm,String sid,Element xml)
 
    launch_id = IvyXml.getAttrString(xml,"LAUNCHID");
    thread_ids = new HashSet<String>();
+   thread_frame = new HashMap<String,String>();
    String s = IvyXml.getAttrString(xml,"THREADID");
    for (StringTokenizer tok = new StringTokenizer(s," ,;\t\n"); tok.hasMoreTokens(); ) {
       thread_ids.add(tok.nextToken());
     }
-   value_map = new HashMap<String,SesameValueData>();
+   thread_values = new HashMap<String,Map<String,SesameValueData>>();
+   unique_values = new HashMap<String,SesameValueData>();
    accessible_types = new HashSet<String>();
 
    loadInitialValues();
@@ -95,7 +99,7 @@ SesameSessionLaunch(SesameMain sm,String sid,Element xml)
 /*										*/
 /********************************************************************************/
 
-String getFrameId()			{ return frame_id; }
+String getFrameId(String thread)	{ return thread_frame.get(thread); }
 
 String getAnyThread()		
 {
@@ -106,20 +110,23 @@ String getAnyThread()
 }
 
 
-@Override public List<CashewValue> getCallArgs()
+@Override public List<CashewValue> getCallArgs(SesameLocation loc)
 {
-   MethodDeclaration md = getCallMethod();
+   MethodDeclaration md = getCallMethod(loc);
    List<CashewValue> args = new ArrayList<CashewValue>();
    JcompSymbol msym = JcompAst.getDefinition(md.getName());
+   Map<String,SesameValueData> valmap = thread_values.get(loc.getThread());
    if (!msym.isStatic()) {
-      SesameValueData svd = value_map.get("this");
+      SesameValueData svd = valmap.get("this");
+      svd = getUniqueValue(svd);
       CashewValue cv = svd.getCashewValue();
       args.add(cv);
     }
    for (Object o : md.parameters()) {
       SingleVariableDeclaration svd = (SingleVariableDeclaration) o;
       JcompSymbol psym = JcompAst.getDefinition(svd.getName());
-      SesameValueData val = value_map.get(psym.getName());
+      SesameValueData val = valmap.get(psym.getName());
+      val = getUniqueValue(val);
       args.add(val.getCashewValue());
     }
 
@@ -211,19 +218,25 @@ private void loadInitialValues()
       String teid = IvyXml.getAttrString(telt,"ID");
       if (!thread_ids.contains(teid)) continue;
       Element frm = IvyXml.getChild(telt,"STACKFRAME");
-      frame_id = IvyXml.getAttrString(frm,"ID");
+      String feid = IvyXml.getAttrString(frm,"ID");
+      thread_frame.put(teid,feid);
       method_name = IvyXml.getAttrString(frm,"METHOD");
       String fnm = IvyXml.getAttrString(frm,"FILE");
       File sf = new File(fnm);
       source_file = sesame_control.getFileManager().openFile(sf);
       line_number = IvyXml.getAttrInt(frm,"LINENO");
+      Map<String,SesameValueData> valmap = thread_values.get(teid);
+      if (valmap == null) {
+         valmap = new HashMap<String,SesameValueData>();
+         thread_values.put(teid,valmap);
+       }
       for (Element var : IvyXml.children(frm,"VALUE")) {
 	 String nm = IvyXml.getAttrString(var,"NAME");
 	 SesameValueData svd = new SesameValueData(this,teid,var,null);
 	 svd = getUniqueValue(svd);
-	 value_map.put(nm,svd);
+	 valmap.put(nm,svd);
        }
-      SesameLocation loc = new SesameLocation(source_file,method_name,line_number);
+      SesameLocation loc = new SesameLocation(source_file,method_name,line_number,teid);
       addLocation(loc);
     }
 }
@@ -234,10 +247,10 @@ SesameValueData getUniqueValue(SesameValueData svd)
 {
    if (svd == null) return null;
    if (svd.getKind() == ValueKind.OBJECT) {
-      String dnm = "MATCH " + svd.getValue();
-      SesameValueData nsvd = value_map.get(dnm);
+      String dnm = svd.getValue();
+      SesameValueData nsvd = unique_values.get(dnm);
       if (nsvd != null) svd = nsvd;
-      else value_map.put(dnm,svd);
+      else unique_values.put(dnm,svd);
     }
    return svd;
 }

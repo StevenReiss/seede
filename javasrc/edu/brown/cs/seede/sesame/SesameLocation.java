@@ -54,6 +54,7 @@ private Position        start_position;
 private int             line_number;
 private String          method_name;
 private boolean         is_active;
+private String          thread_id;
 
 
 
@@ -74,6 +75,7 @@ SesameLocation(SesameMain sm,Element xml)
    sesame_file = sm.getFileManager().openFile(f);
    line_number = IvyXml.getAttrInt(xml,"LINE");
    method_name = IvyXml.getAttrString(xml,"METHOD");
+   thread_id = IvyXml.getAttrString(xml,"THREAD");
    String cnm = IvyXml.getAttrString(xml,"CLASS");
    if (cnm != null) method_name = cnm + "." + method_name;
    String sign = IvyXml.getAttrString(xml,"SIGNATURE");
@@ -87,12 +89,13 @@ SesameLocation(SesameMain sm,Element xml)
 
 
 
-SesameLocation(SesameFile sf,String method,int lno)
+SesameLocation(SesameFile sf,String method,int lno,String thread)
 {
    location_id =  "L_" + new Random().nextInt(10000000);
    sesame_file = sf;
    line_number = lno;
    method_name = method;
+   thread_id = thread;
    is_active = true;
    start_position = null;
    setupPosition();
@@ -112,6 +115,9 @@ boolean isActive()              { return is_active; }
 String getMethodName()          { return method_name;} 
 int getLineNumber()             { return line_number; }
 Position getStartPositiion()    { return start_position; }
+String getThread()              { return thread_id; }
+
+
 
 
 /********************************************************************************/

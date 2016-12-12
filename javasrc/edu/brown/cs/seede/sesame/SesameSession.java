@@ -24,12 +24,14 @@
 
 package edu.brown.cs.seede.sesame;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.WeakHashMap;
 
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
@@ -38,6 +40,7 @@ import org.w3c.dom.Element;
 import edu.brown.cs.ivy.jcomp.JcompAst;
 import edu.brown.cs.ivy.xml.IvyXml;
 import edu.brown.cs.seede.cashew.CashewValue;
+import edu.brown.cs.seede.cumin.CuminRunner;
 
 public abstract class SesameSession implements SesameConstants
 {
@@ -80,6 +83,7 @@ protected SesameMain	sesame_control;
 private String		session_id;
 private SesameProject	for_project;
 private Map<String,SesameLocation> location_map;
+private Map<CuminRunner,SesameLocation> runner_location;
 private Set<SesameExecRunner> exec_runners;
 
 
@@ -110,6 +114,7 @@ protected SesameSession(SesameMain sm,String sid,Element xml)
     }
 
    exec_runners = new HashSet<SesameExecRunner>();
+   runner_location = new WeakHashMap<CuminRunner,SesameLocation>();
 }
 
 
@@ -124,27 +129,38 @@ public String getSessionId()			{ return session_id; }
 
 public SesameProject getProject()		{ return for_project; }
 
-public MethodDeclaration getCallMethod()
+public MethodDeclaration getCallMethod(SesameLocation loc)
 {
-   for (SesameLocation loc : location_map.values()) {
-      if (loc.isActive()) {
-	 // need to find AST for the method
-	 // need to find JcompSymbol for the method
-	 SesameFile sf = loc.getFile();
-	 ASTNode root = sf.getResolvedAst(for_project);
-	 ASTNode mnode = JcompAst.findNodeAtOffset(root,loc.getStartPositiion().getOffset());
-	 while (!(mnode instanceof MethodDeclaration)) {
-	    mnode = mnode.getParent();
-	  }
-	 return (MethodDeclaration) mnode;
-       }
+   if (!loc.isActive()) return null;
+   
+   SesameFile sf = loc.getFile();
+   ASTNode root = sf.getResolvedAst(for_project);
+   ASTNode mnode = JcompAst.findNodeAtOffset(root,loc.getStartPositiion().getOffset());
+   while (!(mnode instanceof MethodDeclaration)) {
+      mnode = mnode.getParent();
     }
-   return null;
+   return (MethodDeclaration) mnode;
 }
 
-public List<CashewValue> getCallArgs()		{ return null; }
 
 
+public List<SesameLocation> getActiveLocations()
+{
+   List<SesameLocation> rslt = new ArrayList<SesameLocation>();
+   
+   for (SesameLocation loc : location_map.values()) {
+      if (loc.isActive()) rslt.add(loc);
+    }
+   
+   return rslt;
+}
+
+public List<CashewValue> getCallArgs(SesameLocation loc)	{ return null; }
+
+public SesameLocation getLocation(CuminRunner cr)
+{
+   return runner_location.get(cr);
+}
 
 SesameMain getControl() 			{ return sesame_control; }
 
@@ -163,10 +179,21 @@ protected void addLocation(SesameLocation sl)
 /*										*/
 /********************************************************************************/
 
+CuminRunner createRunner(SesameLocation loc,SesameContext gblctx)
+{
+   MethodDeclaration mthd = getCallMethod(loc);
+   List<CashewValue> args = getCallArgs(loc);
+   CuminRunner cr = CuminRunner.createRunner(getProject(),gblctx,mthd,args);
+   runner_location.put(cr,loc);
+   
+   return cr;
+}
+
+
+
 synchronized void addRunner(SesameExecRunner th)
 {
    exec_runners.add(th);
-   th.startExecution();
 }
 
 

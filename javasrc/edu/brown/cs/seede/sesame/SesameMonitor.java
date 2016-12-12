@@ -27,11 +27,9 @@ package edu.brown.cs.seede.sesame;
 import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 
-import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.w3c.dom.Element;
 
 import edu.brown.cs.ivy.mint.MintArguments;
@@ -45,12 +43,7 @@ import edu.brown.cs.ivy.mint.MintConstants;
 import edu.brown.cs.ivy.xml.IvyXml;
 import edu.brown.cs.ivy.xml.IvyXmlWriter;
 import edu.brown.cs.seede.acorn.AcornLog;
-import edu.brown.cs.seede.cashew.CashewContext;
-import edu.brown.cs.seede.cashew.CashewOutputContext;
-import edu.brown.cs.seede.cashew.CashewValue;
 import edu.brown.cs.seede.cumin.CuminRunner;
-import edu.brown.cs.seede.cumin.CuminConstants;
-import edu.brown.cs.seede.cumin.CuminRunError;
 
 
 
@@ -257,33 +250,25 @@ private void handleBegin(String sid,Element xml,IvyXmlWriter xw) throws SesameEx
 private void handleExec(String sid,Element xml,IvyXmlWriter xw)
 	throws SesameException
 {
-   String xid = IvyXml.getAttrString(xml,"EXECID");
+   String xid = IvyXml.getAttrString(xml,"EXECID","TEST_XID");
+   boolean iscont = IvyXml.getAttrBool(xml,"CONTINUOUS");
 
    SesameSession ss = session_map.get(sid);
    if (ss == null) throw new SesameException("Session " + sid + " not found");
-   MethodDeclaration mthd = ss.getCallMethod();
-   List<CashewValue> args = ss.getCallArgs();
    SesameContext gblctx = new SesameContext(ss);
-   CuminRunner cr = CuminRunner.createRunner(ss.getProject(),gblctx,mthd,args);
-
-   if (xid != null) {
-      SesameExecRunner execer = new SesameExecRunner(this,xid,cr);
-      ss.addRunner(execer);
-      return;
+   
+   SesameExecRunner execer = null;
+   for (SesameLocation loc : ss.getActiveLocations()) {
+      CuminRunner cr = ss.createRunner(loc,gblctx);
+      if (execer == null) {
+         execer = new SesameExecRunner(ss,xid,iscont,cr);
+         ss.addRunner(execer);
+       }
+      else {
+         execer.addRunner(cr);
+       }
     }
-
-   CuminRunError sts = null;
-   try {
-      cr.interpret(CuminConstants.EvalType.RUN);
-    }
-   catch (CuminRunError r) {
-      sts = r;
-    }
-
-   if (sts == null) xw.textElement("STATUS","OK");
-   else {
-      outputResult(xw,cr,sts);
-    }
+   if (execer != null) execer.startExecution();
 }
 
 
@@ -293,28 +278,7 @@ private void handleExec(String sid,Element xml,IvyXmlWriter xw)
 
 
 
-private void outputResult(IvyXmlWriter xw,CuminRunner cr,CuminRunError sts)
-{
-   CashewOutputContext outctx = new CashewOutputContext(xw);
-   xw.begin("RETURN");
-   xw.field("REASON",sts.getReason());
-   xw.field("MESSAGE",sts.getMessage());
-   if (sts.getCause() != null) {
-      StringWriter sw = new StringWriter();
-      PrintWriter pw = new PrintWriter(sw);
-      sts.getCause().printStackTrace(pw);
-      xw.textElement("STACK",sw.toString());
-      pw.close();
-    }
-   if (sts.getValue() != null) {
-      xw.begin("VALUE");
-      sts.getValue().outputXml(outctx);
-      xw.end("VALUE");
-    }
-   xw.end("RETURN");
-   CashewContext ctx = cr.getLookupContext();
-   ctx.outputXml(outctx);
-}
+
 
 
 

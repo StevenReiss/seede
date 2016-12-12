@@ -88,7 +88,7 @@ SesameSessionTest(SesameMain sm,String sid,Element xml) throws SesameException
 /*                                                                              */
 /********************************************************************************/
 
-@Override public List<CashewValue> getCallArgs()
+@Override public List<CashewValue> getCallArgs(SesameLocation loc)
 {
    return test_args;
 }

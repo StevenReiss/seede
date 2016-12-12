@@ -75,6 +75,7 @@ private static MintControl mint_control;
 private static File	   project_directory;
 
 private String		stopped_thread;
+private Element 	seede_result;
 
 
 static {
@@ -91,7 +92,11 @@ static {
 
 public TestSeede()
 {
+   stopped_thread = null;
+   seede_result = null;
+
    mint_control.register("<BEDROCK SOURCE='ECLIPSE' TYPE='_VAR_0' />",new IDEHandler());
+   mint_control.register("<SEEDE TYPE='_VAR_0' />",new SeedeHandler());
 }
 
 
@@ -312,9 +317,13 @@ private static class SeedeThread extends Thread {
    Assert.assertTrue(IvyXml.isElement(status,"RESULT"));
 
    rply = new MintDefaultReply();
-   sendSeedeMessage("EXEC",TEST1_SID,null,cnts,rply);
+   CommandArgs args = new CommandArgs("EXECID","test1");
+   seede_result = null;
+   sendSeedeMessage("EXEC",TEST1_SID,args,cnts,rply);
    String sstatus = rply.waitForString();
    System.err.println("RESULT IS " + sstatus);
+   Element xml = waitForSeedeResult();
+   System.err.println("SEED RESULT IS " + IvyXml.convertXmlToString(xml));
 }
 
 
@@ -341,6 +350,7 @@ private static class SeedeThread extends Thread {
    xw.field("LINE",33);
    xw.field("CLASS","edu.brown.cs.seede.sample.Tester");
    xw.field("METHOD","gcd");
+   xw.field("THREAD","THREAD_1");
    xw.field("SIGNATURE","(II)I");
    xw.field("ACTIVE",true);
    xw.end("LOCATION");
@@ -367,9 +377,13 @@ private static class SeedeThread extends Thread {
    Assert.assertTrue(IvyXml.isElement(status,"RESULT"));
 
    rply = new MintDefaultReply();
-   sendSeedeMessage("EXEC",TEST2_SID,null,cnts,rply);
+   seede_result = null;
+   CommandArgs args = new CommandArgs("EXECID","test2");
+   sendSeedeMessage("EXEC",TEST2_SID,args,cnts,rply);
    String sstatus = rply.waitForString();
    System.err.println("RESULT IS " + sstatus);
+   Element xml = waitForSeedeResult();
+   System.err.println("SEED RESULT IS " + IvyXml.convertXmlToString(xml));
 }
 
 
@@ -396,9 +410,13 @@ private static class SeedeThread extends Thread {
    Assert.assertTrue(IvyXml.isElement(status,"RESULT"));
 
    rply = new MintDefaultReply();
-   sendSeedeMessage("EXEC",TEST3_SID,null,cnts,rply);
+   seede_result = null;
+   CommandArgs args = new CommandArgs("EXECID","test3");
+   sendSeedeMessage("EXEC",TEST3_SID,args,cnts,rply);
    String sstatus = rply.waitForString();
    System.err.println("RESULT IS " + sstatus);
+   Element xml = waitForSeedeResult();
+   System.err.println("SEED RESULT IS " + IvyXml.convertXmlToString(xml));
 }
 
 
@@ -553,6 +571,50 @@ private class IDEHandler implements MintHandler {
 
 
 
+/********************************************************************************/
+/*										*/
+/*	Handle messages from SEEDE						*/
+/*										*/
+/********************************************************************************/
+
+private class SeedeHandler implements MintHandler {
+
+   @Override public void receive(MintMessage msg,MintArguments args) {
+      System.err.println("TEST: Received from seede: " + msg.getText());
+      String what = args.getArgument(0);
+      Element xml = msg.getXml();
+      switch (what) {
+	 case "EXEC" :
+	    synchronized (TestSeede.this) {
+	       seede_result = xml;
+	       notifyAll();
+	     }
+	    break;
+       }
+    }
+
+}	// end of inner class SeedeHandler
+
+
+
+private Element waitForSeedeResult()
+{
+   synchronized (this) {
+      while (seede_result == null) {
+	 try {
+	    wait(1000);
+	  }
+	 catch (InterruptedException e) { }
+       }
+      Element rslt = seede_result;
+      seede_result = null;
+      return rslt;
+    }
+}
+
+
+
+
 private void handleRunEvent(Element xml,long when)
 {
    String type = IvyXml.getAttrString(xml,"TYPE");
@@ -583,7 +645,7 @@ private void handleThreadEvent(Element xml,long when)
 	    stopped_thread = IvyXml.getAttrString(thread,"ID");
 	    notifyAll();
 	  }
-	 break; 
+	 break;
     }
 }
 

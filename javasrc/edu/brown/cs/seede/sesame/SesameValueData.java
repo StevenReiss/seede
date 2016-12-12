@@ -112,7 +112,7 @@ String getActualType()		{ return null; }
 boolean hasContents()		{ return has_values; }
 boolean isLocal()		{ return is_local; }
 boolean isStatic()		{ return is_static; }
-String getFrame()		{ return sesame_session.getFrameId(); }
+String getFrame()		{ return sesame_session.getFrameId(val_thread); }
 String getThread()		{ return val_thread; }
 int getLength() 		{ return array_length; }
 
