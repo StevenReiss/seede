@@ -256,30 +256,20 @@ private void handleExec(String sid,Element xml,IvyXmlWriter xw)
    SesameSession ss = session_map.get(sid);
    if (ss == null) throw new SesameException("Session " + sid + " not found");
    SesameContext gblctx = new SesameContext(ss);
-   
+
    SesameExecRunner execer = null;
    for (SesameLocation loc : ss.getActiveLocations()) {
       CuminRunner cr = ss.createRunner(loc,gblctx);
       if (execer == null) {
-         execer = new SesameExecRunner(ss,xid,iscont,cr);
-         ss.addRunner(execer);
+	 execer = new SesameExecRunner(ss,xid,iscont,cr);
+	 ss.addRunner(execer);
        }
       else {
-         execer.addRunner(cr);
+	 execer.addRunner(cr);
        }
     }
    if (execer != null) execer.startExecution();
 }
-
-
-
-
-
-
-
-
-
-
 
 
 

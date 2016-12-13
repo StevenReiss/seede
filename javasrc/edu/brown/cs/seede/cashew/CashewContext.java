@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.CompilationUnit;
@@ -51,6 +52,11 @@ private Map<Object,CashewValue> context_map;
 private CashewContext parent_context;
 private String context_owner;
 private List<CashewContext> nested_contexts;
+private int context_id;
+private long start_time;
+private long end_time;
+
+private static AtomicInteger id_counter = new AtomicInteger();
 
 
 
@@ -77,6 +83,8 @@ public CashewContext(String js,CashewContext par)
    context_map = new HashMap<>();
    parent_context = par;
    nested_contexts = new ArrayList<CashewContext>();
+   start_time = end_time = 0;
+   context_id = id_counter.incrementAndGet();
 }
 
 
@@ -176,6 +184,19 @@ public void define(Object var,CashewValue addr)
 
 /********************************************************************************/
 /*                                                                              */
+/*      Recording methods                                                       */
+/*                                                                              */
+/********************************************************************************/
+
+public void setStartTime(CashewClock cc)        { start_time = cc.getTimeValue(); }
+
+
+public void setEndTime(CashewClock cc)          { end_time = cc.getTimeValue(); }
+
+
+
+/********************************************************************************/
+/*                                                                              */
 /*      Evaluation methods                                                      */
 /*                                                                              */
 /********************************************************************************/
@@ -223,9 +244,14 @@ public void outputXml(CashewOutputContext outctx)
 {
    IvyXmlWriter xw = outctx.getXmlWriter();
    xw.begin("CONTEXT");
+   xw.field("ID",context_id);
    if (context_owner != null) {
       xw.field("METHOD",context_owner);
     }
+   if (start_time != 0 || end_time != 0) xw.field("START",start_time);
+   if (end_time != 0) xw.field("END",end_time);
+   if (parent_context != null) xw.field("PARENT",parent_context.context_id);
+   
    for (Map.Entry<Object,CashewValue> ent : context_map.entrySet()) {
       Object var = ent.getKey();
       xw.begin("VARIABLE");

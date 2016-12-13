@@ -143,7 +143,9 @@ CashewValueObject(JcompType jt,Map<String,Object> inits)
 @Override public void outputLocalXml(IvyXmlWriter xw,CashewOutputContext outctx)
 {
    xw.field("OBJECT",true);
-   if (outctx.noteValue(this)) {
+   int rvl = outctx.noteValue(this);
+   xw.field("ID",Math.abs(rvl));
+   if (rvl > 0) {
       xw.field("REF",true);
     }
    else {

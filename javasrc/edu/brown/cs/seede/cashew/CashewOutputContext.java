@@ -24,8 +24,11 @@
 
 package edu.brown.cs.seede.cashew;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import edu.brown.cs.ivy.xml.IvyXmlWriter;
 
@@ -42,8 +45,10 @@ public class CashewOutputContext implements CashewConstants
 /********************************************************************************/
 
 private IvyXmlWriter xml_writer;
-private Set<CashewValue> values_output;
+private Map<CashewValue,Integer> values_output;
 private Set<String> fields_output;
+
+private static AtomicInteger id_counter = new AtomicInteger();
 
 
 
@@ -55,7 +60,7 @@ private Set<String> fields_output;
 
 public CashewOutputContext() 
 {
-   values_output = new HashSet<CashewValue>();
+   values_output = new HashMap<CashewValue,Integer>();
    fields_output = new HashSet<String>();
    xml_writer = new IvyXmlWriter();
 }
@@ -64,7 +69,7 @@ public CashewOutputContext()
 
 public CashewOutputContext(IvyXmlWriter xw)
 {
-   values_output = new HashSet<CashewValue>();
+   values_output = new HashMap<CashewValue,Integer>();
    fields_output = new HashSet<String>();
    xml_writer = xw;
 }
@@ -96,11 +101,15 @@ public String getContents()
 /*                                                                              */
 /********************************************************************************/
 
-public boolean noteValue(CashewValue cv)
+public int noteValue(CashewValue cv)
 {
-   // return true if the value has been previously output
-   if (values_output.add(cv)) return false;
-   return true;
+   // returns -id if new, id if old
+   
+   Integer v = values_output.get(cv);
+   if (v != null) return v;
+   v = id_counter.incrementAndGet();
+   values_output.put(cv,v);
+   return -v;
 }
 
 
@@ -110,6 +119,7 @@ public boolean noteField(String name)
    if (fields_output.add(name)) return false;
    return true;
 }
+
 
 
 

@@ -76,7 +76,6 @@ protected CashewClock	execution_clock;
 protected CashewContext lookup_context;
 protected CashewContext global_context;
 protected List<CashewValue> call_args;
-protected long		start_clock;
 
 
 
@@ -97,7 +96,6 @@ protected CuminRunner(CuminProject cp,CashewContext gblctx,CashewClock cc,List<C
    call_args = args;
    global_context = gblctx;
    lookup_context = null;
-   start_clock = execution_clock.getTimeValue();
 }
 
 
@@ -141,6 +139,7 @@ List<CashewValue> getCallArgs() 	{ return call_args; }
 protected void setLookupContext(CashewContext ctx)
 {
    lookup_context = ctx;
+   ctx.setStartTime(execution_clock);
 }
 
 
@@ -165,7 +164,10 @@ public void interpret(EvalType et) throws CuminRunError
 		  r.getReason() == CuminRunError.Reason.EXCEPTION) {
 	       ret = r;
 	     }
-	    else throw r;
+	    else {
+               lookup_context.setEndTime(execution_clock);
+               throw r;
+             }
 	  }
        }
 
@@ -178,6 +180,7 @@ public void interpret(EvalType et) throws CuminRunError
 	    nested_call = r.getCallRunner();
 	    continue;
 	  }
+         lookup_context.setEndTime(execution_clock);
 	 throw r;
        }
     }
