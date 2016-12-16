@@ -584,12 +584,12 @@ private class SeedeHandler implements MintHandler {
       String what = args.getArgument(0);
       Element xml = msg.getXml();
       switch (what) {
-	 case "EXEC" :
-	    synchronized (TestSeede.this) {
-	       seede_result = xml;
-	       notifyAll();
-	     }
-	    break;
+         case "EXEC" :
+            synchronized (TestSeede.this) {
+               seede_result = xml;
+               TestSeede.this.notifyAll();
+             }
+            break;
        }
     }
 
