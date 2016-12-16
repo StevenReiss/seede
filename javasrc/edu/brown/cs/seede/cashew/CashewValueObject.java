@@ -65,7 +65,7 @@ CashewValueObject(JcompType jt,Map<String,Object> inits)
    for (JcompScope tscp = jt.getScope(); tscp != null; tscp = tscp.getParent()) {
       for (JcompSymbol fsym : tscp.getDefinedFields()) {
 	 String key = fsym.getFullName();
-	
+
 	 CashewValue cv = CashewValue.createDefaultValue(fsym.getType());
 	 CashewRef cr = null;
 	 if (inits != null) {
@@ -77,7 +77,7 @@ CashewValueObject(JcompType jt,Map<String,Object> inits)
 	     }
 	  }
 	 if (cr == null) cr = new CashewRef(cv);
-	
+
 	 if (fsym.isStatic()) {
 	    if (!static_values.containsKey(key)) static_values.put(key,cr);
 	  }
@@ -121,6 +121,7 @@ CashewValueObject(JcompType jt,Map<String,Object> inits)
 @Override public String getString(CashewClock cc)
 {
    StringBuffer buf = new StringBuffer();
+   buf.append(getDataType(cc));
    buf.append("{");
    int ctr = 0;
    for (String fldname : field_values.keySet()) {
@@ -165,6 +166,14 @@ CashewValueObject(JcompType jt,Map<String,Object> inits)
        }
     }
 }
+
+
+
+@Override public String toString()
+{
+   return getString(null);
+}
+
 
 
 

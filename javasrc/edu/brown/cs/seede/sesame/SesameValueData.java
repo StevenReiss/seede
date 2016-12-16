@@ -136,8 +136,10 @@ CashewValue getCashewValue()
    String vtype = val_type;
    if (vtype != null) {
       int idx = vtype.indexOf("<");
+      int idx1 = vtype.lastIndexOf(">");
       if (idx >= 0) {
 	 vtype = val_type.substring(0,idx);
+	 if (idx1 > 0) vtype += val_type.substring(idx1+1);
        }
     }
 
@@ -149,10 +151,15 @@ CashewValue getCashewValue()
    if (typ == null && vtype != null) {
       typ = typer.findType(vtype);
     }
+   if (typ == null && vtype != null) {
+      String ityp = vtype.replace("$",".");
+      typ = typer.findType(ityp);
+    }
    if (typ == null) {
       typ = typer.findSystemType(val_type);
     }
    if (typ == null) {
+      AcornLog.logE("TYPE " + val_type +  " " + vtype + " not found");
       return CashewValue.nullValue();
     }
 
@@ -213,6 +220,7 @@ CashewValue getCashewValue()
 	     }
 	  }
 	 result_value = CashewValue.arrayValue(typ,array_length,ainits);
+	 // AcornLog.logD("BUILT ARRAY : " + result_value);
 	 break;
       case CLASS :
 	 int idx2 = val_value.lastIndexOf("(");
@@ -332,6 +340,7 @@ private void addValues(Element xml)
       String nm = vd.val_name;
       vd = sesame_session.getUniqueValue(vd);
       sub_values.put(nm,vd);
+      // AcornLog.logD("ADD VALUE " + nm + " = " + vd);
     }
 }
 
@@ -373,22 +382,22 @@ private class DeferredLookup implements CashewConstants.CashewDeferredValue {
    @Override public CashewValue getValue() {
       computeValues();
       if (field_name.equals(CashewConstants.HASH_CODE_FIELD)) {
-         if (sub_values == null) sub_values = new HashMap<String,SesameValueData>();
-         if (sub_values.get(field_name) == null) {
-            SesameValueData svd = null;
-            if (val_expr != null) {
-               svd = sesame_session.evaluateData("System.identityHashCode(" + val_expr + ")");
-             }
-            else {
-               CommandArgs args = new CommandArgs("FRAME",getFrame(),"THREAD",getThread(),"DEPTH",1);
-               String var = "<VAR>" + IvyXml.xmlSanitize(val_name) + "?@hashCode</VAR>";
-               Element xml = sesame_session.getControl().getXmlReply("VARVAL",sesame_session.getProject(),args,var,0);
-               if (IvyXml.isElement(xml,"RESULT")) {
-        	  svd = new SesameValueData(sesame_session,val_thread,xml,null);
-        	}
-             }
-            if (svd != null) sub_values.put(field_name,svd);
-          }
+	 if (sub_values == null) sub_values = new HashMap<String,SesameValueData>();
+	 if (sub_values.get(field_name) == null) {
+	    SesameValueData svd = null;
+	    if (val_expr != null) {
+	       svd = sesame_session.evaluateData("System.identityHashCode(" + val_expr + ")");
+	     }
+	    else {
+	       CommandArgs args = new CommandArgs("FRAME",getFrame(),"THREAD",getThread(),"DEPTH",1);
+	       String var = "<VAR>" + IvyXml.xmlSanitize(val_name) + "?@hashCode</VAR>";
+	       Element xml = sesame_session.getControl().getXmlReply("VARVAL",sesame_session.getProject(),args,var,0);
+	       if (IvyXml.isElement(xml,"RESULT")) {
+		  svd = new SesameValueData(sesame_session,val_thread,xml,null);
+		}
+	     }
+	    if (svd != null) sub_values.put(field_name,svd);
+	  }
        }
       if (sub_values == null) return null;
       String fnm = field_name;
@@ -397,11 +406,40 @@ private class DeferredLookup implements CashewConstants.CashewDeferredValue {
       String lookup = getKey(fnm);
       SesameValueData svd = sub_values.get(lookup);
       svd = sesame_session.getUniqueValue(svd);
-      if (svd == null) return null;
-      return svd.getCashewValue();
+      if (svd == null) {
+	 AcornLog.logE("Deferred Lookup of " + lookup + " not found");
+	 return null;
+       }
+      CashewValue cvr = svd.getCashewValue();
+      // AcornLog.logD("Deferred Lookup of " + lookup + " = " + cvr);
+      return cvr;
     }
 
 }	// end of inner class DeferredLookup
+
+
+
+/********************************************************************************/
+/*										*/
+/*	Debugging methods							*/
+/*										*/
+/********************************************************************************/
+
+@Override public String toString()
+{
+   StringBuffer buf = new StringBuffer();
+   buf.append("<<");
+   buf.append(val_kind);
+   buf.append(":");
+   buf.append(val_type);
+   buf.append("@");
+   buf.append(val_value);
+   if (array_length > 0) buf.append("#" + array_length);
+   buf.append(" ");
+   buf.append(val_name);
+   buf.append(">>");
+   return buf.toString();
+}
 
 
 

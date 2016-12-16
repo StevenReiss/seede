@@ -909,7 +909,10 @@ private void evaluateInstruction() throws CuminRunError
 	 throw new CuminRunError(CuminRunError.Reason.ERROR,"Unknown instruction");
     }
 
-   if (vstack != null) execution_stack.push(vstack);
+   if (vstack != null) {
+      AcornLog.logD("RESULT: " + vstack.getString(execution_clock));
+      execution_stack.push(vstack);
+    }
    if (nextins != null) next = nextins.getIndex();
    current_instruction = next;
 }

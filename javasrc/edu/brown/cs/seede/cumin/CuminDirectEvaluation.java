@@ -733,8 +733,8 @@ void checkSystemMethods()
 
    switch (getMethod().getName()) {
       case "arraycopy" :
-	 // handle arraycopy here
-	 return;
+         handleArrayCopy(getValue(0),getInt(1),getValue(2),getInt(3),getInt(4));
+	 break;
       case "currentTimeMillis" :
 	 rslt = CashewValue.numericValue(LONG_TYPE,System.currentTimeMillis());
 	 break;
@@ -766,6 +766,41 @@ void checkSystemMethods()
     }
 
    throw new CuminRunError(CuminRunError.Reason.RETURN,rslt);
+}
+
+
+
+private void handleArrayCopy(CashewValue src,int spos,CashewValue dst,int dpos,int len)
+{
+   if (src.isNull(getClock()) || dst.isNull(getClock())) CuminEvaluator.throwException(NULL_PTR_EXC);
+   
+   int sdim = -1;
+   int ddim = -1;
+   try {
+      sdim = src.getDimension(getClock());
+      ddim = dst.getDimension(getClock());
+    }
+   catch (Throwable t) {
+      CuminEvaluator.throwException(ARRAY_STORE_EXC);
+    }
+   // check array element types
+   
+   if (spos < 0 || dpos < 0 || len < 0 || spos+len > sdim || dpos+len > ddim) 
+      CuminEvaluator.throwException(IDX_BNDS_EXC);
+   
+   if (src == dst && spos < dpos) {
+      for (int i = len-1; i >= 0; --i) {
+         CashewValue cv = src.getIndexValue(getClock(),spos+i);
+         dst.setIndexValue(getClock(),dpos+i,cv.getActualValue(getClock()));
+       }
+    }
+   else {
+      for (int i = 0; i < len; ++i) {
+         CashewValue cv = src.getIndexValue(getClock(),spos+i);
+         // should type check the assignment here
+         dst.setIndexValue(getClock(),dpos+i,cv.getActualValue(getClock()));
+       }
+    }
 }
 
 

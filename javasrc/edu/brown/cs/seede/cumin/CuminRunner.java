@@ -165,9 +165,9 @@ public void interpret(EvalType et) throws CuminRunError
 	       ret = r;
 	     }
 	    else {
-               lookup_context.setEndTime(execution_clock);
-               throw r;
-             }
+	       lookup_context.setEndTime(execution_clock);
+	       throw r;
+	     }
 	  }
        }
 
@@ -180,7 +180,7 @@ public void interpret(EvalType et) throws CuminRunError
 	    nested_call = r.getCallRunner();
 	    continue;
 	  }
-         lookup_context.setEndTime(execution_clock);
+	 lookup_context.setEndTime(execution_clock);
 	 throw r;
        }
     }
@@ -207,7 +207,10 @@ protected CuminRunner handleCall(CashewClock cc,JcompSymbol method,List<CashewVa
       CallType ctyp)
 {
    CashewValue thisarg = null;
-   if (args != null && args.size() > 0) thisarg = args.get(0);
+   if (args != null && args.size() > 0) {
+      thisarg = args.get(0);
+      // AcornLog.logD("Call " + method + " on " + thisarg.getString(execution_clock));
+    }
 
    JcompSymbol cmethod = findTargetMethod(cc,method,thisarg,ctyp);
    if (cmethod == null) {
@@ -235,7 +238,10 @@ CuminRunner handleCall(CashewClock cc,JcodeMethod method,List<CashewValue> args,
       CallType ctyp)
 {
    CashewValue thisarg = null;
-   if (args != null && args.size() > 0 && !method.isStatic()) thisarg = args.get(0);
+   if (args != null && args.size() > 0 && !method.isStatic()) {
+      thisarg = args.get(0);
+      // AcornLog.logD("Call " + method + " on " + thisarg.getString(execution_clock));
+    }
 
    JcodeMethod cmethod = findTargetMethod(cc,method,thisarg,ctyp);
    if (cmethod == null) {
@@ -301,6 +307,7 @@ private JcodeMethod findTargetMethod(CashewClock cc,JcodeMethod method,
     }
 
    JcodeClass cls = getCodeFactory().findClass(base.getName());
+   if (cls == null) cls = getCodeFactory().findClass("java.lang.Object");
    JcodeMethod cmethod = cls.findInheritedMethod(method.getName(),method.getDescription());
 
    return cmethod;

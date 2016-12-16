@@ -1,4 +1,4 @@
-<project name='seede' default='all'>
+<project name='seede' default='jar'>
 
    <target name='all'>
       <ant antfile="build.xml" dir="javasrc" />
