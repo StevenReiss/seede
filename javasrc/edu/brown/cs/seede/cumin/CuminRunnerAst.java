@@ -327,6 +327,10 @@ private void evalNode(ASTNode node,ASTNode afterchild) throws CuminRunError
       // check for step
       // check for timeout
     }
+   JcompType jt = JcompAst.getExprType(node);
+   if (jt != null && jt.isErrorType()) {
+      throw new CuminRunError(CuminRunError.Reason.COMPILER_ERROR);
+    }
 
    AcornLog.logD("EXEC: " + node.getClass());
 
@@ -1099,6 +1103,7 @@ private void visit(MethodInvocation v,ASTNode after)
 
    JcompSymbol js = JcompAst.getReference(v.getName());
    JcompType ctyp = js.getType();
+   
    List<JcompType> atyps = ctyp.getComponents();
 
    List<CashewValue> argv = new ArrayList<CashewValue>();

@@ -84,6 +84,10 @@ CashewValueObject(JcompType jt,Map<String,Object> inits)
 	 else field_values.put(key,cr);
        }
     }
+    if (field_values.get(HASH_CODE_FIELD) == null) {
+       CashewValue chvl = CashewValue.numericValue(INT_TYPE,hashCode());
+       field_values.put(HASH_CODE_FIELD,new CashewRef(chvl));
+     }
 }
 
 
@@ -96,24 +100,38 @@ CashewValueObject(JcompType jt,Map<String,Object> inits)
 
 @Override public CashewValue getFieldValue(CashewClock cc,String nm)
 {
-   CashewValue cv = field_values.get(nm);
-   if (cv == null) {
-      cv = static_values.get(nm);
-      if (cv == null) throw new Error("UndefinedField");
-    }
+   CashewValue cv = findFieldForName(nm);
    return cv;
 }
 
 @Override public CashewValue setFieldValue(CashewClock cc,String nm,CashewValue cv)
 {
+   CashewRef ov = findFieldForName(nm);
+   ov.setValueAt(cc,cv);
+   return this;
+}
+
+
+
+private CashewRef findFieldForName(String nm)
+{
    CashewRef ov = field_values.get(nm);
    if (ov == null) {
       ov = static_values.get(nm);
-      if (ov == null)
-	 throw new Error("UndefinedField");
     }
-   ov.setValueAt(cc,cv);
-   return this;
+   String anm = nm;
+   while (ov == null && anm.contains("$")) {
+      int idx = anm.indexOf("$");
+      anm = anm.substring(0,idx) + "." + anm.substring(idx+1);
+      ov = field_values.get(anm);
+      if (ov == null) ov = static_values.get(anm); 
+    }
+   
+   if (ov == null) {
+      throw new Error("UndefinedField: " + nm);
+    }
+   
+   return ov;
 }
 
 
@@ -198,7 +216,8 @@ static class ValueClass extends CashewValueObject
 
    @Override public void outputLocalXml(IvyXmlWriter xw,CashewOutputContext outctx) {
       xw.field("OBJECT",true);
-      xw.field("CLASS",class_value.toString());
+      if (class_value == null) xw.field("CLASS","*UNKNOWN*");
+      else xw.field("CLASS",class_value.toString());
     }
 
 }	// end of inner class ValueClass

@@ -36,7 +36,7 @@ public class CuminRunError extends Error
 /*										*/
 /********************************************************************************/
 
-public enum Reason { ERROR, EXCEPTION, BREAKPOINT, TIMEOUT,
+public enum Reason { ERROR, EXCEPTION, BREAKPOINT, TIMEOUT, COMPILER_ERROR,
    STEP_END, BREAK, CONTINUE, RETURN, CALL, STOPPED, HALTED };
 
 private Reason		throw_reason;
