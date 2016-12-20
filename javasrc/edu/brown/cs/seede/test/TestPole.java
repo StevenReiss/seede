@@ -67,7 +67,6 @@ private static final String		LAUNCHPOLE_NAME = "Pole Test2";
 
 
 private static MintControl mint_control;
-private static File	   project_directory;
 
 private String		stopped_thread;
 private Element 	seede_result;
@@ -116,6 +115,7 @@ public TestPole()
    cmd += " -data " + ec2.getAbsolutePath();
    cmd += " -nosplash";
    cmd += " -vmargs -Dedu.brown.cs.bubbles.MINT=" + MINT_NAME;
+   cmd += " -Xmx16000m";
    
    try {
       for (int i = 0; i < 250; ++i) {
@@ -128,8 +128,6 @@ public TestPole()
 	    sendBubblesMessage("OPENPROJECT",TEST_PROJECT,null,null,rply);
 	    Element pxml = rply.waitForXml();
 	    if (!IvyXml.isElement(pxml,"PROJECT")) pxml = IvyXml.getChild(pxml,"PROJECT");
-	    String dirs = IvyXml.getAttrString(pxml,"PATH");
-	    if (dirs != null) project_directory = new File(dirs);
 	    return;
 	  }
 	 if (i == 0) new IvyExec(cmd);

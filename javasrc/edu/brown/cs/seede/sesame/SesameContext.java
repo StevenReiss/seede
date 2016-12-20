@@ -67,7 +67,10 @@ SesameContext(SesameSession ss)
    CashewValue cv = super.findStaticFieldReference(name,type);
    if (cv != null) return cv;
    cv = for_session.lookupValue(name,type);
-   if (cv != null) define(name,cv);
+   if (cv != null) {
+      cv = CashewValue.createReference(cv);
+      define(name,cv);
+    }
    
    return cv;
 }

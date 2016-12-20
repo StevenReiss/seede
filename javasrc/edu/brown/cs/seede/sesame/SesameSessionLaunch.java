@@ -154,13 +154,18 @@ String getAnyThread()
    String thread = getAnyThread();
    CommandArgs args = new CommandArgs("THREAD",thread,
 	 "FRAME",frame_id,"BREAK",false,"EXPR",expr,
-	 "LEVEL",5,"SAVEID",eid,"REPLYID",eid);
+	 "LEVEL",3,"REPLYID",eid);
+   args.put("SAVEID",eid);
    Element xml = getControl().getXmlReply("EVALUATE",getProject(),args,null,0);
    if (IvyXml.isElement(xml,"RESULT")) {
       Element root = getControl().waitForEvaluation(eid);
       Element v = IvyXml.getChild(root,"EVAL");
       Element v1 = IvyXml.getChild(v,"VALUE");
-      SesameValueData svd = new SesameValueData(this,thread,v1,"*" + eid);
+      String assoc = expr;
+      if (args.get("SAVEID") != null) {
+         assoc = "*" + args.get("SAVEID").toString();
+       }
+      SesameValueData svd = new SesameValueData(this,thread,v1,assoc);
       return svd;
     }
    return null;

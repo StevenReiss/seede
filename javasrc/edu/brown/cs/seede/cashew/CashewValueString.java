@@ -129,8 +129,9 @@ CashewValueString(String s)
 
 @Override synchronized public CashewValue getFieldValue(CashewClock cc,String name) 
 {
-   switch ("name") {
+   switch (name) {
       case "value" :
+      case "java.lang.String.value" :
          if (value_field == null) {
             Map<Integer,Object> inits = new HashMap<Integer,Object>();
             for (int i = 0; i < string_value.length(); ++i) {
@@ -141,11 +142,13 @@ CashewValueString(String s)
           }
          return value_field;
       case "hash" :
+      case "java.lang.String.hash" :
          if (hash_field == null) {
             hash_field = CashewValue.numericValue(INT_TYPE,string_value.hashCode());
           }
          return hash_field;
       case "hash32" :
+      case "java.lang.String.hash32" :
          if (hash32_field == null) {
             hash32_field = CashewValue.numericValue(INT_TYPE,0);
           }
