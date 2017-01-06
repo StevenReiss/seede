@@ -101,11 +101,11 @@ CashewRef(CashewDeferredValue deferred)
 
 
 
-@Override public String getString(CashewClock cc)
+@Override protected String getString(CashewClock cc,int lvl)
 {
    CashewValue cv = getValueAt(cc);
    if (cv == null) return null;
-   return cv.getString(cc);
+   return cv.getString(cc,lvl);
 }
 
 
@@ -124,7 +124,7 @@ CashewRef(CashewDeferredValue deferred)
    long tv = 0;
    if (cc != null) tv = cc.getTimeValue();
 
-   if (last_update < 0) {
+   if (last_update < 0 || (tv == 0 && last_update == 0)) {
       // first time -- just record value
       last_update = tv;
       last_value = cv;
@@ -240,10 +240,14 @@ CashewRef(CashewDeferredValue deferred)
 
 private CashewValue getValueAt(CashewClock cc)
 {
-   long tv = cc.getTimeValue();
+   long tv = 0;
+   if (cc == null) {
+      if (last_update >= 0) tv = last_update;
+    }
+   else tv = cc.getTimeValue();
 
    if (last_update >= 0) {
-      if (tv > last_update) return last_value;
+      if (tv > last_update || tv == 0) return last_value;
     }
 
    if (value_map == null) {

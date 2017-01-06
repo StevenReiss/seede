@@ -100,12 +100,12 @@ CashewValueArray(JcompType jt,int dim,Map<Integer,Object> inits) {
    return this;
 }
 
-@Override public String getString(CashewClock cc) {
+@Override protected String getString(CashewClock cc,int lvl) {
    StringBuffer buf = new StringBuffer();
    buf.append("[");
    for (int i = 0; i < dim_size; ++i) {
       if (i != 0) buf.append(",");
-      buf.append(getIndexValue(cc,i).toString());
+      buf.append(getIndexValue(cc,i).getString(cc,lvl));
     }
    buf.append("]");
    return buf.toString();

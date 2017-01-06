@@ -347,15 +347,15 @@ private static class RunnerThread extends Thread {
    @Override public void run() {
       CuminRunError sts = null;
       try {
-	 cumin_runner.interpret(CuminConstants.EvalType.RUN);
+         cumin_runner.interpret(CuminConstants.EvalType.RUN);
        }
       catch (CuminRunError r) {
-	 sts = r;
+         sts = r;
        }
       catch (Throwable t) {
-	 sts = new CuminRunError(t);
+         sts = new CuminRunError(t);
        }
-
+   
       exec_runner.setStatus(cumin_runner,sts);
     }
 

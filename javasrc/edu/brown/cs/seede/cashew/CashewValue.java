@@ -404,7 +404,12 @@ public Character getChar(CashewClock cc)
    throw new Error("Illegal value conversion");
 }
 
-public String getString(CashewClock cc)
+public final String getString(CashewClock cc)
+{
+   return getString(cc,4);
+}
+
+protected String getString(CashewClock cc,int lvl)
 {
    throw new Error("Illegal value conversion");
 }
@@ -526,7 +531,7 @@ private static class ValueNumeric extends CashewValue {
       return (char) num_value.shortValue();
     }
 
-   @Override public String getString(CashewClock cc) {
+   @Override protected String getString(CashewClock cc,int idx) {
       return num_value.toString();
     }
 
@@ -607,7 +612,7 @@ private static class ValueNull extends CashewValue
       throw new NullPointerException();
     }
 
-   @Override public String getString(CashewClock cc) {
+   @Override protected String getString(CashewClock cc,int idx) {
       return "null";
     }
 

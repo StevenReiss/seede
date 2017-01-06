@@ -114,7 +114,9 @@ public CashewValue findReference(JcompSymbol js)
 public CashewValue findReference(JcodeField jf)
 {
    CashewValue cv = null;
-   String nm = jf.getDeclaringClass().getName() + "." + jf.getName();
+   String cnm = jf.getDeclaringClass().getName();
+   cnm = cnm.replace("$",".");
+   String nm = cnm + "." + jf.getName();
    if (jf.isStatic()) {
       return findStaticFieldReference(nm,jf.getType().getName());
     }
@@ -126,7 +128,7 @@ public CashewValue findReference(JcodeField jf)
 
 
 
-protected CashewValue findStaticFieldReference(String name,String type)
+public CashewValue findStaticFieldReference(String name,String type)
 {
    CashewValue cv = findReference(name);
    

@@ -55,7 +55,6 @@ class SesameSessionLaunch extends SesameSession
 
 private String		launch_id;
 private Set<String>	thread_ids;
-private String		frame_id;
 private String		method_name;
 private SesameFile	source_file;
 private int		line_number;
@@ -139,21 +138,22 @@ String getAnyThread()
    CashewValue cv = super.lookupValue(name,type);
    if (cv != null) return null;
 
-   cv = evaluate(name);
+   cv = evaluate(name,null);
    if (cv != null) return cv;
 
    return cv;
 }
 
 
-@Override SesameValueData evaluateData(String expr)
+@Override SesameValueData evaluateData(String expr,String thread)
 {
    String eid = "E_" + eval_counter.incrementAndGet();
    // expr = "edu.brown.cs.seede.poppy.PoppyValue.register(" + expr + ")";
 
-   String thread = getAnyThread();
+   if (thread == null) thread = getAnyThread();
+   String frame = thread_frame.get(thread);
    CommandArgs args = new CommandArgs("THREAD",thread,
-	 "FRAME",frame_id,"BREAK",false,"EXPR",expr,
+	 "FRAME",frame,"BREAK",false,"EXPR",expr,
 	 "LEVEL",3,"REPLYID",eid);
    args.put("SAVEID",eid);
    Element xml = getControl().getXmlReply("EVALUATE",getProject(),args,null,0);
@@ -176,8 +176,10 @@ String getAnyThread()
 @Override void evaluateVoid(String expr)
 {
    String eid = "E_" + eval_counter.incrementAndGet();
+   String thread = getAnyThread();
+   String frame = thread_frame.get(thread);
    CommandArgs args = new CommandArgs("THREAD",getAnyThread(),
-	 "FRAME",frame_id,"BREAK",false,"EXPR",expr,
+	 "FRAME",frame,"BREAK",false,"EXPR",expr,
 	 "LEVEL",4,"REPLYID",eid);
    Element xml = getControl().getXmlReply("EVALUATE",getProject(),args,null,0);
    if (IvyXml.isElement(xml,"RESULT")) {

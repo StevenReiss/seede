@@ -1,8 +1,8 @@
 /********************************************************************************/
 /*                                                                              */
-/*              SesameContext.java                                              */
+/*              SesameThreadContext.java                                        */
 /*                                                                              */
-/*      description of class                                                    */
+/*      Context information for thread-specific information                     */
 /*                                                                              */
 /********************************************************************************/
 /*      Copyright 2011 Brown University -- Steven P. Reiss                    */
@@ -27,7 +27,7 @@ package edu.brown.cs.seede.sesame;
 import edu.brown.cs.seede.cashew.CashewContext;
 import edu.brown.cs.seede.cashew.CashewValue;
 
-public class SesameContext extends CashewContext implements SesameConstants
+class SesameThreadContext extends CashewContext implements SesameConstants
 {
 
 
@@ -37,7 +37,10 @@ public class SesameContext extends CashewContext implements SesameConstants
 /*                                                                              */
 /********************************************************************************/
 
-private SesameSession   for_session;
+private String  thread_id;
+private SesameSession for_session;
+
+
 
 
 /********************************************************************************/
@@ -46,13 +49,13 @@ private SesameSession   for_session;
 /*                                                                              */
 /********************************************************************************/
 
-SesameContext(SesameSession ss)
+SesameThreadContext(String tid,SesameSession sess,SesameContext gbl)
 {
-   super("GLOBAL_CONTEXT",null);
+   super("THREAD_CONTEXT",gbl);
    
-   for_session = ss;
+   thread_id = tid;
+   for_session = sess;
 }
-
 
 
 
@@ -62,63 +65,30 @@ SesameContext(SesameSession ss)
 /*                                                                              */
 /********************************************************************************/
 
-@Override public CashewValue findStaticFieldReference(String name,String type)
+public CashewValue findStaticFieldReference(String name,String type)
 {
-   CashewValue cv = super.findStaticFieldReference(name,type);
-   if (cv != null) return cv;
-   
-   if (name.endsWith(".$assertionsDisabled")) {
-      cv = CashewValue.booleanValue(false);
-      return cv;
-    }
-   if (name.endsWith(".$assertionsEnabled")) {
-      cv = CashewValue.booleanValue(true);
-      return cv;
-    }
-   
-   cv = for_session.lookupValue(name,type);
-   if (cv != null) {
-      cv = CashewValue.createReference(cv);
-      define(name,cv);
+   if (name.equals(CURRENT_THREAD_FIELD)) {
+      CashewValue cv = findReference(name);
+      if (cv != null) return cv;
+      SesameValueData svd = for_session.evaluateData("java.lang.Thread.currentThread()",thread_id);
+      if (svd != null) {
+         cv = svd.getCashewValue();
+         if (cv != null) {
+            define(name,cv);
+            return cv;
+          }
+       }
     }
    
-   return cv;
-}
-
-
-@Override public CashewValue evaluate(String expr)
-{
-   return for_session.evaluate(expr,null);
-}
-
-
-@Override public CashewValue evaluateVoid(String expr)
-{
-   for_session.evaluateVoid(expr);
-   
-   return null;
+   return super.findStaticFieldReference(name,type);
 }
 
 
 
-
-@Override public void enableAccess(String type)
-{
-   for_session.enableAccess(type);
-}
+}       // end of class SesameThreadContext
 
 
 
 
-
-
-
-
-
-}       // end of class SesameContext
-
-
-
-
-/* end of SesameContext.java */
+/* end of SesameThreadContext.java */
 

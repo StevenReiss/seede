@@ -859,8 +859,9 @@ void checkThreadMethods()
    if (getMethod().isStatic()) {
       switch (getMethod().getName()) {
 	 case "currentThread" :
-	    // TODO: handle currentThread
-	    return;
+            rslt = exec_runner.getLookupContext().findStaticFieldReference(
+                  CURRENT_THREAD_FIELD,"java.lang.Thread");
+	    break; 
 	 default :
 	    return;
        }

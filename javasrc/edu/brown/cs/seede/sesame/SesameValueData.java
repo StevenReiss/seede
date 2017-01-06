@@ -181,6 +181,7 @@ CashewValue getCashewValue()
       case OBJECT :
 	 Map<String,Object> inits = new HashMap<String,Object>();
 	 typ.defineAll(typer);
+         Map<String,SesameValueData> sets = new HashMap<String,SesameValueData>();
 	 for (Map.Entry<String,JcompType> ent : typ.getFields().entrySet()) {
 	    String fnm = ent.getKey();
 	    String key = fnm;
@@ -190,7 +191,8 @@ CashewValue getCashewValue()
 	    if (sub_values != null && sub_values.get(key) != null) {
 	       SesameValueData fsvd = sub_values.get(key);
 	       fsvd = sesame_session.getUniqueValue(fsvd);
-	       inits.put(fnm,fsvd.getCashewValue());
+               sets.put(fnm,fsvd);
+	       // inits.put(fnm,fsvd.getCashewValue());
 	     }
 	    else {
 	       DeferredLookup def = new DeferredLookup(fnm);
@@ -205,6 +207,10 @@ CashewValue getCashewValue()
 	    inits.put(CashewConstants.HASH_CODE_FIELD,hvl);
 	  }
 	 result_value = CashewValue.objectValue(typ,inits);
+         for (Map.Entry<String,SesameValueData> ent : sets.entrySet()) {
+            CashewValue cv = ent.getValue().getCashewValue();
+            result_value.setFieldValue(null,ent.getKey(),cv);
+          }
 	 break;
       case ARRAY :
 	 if (array_length <= 1024) computeValues();
@@ -371,7 +377,7 @@ private synchronized void computeValues()
        }
     }
    else {
-      SesameValueData svd = sesame_session.evaluateData(val_expr);
+      SesameValueData svd = sesame_session.evaluateData(val_expr,null);
       sub_values = svd.sub_values;
     }
 }
@@ -400,7 +406,7 @@ private class DeferredLookup implements CashewConstants.CashewDeferredValue {
          if (sub_values.get(field_name) == null) {
             SesameValueData svd = null;
             if (val_expr != null) {
-               svd = sesame_session.evaluateData("System.identityHashCode(" + val_expr + ")");
+               svd = sesame_session.evaluateData("System.identityHashCode(" + val_expr + ")",null);
              }
             else {
                CommandArgs args = new CommandArgs("FRAME",getFrame(),"THREAD",getThread(),"DEPTH",1);

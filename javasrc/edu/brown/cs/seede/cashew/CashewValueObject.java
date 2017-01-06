@@ -70,11 +70,13 @@ CashewValueObject(JcompType jt,Map<String,Object> inits)
 	 CashewRef cr = null;
 	 if (inits != null) {
 	    Object ival = inits.get(key);
-	    if (ival instanceof CashewValue) cv = (CashewValue) ival;
-	    else if (ival instanceof CashewDeferredValue) {
-	       CashewDeferredValue dv = (CashewDeferredValue) ival;
-	       cr = new CashewRef(dv);
-	     }
+            if (ival != null) {
+               if (ival instanceof CashewValue) cv = (CashewValue) ival;
+               else if (ival instanceof CashewDeferredValue) {
+                  CashewDeferredValue dv = (CashewDeferredValue) ival;
+                  cr = new CashewRef(dv);
+                }
+             }
 	  }
 	 if (cr == null) cr = new CashewRef(cv);
 
@@ -136,19 +138,26 @@ private CashewRef findFieldForName(String nm)
 
 
 
-@Override public String getString(CashewClock cc)
+
+
+
+
+@Override protected String getString(CashewClock cc,int lvl)
 {
    StringBuffer buf = new StringBuffer();
    buf.append(getDataType(cc));
-   buf.append("{");
-   int ctr = 0;
-   for (String fldname : field_values.keySet()) {
-      if (ctr++ != 0) buf.append(",");
-      buf.append(fldname);
-      buf.append(":");
-      buf.append(getFieldValue(cc,fldname));
+   if (lvl > 0) {
+      buf.append("{");
+      int ctr = 0;
+      for (String fldname : field_values.keySet()) {
+         if (ctr++ != 0) buf.append(",");
+         buf.append(fldname);
+         buf.append(":");
+         CashewValue cv = getFieldValue(cc,fldname);
+         buf.append(cv.getString(cc,lvl-1));
+       }
+      buf.append("}");
     }
-   buf.append("}");
    return buf.toString();
 }
 
@@ -210,7 +219,7 @@ static class ValueClass extends CashewValueObject
       class_value = c;
     }
 
-   @Override public String getString(CashewClock cc) {
+   @Override protected String getString(CashewClock cc,int idx) {
       return class_value.toString();
     }
 

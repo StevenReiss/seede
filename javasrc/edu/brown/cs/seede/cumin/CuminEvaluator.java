@@ -327,23 +327,23 @@ static CashewValue evaluate(CashewClock cc,CuminOperator op,CashewValue v1,Cashe
 	 break;
       case SIG :
 	 if (isdbl) {
-	    if (v1.getNumber(cc).doubleValue() < v1.getNumber(cc).doubleValue()) irslt = -1;
-	    else if (v1.getNumber(cc).doubleValue() > v1.getNumber(cc).doubleValue()) irslt = 1;
+	    if (v1.getNumber(cc).doubleValue() < v2.getNumber(cc).doubleValue()) irslt = -1;
+	    else if (v1.getNumber(cc).doubleValue() > v2.getNumber(cc).doubleValue()) irslt = 1;
 	    else irslt = 0;
 	  }
 	 else if (isflt) {
-	    if (v1.getNumber(cc).floatValue() < v1.getNumber(cc).floatValue()) irslt = -1;
-	    else if (v1.getNumber(cc).floatValue() > v1.getNumber(cc).floatValue()) irslt = 1;
+	    if (v1.getNumber(cc).floatValue() < v2.getNumber(cc).floatValue()) irslt = -1;
+	    else if (v1.getNumber(cc).floatValue() > v2.getNumber(cc).floatValue()) irslt = 1;
 	    else irslt = 0;
 	  }
 	 else if (islng) {
-	    if (v1.getNumber(cc).longValue() < v1.getNumber(cc).longValue()) irslt = -1;
-	    else if (v1.getNumber(cc).longValue() > v1.getNumber(cc).longValue()) irslt = 1;
+	    if (v1.getNumber(cc).longValue() < v2.getNumber(cc).longValue()) irslt = -1;
+	    else if (v1.getNumber(cc).longValue() > v2.getNumber(cc).longValue()) irslt = 1;
 	    else irslt = 0;
 	  }
 	 else {
-	    if (v1.getNumber(cc).intValue() < v1.getNumber(cc).intValue()) irslt = -1;
-	    else if (v1.getNumber(cc).intValue() > v1.getNumber(cc).intValue()) irslt = 1;
+	    if (v1.getNumber(cc).intValue() < v2.getNumber(cc).intValue()) irslt = -1;
+	    else if (v1.getNumber(cc).intValue() > v2.getNumber(cc).intValue()) irslt = 1;
 	    else irslt = 0;
 	  }
 	 return CashewValue.numericValue(INT_TYPE,irslt);

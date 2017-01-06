@@ -183,7 +183,8 @@ CuminRunner createRunner(SesameLocation loc,SesameContext gblctx)
 {
    MethodDeclaration mthd = getCallMethod(loc);
    List<CashewValue> args = getCallArgs(loc);
-   CuminRunner cr = CuminRunner.createRunner(getProject(),gblctx,mthd,args);
+   SesameThreadContext tctx = new SesameThreadContext(loc.getThread(),this,gblctx);
+   CuminRunner cr = CuminRunner.createRunner(getProject(),tctx,mthd,args);
    runner_location.put(cr,loc);
    
    return cr;
@@ -241,9 +242,9 @@ CashewValue lookupValue(String name,String type)
 }
 
 
-CashewValue evaluate(String expr)
+CashewValue evaluate(String expr,String thread)
 {
-   SesameValueData svd = evaluateData(expr);
+   SesameValueData svd = evaluateData(expr,thread);
 
    if (svd == null) return null;
 
@@ -252,7 +253,7 @@ CashewValue evaluate(String expr)
 
 
 
-SesameValueData evaluateData(String expr)
+SesameValueData evaluateData(String expr,String tid)
 {
    return null;
 }
