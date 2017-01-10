@@ -291,6 +291,19 @@ public static CashewValue arrayValue(JcompType atyp,int dim,Map<Integer,Object> 
    return new CashewValueArray(atyp,dim,inits);
 }
 
+
+public static CashewValue arrayValue(char [] arr)
+{
+   Map<Integer,Object> inits = new HashMap<Integer,Object>();
+   for (int i = 0; i < arr.length; ++i) {
+      inits.put(i,CashewValue.characterValue(CHAR_TYPE,arr[i]));
+    }
+   
+   JcompType jty = JcompType.createArrayType(CHAR_TYPE);
+   
+   return arrayValue(jty,arr.length,inits);
+}
+
 public static CashewValue objectValue(JcompType otyp)
 {
    return objectValue(otyp,null);
@@ -409,7 +422,7 @@ public final String getString(CashewClock cc)
    return getString(cc,4);
 }
 
-protected String getString(CashewClock cc,int lvl)
+public String getString(CashewClock cc,int lvl)
 {
    throw new Error("Illegal value conversion");
 }
@@ -531,7 +544,7 @@ private static class ValueNumeric extends CashewValue {
       return (char) num_value.shortValue();
     }
 
-   @Override protected String getString(CashewClock cc,int idx) {
+   @Override public String getString(CashewClock cc,int idx) {
       return num_value.toString();
     }
 
@@ -612,7 +625,7 @@ private static class ValueNull extends CashewValue
       throw new NullPointerException();
     }
 
-   @Override protected String getString(CashewClock cc,int idx) {
+   @Override public String getString(CashewClock cc,int idx) {
       return "null";
     }
 

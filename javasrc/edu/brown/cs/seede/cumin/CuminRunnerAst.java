@@ -1036,6 +1036,7 @@ private void visit(ClassInstanceCreation v, ASTNode after)
     }
 
    JcompType rty = JcompAst.getJavaType(v.getType());
+   rty.defineAll(JcompAst.getTyper(v));
    JcompSymbol csym = JcompAst.getReference(v);
    CashewValue rval = CashewValue.objectValue(rty);
    List<CashewValue> argv = new ArrayList<CashewValue>();

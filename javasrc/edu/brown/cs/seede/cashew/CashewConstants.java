@@ -106,8 +106,8 @@ JcompType NULL_PTR_EXC = JCOMP_BASE.getSystemType("java.lang.NullPointerExceptio
 JcompType IDX_BNDS_EXC = JCOMP_BASE.getSystemType("java.lang.IndexOutOfBoundsException");
 JcompType ARITH_EXC = JCOMP_BASE.getSystemType("java.lang.ArithmeticException");
 JcompType CAST_EXC = JCOMP_BASE.getSystemType("java.lang.ClassCastException");
-JcompType ARRAY_STORE_EXC =
-   JCOMP_BASE.getSystemType("java.lang.ArrayStoreException");
+JcompType ARRAY_STORE_EXC = JCOMP_BASE.getSystemType("java.lang.ArrayStoreException");
+JcompType NUM_FMT_EXC = JCOMP_BASE.getSystemType("java.lang.NumberFormatException");
 
 JcompType INT_BOX_TYPE = JCOMP_BASE.getSystemType("java.lang.Integer");
 JcompType SHORT_BOX_TYPE = JCOMP_BASE.getSystemType("java.lang.Short");

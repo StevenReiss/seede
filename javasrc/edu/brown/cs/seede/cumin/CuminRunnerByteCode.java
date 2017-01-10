@@ -821,6 +821,9 @@ private void evaluateInstruction() throws CuminRunError
 	 break;
       case GETSTATIC :
 	 fld = jins.getFieldReference();
+         JcompType fldtyp = convertType(fld.getDeclaringClass());
+         fldtyp.defineAll(type_converter);
+         lookup_context.enableAccess(fldtyp.getName());
 	 vstack = lookup_context.findReference(fld);
 	 vstack = vstack.getActualValue(execution_clock);
 	 break;
@@ -910,7 +913,7 @@ private void evaluateInstruction() throws CuminRunError
     }
 
    if (vstack != null) {
-      AcornLog.logD("RESULT: " + vstack.getString(execution_clock));
+      AcornLog.logD("RESULT: " + vstack.getString(execution_clock,0));
       execution_stack.push(vstack);
     }
    if (nextins != null) next = nextins.getIndex();
@@ -1043,7 +1046,10 @@ private void checkSpecial()
       case "java.io.Console" :
 	 // handle console methods
 	 break;
-      // also want to handle Random, I/O methods
+      case "sun.misc.FloatingDecimal" :
+         cde = new CuminDirectEvaluation(this);
+         cde.checkFloatingDecimalMehtods();
+         break;      // also want to handle Random, I/O methods
     }
 }
 

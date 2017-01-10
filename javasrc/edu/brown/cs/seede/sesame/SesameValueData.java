@@ -181,7 +181,7 @@ CashewValue getCashewValue()
       case OBJECT :
 	 Map<String,Object> inits = new HashMap<String,Object>();
 	 typ.defineAll(typer);
-         Map<String,SesameValueData> sets = new HashMap<String,SesameValueData>();
+	 Map<String,SesameValueData> sets = new HashMap<String,SesameValueData>();
 	 for (Map.Entry<String,JcompType> ent : typ.getFields().entrySet()) {
 	    String fnm = ent.getKey();
 	    String key = fnm;
@@ -191,7 +191,7 @@ CashewValue getCashewValue()
 	    if (sub_values != null && sub_values.get(key) != null) {
 	       SesameValueData fsvd = sub_values.get(key);
 	       fsvd = sesame_session.getUniqueValue(fsvd);
-               sets.put(fnm,fsvd);
+	       sets.put(fnm,fsvd);
 	       // inits.put(fnm,fsvd.getCashewValue());
 	     }
 	    else {
@@ -207,10 +207,10 @@ CashewValue getCashewValue()
 	    inits.put(CashewConstants.HASH_CODE_FIELD,hvl);
 	  }
 	 result_value = CashewValue.objectValue(typ,inits);
-         for (Map.Entry<String,SesameValueData> ent : sets.entrySet()) {
-            CashewValue cv = ent.getValue().getCashewValue();
-            result_value.setFieldValue(null,ent.getKey(),cv);
-          }
+	 for (Map.Entry<String,SesameValueData> ent : sets.entrySet()) {
+	    CashewValue cv = ent.getValue().getCashewValue();
+	    result_value.setFieldValue(null,ent.getKey(),cv);
+	  }
 	 break;
       case ARRAY :
 	 if (array_length <= 1024) computeValues();
@@ -288,7 +288,7 @@ SesameValueData getValue(String var)
 String getDetail()
 {
    if (var_detail == null) {
-      CommandArgs args = new CommandArgs("FRAME",getFrame(),"THREAD",getThread());
+      CommandArgs args = new CommandArgs("FRAME",getFrame(),"THREAD",getThread(),"ARRAY",-1);
       String varxml = "<VAR>" + IvyXml.xmlSanitize(val_name) + "</VAR>";
       Element xml = sesame_session.getControl().getXmlReply("VARDETAIL",sesame_session.getProject(),args,varxml,0);
       Element val = IvyXml.getChild(xml,"VALUE");
@@ -368,7 +368,8 @@ private synchronized void computeValues()
 {
    if (!has_values || sub_values != null) return;
    if (val_expr == null) {
-      CommandArgs args = new CommandArgs("FRAME",getFrame(),"THREAD",getThread(),"DEPTH",2);
+      CommandArgs args = new CommandArgs("FRAME",getFrame(),"THREAD",getThread(),"DEPTH",2,
+					    "ARRAY",-1);
       String var = "<VAR>" + IvyXml.xmlSanitize(val_name) + "</VAR>";
       Element xml = sesame_session.getControl().getXmlReply("VARVAL",sesame_session.getProject(),args,var,0);
       if (IvyXml.isElement(xml,"RESULT")) {
@@ -409,7 +410,8 @@ private class DeferredLookup implements CashewConstants.CashewDeferredValue {
                svd = sesame_session.evaluateData("System.identityHashCode(" + val_expr + ")",null);
              }
             else {
-               CommandArgs args = new CommandArgs("FRAME",getFrame(),"THREAD",getThread(),"DEPTH",1);
+               CommandArgs args = new CommandArgs("FRAME",getFrame(),"THREAD",getThread(),
+        					     "DEPTH",1,"ARRAY",-1);
                String var = "<VAR>" + IvyXml.xmlSanitize(val_name) + "?@hashCode</VAR>";
                Element xml = sesame_session.getControl().getXmlReply("VARVAL",sesame_session.getProject(),args,var,0);
                if (IvyXml.isElement(xml,"RESULT")) {

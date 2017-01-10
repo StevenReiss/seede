@@ -48,6 +48,15 @@
       </junit>
    </target>
 
+   <target name='test2' depends='compile'>
+      <junit fork='true' printsummary='on'>
+	 <classpath refid='test.classpath' />
+	 <assertions><enable/></assertions>
+	 <formatter type='xml' usefile='true' />
+	 <test name='edu.brown.cs.seede.test.TestPole' outfile='test2.out' />
+      </junit>
+   </target>
+
 </project>
 
 

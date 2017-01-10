@@ -162,8 +162,16 @@ void checkStringMethods()
 	    else if (getDataType(0) == LONG_TYPE) {
 	       rslt = CashewValue.stringValue(String.valueOf(getDouble(0)));
 	     }
+            else if (getDataType(0).isArrayType() && getDataType(0).getBaseType() == CHAR_TYPE) {
+               if (getNumArgs() == 1) {
+                  rslt = CashewValue.stringValue(String.valueOf(getCharArray(0)));
+                }
+               else {
+                  rslt = CashewValue.stringValue(String.valueOf(getCharArray(0),getInt(1),getInt(2)));
+                }
+             }
 	    else {
-	       // char [], Object, (char[],int,int)
+	       // Object
 	       return;
 	     }
 	    break;
@@ -349,7 +357,10 @@ void checkStringMethods()
 	 case "getChars" :
 	 case "intern":
 	 case "split" :
+            return;
+            
 	 case "toCharArray" :
+            rslt = CashewValue.arrayValue(thisstr.toCharArray());
 	    return;
 
 	 default :
@@ -929,6 +940,51 @@ void checkThrowableMethods()
 }
 
 
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Handle sun.misc.FloatingDecimal for efficiency                          */
+/*                                                                              */
+/********************************************************************************/
+
+void checkFloatingDecimalMehtods()
+{
+   CashewValue rslt = null;
+   String s1;
+   
+   switch (getMethod().getName()) { 
+      case "toJavaFormatString" :
+         if (getDataType(0) == FLOAT_TYPE) {
+            s1 = String.valueOf(getFloat(0));
+          }
+         else s1 = String.valueOf(getDouble(0));
+         rslt = CashewValue.stringValue(s1);
+         break;
+      case "parseDouble" :
+         try {
+            double d1 = Double.parseDouble(getString(0));
+            rslt = CashewValue.numericValue(DOUBLE_TYPE,d1);
+          }
+         catch (NumberFormatException e) {
+            CuminEvaluator.throwException(NUM_FMT_EXC);
+          }
+         break;
+      case "parseFloat" :
+         try {
+            float f1 = Float.parseFloat(getString(0));
+            rslt = CashewValue.numericValue(FLOAT_TYPE,f1);
+          }
+         catch (NumberFormatException e) {
+            CuminEvaluator.throwException(NUM_FMT_EXC);
+          }
+         break; 
+      default  :
+         return;
+    }
+   
+   throw new CuminRunError(CuminRunError.Reason.RETURN,rslt);    
+}
 
 
 

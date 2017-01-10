@@ -100,7 +100,7 @@ SesameSessionLaunch(SesameMain sm,String sid,Element xml)
 
 String getFrameId(String thread)	{ return thread_frame.get(thread); }
 
-String getAnyThread()		
+String getAnyThread()	
 {
    for (String s : thread_ids) {
       return s;
@@ -154,7 +154,7 @@ String getAnyThread()
    String frame = thread_frame.get(thread);
    CommandArgs args = new CommandArgs("THREAD",thread,
 	 "FRAME",frame,"BREAK",false,"EXPR",expr,
-	 "LEVEL",3,"REPLYID",eid);
+	 "LEVEL",3,"ARRAY",-1,"REPLYID",eid);
    args.put("SAVEID",eid);
    Element xml = getControl().getXmlReply("EVALUATE",getProject(),args,null,0);
    if (IvyXml.isElement(xml,"RESULT")) {
@@ -163,7 +163,7 @@ String getAnyThread()
       Element v1 = IvyXml.getChild(v,"VALUE");
       String assoc = expr;
       if (args.get("SAVEID") != null) {
-         assoc = "*" + args.get("SAVEID").toString();
+	 assoc = "*" + args.get("SAVEID").toString();
        }
       SesameValueData svd = new SesameValueData(this,thread,v1,assoc);
       return svd;
@@ -215,7 +215,8 @@ String getAnyThread()
 
 private void loadInitialValues()
 {
-   CommandArgs cargs = new CommandArgs("LAUNCH",launch_id,"THREAD",null,"COUNT",1);
+   CommandArgs cargs = new CommandArgs("LAUNCH",launch_id,"THREAD",null,"COUNT",1,
+					  "ARRAY",-1);
 
    Element stack = sesame_control.getXmlReply("GETSTACKFRAMES",getProject(),cargs,
 	 null,0);
@@ -234,8 +235,8 @@ private void loadInitialValues()
       line_number = IvyXml.getAttrInt(frm,"LINENO");
       Map<String,SesameValueData> valmap = thread_values.get(teid);
       if (valmap == null) {
-         valmap = new HashMap<String,SesameValueData>();
-         thread_values.put(teid,valmap);
+	 valmap = new HashMap<String,SesameValueData>();
+	 thread_values.put(teid,valmap);
        }
       for (Element var : IvyXml.children(frm,"VALUE")) {
 	 String nm = IvyXml.getAttrString(var,"NAME");

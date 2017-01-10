@@ -69,7 +69,7 @@ CashewValueString(String s)
 /*                                                                              */
 /********************************************************************************/
 
-@Override protected String getString(CashewClock cc,int lvl)    
+@Override public String getString(CashewClock cc,int lvl)    
 { 
    return string_value; 
 }
