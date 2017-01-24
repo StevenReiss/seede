@@ -111,6 +111,8 @@ class CuminRunnerAst extends CuminRunner
 /*										*/
 /********************************************************************************/
 
+enum TryState { BODY, CATCH, FINALLY };
+
 private MethodDeclaration method_node;
 private ASTNode 	current_node;
 private ASTNode 	next_node;
@@ -1521,31 +1523,59 @@ private void visit(ThrowStatement s,ASTNode after)
 private void visit(TryStatement s,ASTNode after)
 {
    if (after == null) {
-      execution_stack.pushMarker(s);
+      execution_stack.pushMarker(s,TryState.BODY);
       next_node = s.getBody();
     }
+   else if (after == s.getFinally()) {
+      Object o = execution_stack.popMarker(s);
+      if (o instanceof CuminRunError) {
+         CuminRunError r = (CuminRunError) o;
+         throw r;
+       }
+    }
    else {
-      Object o = execution_stack.popMarker();
-      assert o == this;
+      Object o = execution_stack.popMarker(s);
+      assert o != null;
+      if (o == TryState.BODY || o == TryState.CATCH) {
+         Block b = s.getFinally();
+         if (b != null) {
+            execution_stack.pushMarker(s,TryState.FINALLY);
+            next_node = b;
+          }
+       }
     }
 }
 
 
 private void visitThrow(TryStatement s,CuminRunError r)
 {
-   execution_stack.popUntil(s);
-   if (r.getReason() != CuminRunError.Reason.EXCEPTION) throw r;
-   JcompType etyp = r.getValue().getDataType(execution_clock);
-   for (Object o : s.catchClauses()) {
-      CatchClause cc = (CatchClause) o;
-      SingleVariableDeclaration svd = cc.getException();
-      JcompType ctype = JcompAst.getJavaType(svd.getType());
-      if (etyp.isCompatibleWith(ctype)) {
-	 execution_stack.push(r.getValue());
-	 next_node = cc;
-	 return;
+   Object sts = execution_stack.popUntil(s);
+   assert sts != null;
+   
+   if (r.getReason() == CuminRunError.Reason.EXCEPTION && sts == TryState.BODY) {
+      JcompType etyp = r.getValue().getDataType(execution_clock);
+      for (Object o : s.catchClauses()) {
+         CatchClause cc = (CatchClause) o;
+         SingleVariableDeclaration svd = cc.getException();
+         JcompType ctype = JcompAst.getJavaType(svd.getType());
+         if (etyp.isCompatibleWith(ctype)) {
+            execution_stack.pushMarker(s,TryState.CATCH);
+            execution_stack.push(r.getValue());
+            next_node = cc;
+            return;
+          }
        }
     }
+   
+   if (sts instanceof TryState && sts != TryState.FINALLY) {
+      Block b = s.getFinally();
+      if (b != null) {
+         execution_stack.pushMarker(s,r); 
+         next_node = b;
+         return;
+       }
+    }
+   
    throw r;
 }
 
@@ -1738,7 +1768,6 @@ private CashewValue handleStaticFieldAccess(JcompSymbol sym)
 
    return rslt;
 }
-
 
 
 }	// end of class CuminRunnerAst

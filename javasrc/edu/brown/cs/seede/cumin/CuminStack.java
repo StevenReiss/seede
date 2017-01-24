@@ -80,26 +80,48 @@ CashewValue peek(int idx)
 }
 
 
-void pushMarker(Object v)
+void pushMarker(Object v,Object data)
 {
-   execution_stack.push(v);
+   StackMarker sm = new StackMarker(v,data);
+   execution_stack.push(sm);
 }
 
 
-Object popMarker()
+Object popMarker(Object itm)
 {
    Object v = execution_stack.pop();
-   if (v instanceof CashewValue) throw new Error("Non-marker popped from stack");
-   return v;
+   if (v instanceof StackMarker) {
+      StackMarker sm = (StackMarker) v;
+      if (sm.getItem() != v) throw new Error("Unexpected marker popped from stack");
+      return sm.getData();
+    }
+   else throw new Error("Non-marker popped from stack");
 }
 
 
-Object popUntil(Object marker)
+Object popUntil(Object v)
 {
-   if (!execution_stack.contains(marker)) return null;
+   boolean fnd = false;
+   for (int i = execution_stack.size()-1; i >= 0; --i) {
+      Object o = execution_stack.get(i);
+      if (o instanceof StackMarker) {
+         StackMarker sm = (StackMarker) o;
+         if (sm.getItem() == v) {
+            fnd = true;
+            break;
+          }
+       }
+    }
+   if (!fnd) return null;
+   
    for ( ; ; ) {
       Object o = execution_stack.pop();
-      if (o == marker) return o;
+      if (o instanceof StackMarker) {
+         StackMarker sm = (StackMarker) o;
+         if (sm.getItem() == v) {
+            return sm.getData();
+          }
+       }
     }
 }
 
@@ -107,7 +129,26 @@ Object popUntil(Object marker)
 int size()                      { return execution_stack.size(); }
 
 
+/********************************************************************************/
+/*                                                                              */
+/*      Marker class                                                            */
+/*                                                                              */
+/********************************************************************************/
 
+private static class StackMarker {
+   
+   private Object for_object;
+   private Object marker_data;
+   
+   StackMarker(Object itm,Object data) {
+      for_object = itm;
+      marker_data = data;
+    }
+   
+   Object getItem()                     { return for_object; }
+   Object getData()                     { return marker_data; }
+   
+}       // end of inner class StackMarker
 
 }       // end of class CuminStack
 
