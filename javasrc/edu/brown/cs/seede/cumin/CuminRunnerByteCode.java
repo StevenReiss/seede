@@ -874,11 +874,11 @@ private void evaluateInstruction() throws CuminRunError
 	 break;
 
       case JSR :
-	 execution_stack.pushMarker(next);
+	 execution_stack.pushMarker(jins,next);
 	 nextins = jins.getTargetInstruction();
 	 break;
       case RET :
-	 next = (Integer) execution_stack.popMarker();
+	 next = (Integer) execution_stack.popMarker(jins);
 	 break;
 
       case LOOKUPSWITCH :
