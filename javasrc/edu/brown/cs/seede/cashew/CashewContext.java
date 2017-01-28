@@ -250,8 +250,8 @@ public void outputXml(CashewOutputContext outctx)
    if (context_owner != null) {
       xw.field("METHOD",context_owner);
     }
-   if (start_time != 0 || end_time != 0) xw.field("START",start_time);
-   if (end_time != 0) xw.field("END",end_time);
+   xw.field("START",start_time);
+   xw.field("END",end_time);
    if (parent_context != null) xw.field("PARENT",parent_context.context_id);
    
    for (Map.Entry<Object,CashewValue> ent : context_map.entrySet()) {
@@ -269,10 +269,10 @@ public void outputXml(CashewOutputContext outctx)
       cv.outputXml(outctx);
       xw.end("VARIABLE");
     }
-   xw.end("CONTEXT");
    for (CashewContext ctx : nested_contexts) {
       ctx.outputXml(outctx);
     }
+   xw.end("CONTEXT");
 }
 
 

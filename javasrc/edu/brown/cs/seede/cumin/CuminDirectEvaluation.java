@@ -30,6 +30,7 @@ import edu.brown.cs.seede.cashew.CashewClock;
 import edu.brown.cs.seede.cashew.CashewConstants;
 import edu.brown.cs.seede.cashew.CashewContext;
 import edu.brown.cs.seede.cashew.CashewValue;
+import edu.brown.cs.seede.cashew.CashewValueString;
 import edu.brown.cs.seede.acorn.AcornLog;
 
 class CuminDirectEvaluation implements CuminConstants, CashewConstants
@@ -139,7 +140,7 @@ private CashewValue getValue(int idx)
 void checkStringMethods()
 {
    CashewValue rslt = null;
-
+   
    if (getMethod().isStatic()) {
       switch (getMethod().getName()) {
 	 case "valueOf" :
@@ -190,8 +191,17 @@ void checkStringMethods()
        }
     }
    else if (getMethod().isConstructor()) {
+      CashewValueString cvs = (CashewValueString) getContext().findReference(0).getActualValue(getClock());
+      if (getNumArgs() == 1) ;
+      else if (getNumArgs() == 2 && getDataType(1) == STRING_TYPE) {
+         cvs.setInitialValue(getString(1));
+       }
+      else if (getNumArgs() == 2 && getDataType(1).getBaseType() == CHAR_TYPE) {
+         String temp = new String(getCharArray(1));
+         cvs.setInitialValue(temp);
+       }
       // handle various constructors
-      return;
+      else return;
     }
    else {
       CashewValue thisarg = getContext().findReference(0).getActualValue(getClock());

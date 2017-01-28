@@ -128,6 +128,7 @@ CashewRef(CashewDeferredValue deferred)
       // first time -- just record value
       last_update = tv;
       last_value = cv;
+      if (cc != null) cc.tick();
       return this;
     }
 

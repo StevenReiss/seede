@@ -29,7 +29,7 @@ import java.util.Map;
 
 
 
-class CashewValueString extends CashewValue implements CashewConstants
+public class CashewValueString extends CashewValue implements CashewConstants
 {
 
 
@@ -39,7 +39,7 @@ class CashewValueString extends CashewValue implements CashewConstants
 /*                                                                              */
 /********************************************************************************/
 
-private final String string_value;
+private String string_value;
 private CashewValue value_field;
 private CashewValue hash_field;
 private CashewValue hash32_field;
@@ -185,6 +185,14 @@ CashewValueString(String s)
 }
 
 
+
+public void setInitialValue(String s)
+{
+   string_value = s;
+   value_field = null;
+   hash_field = null;
+   hash32_field = null;
+}
 
 
 }       // end of class CashewValueString
