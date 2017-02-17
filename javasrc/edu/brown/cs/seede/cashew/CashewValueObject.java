@@ -142,7 +142,7 @@ private CashewRef findFieldForName(String nm)
 
 
 
-@Override public String getString(CashewClock cc,int lvl)
+@Override public String getString(CashewClock cc,int lvl,boolean dbg)
 {
    StringBuffer buf = new StringBuffer();
    buf.append(getDataType(cc));
@@ -154,12 +154,13 @@ private CashewRef findFieldForName(String nm)
          buf.append(fldname);
          buf.append(":");
          CashewValue cv = getFieldValue(cc,fldname);
-         buf.append(cv.getString(cc,lvl-1));
+         buf.append(cv.getString(cc,lvl-1,dbg));
        }
       buf.append("}");
     }
    return buf.toString();
 }
+
 
 
 /********************************************************************************/
@@ -198,7 +199,7 @@ private CashewRef findFieldForName(String nm)
 
 @Override public String toString()
 {
-   return getString(null);
+   return getDebugString(null);
 }
 
 
@@ -219,7 +220,7 @@ static class ValueClass extends CashewValueObject
       class_value = c;
     }
 
-   @Override public String getString(CashewClock cc,int idx) {
+   @Override public String getString(CashewClock cc,int idx,boolean dbg) {
       return class_value.toString();
     }
 

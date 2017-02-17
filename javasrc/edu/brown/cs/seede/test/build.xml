@@ -48,12 +48,21 @@
       </junit>
    </target>
 
-   <target name='test2' depends='compile'>
+   <target name='testpole' depends='compile'>
       <junit fork='true' printsummary='on'>
 	 <classpath refid='test.classpath' />
 	 <assertions><enable/></assertions>
 	 <formatter type='xml' usefile='true' />
-	 <test name='edu.brown.cs.seede.test.TestPole' outfile='test2.out' />
+	 <test name='edu.brown.cs.seede.test.TestPole' outfile='testpole.out' />
+      </junit>
+   </target>
+
+   <target name='testsolar' depends='compile'>
+      <junit fork='true' printsummary='on'>
+	 <classpath refid='test.classpath' />
+	 <assertions><enable/></assertions>
+	 <formatter type='xml' usefile='true' />
+	 <test name='edu.brown.cs.seede.test.TestSolar' outfile='testsolar.out' />
       </junit>
    </target>
 

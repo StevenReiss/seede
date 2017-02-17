@@ -191,18 +191,21 @@ CuminRunner createRunner(SesameLocation loc,SesameContext gblctx)
 }
 
 
+MethodDeclaration getRunnerMethod(CuminRunner cr)
+{
+   SesameLocation loc = getLocation(cr);
+   MethodDeclaration mthd = getCallMethod(loc);
+   
+   return mthd;
+}
+
+
 
 synchronized void addRunner(SesameExecRunner th)
 {
    exec_runners.add(th);
 }
 
-
-
-synchronized void removeRunner(Thread th)
-{
-   exec_runners.remove(th);
-}
 
 
 synchronized void stopRunners()

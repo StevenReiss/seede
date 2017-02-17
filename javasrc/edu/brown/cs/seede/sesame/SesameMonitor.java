@@ -114,7 +114,7 @@ private boolean checkEclipse()
    MintDefaultReply rply = new MintDefaultReply();
    String msg = "<BUBBLES DO='PING' />";
    mint_control.send(msg,rply,MintConstants.MINT_MSG_FIRST_NON_NULL);
-   String r = rply.waitForString(30000);
+   String r = rply.waitForString(300000);
    AcornLog.logD("BUBBLES PING " + r);
    if (r == null) return false;
    return true;
@@ -130,25 +130,25 @@ private class WaitForExit extends Thread {
 
    @Override public void run() {
       synchronized (this) {
-	 for ( ; ; ) {
-	    if (checkEclipse()) break;
-	    try {
-	       wait(30000l);
-	     }
-	    catch (InterruptedException e) { }
-	  }
-
-	 while (!is_done) {
-	    if (!checkEclipse()) is_done = true;
-	    else {
-	       try {
-		  wait(30000l);
-		}
-	       catch (InterruptedException e) { }
-	     }
-	  }
+         for ( ; ; ) {
+            if (checkEclipse()) break;
+            try {
+               wait(30000l);
+             }
+            catch (InterruptedException e) { }
+          }
+   
+         while (!is_done) {
+            if (!checkEclipse()) is_done = true;
+            else {
+               try {
+        	  wait(30000l);
+        	}
+               catch (InterruptedException e) { }
+             }
+          }
        }
-
+   
       System.exit(0);
     }
 
@@ -190,14 +190,17 @@ private void handleEdit(String bid,File file,int len,int offset,boolean complete
 
    for (SesameSession ss : session_map.values()) {
       SesameProject sp = ss.getProject();
-      boolean fnd = false;
+      SesameFile fnd = null;
       for (SesameFile sf : sp.getActiveFiles()) {
 	 if (sf.getFile().equals(file)) {
-	    fnd = true;
+	    fnd = sf;
 	    break;
 	  }
        }
-      if (fnd) ss.restartRunners();
+      AcornLog.logD("EDIT RESTART " + fnd);
+      if (fnd != null) {
+         ss.restartRunners();
+       }   
     }
 }
 
@@ -269,6 +272,7 @@ private void handleExec(String sid,Element xml,IvyXmlWriter xw)
        }
     }
    if (execer != null) execer.startExecution();
+   else throw new SesameException("Session " + sid + " has not starting points");
 }
 
 
@@ -277,6 +281,7 @@ private void handleRemove(String sid) throws SesameException
 {
    SesameSession ss = session_map.remove(sid);
    if (ss == null) throw new SesameException("Session " + sid + " not found");
+   ss.stopRunners();
 }
 
 
@@ -292,6 +297,14 @@ private class EclipseHandler implements MintHandler {
    @Override public void receive(MintMessage msg,MintArguments args) {
       String cmd = args.getArgument(0);
       Element e = msg.getXml();
+
+      switch (cmd) {
+	 case "ELISION" :
+	    return;
+       }
+
+      AcornLog.logD("Message from eclipse: " + cmd + " " + msg.getText());
+
       switch (cmd) {
 	 case "PING" :
 	    msg.replyTo("<PONG/>");

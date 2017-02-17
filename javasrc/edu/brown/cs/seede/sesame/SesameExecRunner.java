@@ -32,6 +32,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.eclipse.jdt.core.dom.MethodDeclaration;
+
 import edu.brown.cs.ivy.mint.MintDefaultReply;
 import edu.brown.cs.ivy.mint.MintConstants;
 import edu.brown.cs.ivy.xml.IvyXmlWriter;
@@ -140,6 +142,8 @@ void restartExecution()
 }
 
 
+
+
 private synchronized void stopCurrentRun()
 {
    if (master_thread == null) return;
@@ -160,7 +164,11 @@ private synchronized void stopCurrentRun()
 private synchronized void stopRunner()
 {
    stopCurrentRun();
-   if (master_thread != null) master_thread.interrupt();
+   if (master_thread != null) {
+      is_continuous = false;
+      run_again = false;
+      master_thread.interrupt();
+    }
 }
 
 
@@ -192,7 +200,7 @@ private void report()
     }
 
    IvyXmlWriter xw = new IvyXmlWriter();
-   xw.begin("SEEDE");
+   xw.begin("SEEDEXEC");
    xw.field("TYPE","EXEC");
    if (reply_id != null) xw.field("ID",reply_id);
    if (empty || run_status.isEmpty()) xw.field("EMPTY",true);
@@ -203,7 +211,7 @@ private void report()
 	 outputResult(xw,cr,sts);
        }
     }
-   xw.end("SEEDE");
+   xw.end("SEEDEXEC");
 
    String rslt = xw.toString();
    xw.close();
@@ -212,7 +220,8 @@ private void report()
    if (reply_id != null) {
       MintDefaultReply hdlr = new MintDefaultReply();
       for_monitor.sendMessage(rslt,hdlr,MintConstants.MINT_MSG_FIRST_REPLY);
-      hdlr.waitFor();
+      String mrslt = hdlr.waitForString();
+      AcornLog.logD("Message result: " + mrslt);
     }
 
    run_status.clear();
@@ -274,51 +283,59 @@ private class MasterThread extends Thread {
 
    @Override public void run()
    {
-      for ( ; ; ) {
-	 // first start all the threads
-	 run_status.clear();
-	 List<RunnerThread> waits = new ArrayList<RunnerThread>();
-	 synchronized (this) {
-	    for (CuminRunner cr : cumin_runners) {
-	       RunnerThread rt = new RunnerThread(SesameExecRunner.this,cr);
-	       runner_threads.put(cr,rt);
-	       waits.add(rt);
-	       rt.start();
-	     }
-	  }
-
-	 // wait for all to exit
-	 while (!waits.isEmpty()) {
-	    for (Iterator<RunnerThread> it = waits.iterator(); it.hasNext(); ) {
-	       RunnerThread rt = it.next();
-	       try {
-		  rt.join();
-		  synchronized (this) {
-		     runner_threads.remove(rt.getRunner());
-		     if (runner_threads.isEmpty()) {
-			notifyAll();
-		      }
-		   }
-		  it.remove();
-		}
-	       catch (InterruptedException e) { }
-	     }
-	  }
-	 report();
-	 synchronized (this) {
-	    if (!is_continuous) break;
-	    while (!run_again) {
-	       if (isInterrupted()) break;
-	       try {
-		  wait(5000);
-		}
-	       catch (InterruptedException e) { }
-	     }
-	  }
-
-	 master_thread = null;
+      for (int i = 0; ; ++i ) {
+         // first start all the threads
+         run_status.clear();
+         List<RunnerThread> waits = new ArrayList<RunnerThread>();
+         synchronized (this) {
+            for (CuminRunner cr : cumin_runners) {
+               if (i != 0) {
+        	  MethodDeclaration mthd = for_session.getRunnerMethod(cr);
+        	  if (mthd == null) continue;
+        	  cr.reset(mthd);
+        	}
+               RunnerThread rt = new RunnerThread(SesameExecRunner.this,cr);
+               runner_threads.put(cr,rt);
+               waits.add(rt);
+               rt.start();
+             }
+          }
+   
+         // wait for all to exit
+         while (!waits.isEmpty()) {
+            for (Iterator<RunnerThread> it = waits.iterator(); it.hasNext(); ) {
+               RunnerThread rt = it.next();
+               try {
+        	  rt.join();
+        	  synchronized (this) {
+        	     runner_threads.remove(rt.getRunner());
+        	     if (runner_threads.isEmpty()) {
+        		notifyAll();
+        	      }
+        	   }
+        	  it.remove();
+        	}
+               catch (InterruptedException e) { }
+             }
+          }
+         report();
+         synchronized (this) {
+            if (!is_continuous) break;
+            while (!run_again) {
+               if (isInterrupted()) break;
+               if (!is_continuous) break;
+               try {
+        	  wait(5000);
+        	}
+               catch (InterruptedException e) { }
+             }
+            run_again = false;
+            if (!is_continuous) break;
+          }
        }
-    }
+   
+      master_thread = null;
+   }
 
 }	// end of inner class MasterRunner
 

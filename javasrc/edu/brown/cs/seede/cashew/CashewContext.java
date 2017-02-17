@@ -1,21 +1,21 @@
 /********************************************************************************/
-/*                                                                              */
-/*              CashewContext.java                                              */
-/*                                                                              */
-/*      Context for looking up symbols/names                                    */
-/*                                                                              */
+/*										*/
+/*		CashewContext.java						*/
+/*										*/
+/*	Context for looking up symbols/names					*/
+/*										*/
 /********************************************************************************/
-/*      Copyright 2011 Brown University -- Steven P. Reiss                    */
+/*	Copyright 2011 Brown University -- Steven P. Reiss		      */
 /*********************************************************************************
- *  Copyright 2011, Brown University, Providence, RI.                            *
- *                                                                               *
- *                        All Rights Reserved                                    *
- *                                                                               *
- * This program and the accompanying materials are made available under the      *
+ *  Copyright 2011, Brown University, Providence, RI.				 *
+ *										 *
+ *			  All Rights Reserved					 *
+ *										 *
+ * This program and the accompanying materials are made available under the	 *
  * terms of the Eclipse Public License v1.0 which accompanies this distribution, *
- * and is available at                                                           *
- *      http://www.eclipse.org/legal/epl-v10.html                                *
- *                                                                               *
+ * and is available at								 *
+ *	http://www.eclipse.org/legal/epl-v10.html				 *
+ *										 *
  ********************************************************************************/
 
 /* SVN: $Id$ */
@@ -43,9 +43,9 @@ public class CashewContext implements CashewConstants
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Private Storage                                                         */
-/*                                                                              */
+/*										*/
+/*	Private Storage 							*/
+/*										*/
 /********************************************************************************/
 
 private Map<Object,CashewValue> context_map;
@@ -61,12 +61,12 @@ private static AtomicInteger id_counter = new AtomicInteger();
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Constructors                                                            */
-/*                                                                              */
+/*										*/
+/*	Constructors								*/
+/*										*/
 /********************************************************************************/
 
-public CashewContext(JcompSymbol js,CashewContext par) 
+public CashewContext(JcompSymbol js,CashewContext par)
 {
    this(js.getFullName(),par);
 }
@@ -78,7 +78,7 @@ public CashewContext(JcodeMethod jm,CashewContext par)
 
 
 public CashewContext(String js,CashewContext par)
-{ 
+{
    context_owner = js;
    context_map = new HashMap<>();
    parent_context = par;
@@ -89,24 +89,33 @@ public CashewContext(String js,CashewContext par)
 
 
 
+public void reset()
+{
+   nested_contexts.clear();
+   context_map.clear();
+   start_time = end_time = 0;
+}
+
+
+
 /********************************************************************************/
-/*                                                                              */
-/*      High-level access methods                                               */
-/*                                                                              */
+/*										*/
+/*	High-level access methods						*/
+/*										*/
 /********************************************************************************/
 
 public CashewValue findReference(JcompSymbol js)
 {
    CashewValue cv = null;
-   
+
    if (js.isFieldSymbol() && js.isStatic()) {
       String nm = js.getFullName();
       return findStaticFieldReference(nm,js.getType().getName());
     }
-   
+
    cv = findReference((Object) js);
    if (cv != null) return cv;
-   
+
    return cv;
 }
 
@@ -120,9 +129,9 @@ public CashewValue findReference(JcodeField jf)
    if (jf.isStatic()) {
       return findStaticFieldReference(nm,jf.getType().getName());
     }
-   
+
    cv = findReference((Object) jf);
-     
+
    return cv;
 }
 
@@ -131,11 +140,11 @@ public CashewValue findReference(JcodeField jf)
 public CashewValue findStaticFieldReference(String name,String type)
 {
    CashewValue cv = findReference(name);
-   
+
    if (cv == null && parent_context != null) {
       cv = parent_context.findStaticFieldReference(name,type);
     }
-   
+
    return cv;
 }
 
@@ -145,15 +154,15 @@ public CashewValue findReference(Integer lv)
 {
    CashewValue cv = findReference(((Object) lv));
    if (cv != null) return cv;
-   
+
    return null;
 }
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Context Operators                                                       */
-/*                                                                              */
+/*										*/
+/*	Context Operators							*/
+/*										*/
 /********************************************************************************/
 
 public CashewValue findReference(Object var)
@@ -164,7 +173,7 @@ public CashewValue findReference(Object var)
    if (parent_context != null) {
       cv = parent_context.findReference(var);
     }
-   
+
    return cv;
 }
 
@@ -185,28 +194,28 @@ public void define(Object var,CashewValue addr)
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Recording methods                                                       */
-/*                                                                              */
+/*										*/
+/*	Recording methods							*/
+/*										*/
 /********************************************************************************/
 
-public void setStartTime(CashewClock cc)        { start_time = cc.getTimeValue(); }
+public void setStartTime(CashewClock cc)	{ start_time = cc.getTimeValue(); }
 
 
-public void setEndTime(CashewClock cc)          { end_time = cc.getTimeValue(); }
+public void setEndTime(CashewClock cc)		{ end_time = cc.getTimeValue(); }
 
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Evaluation methods                                                      */
-/*                                                                              */
+/*										*/
+/*	Evaluation methods							*/
+/*										*/
 /********************************************************************************/
 
 public CashewValue evaluate(String expr)
 {
    if (parent_context != null) return parent_context.evaluate(expr);
-   
+
    return null;
 }
 
@@ -214,7 +223,7 @@ public CashewValue evaluate(String expr)
 public CashewValue evaluateVoid(String expr)
 {
    if (parent_context != null) return parent_context.evaluateVoid(expr);
-   
+
    return null;
 }
 
@@ -230,9 +239,9 @@ public void enableAccess(String type)
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Output methods                                                          */
-/*                                                                              */
+/*										*/
+/*	Output methods								*/
+/*										*/
 /********************************************************************************/
 
 public void addNestedContext(CashewContext ctx)
@@ -242,7 +251,7 @@ public void addNestedContext(CashewContext ctx)
 
 
 
-public void outputXml(CashewOutputContext outctx) 
+public void outputXml(CashewOutputContext outctx)
 {
    IvyXmlWriter xw = outctx.getXmlWriter();
    xw.begin("CONTEXT");
@@ -253,17 +262,17 @@ public void outputXml(CashewOutputContext outctx)
    xw.field("START",start_time);
    xw.field("END",end_time);
    if (parent_context != null) xw.field("PARENT",parent_context.context_id);
-   
+
    for (Map.Entry<Object,CashewValue> ent : context_map.entrySet()) {
       Object var = ent.getKey();
       xw.begin("VARIABLE");
       xw.field("NAME",var.toString());
       if (var instanceof JcompSymbol) {
-         JcompSymbol js = (JcompSymbol) var;
-         ASTNode defn = js.getDefinitionNode();
-         CompilationUnit cu = (CompilationUnit) defn.getRoot();
-         int lno = cu.getLineNumber(defn.getStartPosition());
-         xw.field("LINE",lno);
+	 JcompSymbol js = (JcompSymbol) var;
+	 ASTNode defn = js.getDefinitionNode();
+	 CompilationUnit cu = (CompilationUnit) defn.getRoot();
+	 int lno = cu.getLineNumber(defn.getStartPosition());
+	 xw.field("LINE",lno);
        }
       CashewValue cv = ent.getValue();
       cv.outputXml(outctx);
@@ -277,7 +286,7 @@ public void outputXml(CashewOutputContext outctx)
 
 
 
-}       // end of class CashewContext
+}	// end of class CashewContext
 
 
 

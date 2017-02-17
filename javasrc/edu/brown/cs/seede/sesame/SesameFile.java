@@ -94,6 +94,8 @@ void editFile(int len,int off,String txt,boolean complete)
    
    synchronized (ast_roots) {
       ast_roots.clear();
+      JcompSemantics semdata = SesameMain.getJcompBase().getSemanticData(this);
+      if (semdata != null) semdata.reparse();
     }
 }
 

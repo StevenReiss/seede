@@ -104,6 +104,15 @@ int getNumArg() 			{ return num_arg; }
 /*										*/
 /********************************************************************************/
 
+@Override public void reset()
+{
+   super.reset();
+   current_instruction = 0;
+   last_line = 0;
+}
+
+
+
 @Override protected void interpretRun(CuminRunError r)
 {
    if (r == null) {
@@ -200,7 +209,12 @@ private void setupContext(List<CashewValue> args)
       ++vct;
     }
 
-   CashewValue zv = CashewValue.numericValue(CashewConstants.INT_TYPE,0); ctx.define(LINE_NAME,CashewValue.createReference(zv));
+   int lno = 0;
+   JcodeInstruction jins = jcode_method.getInstruction(0);
+   if (jins != null) lno = jins.getLineNumber();
+   if (lno < 0) lno = 0;
+   CashewValue zv = CashewValue.numericValue(CashewConstants.INT_TYPE,lno);
+   ctx.define(LINE_NAME,CashewValue.createReference(zv));
 
    setLookupContext(ctx);
 }
@@ -920,7 +934,7 @@ private void evaluateInstruction() throws CuminRunError
     }
 
    if (vstack != null) {
-      AcornLog.logD("RESULT: " + vstack.getString(execution_clock,0));
+      AcornLog.logD("RESULT: " + vstack.getString(execution_clock,0,true));
       execution_stack.push(vstack);
     }
    if (nextins != null) next = nextins.getIndex();
@@ -1005,7 +1019,7 @@ private CashewValue buildArray(int idx,int [] bnds,JcompType base)
 private void checkSpecial()
 {
    String cls = jcode_method.getDeclaringClass().getName();
-
+ 
    switch (cls) {
       case "java.lang.String" :
 	 CuminDirectEvaluation cde = new CuminDirectEvaluation(this);

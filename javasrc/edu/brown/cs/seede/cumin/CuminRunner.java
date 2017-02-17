@@ -91,7 +91,10 @@ protected CuminRunner(CuminProject cp,CashewContext gblctx,CashewClock cc,List<C
    base_project = cp;
    nested_call = null;
    execution_stack = new CuminStack();
-   if (cc == null) execution_clock = new CashewClock();
+   if (cc == null) {
+      execution_clock = new CashewClock();
+      execution_clock.tick();
+    }
    else execution_clock = cc;
    call_args = args;
    global_context = gblctx;
@@ -149,6 +152,22 @@ protected void setLookupContext(CashewContext ctx)
 /*	Evaluation methods							*/
 /*										*/
 /********************************************************************************/
+
+public void reset(MethodDeclaration md)
+{
+   reset();
+}
+
+
+protected void reset()
+{
+   nested_call = null;
+   execution_stack = new CuminStack();
+   execution_clock = new CashewClock();
+   lookup_context = null;
+}
+
+
 
 public void interpret(EvalType et) throws CuminRunError
 {
@@ -209,15 +228,16 @@ protected CuminRunner handleCall(CashewClock cc,JcompSymbol method,List<CashewVa
    CashewValue thisarg = null;
    if (args != null && args.size() > 0) {
       thisarg = args.get(0);
-      // AcornLog.logD("Call " + method + " on " + thisarg.getString(execution_clock));
+      // AcornLog.logD("Call " + method + " on " + thisarg.getDebugString(execution_clock));
     }
 
    JcompSymbol cmethod = findTargetMethod(cc,method,thisarg,ctyp);
    if (cmethod == null) {
       AcornLog.logE("Couldn't find method to call " + method);
       for (CashewValue cv : args) {
-	 AcornLog.logE("ARG: " + cv.getString(cc));
+	 AcornLog.logE("ARG: " + cv.getDebugString(cc));
        }
+      throw new CuminRunError(CuminRunError.Reason.ERROR,"Missing method " + method);
     }
 
    JcompType type = cmethod.getClassType();
@@ -240,14 +260,15 @@ CuminRunner handleCall(CashewClock cc,JcodeMethod method,List<CashewValue> args,
    CashewValue thisarg = null;
    if (args != null && args.size() > 0 && !method.isStatic()) {
       thisarg = args.get(0);
-      // AcornLog.logD("Call " + method + " on " + thisarg.getString(execution_clock));
+      // AcornLog.logD("Call " + method + " on " + thisarg.getDebugString(execution_clock));
     }
 
    JcodeMethod cmethod = findTargetMethod(cc,method,thisarg,ctyp);
+
    if (cmethod == null) {
       AcornLog.logE("Couldn't find bc method to call " + method);
       for (CashewValue cv : args) {
-	 AcornLog.logE("ARG: " + cv.getString(cc));
+	 AcornLog.logE("ARG: " + cv.getDebugString(cc));
        }
     }
 
@@ -290,9 +311,18 @@ private JcompSymbol findTargetMethod(CashewClock cc,JcompSymbol method,
    if (method.isStatic() || ctyp == CallType.STATIC || ctyp == CallType.SPECIAL) {
       return method;
     }
-   method = base.lookupMethod(getTyper(),method.getName(),method.getType());
+   JcompSymbol nmethod = base.lookupMethod(getTyper(),method.getName(),method.getType());
+   if (nmethod == null) {
+      base.defineAll(getTyper());
+      nmethod = base.lookupMethod(getTyper(),method.getName(),method.getType());
+    }
+   if (nmethod == null) {
+      AcornLog.logD("Can't find method " + method.getName() + " " + method.getType() +
+		       " " + base);
+      nmethod = method;
+    }
 
-   return method;
+   return nmethod;
 }
 
 

@@ -217,9 +217,9 @@ CashewValue getCashewValue()
 	 Map<Integer,Object> ainits = new HashMap<Integer,Object>();
 	 for (int i = 0; i < array_length; ++i) {
 	    String key = "[" + i + "]";
-	    key = getKey(key);
-	    if (sub_values != null && sub_values.get(key) != null) {
-	       SesameValueData fsvd = sub_values.get(key);
+	    String fullkey = getKey(key);
+	    if (sub_values != null && sub_values.get(fullkey) != null) {
+	       SesameValueData fsvd = sub_values.get(fullkey);
 	       fsvd = sesame_session.getUniqueValue(fsvd);
 	       ainits.put(i,fsvd.getCashewValue());
 	     }
@@ -398,6 +398,9 @@ private class DeferredLookup implements CashewConstants.CashewDeferredValue {
 
    DeferredLookup(String name) {
       field_name = name;
+      if (name.contains("elementData?[0]")) {
+         System.err.println("CHECK access");
+       }
     }
 
    @Override public CashewValue getValue() {

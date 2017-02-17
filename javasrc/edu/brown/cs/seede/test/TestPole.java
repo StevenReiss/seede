@@ -1,21 +1,21 @@
 /********************************************************************************/
-/*                                                                              */
-/*              TestPole.java                                                   */
-/*                                                                              */
-/*      Test seed using POLE package                                            */
-/*                                                                              */
+/*										*/
+/*		TestPole.java							*/
+/*										*/
+/*	Test seede using POLE package						*/
+/*										*/
 /********************************************************************************/
-/*      Copyright 2011 Brown University -- Steven P. Reiss                    */
+/*	Copyright 2011 Brown University -- Steven P. Reiss		      */
 /*********************************************************************************
- *  Copyright 2011, Brown University, Providence, RI.                            *
- *                                                                               *
- *                        All Rights Reserved                                    *
- *                                                                               *
- * This program and the accompanying materials are made available under the      *
+ *  Copyright 2011, Brown University, Providence, RI.				 *
+ *										 *
+ *			  All Rights Reserved					 *
+ *										 *
+ * This program and the accompanying materials are made available under the	 *
  * terms of the Eclipse Public License v1.0 which accompanies this distribution, *
- * and is available at                                                           *
- *      http://www.eclipse.org/legal/epl-v10.html                                *
- *                                                                               *
+ * and is available at								 *
+ *	http://www.eclipse.org/legal/epl-v10.html				 *
+ *										 *
  ********************************************************************************/
 
 /* SVN: $Id$ */
@@ -53,9 +53,9 @@ public class TestPole implements MintConstants, SesameConstants
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Private Storage                                                         */
-/*                                                                              */
+/*										*/
+/*	Private Storage 							*/
+/*										*/
 /********************************************************************************/
 
 private static final String		MINT_NAME = "SEEDE_TEST_pole";
@@ -79,18 +79,19 @@ static {
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Constructors                                                            */
-/*                                                                              */
+/*										*/
+/*	Constructors								*/
+/*										*/
 /********************************************************************************/
 
 public TestPole()
 {
    stopped_thread = null;
    seede_result = null;
-   
+
    mint_control.register("<BEDROCK SOURCE='ECLIPSE' TYPE='_VAR_0' />",new IDEHandler());
    mint_control.register("<SEEDE TYPE='_VAR_0' />",new SeedeHandler());
+   mint_control.register("<SEEDEXEC TYPE='_VAR_0' />",new SeedeHandler());
 }
 
 
@@ -109,14 +110,14 @@ public TestPole()
       System.err.println("Can't find bubbles version of eclipse to run");
       System.exit(1);
     }
-   
+
    String cmd = ec1.getAbsolutePath();
    cmd += " -application edu.brown.cs.bubbles.bedrock.application";
    cmd += " -data " + ec2.getAbsolutePath();
    cmd += " -nosplash";
    cmd += " -vmargs -Dedu.brown.cs.bubbles.MINT=" + MINT_NAME;
    cmd += " -Xmx16000m";
-   
+
    try {
       for (int i = 0; i < 250; ++i) {
 	 try { Thread.sleep(1000); } catch (InterruptedException e) { }
@@ -134,7 +135,7 @@ public TestPole()
        }
     }
    catch (IOException e) { }
-   
+
    throw new Error("Problem running Eclipse: " + cmd);
 }
 
@@ -142,7 +143,7 @@ public TestPole()
 @BeforeClass public static void startSeede()
 {
    System.err.println("Setting Up Sesame");
-   
+
    SeedeThread st = new SeedeThread();
    for (int i = 0; i < 100; ++i) {
       if (pingSeede()) return;
@@ -188,17 +189,17 @@ private static boolean pingSeede()
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Test method                                                             */
-/*                                                                              */
+/*										*/
+/*	Test method								*/
+/*										*/
 /********************************************************************************/
 
 @Test public void testPole()
 {
    System.err.println("Start TEST3");
    LaunchData ld = startLaunch(LAUNCHPOLE_NAME);
-   continueLaunch(ld); 
-   
+   continueLaunch(ld);
+
    IvyXmlWriter xw = new IvyXmlWriter();
    xw.begin("SESSION");
    xw.field("TYPE","LAUNCH");
@@ -212,7 +213,7 @@ private static boolean pingSeede()
    sendSeedeMessage("BEGIN",TESTPOLE_SID,null,cnts,rply);
    Element status = rply.waitForXml();
    Assert.assertTrue(IvyXml.isElement(status,"RESULT"));
-   
+
    rply = new MintDefaultReply();
    seede_result = null;
    CommandArgs args = new CommandArgs("EXECID","testpole");
@@ -236,12 +237,12 @@ private static boolean pingSeede()
 private LaunchData startLaunch(String name)
 {
    stopped_thread = null;
-   
+
    File lib = new File("/pro/seede/lib");
    if (!lib.exists()) lib = new File("/research/people/spr/seede/lib");
    File f1 = new File(lib,"poppy.jar");
    String dargs = "-javaagent:" + f1.getPath();
-   
+
    stopped_thread = null;
    CommandArgs args = new CommandArgs("NAME",name,"MODE","debug","BUILD","TRUE",
 	 "REGISTER","TRUE","VMARG",dargs);
@@ -258,7 +259,7 @@ private LaunchData startLaunch(String name)
    Assert.assertNotNull(processid);
    String threadid = waitForStop();
    Assert.assertNotNull(threadid);
-   
+
    return new LaunchData(launchid,targetid,processid,threadid);
 }
 
@@ -266,7 +267,7 @@ private LaunchData startLaunch(String name)
 private void continueLaunch(LaunchData ld)
 {
    stopped_thread = null;
-   
+
    CommandArgs args = new CommandArgs("LAUNCH",ld.getLaunchId(),
 	 "TARGET",ld.getTargetId(),
 	 "PROCESS",ld.getProcessId(),"ACTION","RESUME");
@@ -276,33 +277,33 @@ private void continueLaunch(LaunchData ld)
    Assert.assertNotNull(x);
    String threadid = waitForStop();
    Assert.assertNotNull(threadid);
-   
+
    ld.setThreadId(threadid);
 }
 
 
 
 private static class LaunchData {
-   
+
    private String lanuch_id;
    private String target_id;
    private String process_id;
    private String thread_id;
-   
+
    LaunchData(String launch,String target,String process,String thread) {
       lanuch_id = launch;
       target_id = target;
       process_id = process;
       thread_id = thread;
     }
-   
+
    String getLaunchId() 			{ return lanuch_id; }
    String getTargetId() 			{ return target_id; }
    String getProcessId()			{ return process_id; }
    String getThreadId() 			{ return thread_id; }
-   
+
    void setThreadId(String id)			{ thread_id = id; }
-   
+
 }	// end of inner class LaunchData
 
 
@@ -315,11 +316,11 @@ private static class LaunchData {
 /********************************************************************************/
 
 private static class SeedeThread extends Thread {
-   
+
    SeedeThread() {
       super("SeedeMain");
     }
-   
+
    @Override public void run() {
       SesameMain.main(new String [] { "-m", MINT_NAME });
     }
@@ -364,12 +365,12 @@ private static void sendBubblesMessage(String cmd,String proj,Map<String,Object>
    xw.field("LANG","eclipse");
    if (cnts != null) xw.xmlText(cnts);
    xw.end("BUBBLES");
-   
+
    String xml = xw.toString();
    xw.close();
-   
+
    AcornLog.logD("SEND to BUBBLES: " + xml);
-   
+
    int fgs = MINT_MSG_NO_REPLY;
    if (rply != null) fgs = MINT_MSG_FIRST_NON_NULL;
    mint_control.send(xml,rply,fgs);
@@ -398,10 +399,10 @@ private static void sendSeedeMessage(String cmd,String sess,Map<String,Object> f
     }
    if (cnts != null) xw.xmlText(cnts);
    xw.end("SEEDE");
-   
+
    String xml = xw.toString();
    xw.close();
-   
+
    int fgs = MINT_MSG_NO_REPLY;
    if (rply != null) fgs = MINT_MSG_FIRST_NON_NULL;
    mint_control.send(xml,rply,fgs);
@@ -417,65 +418,65 @@ private static void sendSeedeMessage(String cmd,String sess,Map<String,Object> f
 /********************************************************************************/
 
 private class IDEHandler implements MintHandler {
-   
+
    @Override public void receive(MintMessage msg,MintArguments args) {
       String cmd = args.getArgument(0);
       Element e = msg.getXml();
       if (cmd == null) return;
-      
+
       switch (cmd) {
-         case "ELISIION" :
-            break;
-         case "EDITERROR" :
-            break;
-         case "FILEERROR" :
-            break;
-         case "PRIVATEERROR" :
-            break;
-         case "EDIT" :
-            break;
-         case "BREAKEVENT" :
-            break;
-         case "LAUNCHCONFIGEVENT" :
-            break;
-         case "RUNEVENT" :
-            long when = IvyXml.getAttrLong(e,"TIME");
-            for (Element re : IvyXml.children(e,"RUNEVENT")) {
-               handleRunEvent(re,when);
-             }
-            msg.replyTo("<OK/>");
-            break;
-         case "NAMES" :
-         case "ENDNAMES" :
-            break;
-         case "PING" :
-            msg.replyTo("<PONG/>");
-            break;
-         case "PROGRESS" :
-            msg.replyTo("<OK/>");
-            break;
-         case "RESOURCE" :
-            break;
-         case "CONSOLE" :
-            msg.replyTo("<OK/>");
-            break;
-         case "OPENEDITOR" :
-            break;
-         case "EVALUATION" :
-            msg.replyTo("<OK/>");
-            break;
-         case "BUILDDONE" :
-         case "FILECHANGE" :
-         case "PROJECTDATA" :
-         case "PROJECTOPEN" :
-            break;
-         case "STOP" :
-            break;
-         default :
-            break;
+	 case "ELISIION" :
+	    break;
+	 case "EDITERROR" :
+	    break;
+	 case "FILEERROR" :
+	    break;
+	 case "PRIVATEERROR" :
+	    break;
+	 case "EDIT" :
+	    break;
+	 case "BREAKEVENT" :
+	    break;
+	 case "LAUNCHCONFIGEVENT" :
+	    break;
+	 case "RUNEVENT" :
+	    long when = IvyXml.getAttrLong(e,"TIME");
+	    for (Element re : IvyXml.children(e,"RUNEVENT")) {
+	       handleRunEvent(re,when);
+	     }
+	    msg.replyTo("<OK/>");
+	    break;
+	 case "NAMES" :
+	 case "ENDNAMES" :
+	    break;
+	 case "PING" :
+	    msg.replyTo("<PONG/>");
+	    break;
+	 case "PROGRESS" :
+	    msg.replyTo("<OK/>");
+	    break;
+	 case "RESOURCE" :
+	    break;
+	 case "CONSOLE" :
+	    msg.replyTo("<OK/>");
+	    break;
+	 case "OPENEDITOR" :
+	    break;
+	 case "EVALUATION" :
+	    msg.replyTo("<OK/>");
+	    break;
+	 case "BUILDDONE" :
+	 case "FILECHANGE" :
+	 case "PROJECTDATA" :
+	 case "PROJECTOPEN" :
+	    break;
+	 case "STOP" :
+	    break;
+	 default :
+	    break;
        }
     }
-   
+
 }	// end of innerclass IDEHandler
 
 
@@ -487,7 +488,7 @@ private class IDEHandler implements MintHandler {
 /********************************************************************************/
 
 private class SeedeHandler implements MintHandler {
-   
+
    @Override public void receive(MintMessage msg,MintArguments args) {
       System.err.println("TEST: Received from seede: " + msg.getText());
       String what = args.getArgument(0);
@@ -500,8 +501,9 @@ private class SeedeHandler implements MintHandler {
              }
             break;
        }
+      msg.replyTo();
     }
-   
+
 }	// end of inner class SeedeHandler
 
 
@@ -575,7 +577,7 @@ private String waitForStop()
 
 
 
-}       // end of class TestPole
+}	// end of class TestPole
 
 
 

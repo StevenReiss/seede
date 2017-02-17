@@ -92,7 +92,7 @@ Object popMarker(Object itm)
    Object v = execution_stack.pop();
    if (v instanceof StackMarker) {
       StackMarker sm = (StackMarker) v;
-      if (sm.getItem() != v) throw new Error("Unexpected marker popped from stack");
+      if (sm.getItem() != itm) throw new Error("Unexpected marker popped from stack");
       return sm.getData();
     }
    else throw new Error("Non-marker popped from stack");

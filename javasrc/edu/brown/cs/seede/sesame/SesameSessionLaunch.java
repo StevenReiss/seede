@@ -100,7 +100,7 @@ SesameSessionLaunch(SesameMain sm,String sid,Element xml)
 
 String getFrameId(String thread)	{ return thread_frame.get(thread); }
 
-String getAnyThread()	
+String getAnyThread()
 {
    for (String s : thread_ids) {
       return s;
@@ -126,7 +126,7 @@ String getAnyThread()
       JcompSymbol psym = JcompAst.getDefinition(svd.getName());
       SesameValueData val = valmap.get(psym.getName());
       val = getUniqueValue(val);
-      args.add(val.getCashewValue());
+      if (val != null) args.add(val.getCashewValue());
     }
 
    return args;

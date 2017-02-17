@@ -1,21 +1,21 @@
 /********************************************************************************/
-/*                                                                              */
-/*              SesameMain.java                                                 */
-/*                                                                              */
-/*      Main program for SEEDE assistance                                       */
-/*                                                                              */
+/*										*/
+/*		SesameMain.java 						*/
+/*										*/
+/*	Main program for SEEDE assistance					*/
+/*										*/
 /********************************************************************************/
-/*      Copyright 2011 Brown University -- Steven P. Reiss                    */
+/*	Copyright 2011 Brown University -- Steven P. Reiss		      */
 /*********************************************************************************
- *  Copyright 2011, Brown University, Providence, RI.                            *
- *                                                                               *
- *                        All Rights Reserved                                    *
- *                                                                               *
- * This program and the accompanying materials are made available under the      *
+ *  Copyright 2011, Brown University, Providence, RI.				 *
+ *										 *
+ *			  All Rights Reserved					 *
+ *										 *
+ * This program and the accompanying materials are made available under the	 *
  * terms of the Eclipse Public License v1.0 which accompanies this distribution, *
- * and is available at                                                           *
- *      http://www.eclipse.org/legal/epl-v10.html                                *
- *                                                                               *
+ * and is available at								 *
+ *	http://www.eclipse.org/legal/epl-v10.html				 *
+ *										 *
  ********************************************************************************/
 
 /* SVN: $Id$ */
@@ -39,46 +39,46 @@ import edu.brown.cs.ivy.xml.IvyXmlWriter;
 import edu.brown.cs.seede.acorn.AcornLog;
 import edu.brown.cs.seede.cashew.CashewConstants;
 
-public class SesameMain implements SesameConstants, MintConstants 
+public class SesameMain implements SesameConstants, MintConstants
 {
 
 
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Main Program                                                            */
-/*                                                                              */
+/*										*/
+/*	Main Program								*/
+/*										*/
 /********************************************************************************/
 
 
-public static void main(String [] args) 
+public static void main(String [] args)
 {
    SesameMain sm = new SesameMain(args);
    sm.process();
 }
- 
+
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Private Storage                                                         */
-/*                                                                              */
+/*										*/
+/*	Private Storage 							*/
+/*										*/
 /********************************************************************************/
 
-private String                  message_id;
-private SesameFileManager       file_manager;
-private SesameMonitor           message_monitor;
+private String			message_id;
+private SesameFileManager	file_manager;
+private SesameMonitor		message_monitor;
 private Map<String,SesameProject> project_map;
 
-private static JcompControl     jcomp_base;
+private static JcompControl	jcomp_base;
 
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Constructors                                                            */
-/*                                                                              */
+/*										*/
+/*	Constructors								*/
+/*										*/
 /********************************************************************************/
 
 private SesameMain(String [] args)
@@ -86,11 +86,12 @@ private SesameMain(String [] args)
    message_id = null;
    project_map = new HashMap<String,SesameProject>();
    jcomp_base = CashewConstants.JCOMP_BASE;
-   
-   AcornLog.setLogFile(new File("seede.log"));
-   
+
+   AcornLog.setLogFile(new File("/u/spr/seede.log"));
+   AcornLog.useStdErr(true);
+
    scanArgs(args);
-   
+
    file_manager = new SesameFileManager(this);
    message_monitor = new SesameMonitor(this);
 }
@@ -98,23 +99,23 @@ private SesameMain(String [] args)
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Argument scanning methods                                               */
-/*                                                                              */
+/*										*/
+/*	Argument scanning methods						*/
+/*										*/
 /********************************************************************************/
 
 private void scanArgs(String [] args)
 {
    for (int i = 0; i < args.length; ++i) {
       if (args[i].startsWith("-")) {
-         if (args[i].startsWith("-m") && i+1 < args.length) {
-            message_id = args[++i];
-          }
-         else badArgs();
+	 if (args[i].startsWith("-m") && i+1 < args.length) {
+	    message_id = args[++i];
+	  }
+	 else badArgs();
        }
       else badArgs();
     }
-   
+
   if (message_id == null) {
      message_id = System.getProperty("edu.brown.cs.bubbles.MINT");
      if (message_id == null) message_id = System.getProperty("edu.brown.cs.bubbles.mint");
@@ -134,36 +135,36 @@ private void badArgs()
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Access methods                                                          */
-/*                                                                              */
+/*										*/
+/*	Access methods								*/
+/*										*/
 /********************************************************************************/
 
-static JcompControl getJcompBase()              { return jcomp_base; }
+static JcompControl getJcompBase()		{ return jcomp_base; }
 
-SesameFileManager getFileManager()              { return file_manager; }
-SesameMonitor getMonitor()                      { return message_monitor; }
+SesameFileManager getFileManager()		{ return file_manager; }
+SesameMonitor getMonitor()			{ return message_monitor; }
 
-String getMintId()                              { return message_id; }
+String getMintId()				{ return message_id; }
 
 
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Project managment                                                       */
-/*                                                                              */
+/*										*/
+/*	Project managment							*/
+/*										*/
 /********************************************************************************/
 
 SesameProject getProject(String name)
 {
    if (name == null) return null;
-   
+
    synchronized (project_map) {
       SesameProject sp = project_map.get(name);
       if (sp == null) {
-         sp = new SesameProject(this,name);
-         project_map.put(name,sp);
+	 sp = new SesameProject(this,name);
+	 project_map.put(name,sp);
        }
       return sp;
     }
@@ -172,11 +173,11 @@ SesameProject getProject(String name)
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Messaging methods                                                       */
-/*                                                                              */
+/*										*/
+/*	Messaging methods							*/
+/*										*/
 /********************************************************************************/
- 
+
 void sendMessage(String cmd,String proj,Map<String,Object> flds,String cnts)
 {
    sendMessage(cmd,proj,flds,cnts,null,MINT_MSG_NO_REPLY);
@@ -187,9 +188,9 @@ String getStringReply(String cmd,String proj,Map<String,Object> flds,String cnts
    MintDefaultReply rply = new MintDefaultReply();
    sendMessage(cmd,proj,flds,cnts,rply,MINT_MSG_FIRST_REPLY);
    String rslt = rply.waitForString(delay);
-   
+
    AcornLog.logD("Reply: " + rslt);
-   
+
    return rslt;
 }
 
@@ -198,13 +199,13 @@ Element getXmlReply(String cmd,SesameProject sproj,Map<String,Object> flds,Strin
 {
    String proj = null;
    if (sproj != null) proj = sproj.getName();
-   
+
    MintDefaultReply rply = new MintDefaultReply();
    sendMessage(cmd,proj,flds,cnts,rply,MINT_MSG_FIRST_REPLY);
    Element rslt = rply.waitForXml(delay);
-   
+
    AcornLog.logD("Reply: " + IvyXml.convertXmlToString(rslt));
-   
+
    return rslt;
 }
 
@@ -226,7 +227,7 @@ private void sendMessage(String cmd,String proj,Map<String,Object> flds,String c
    xw.field("LANG","Eclipse");
    if (flds != null) {
       for (Map.Entry<String,Object> ent : flds.entrySet()) {
-         xw.field(ent.getKey(),ent.getValue());
+	 xw.field(ent.getKey(),ent.getValue());
        }
     }
    if (cnts != null) {
@@ -235,17 +236,17 @@ private void sendMessage(String cmd,String proj,Map<String,Object> flds,String c
    xw.end("BUBBLES");
    String msg = xw.toString();
    xw.close();
-   
+
    AcornLog.logD("SEND: " + msg);
-   
+
    message_monitor.sendMessage(msg,rply,fgs);
 }
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Processing methods                                                      */
-/*                                                                              */
+/*										*/
+/*	Processing methods							*/
+/*										*/
 /********************************************************************************/
 
 private void process()
@@ -256,7 +257,7 @@ private void process()
 
 
 
-}       // end of class SesameMain
+}	// end of class SesameMain
 
 
 

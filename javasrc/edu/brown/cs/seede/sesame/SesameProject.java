@@ -195,6 +195,9 @@ private synchronized void clearProject()
    return base_project;
 }
 
+
+
+
 @Override public synchronized JcodeFactory getJcodeFactory()
 {
    if (binary_control != null) return binary_control;

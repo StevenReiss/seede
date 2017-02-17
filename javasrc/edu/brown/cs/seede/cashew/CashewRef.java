@@ -101,11 +101,13 @@ CashewRef(CashewDeferredValue deferred)
 
 
 
-@Override public String getString(CashewClock cc,int lvl)
+@Override public String getString(CashewClock cc,int lvl,boolean dbg)
 {
+   if (dbg && deferred_value != null) return "<???>";
+   
    CashewValue cv = getValueAt(cc);
    if (cv == null) return null;
-   return cv.getString(cc,lvl);
+   return cv.getString(cc,lvl,dbg);
 }
 
 
@@ -196,12 +198,14 @@ CashewRef(CashewDeferredValue deferred)
 
 
 
-@Override public Boolean isNull(CashewClock cc)
+@Override public boolean isNull(CashewClock cc)
 {
    CashewValue cv = getValueAt(cc);
-   if (cv == null) return null;
+   if (cv == null) return true;
    return cv.isNull(cc);
 }
+
+
 
 
 @Override public Boolean isCategory2(CashewClock cc)
@@ -335,4 +339,3 @@ private CashewValue getValueAt(CashewClock cc)
 
 
 /* end of CashewRef.java */
-

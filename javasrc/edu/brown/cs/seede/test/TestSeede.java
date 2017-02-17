@@ -591,6 +591,7 @@ private class SeedeHandler implements MintHandler {
              }
             break;
        }
+      msg.replyTo();
     }
 
 }	// end of inner class SeedeHandler

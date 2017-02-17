@@ -419,10 +419,16 @@ public Character getChar(CashewClock cc)
 
 public final String getString(CashewClock cc)
 {
-   return getString(cc,4);
+   return getString(cc,4,false);
 }
 
-public String getString(CashewClock cc,int lvl)
+
+public String getDebugString(CashewClock cc)
+{
+   return getString(cc,2,true);
+}
+
+public String getString(CashewClock cc,int lvl,boolean debug)
 {
    throw new Error("Illegal value conversion");
 }
@@ -466,7 +472,8 @@ public CashewValue setValueAt(CashewClock cc,CashewValue cv)
 
 
 
-public Boolean isNull(CashewClock cc)		{ return false; }
+public boolean isNull(CashewClock cc)		{ return false; }
+
 
 public Boolean isCategory2(CashewClock cc)	{ return false; }
 
@@ -544,7 +551,7 @@ private static class ValueNumeric extends CashewValue {
       return (char) num_value.shortValue();
     }
 
-   @Override public String getString(CashewClock cc,int idx) {
+   @Override public String getString(CashewClock cc,int idx,boolean dbg) {
       return num_value.toString();
     }
 
@@ -553,7 +560,7 @@ private static class ValueNumeric extends CashewValue {
       return false;
     }
 
-   @Override public Boolean isNull(CashewClock cc) {
+   @Override public boolean isNull(CashewClock cc) {
       throw new Error("Illegal value conversion");
     }
 
@@ -615,7 +622,7 @@ private static class ValueNull extends CashewValue
       super(jt);
     }
 
-   @Override public Boolean isNull(CashewClock cc)	{ return true; }
+   @Override public boolean isNull(CashewClock cc)	{ return true; }
 
    @Override public CashewValue getFieldValue(CashewClock cc,String nm) {
       throw new NullPointerException();
@@ -625,7 +632,7 @@ private static class ValueNull extends CashewValue
       throw new NullPointerException();
     }
 
-   @Override public String getString(CashewClock cc,int idx) {
+   @Override public String getString(CashewClock cc,int idx,boolean dbg) {
       return "null";
     }
 
