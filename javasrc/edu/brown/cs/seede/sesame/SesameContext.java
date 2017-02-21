@@ -48,7 +48,7 @@ private SesameSession   for_session;
 
 SesameContext(SesameSession ss)
 {
-   super("GLOBAL_CONTEXT",null);
+   super("GLOBAL_CONTEXT",null,null);
    
    for_session = ss;
 }

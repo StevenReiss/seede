@@ -24,6 +24,7 @@
 
 package edu.brown.cs.seede.cashew;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -50,6 +51,7 @@ public class CashewContext implements CashewConstants
 
 private Map<Object,CashewValue> context_map;
 private CashewContext parent_context;
+private File   context_file;
 private String context_owner;
 private List<CashewContext> nested_contexts;
 private int context_id;
@@ -66,20 +68,22 @@ private static AtomicInteger id_counter = new AtomicInteger();
 /*										*/
 /********************************************************************************/
 
-public CashewContext(JcompSymbol js,CashewContext par)
+public CashewContext(JcompSymbol js,File f,CashewContext par)
 {
-   this(js.getFullName(),par);
+   this(js.getFullName(),f,par);
 }
+
 
 public CashewContext(JcodeMethod jm,CashewContext par)
 {
-   this(jm.getFullName(),par);
+   this(jm.getFullName(),null,par);
 }
 
 
-public CashewContext(String js,CashewContext par)
+public CashewContext(String js,File f,CashewContext par)
 {
    context_owner = js;
+   context_file = f;
    context_map = new HashMap<>();
    parent_context = par;
    nested_contexts = new ArrayList<CashewContext>();
@@ -258,6 +262,9 @@ public void outputXml(CashewOutputContext outctx)
    xw.field("ID",context_id);
    if (context_owner != null) {
       xw.field("METHOD",context_owner);
+    }
+   if (context_file != null) {
+      xw.field("FILE",context_file.getAbsolutePath());
     }
    xw.field("START",start_time);
    xw.field("END",end_time);

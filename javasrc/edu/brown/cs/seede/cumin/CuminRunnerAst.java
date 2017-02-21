@@ -25,6 +25,7 @@
 package edu.brown.cs.seede.cumin;
 
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -95,6 +96,7 @@ import org.eclipse.jdt.core.dom.TypeLiteral;
 import org.eclipse.jdt.core.dom.VariableDeclarationExpression;
 
 import edu.brown.cs.ivy.jcomp.JcompAst;
+import edu.brown.cs.ivy.jcomp.JcompSource;
 import edu.brown.cs.ivy.jcomp.JcompSymbol;
 import edu.brown.cs.ivy.jcomp.JcompType;
 import edu.brown.cs.ivy.jcomp.JcompTyper;
@@ -257,8 +259,11 @@ CuminRunnerAst(CuminProject cp,CashewContext gblctx,CashewClock cc,
 private void setupContext()
 {
    JcompSymbol js = JcompAst.getDefinition(method_node);
+   JcompSource src = JcompAst.getSource(method_node.getRoot());
+   File file = null;
+   if (src != null) file = new File(src.getFileName());
 
-   CashewContext ctx = new CashewContext(js,global_context);
+   CashewContext ctx = new CashewContext(js,file,global_context);
    LocalFinder lf = new LocalFinder();
    method_node.accept(lf);
    for (JcompSymbol lcl : lf.getLocalVars()) {

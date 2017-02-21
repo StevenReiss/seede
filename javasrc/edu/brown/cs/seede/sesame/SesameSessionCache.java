@@ -1,8 +1,8 @@
 /********************************************************************************/
 /*                                                                              */
-/*              SesameThreadContext.java                                        */
+/*              SesameSessionCache.java                                         */
 /*                                                                              */
-/*      Context information for thread-specific information                     */
+/*      description of class                                                    */
 /*                                                                              */
 /********************************************************************************/
 /*      Copyright 2011 Brown University -- Steven P. Reiss                    */
@@ -24,10 +24,10 @@
 
 package edu.brown.cs.seede.sesame;
 
-import edu.brown.cs.seede.cashew.CashewContext;
-import edu.brown.cs.seede.cashew.CashewValue;
+import java.util.HashMap;
+import java.util.Map;
 
-class SesameThreadContext extends CashewContext implements SesameConstants
+class SesameSessionCache implements SesameConstants
 {
 
 
@@ -37,8 +37,7 @@ class SesameThreadContext extends CashewContext implements SesameConstants
 /*                                                                              */
 /********************************************************************************/
 
-private String  thread_id;
-private SesameSession for_session;
+private Map<String,Map<String,SesameValueData>> thread_map;
 
 
 
@@ -49,46 +48,59 @@ private SesameSession for_session;
 /*                                                                              */
 /********************************************************************************/
 
-SesameThreadContext(String tid,SesameSession sess,SesameContext gbl)
+SesameSessionCache()
 {
-   super("THREAD_CONTEXT",null,gbl);
-   
-   thread_id = tid;
-   for_session = sess;
+   thread_map = new HashMap<>();
 }
 
 
 
 /********************************************************************************/
 /*                                                                              */
-/*      Overridden methods                                                      */
+/*      Lookup methods                                                          */
 /*                                                                              */
 /********************************************************************************/
 
-public CashewValue findStaticFieldReference(String name,String type)
+SesameValueData lookup(String thread,String expr)
 {
-   if (name.equals(CURRENT_THREAD_FIELD)) {
-      CashewValue cv = findReference(name);
-      if (cv != null) return cv;
-      SesameValueData svd = for_session.evaluateData("java.lang.Thread.currentThread()",thread_id);
-      if (svd != null) {
-         cv = svd.getCashewValue();
-         if (cv != null) {
-            define(name,cv);
-            return cv;
-          }
-       }
+   if (thread == null || thread.equals("")) thread = "*";
+   
+   synchronized (thread_map) {
+      Map<String,SesameValueData> mapr = thread_map.get(thread);
+      if (mapr == null) return null;
+      return mapr.get(expr);
     }
-   
-   return super.findStaticFieldReference(name,type);
 }
 
 
 
-}       // end of class SesameThreadContext
+void cacheValue(String thread,String expr,SesameValueData svd)
+{
+   if (thread == null || thread.equals("")) thread = "*";
+   
+   synchronized (thread_map) {
+      Map<String,SesameValueData> mapr = thread_map.get(thread);
+      if (mapr == null) {
+         mapr = new HashMap<>();
+         thread_map.put(thread,mapr);
+       }
+      mapr.put(expr,svd);
+    }
+}
 
 
 
 
-/* end of SesameThreadContext.java */
+void clearCache()
+{
+   thread_map.clear();
+}
+
+
+}       // end of class SesameSessionCache
+
+
+
+
+/* end of SesameSessionCache.java */
 

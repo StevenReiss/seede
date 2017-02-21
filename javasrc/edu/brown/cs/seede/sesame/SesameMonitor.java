@@ -130,25 +130,25 @@ private class WaitForExit extends Thread {
 
    @Override public void run() {
       synchronized (this) {
-         for ( ; ; ) {
-            if (checkEclipse()) break;
-            try {
-               wait(30000l);
-             }
-            catch (InterruptedException e) { }
-          }
-   
-         while (!is_done) {
-            if (!checkEclipse()) is_done = true;
-            else {
-               try {
-        	  wait(30000l);
-        	}
-               catch (InterruptedException e) { }
-             }
-          }
+	 for ( ; ; ) {
+	    if (checkEclipse()) break;
+	    try {
+	       wait(30000l);
+	     }
+	    catch (InterruptedException e) { }
+	  }
+
+	 while (!is_done) {
+	    if (!checkEclipse()) is_done = true;
+	    else {
+	       try {
+		  wait(30000l);
+		}
+	       catch (InterruptedException e) { }
+	     }
+	  }
        }
-   
+
       System.exit(0);
     }
 
@@ -199,8 +199,8 @@ private void handleEdit(String bid,File file,int len,int offset,boolean complete
        }
       AcornLog.logD("EDIT RESTART " + fnd);
       if (fnd != null) {
-         ss.restartRunners();
-       }   
+	 ss.restartRunners();
+       }
     }
 }
 
@@ -221,7 +221,33 @@ private void handleResourceChange(Element res)
 
 private void handleRunEvent(Element event,long when)
 {
-
+   String kind = IvyXml.getAttrString(event,"KIND");
+   String detail = IvyXml.getAttrString(event,"DETAIL");
+   if (detail != null && detail.equals("EVALUATION")) return;
+   
+   switch (kind) {
+      case "RESUME" :
+         Element thrd = IvyXml.getChild(event,"THREAD");
+         String tid = null;
+         String lid = null;
+         if (thrd != null) {
+            tid = IvyXml.getAttrString(thrd,"ID");
+            lid = IvyXml.getAttrString(IvyXml.getChild(thrd,"LAUNCH"),"ID");
+          }
+         else {
+            Element tgt = IvyXml.getChild(event,"TARGET");
+            lid = IvyXml.getAttrString(IvyXml.getChild(tgt,"LAUNCH"),"ID");
+          }
+         for (SesameSession ss : session_map.values()) {
+            ss.noteContinue(lid,tid);
+          }
+         
+         break;
+      case "SUSPEND" :
+         break;
+      default :
+         return;
+    }
 }
 
 
@@ -297,72 +323,72 @@ private class EclipseHandler implements MintHandler {
    @Override public void receive(MintMessage msg,MintArguments args) {
       String cmd = args.getArgument(0);
       Element e = msg.getXml();
-
+   
       switch (cmd) {
-	 case "ELISION" :
-	    return;
+         case "ELISION" :
+            return;
        }
-
+   
       AcornLog.logD("Message from eclipse: " + cmd + " " + msg.getText());
-
+   
       switch (cmd) {
-	 case "PING" :
-	    msg.replyTo("<PONG/>");
-	    break;
-	 case "EDITERROR" :
-	 case "FIEERROR" :
-	    handleErrors(IvyXml.getAttrString(e,"PROJECT"),
-		  new File(IvyXml.getAttrString(e,"FILE")),
-		  IvyXml.getAttrInt(e,"ID",-1),
-		  IvyXml.getChild(e,"MESSAGES"));
-	    break;
-	 case "EDIT" :
-	    AcornLog.logD("Eclipse Message: " + msg.getText());
-	    String txt = IvyXml.getText(e);
-	    boolean complete = IvyXml.getAttrBool(e,"COMPLETE");
-	    boolean remove = IvyXml.getAttrBool(e,"REMOVE");
-	    if (complete) {
-	       byte [] data = IvyXml.getBytesElement(e,"CONTENTS");
-	       if (data != null) txt = new String(data);
-	       else remove = true;
-	     }
-	    handleEdit(IvyXml.getAttrString(e,"BID"),
-		  new File(IvyXml.getAttrString(e,"FILE")),
-		  IvyXml.getAttrInt(e,"LENGTH"),
-		  IvyXml.getAttrInt(e,"OFFSET"),
-		  complete,remove,txt);
-	    break;
-	 case "RUNEVENT" :
-	    long when = IvyXml.getAttrLong(e,"TIME");
-	    for (Element re : IvyXml.children(e,"RUNEVENT")) {
-	       handleRunEvent(re,when);
-	     }
-	    break;
-	 case "RESOURCE" :
-	    for (Element re : IvyXml.children(e,"DELTA")) {
-	       handleResourceChange(re);
-	     }
-	    break;
-	 case "CONSOLE" :
-	    handleConsoleEvent(e);
-	    break;
-	 case "EVALUATION" :
-	    AcornLog.logD("Eclipse Message: " + msg.getText());
-	    String bid = IvyXml.getAttrString(e,"BID");
-	    String id = IvyXml.getAttrString(e,"ID");
-	    if ((bid == null || bid.equals(SOURCE_ID)) && id != null) {
-	       EvalData ed = new EvalData(e);
-	       synchronized (eval_handlers) {
-		  eval_handlers.put(id,ed);
-		  eval_handlers.notifyAll();
-		}
-	     }
-	    msg.replyTo("<OK/>");
-	    break;
-	 case "STOP" :
-	    AcornLog.logD("Eclipse Message: " + msg.getText());
-	    serverDone();
-	    break;
+         case "PING" :
+            msg.replyTo("<PONG/>");
+            break;
+         case "EDITERROR" :
+         case "FIEERROR" :
+            handleErrors(IvyXml.getAttrString(e,"PROJECT"),
+        	  new File(IvyXml.getAttrString(e,"FILE")),
+        	  IvyXml.getAttrInt(e,"ID",-1),
+        	  IvyXml.getChild(e,"MESSAGES"));
+            break;
+         case "EDIT" :
+            AcornLog.logD("Eclipse Message: " + msg.getText());
+            String txt = IvyXml.getText(e);
+            boolean complete = IvyXml.getAttrBool(e,"COMPLETE");
+            boolean remove = IvyXml.getAttrBool(e,"REMOVE");
+            if (complete) {
+               byte [] data = IvyXml.getBytesElement(e,"CONTENTS");
+               if (data != null) txt = new String(data);
+               else remove = true;
+             }
+            handleEdit(IvyXml.getAttrString(e,"BID"),
+        	  new File(IvyXml.getAttrString(e,"FILE")),
+        	  IvyXml.getAttrInt(e,"LENGTH"),
+        	  IvyXml.getAttrInt(e,"OFFSET"),
+        	  complete,remove,txt);
+            break;
+         case "RUNEVENT" :
+            long when = IvyXml.getAttrLong(e,"TIME");
+            for (Element re : IvyXml.children(e,"RUNEVENT")) {
+               handleRunEvent(re,when);
+             }
+            break;
+         case "RESOURCE" :
+            for (Element re : IvyXml.children(e,"DELTA")) {
+               handleResourceChange(re);
+             }
+            break;
+         case "CONSOLE" :
+            handleConsoleEvent(e);
+            break;
+         case "EVALUATION" :
+            AcornLog.logD("Eclipse Message: " + msg.getText());
+            String bid = IvyXml.getAttrString(e,"BID");
+            String id = IvyXml.getAttrString(e,"ID");
+            if ((bid == null || bid.equals(SOURCE_ID)) && id != null) {
+               EvalData ed = new EvalData(e);
+               synchronized (eval_handlers) {
+        	  eval_handlers.put(id,ed);
+        	  eval_handlers.notifyAll();
+        	}
+             }
+            msg.replyTo("<OK/>");
+            break;
+         case "STOP" :
+            AcornLog.logD("Eclipse Message: " + msg.getText());
+            serverDone();
+            break;
        }
     }
 

@@ -62,6 +62,7 @@ private Map<String,Map<String,SesameValueData>> thread_values;
 private Map<String,SesameValueData> unique_values;
 private Map<String,String> thread_frame;
 private Set<String>	accessible_types;
+private SesameSessionCache value_cache;
 
 private static AtomicInteger eval_counter = new AtomicInteger();
 
@@ -87,6 +88,7 @@ SesameSessionLaunch(SesameMain sm,String sid,Element xml)
    thread_values = new HashMap<String,Map<String,SesameValueData>>();
    unique_values = new HashMap<String,SesameValueData>();
    accessible_types = new HashSet<String>();
+   value_cache = new SesameSessionCache();
 
    loadInitialValues();
 }
@@ -132,6 +134,23 @@ String getAnyThread()
    return args;
 }
 
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Evaluation methods                                                      */
+/*                                                                              */
+/********************************************************************************/
+
+@Override void noteContinue(String launch,String thread)
+{
+   if (!launch.equals(launch_id)) return;
+   if (thread != null) {
+      if (!thread_ids.contains(thread)) return;
+    }
+   value_cache.clearCache();
+}
 
 @Override CashewValue lookupValue(String name,String type)
 {

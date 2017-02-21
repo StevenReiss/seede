@@ -171,6 +171,9 @@ protected void addLocation(SesameLocation sl)
 }
 
 
+void noteContinue(String launch,String thread)          { }
+
+
 
 
 /********************************************************************************/
