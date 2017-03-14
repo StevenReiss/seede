@@ -70,13 +70,13 @@ CashewValueObject(JcompType jt,Map<String,Object> inits)
 	 CashewRef cr = null;
 	 if (inits != null) {
 	    Object ival = inits.get(key);
-            if (ival != null) {
-               if (ival instanceof CashewValue) cv = (CashewValue) ival;
-               else if (ival instanceof CashewDeferredValue) {
-                  CashewDeferredValue dv = (CashewDeferredValue) ival;
-                  cr = new CashewRef(dv);
-                }
-             }
+	    if (ival != null) {
+	       if (ival instanceof CashewValue) cv = (CashewValue) ival;
+	       else if (ival instanceof CashewDeferredValue) {
+		  CashewDeferredValue dv = (CashewDeferredValue) ival;
+		  cr = new CashewRef(dv);
+		}
+	     }
 	  }
 	 if (cr == null) cr = new CashewRef(cv);
 
@@ -126,13 +126,13 @@ private CashewRef findFieldForName(String nm)
       int idx = anm.indexOf("$");
       anm = anm.substring(0,idx) + "." + anm.substring(idx+1);
       ov = field_values.get(anm);
-      if (ov == null) ov = static_values.get(anm); 
+      if (ov == null) ov = static_values.get(anm);
     }
-   
+
    if (ov == null) {
       throw new Error("UndefinedField: " + nm);
     }
-   
+
    return ov;
 }
 
@@ -150,11 +150,11 @@ private CashewRef findFieldForName(String nm)
       buf.append("{");
       int ctr = 0;
       for (String fldname : field_values.keySet()) {
-         if (ctr++ != 0) buf.append(",");
-         buf.append(fldname);
-         buf.append(":");
-         CashewValue cv = getFieldValue(cc,fldname);
-         buf.append(cv.getString(cc,lvl-1,dbg));
+	 if (ctr++ != 0) buf.append(",");
+	 buf.append(fldname);
+	 buf.append(":");
+	 CashewValue cv = getFieldValue(cc,fldname);
+	 buf.append(cv.getString(cc,lvl-1,dbg));
        }
       buf.append("}");
     }

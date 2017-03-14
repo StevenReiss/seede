@@ -25,6 +25,7 @@
 package edu.brown.cs.seede.sesame;
 
 import edu.brown.cs.seede.cashew.CashewContext;
+import edu.brown.cs.seede.cashew.CashewInputOutputModel;
 import edu.brown.cs.seede.cashew.CashewValue;
 
 public class SesameContext extends CashewContext implements SesameConstants
@@ -108,8 +109,10 @@ SesameContext(SesameSession ss)
 }
 
 
-
-
+@Override public CashewInputOutputModel getIOModel()
+{
+   return for_session.getIOModel();
+}
 
 
 

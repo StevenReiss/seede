@@ -35,12 +35,13 @@ import java.util.Map;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 
 import edu.brown.cs.ivy.mint.MintDefaultReply;
-import edu.brown.cs.ivy.mint.MintConstants;
 import edu.brown.cs.ivy.xml.IvyXmlWriter;
 import edu.brown.cs.seede.acorn.AcornLog;
 import edu.brown.cs.seede.cashew.CashewContext;
 import edu.brown.cs.seede.cashew.CashewOutputContext;
+import edu.brown.cs.seede.cashew.CashewValue;
 import edu.brown.cs.seede.cumin.CuminConstants;
+import edu.brown.cs.seede.cumin.CuminGraphics;
 import edu.brown.cs.seede.cumin.CuminRunError;
 import edu.brown.cs.seede.cumin.CuminRunner;
 
@@ -63,6 +64,9 @@ private Map<CuminRunner,CuminRunError> run_status;
 private MasterThread	master_thread;
 private boolean 	is_continuous;
 private boolean 	run_again;
+private List<CashewValue> swing_components;
+private SesameContext   base_context;
+
 
 
 
@@ -73,15 +77,18 @@ private boolean 	run_again;
 /*										*/
 /********************************************************************************/
 
-SesameExecRunner(SesameSession ss,String rid,boolean contin,CuminRunner... rs)
+SesameExecRunner(SesameSession ss,String rid,SesameContext ctx,
+      boolean contin,CuminRunner... rs)
 {
    for_session = ss;
    for_monitor = ss.getControl().getMonitor();
+   base_context = ctx;
    reply_id = rid;
    cumin_runners = new ArrayList<CuminRunner>();
    runner_threads = new HashMap<CuminRunner,RunnerThread>();
    run_status = new HashMap<CuminRunner,CuminRunError>();
    is_continuous = contin;
+   swing_components = new ArrayList<CashewValue>();
 
    for (CuminRunner r : rs) {
       cumin_runners.add(r);
@@ -98,11 +105,21 @@ SesameExecRunner(SesameSession ss,String rid,boolean contin,CuminRunner... rs)
 /*										*/
 /********************************************************************************/
 
+SesameContext getBaseContext()                  { return base_context; }
+boolean isContinuous()                          { return is_continuous; }
+
+
 void addRunner(CuminRunner cr)
+{
+   addRunner(cr,false);
+}
+
+
+void addRunner(CuminRunner cr,boolean start)
 {
    stopCurrentRun();
    cumin_runners.add(cr);
-   if (is_continuous) startRunner();
+   if (is_continuous && start) startRunner();
 }
 
 
@@ -114,6 +131,19 @@ void removeRunner(CuminRunner cr)
 }
 
 
+void removeAllRunners()
+{
+   stopCurrentRun();
+   cumin_runners.clear();
+}
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Execution methods                                                       */
+/*                                                                              */
+/********************************************************************************/
 
 void startExecution()
 {
@@ -154,7 +184,7 @@ private synchronized void stopCurrentRun()
 
    while (!runner_threads.isEmpty()) {
       try {
-	 runner_threads.wait(1000);
+	 wait(1000);
        }
       catch (InterruptedException e) { }
     }
@@ -185,7 +215,7 @@ private synchronized void startRunner()
 }
 
 
-
+	
 /********************************************************************************/
 /*										*/
 /*	Output methods								*/
@@ -199,27 +229,26 @@ private void report()
       if (sts == null || sts.getReason() == CuminRunError.Reason.STOPPED) empty = true;
     }
 
-   IvyXmlWriter xw = new IvyXmlWriter();
-   xw.begin("SEEDEXEC");
-   xw.field("TYPE","EXEC");
-   if (reply_id != null) xw.field("ID",reply_id);
-   if (empty || run_status.isEmpty()) xw.field("EMPTY",true);
-   else {
-      for (Map.Entry<CuminRunner,CuminRunError> ent : run_status.entrySet()) {
-	 CuminRunner cr = ent.getKey();
-	 CuminRunError sts = ent.getValue();
-	 outputResult(xw,cr,sts);
-       }
-    }
-   xw.end("SEEDEXEC");
-
-   String rslt = xw.toString();
-   xw.close();
-
-   AcornLog.logD("Exec Result: " + rslt);
    if (reply_id != null) {
+      CommandArgs args = new CommandArgs();
+      String cnts = null;
+      if (reply_id != null) args.put("ID",reply_id);
+      if (empty || run_status.isEmpty()) args.put("EMPTY",true);
+      else {
+	 IvyXmlWriter xw = new IvyXmlWriter();
+	 xw.begin("CONTENTS");
+	 for (Map.Entry<CuminRunner,CuminRunError> ent : run_status.entrySet()) {
+	    CuminRunner cr = ent.getKey();
+	    CuminRunError sts = ent.getValue();
+	    outputResult(xw,cr,sts);
+	  }
+	 for_session.getIOModel().outputXml(xw);
+	 xw.end("CONTENTS");
+	 cnts = xw.toString();
+	 xw.close();
+       }
       MintDefaultReply hdlr = new MintDefaultReply();
-      for_monitor.sendMessage(rslt,hdlr,MintConstants.MINT_MSG_FIRST_REPLY);
+      for_monitor.sendCommand("EXEC",args,cnts,hdlr);
       String mrslt = hdlr.waitForString();
       AcornLog.logD("Message result: " + mrslt);
     }
@@ -235,9 +264,11 @@ private void outputResult(IvyXmlWriter xw,CuminRunner cr,CuminRunError sts)
 
    xw.begin("RUNNER");
    SesameLocation loc = for_session.getLocation(cr);
-   xw.field("METHOD",loc.getMethodName());
-   xw.field("LINE",loc.getLineNumber());
-   xw.field("THREAD",loc.getThread());
+   if (loc != null) {
+      xw.field("METHOD",loc.getMethodName());
+      xw.field("LINE",loc.getLineNumber());
+      xw.field("THREAD",loc.getThread());
+    }
 
    xw.begin("RETURN");
    xw.field("REASON",sts.getReason());
@@ -250,9 +281,7 @@ private void outputResult(IvyXmlWriter xw,CuminRunner cr,CuminRunError sts)
       pw.close();
     }
    if (sts.getValue() != null) {
-      xw.begin("VALUE");
       sts.getValue().outputXml(outctx);
-      xw.end("VALUE");
     }
    xw.end("RETURN");
    CashewContext ctx = cr.getLookupContext();
@@ -286,6 +315,7 @@ private class MasterThread extends Thread {
       for (int i = 0; ; ++i ) {
          // first start all the threads
          run_status.clear();
+         for_session.getIOModel().clear();
          List<RunnerThread> waits = new ArrayList<RunnerThread>();
          synchronized (this) {
             for (CuminRunner cr : cumin_runners) {
@@ -318,6 +348,7 @@ private class MasterThread extends Thread {
                catch (InterruptedException e) { }
              }
           }
+         runSwingThreads();
          report();
          synchronized (this) {
             if (!is_continuous) break;
@@ -336,6 +367,17 @@ private class MasterThread extends Thread {
    
       master_thread = null;
    }
+
+   private void runSwingThreads() {
+      if (swing_components == null || swing_components.isEmpty()) return;
+      for (CashewValue cv : swing_components) {
+	 CuminGraphics cgr = new CuminGraphics(cv,null);
+	 // invoke cv.paint(cgr)
+	 String rpt = cgr.getReport();
+	 System.err.println("SWING REPORT: " + rpt);
+	 // add report to output
+       }
+    }
 
 }	// end of inner class MasterRunner
 
@@ -364,15 +406,15 @@ private static class RunnerThread extends Thread {
    @Override public void run() {
       CuminRunError sts = null;
       try {
-         cumin_runner.interpret(CuminConstants.EvalType.RUN);
+	 cumin_runner.interpret(CuminConstants.EvalType.RUN);
        }
       catch (CuminRunError r) {
-         sts = r;
+	 sts = r;
        }
       catch (Throwable t) {
-         sts = new CuminRunError(t);
+	 sts = new CuminRunError(t);
        }
-   
+
       exec_runner.setStatus(cumin_runner,sts);
     }
 

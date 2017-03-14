@@ -118,6 +118,9 @@ JcompType FLOAT_BOX_TYPE = JCOMP_BASE.getSystemType("java.lang.Float");
 JcompType DOUBLE_BOX_TYPE = JCOMP_BASE.getSystemType("java.lang.Double");
 JcompType BOOLEAN_BOX_TYPE = JCOMP_BASE.getSystemType("java.lang.Boolean");
 
+JcompType COMPONENT_TYPE = JCOMP_BASE.getSystemType("java.awt.Component");
+JcompType GRAPHICS2D_TYPE = JCOMP_BASE.getSystemType("java.awt.Graphics2D");
+
 
 
 

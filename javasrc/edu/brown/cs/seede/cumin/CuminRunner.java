@@ -242,7 +242,9 @@ protected CuminRunner handleCall(CashewClock cc,JcompSymbol method,List<CashewVa
 
    JcompType type = cmethod.getClassType();
    if (!type.isKnownType()) {
-      MethodDeclaration md = findAstForMethod(cmethod.getFullName());
+      MethodDeclaration md = (MethodDeclaration) cmethod.getDefinitionNode();
+      if (md == null)  
+         md = findAstForMethod(cmethod.getFullName());
       if (md != null) return doCall(cc,md,args);
     }
 
@@ -297,7 +299,7 @@ CuminRunner doCall(CashewClock cc,JcodeMethod mthd,List<CashewValue> args)
 {
    CuminRunnerByteCode rbyt = new CuminRunnerByteCode(base_project,global_context,cc,mthd,args);
 
-   AcornLog.logD("Start binary call to " + mthd);
+   AcornLog.logD("Start binary call to " + mthd + " with " + args);
 
    return rbyt;
 }
@@ -358,6 +360,7 @@ private MethodDeclaration findAstForMethod(String nm)
    for (JcompSymbol sr : js.getSymbols()) {
       ASTNode an = sr.getDefinitionNode();
       if (an != null && an instanceof MethodDeclaration) {
+	 // Need to Check Data Type here
 	 return ((MethodDeclaration) an);
        }
     }

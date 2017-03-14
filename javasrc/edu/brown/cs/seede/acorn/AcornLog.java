@@ -82,6 +82,13 @@ public static void logE(String msg)
 }
 
 
+public static void logX(String msg) 
+{
+   Throwable t = new Throwable(msg);
+   log(LogLevel.ERROR,msg,t);
+}
+
+
 public static void logW(String msg)
 {
    log(LogLevel.WARNING,msg,null);

@@ -40,7 +40,9 @@ import org.w3c.dom.Element;
 
 import edu.brown.cs.ivy.jcomp.JcompAst;
 import edu.brown.cs.ivy.jcomp.JcompSymbol;
+import edu.brown.cs.ivy.jcomp.JcompTyper;
 import edu.brown.cs.ivy.xml.IvyXml;
+import edu.brown.cs.seede.cashew.CashewException;
 import edu.brown.cs.seede.cashew.CashewValue;
 
 class SesameSessionLaunch extends SesameSession
@@ -136,6 +138,18 @@ String getAnyThread()
 
 
 
+@Override void setInitialValue(String what,Element val) throws SesameException
+{
+   JcompTyper typer = getProject().getTyper();
+   try {
+      CashewValue cv = CashewValue.createValue(typer,val);
+      value_cache.setInitialValue(what,cv);
+    }
+   catch (CashewException e) {
+      throw new SesameException("Illegal value",e);
+    }
+}
+
 
 /********************************************************************************/
 /*                                                                              */
@@ -149,8 +163,11 @@ String getAnyThread()
    if (thread != null) {
       if (!thread_ids.contains(thread)) return;
     }
+   
    value_cache.clearCache();
 }
+
+
 
 @Override CashewValue lookupValue(String name,String type)
 {
@@ -164,12 +181,16 @@ String getAnyThread()
 }
 
 
-@Override SesameValueData evaluateData(String expr,String thread)
+@Override SesameValueData evaluateData(String expr,String thread0)
 {
    String eid = "E_" + eval_counter.incrementAndGet();
    // expr = "edu.brown.cs.seede.poppy.PoppyValue.register(" + expr + ")";
 
-   if (thread == null) thread = getAnyThread();
+   SesameValueData svd0 = value_cache.lookup(thread0,expr);
+   if (svd0 != null) return svd0;
+   
+   String thread = thread0;
+   if (thread0 == null) thread0 = getAnyThread();
    String frame = thread_frame.get(thread);
    CommandArgs args = new CommandArgs("THREAD",thread,
 	 "FRAME",frame,"BREAK",false,"EXPR",expr,
@@ -185,6 +206,7 @@ String getAnyThread()
 	 assoc = "*" + args.get("SAVEID").toString();
        }
       SesameValueData svd = new SesameValueData(this,thread,v1,assoc);
+      value_cache.cacheValue(thread0,expr,svd);
       return svd;
     }
    return null;
@@ -215,8 +237,11 @@ String getAnyThread()
 @Override void enableAccess(String type)
 {
    if (accessible_types.contains(type)) return;
+   
+   String type1 = type.replace('$','.');
 
-   String expr = "java.lang.reflect.AccessibleObject.setAccessible(Class.forName(\"" + type + "\")";
+   //String expr1 = "java.lang.reflect.AccessibleObject.setAccessible(Class.forName(\"" + type + "\")";
+   String expr = "java.lang.reflect.AccessibleObject.setAccessible(" + type1 + ".class";
    expr += ".getDeclaredFields(),true)";
    evaluateVoid(expr);
 

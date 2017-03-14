@@ -110,6 +110,19 @@ SesameSessionTest(SesameMain sm,String sid,Element xml) throws SesameException
 }
 
 
+@Override void setInitialValue(String what,Element val) throws SesameException
+{
+   JcompTyper typer = getProject().getTyper();
+   try {
+      CashewValue cv = CashewValue.createValue(typer,val);
+      global_vars.put(what,cv);
+    }
+   catch (CashewException e) {
+      throw new SesameException("Illegal value",e);
+    }
+}
+
+
 
 }       // end of class SesameSessionTest
 

@@ -842,6 +842,8 @@ private void evaluateInstruction() throws CuminRunError
 	 break;
       case GETSTATIC :
 	 fld = jins.getFieldReference();
+	 if (fld.getName().contains("CHECKED"))
+	    System.err.println("HANDLE CHECKED");
 	 JcompType fldtyp = convertType(fld.getDeclaringClass());
 	 fldtyp.defineAll(type_converter);
 	 lookup_context.enableAccess(fldtyp.getName());
@@ -967,7 +969,10 @@ private void handleCall(JcodeMethod method,CallType cty)
   int act = method.getNumArguments();
   if (!method.isStatic()) ++act;
   List<CashewValue> args = new ArrayList<CashewValue>();
-  for (int i = 0; i < act; ++i) args.add(execution_stack.pop().getActualValue(execution_clock));
+  for (int i = 0; i < act; ++i) {
+     CashewValue cv = execution_stack.pop().getActualValue(execution_clock);
+     args.add(cv);
+   }
   Collections.reverse(args);
 
   CuminRunner cr = handleCall(execution_clock,method,args,cty);
@@ -1019,7 +1024,7 @@ private CashewValue buildArray(int idx,int [] bnds,JcompType base)
 private void checkSpecial()
 {
    String cls = jcode_method.getDeclaringClass().getName();
- 
+
    switch (cls) {
       case "java.lang.String" :
 	 CuminDirectEvaluation cde = new CuminDirectEvaluation(this);
@@ -1065,7 +1070,21 @@ private void checkSpecial()
 	 cde.checkThrowableMethods();
 	 break;
       case "java.io.Console" :
-	 // handle console methods
+      case "java.io.FileDescriptor" :
+      case "java.io.FileInputStraem" :
+      case "java.io.ObjectInputStream" :
+      case "java.io.ObjectOutputStream" :
+      case "java.io.RandomAccessFile" :
+      case "java.io.UnixFileSystem" :
+	 // TODO: handle other IO methods
+	 break;
+      case "java.io.FileOutputStream" :
+	 cde = new CuminDirectEvaluation(this);
+	 cde.checkOutputStreamMethods();
+	 break;
+      case "java.io.File" :
+	 cde = new CuminDirectEvaluation(this);
+	 cde.checkFileMethods();
 	 break;
       case "sun.misc.FloatingDecimal" :
 	 cde = new CuminDirectEvaluation(this);

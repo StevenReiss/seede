@@ -296,6 +296,7 @@ private CashewValue getValueAt(CashewClock cc)
 	 long when = ent.getKey();
 	 xw.begin("VALUE");
 	 xw.field("TIME",when);
+         xw.field("TYPE",ent.getValue().getDataType());
 	 if (ent.getValue() != null) {
 	    ent.getValue().outputLocalXml(xw,outctx);
 	  }

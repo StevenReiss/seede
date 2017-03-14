@@ -154,6 +154,7 @@ static {
    op_map.put(PrefixExpression.Operator.INCREMENT,CuminOperator.INCR);
    op_map.put(PrefixExpression.Operator.MINUS,CuminOperator.NEG);
    op_map.put(PrefixExpression.Operator.PLUS,CuminOperator.NOP);
+   op_map.put(PrefixExpression.Operator.NOT,CuminOperator.NOT);
    op_map.put(Assignment.Operator.ASSIGN,CuminOperator.ASG);
    op_map.put(Assignment.Operator.BIT_AND_ASSIGN,CuminOperator.ASG_AND);
    op_map.put(Assignment.Operator.BIT_OR_ASSIGN,CuminOperator.ASG_OR);
@@ -260,6 +261,8 @@ private void setupContext()
 {
    JcompSymbol js = JcompAst.getDefinition(method_node);
    JcompSource src = JcompAst.getSource(method_node.getRoot());
+   JcompTyper typer = JcompAst.getTyper(method_node);
+   
    File file = null;
    if (src != null) file = new File(src.getFileName());
 
@@ -290,7 +293,7 @@ private void setupContext()
 	  }
        }
     }
-   
+
    CompilationUnit cu = (CompilationUnit) method_node.getRoot();
    int lno = cu.getLineNumber(method_node.getStartPosition());
    if (lno < 0) lno = 0;
@@ -454,7 +457,7 @@ private void evalNode(ASTNode node,ASTNode afterchild) throws CuminRunError
 	 visit((DoStatement) node,afterchild);
 	 break;
       case ASTNode.ENHANCED_FOR_STATEMENT :
-         visit((EnhancedForStatement) node,afterchild);
+	 visit((EnhancedForStatement) node,afterchild);
 	 break;
       case ASTNode.EXPRESSION_STATEMENT :
 	 visit((ExpressionStatement) node,afterchild);
@@ -657,7 +660,7 @@ private void evalThrow(ASTNode node,CuminRunError cause) throws CuminRunError
 	 visitThrow((DoStatement) node,cause);
 	 break;
       case ASTNode.ENHANCED_FOR_STATEMENT :
-         visitThrow((EnhancedForStatement) node,cause);
+	 visitThrow((EnhancedForStatement) node,cause);
 	 break;
       case ASTNode.FOR_STATEMENT :
 	 visitThrow((ForStatement) node,cause);
@@ -976,7 +979,7 @@ private void visit(SimpleName v)
 {
    JcompSymbol js = JcompAst.getReference(v);
    CashewValue cv = null;
-   if (js.isFieldSymbol()) {
+   if (js != null && js.isFieldSymbol()) {
       if (js.isStatic()) cv = handleStaticFieldAccess(js);
       else {
 	 CashewValue tv = lookup_context.findReference(THIS_NAME);
@@ -996,14 +999,26 @@ private void visit(QualifiedName v,ASTNode after)
 {
    JcompSymbol sym = JcompAst.getReference(v.getName());
    if (after == null) {
-      if (sym.isFieldSymbol() && !sym.isStatic()) {
+      if (sym != null && sym.isFieldSymbol() && !sym.isStatic()) {
 	 next_node = v.getQualifier();
 	 return;
        }
+      else if (sym == null && v.getName().getIdentifier().equals("length")) {
+	 next_node = v.getQualifier();
+       }
       else next_node = v.getName();
     }
-   if (after == v.getQualifier()) {
+   if (after == v.getQualifier() && sym != null) {
       handleFieldAccess(sym);
+    }
+   else if (after == v.getQualifier() && sym == null &&
+	       v.getName().getIdentifier().equals("length")) {
+      CashewValue obj = execution_stack.pop().getActualValue(execution_clock);
+      if (obj.isNull(execution_clock))
+	 CuminEvaluator.throwException(CashewConstants.NULL_PTR_EXC);
+      CashewValue rslt = obj.getFieldValue(execution_clock,"length");
+      AcornLog.logD("COMPUTE LENGTH " + obj + " = " + rslt);
+      execution_stack.push(rslt);
     }
 }
 
@@ -1074,12 +1089,22 @@ private void visit(ClassInstanceCreation v, ASTNode after)
    JcompType rty = JcompAst.getJavaType(v.getType());
    rty.defineAll(JcompAst.getTyper(v));
    JcompSymbol csym = JcompAst.getReference(v);
+
+   JcompType ctyp = csym.getType();
+   List<JcompType> atyps = ctyp.getComponents();
+
    CashewValue rval = CashewValue.objectValue(rty);
    List<CashewValue> argv = new ArrayList<CashewValue>();
    for (int i = 0; i < args.size(); ++i) {
       CashewValue cv = execution_stack.pop();
       cv = cv.getActualValue(execution_clock);
-      argv.add(cv);
+      JcompType argtyp = atyps.get(args.size()-1-i);
+      CashewValue ncv = CuminEvaluator.castValue(this,cv,argtyp);
+      if (ncv == null) {
+	 AcornLog.logD("Conversion problem " + cv + " " + argtyp + " " +
+			  cv.getDataType(execution_clock) );
+       }
+      argv.add(ncv);
     }
    argv.add(rval);
    execution_stack.push(rval);
@@ -1103,12 +1128,21 @@ private void visit(ConstructorInvocation v,ASTNode after)
     }
 
    JcompSymbol csym = JcompAst.getReference(v);
+   JcompType ctyp = csym.getType();
+   List<JcompType> atyps = ctyp.getComponents();
+
    CashewValue rval = lookup_context.findReference(THIS_NAME);
    List<CashewValue> argv = new ArrayList<CashewValue>();
    for (int i = 0; i < args.size(); ++i) {
       CashewValue cv = execution_stack.pop();
       cv = cv.getActualValue(execution_clock);
-      argv.add(cv);
+      JcompType argtyp = atyps.get(args.size()-1-i);
+      CashewValue ncv = CuminEvaluator.castValue(this,cv,argtyp);
+      if (ncv == null) {
+	 AcornLog.logD("Conversion problem " + cv + " " + argtyp + " " +
+			  cv.getDataType(execution_clock) );
+       }
+      argv.add(ncv);
     }
    argv.add(rval);
    Collections.reverse(argv);
@@ -1120,7 +1154,9 @@ private void visit(ConstructorInvocation v,ASTNode after)
 
 private void visit(MethodInvocation v,ASTNode after)
 {
-   if (after == null && v.getExpression() != null) {
+   JcompSymbol js = JcompAst.getReference(v.getName());
+
+   if (after == null && v.getExpression() != null && !js.isStatic()) {
       next_node = v.getExpression();
       return;
     }
@@ -1138,9 +1174,7 @@ private void visit(MethodInvocation v,ASTNode after)
 
    AcornLog.logD("INVOKE " + args.size() + " " + v);
 
-   JcompSymbol js = JcompAst.getReference(v.getName());
    JcompType ctyp = js.getType();
-
    List<JcompType> atyps = ctyp.getComponents();
 
    List<CashewValue> argv = new ArrayList<CashewValue>();
@@ -1403,29 +1437,29 @@ private void visit(EnhancedForStatement s,ASTNode after)
       next_node = s.getExpression();
       return;
     }
-   
+
    if (after == s.getExpression()) {
       CashewValue cv = execution_stack.peek(0).getActualValue(execution_clock);
       JcompType jt = cv.getDataType(execution_clock);
       if (jt.isArrayType()) {
-         execution_stack.pushMarker(s,0);
+	 execution_stack.pushMarker(s,0);
        }
       else {
-         JcompTyper typer = JcompAst.getTyper(s);
-         JcompType rty = typer.findSystemType("java.util.Iterator"); 
-         List<JcompType> args = new ArrayList<>();
-         JcompType mty = JcompType.createMethodType(rty,args,false);
-         JcompSymbol js = jt.lookupMethod(typer,"iterator",mty);
-         if (js == null) 
-            throw new CuminRunError(CuminRunError.Reason.COMPILER_ERROR,"Bad type for enhanced for");
-         List<CashewValue> argv = new ArrayList<>();
-         argv.add(cv);
-         execution_stack.pushMarker(s,ForState.INIT);
-         CuminRunner crun = handleCall(execution_clock,js,argv,CallType.VIRTUAL);
-         throw new CuminRunError(crun);
+	 JcompTyper typer = JcompAst.getTyper(s);
+	 JcompType rty = typer.findSystemType("java.util.Iterator");
+	 List<JcompType> args = new ArrayList<>();
+	 JcompType mty = JcompType.createMethodType(rty,args,false);
+	 JcompSymbol js = jt.lookupMethod(typer,"iterator",mty);
+	 if (js == null)
+	    throw new CuminRunError(CuminRunError.Reason.COMPILER_ERROR,"Bad type for enhanced for");
+	 List<CashewValue> argv = new ArrayList<>();
+	 argv.add(cv);
+	 execution_stack.pushMarker(s,ForState.INIT);
+	 CuminRunner crun = handleCall(execution_clock,js,argv,CallType.VIRTUAL);
+	 throw new CuminRunError(crun);
        }
     }
-   
+
    enhancedCheck(s);
 }
 
@@ -1436,59 +1470,59 @@ private void visitThrow(EnhancedForStatement s,CuminRunError r)
    String lbl = r.getMessage();
    switch (r.getReason()) {
       case RETURN :
-         Object val = execution_stack.popMarker(s);
-         CashewValue rval = r.getValue();
-         if (val instanceof ForState) {
-            ForState state = (ForState) val;
-            switch (state) {
-               case INIT :
-                  execution_stack.pop();
-                  execution_stack.push(rval);
-                  execution_stack.pushMarker(s,ForState.HASNEXT);
-                  CuminRunner crun = forMethod(s,rval,ForState.HASNEXT);
-                  throw new CuminRunError(crun);
-               case HASNEXT :
-                  if (rval.getBoolean(execution_clock)) {
-                     CashewValue iter = execution_stack.peek(0);
-                     execution_stack.pushMarker(s,ForState.NEXT);
-                     CuminRunner nrun = forMethod(s,iter,ForState.NEXT);
-                     throw new CuminRunError(nrun);
-                   }
-                  else {
-                     execution_stack.pop();
-                     return;
-                   }
-               case NEXT :
-                  execution_stack.pushMarker(s,ForState.BODY);
-                  enhancedBody(s,rval);
-                  break;
-               case BODY :
-                  execution_stack.pop();
-                  throw r;
-             }
-          }
-         else {
-            execution_stack.pop();
-            throw r; 
-          }
-         break;
+	 Object val = execution_stack.popMarker(s);
+	 CashewValue rval = r.getValue();
+	 if (val instanceof ForState) {
+	    ForState state = (ForState) val;
+	    switch (state) {
+	       case INIT :
+		  execution_stack.pop();
+		  execution_stack.push(rval);
+		  execution_stack.pushMarker(s,ForState.HASNEXT);
+		  CuminRunner crun = forMethod(s,rval,ForState.HASNEXT);
+		  throw new CuminRunError(crun);
+	       case HASNEXT :
+		  if (rval.getBoolean(execution_clock)) {
+		     CashewValue iter = execution_stack.peek(0);
+		     execution_stack.pushMarker(s,ForState.NEXT);
+		     CuminRunner nrun = forMethod(s,iter,ForState.NEXT);
+		     throw new CuminRunError(nrun);
+		   }
+		  else {
+		     execution_stack.pop();
+		     return;
+		   }
+	       case NEXT :
+		  execution_stack.pushMarker(s,ForState.BODY);
+		  enhancedBody(s,rval);
+		  break;
+	       case BODY :
+		  execution_stack.pop();
+		  throw r;
+	     }
+	  }
+	 else {
+	    execution_stack.pop();
+	    throw r;
+	  }
+	 break;
       case BREAK :
-         execution_stack.popMarker(s);
-         execution_stack.pop();
-         if (!checkLabel(s,lbl)) throw r;
-         break;
+	 execution_stack.popMarker(s);
+	 execution_stack.pop();
+	 if (!checkLabel(s,lbl)) throw r;
+	 break;
       case CONTINUE :
-         if (checkLabel(s,lbl)) {
-            // do next
-          }
-         else {
-            execution_stack.popMarker(s);
-            execution_stack.pop();
-            throw r;
-          }
-         break;
+	 if (checkLabel(s,lbl)) {
+	    // do next
+	  }
+	 else {
+	    execution_stack.popMarker(s);
+	    execution_stack.pop();
+	    throw r;
+	  }
+	 break;
       default :
-         throw r;
+	 throw r;
     }
 }
 
@@ -1498,30 +1532,30 @@ private CuminRunner forMethod(EnhancedForStatement s,CashewValue cv,ForState sta
 {
    JcompTyper typer = JcompAst.getTyper(s);
    List<JcompType> args = new ArrayList<>();
-   
+
    String mnm = null;
    JcompType rty = null;
    switch (state) {
       case INIT :
-         mnm = "iterator";
-         rty = typer.findSystemType("java.util.Iterator");
-         break;
+	 mnm = "iterator";
+	 rty = typer.findSystemType("java.util.Iterator");
+	 break;
       case HASNEXT :
-         mnm = "hasNext";
-         rty = CashewConstants.BOOLEAN_TYPE;
-         break;
+	 mnm = "hasNext";
+	 rty = CashewConstants.BOOLEAN_TYPE;
+	 break;
       case NEXT :
-         mnm = "next";
-         rty = typer.findSystemType("java.lang.Object");
-         break;
+	 mnm = "next";
+	 rty = typer.findSystemType("java.lang.Object");
+	 break;
       default :
-         return null;
+	 return null;
     }
-   
+
    JcompType jt = cv.getDataType(execution_clock);
    JcompType mty = JcompType.createMethodType(rty,args,false);
    JcompSymbol js = jt.lookupMethod(typer,mnm,mty);
-   if (js == null) 
+   if (js == null)
       throw new CuminRunError(CuminRunError.Reason.COMPILER_ERROR,"Bad type for enhanced for");
    List<CashewValue> argv = new ArrayList<>();
    argv.add(cv);

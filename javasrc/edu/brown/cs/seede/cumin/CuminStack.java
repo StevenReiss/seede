@@ -26,6 +26,8 @@ package edu.brown.cs.seede.cumin;
 
 import java.util.Stack;
 
+import edu.brown.cs.seede.acorn.AcornLog;
+
 import edu.brown.cs.seede.cashew.CashewValue;
 
 class CuminStack implements CuminConstants
@@ -61,6 +63,10 @@ CuminStack()
 
 CashewValue push(CashewValue cv)
 {
+   if (cv == null) {
+      AcornLog.logX("Pushing null onto stack");
+    }
+   
    execution_stack.push(cv);
    return cv;
 }

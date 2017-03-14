@@ -29,6 +29,7 @@ import edu.brown.cs.ivy.jcomp.JcompType;
 import edu.brown.cs.seede.cashew.CashewClock;
 import edu.brown.cs.seede.cashew.CashewConstants;
 import edu.brown.cs.seede.cashew.CashewContext;
+import edu.brown.cs.seede.cashew.CashewInputOutputModel;
 import edu.brown.cs.seede.cashew.CashewValue;
 import edu.brown.cs.seede.cashew.CashewValueString;
 import edu.brown.cs.seede.acorn.AcornLog;
@@ -114,6 +115,18 @@ private char [] getCharArray(int idx)
    return rslt;
 }
 
+
+private byte [] getByteArray(int idx)
+{
+   CashewValue cv = getContext().findReference(idx).getActualValue(getClock());
+   int dim = cv.getDimension(getClock());
+   byte [] rslt = new byte[dim];
+   for (int i = 0; i < dim; ++i) {
+      rslt[i] = cv.getIndexValue(getClock(),i).getNumber(getClock()).byteValue();
+    }
+   return rslt;
+}
+
 private boolean getBoolean(int idx)
 {
    return getContext().findReference(idx).getBoolean(getClock());
@@ -131,6 +144,8 @@ private CashewValue getValue(int idx)
 }
 
 
+
+
 /********************************************************************************/
 /*										*/
 /*	String methods								*/
@@ -140,7 +155,7 @@ private CashewValue getValue(int idx)
 void checkStringMethods()
 {
    CashewValue rslt = null;
-   
+
    if (getMethod().isStatic()) {
       switch (getMethod().getName()) {
 	 case "valueOf" :
@@ -163,14 +178,14 @@ void checkStringMethods()
 	    else if (getDataType(0) == LONG_TYPE) {
 	       rslt = CashewValue.stringValue(String.valueOf(getDouble(0)));
 	     }
-            else if (getDataType(0).isArrayType() && getDataType(0).getBaseType() == CHAR_TYPE) {
-               if (getNumArgs() == 1) {
-                  rslt = CashewValue.stringValue(String.valueOf(getCharArray(0)));
-                }
-               else {
-                  rslt = CashewValue.stringValue(String.valueOf(getCharArray(0),getInt(1),getInt(2)));
-                }
-             }
+	    else if (getDataType(0).isArrayType() && getDataType(0).getBaseType() == CHAR_TYPE) {
+	       if (getNumArgs() == 1) {
+		  rslt = CashewValue.stringValue(String.valueOf(getCharArray(0)));
+		}
+	       else {
+		  rslt = CashewValue.stringValue(String.valueOf(getCharArray(0),getInt(1),getInt(2)));
+		}
+	     }
 	    else {
 	       // Object
 	       return;
@@ -194,17 +209,17 @@ void checkStringMethods()
       CashewValueString cvs = (CashewValueString) getContext().findReference(0).getActualValue(getClock());
       if (getNumArgs() == 1) ;
       else if (getNumArgs() == 2 && getDataType(1) == STRING_TYPE) {
-         cvs.setInitialValue(getString(1));
+	 cvs.setInitialValue(getString(1));
        }
       else if (getNumArgs() == 2 && getDataType(1).getBaseType() == CHAR_TYPE) {
-         String temp = new String(getCharArray(1));
-         cvs.setInitialValue(temp);
+	 String temp = new String(getCharArray(1));
+	 cvs.setInitialValue(temp);
        }
       // handle various constructors
       else return;
     }
    else {
-      CashewValue thisarg = getContext().findReference(0).getActualValue(getClock());
+      CashewValue thisarg = getValue(0);
       String thisstr = thisarg.getString(getClock());
       switch (getMethod().getName()) {
 	 case "charAt" :
@@ -367,10 +382,10 @@ void checkStringMethods()
 	 case "getChars" :
 	 case "intern":
 	 case "split" :
-            return;
-            
+	    return;
+
 	 case "toCharArray" :
-            rslt = CashewValue.arrayValue(thisstr.toCharArray());
+	    rslt = CashewValue.arrayValue(thisstr.toCharArray());
 	    return;
 
 	 default :
@@ -418,7 +433,7 @@ void checkMathMethods()
 	 rslt = CashewValue.numericValue(DOUBLE_TYPE,StrictMath.atan(getDouble(0)));
 	 break;
       case "atan2" :
-	 rslt = CashewValue.numericValue(DOUBLE_TYPE,StrictMath.atan2(getDouble(0),getDouble(1)));
+	 rslt = CashewValue.numericValue(DOUBLE_TYPE,StrictMath.atan2(getDouble(0),getDouble(2)));
 	 break;
       case "cbrt" :
 	 rslt = CashewValue.numericValue(DOUBLE_TYPE,StrictMath.cbrt(getDouble(0)));
@@ -431,7 +446,7 @@ void checkMathMethods()
 	    rslt = CashewValue.numericValue(FLOAT_TYPE,StrictMath.copySign(getFloat(0),getFloat(1)));
 	  }
 	 else {
-	    rslt = CashewValue.numericValue(DOUBLE_TYPE,StrictMath.copySign(getDouble(0),getDouble(1)));
+	    rslt = CashewValue.numericValue(DOUBLE_TYPE,StrictMath.copySign(getDouble(0),getDouble(2)));
 	  }
 	 break;
       case "cos" :
@@ -458,10 +473,10 @@ void checkMathMethods()
 	  }
 	 break;
       case "hypot" :
-	 rslt = CashewValue.numericValue(DOUBLE_TYPE,StrictMath.hypot(getDouble(0),getDouble(1)));
+	 rslt = CashewValue.numericValue(DOUBLE_TYPE,StrictMath.hypot(getDouble(0),getDouble(2)));
 	 break;
       case "IEEEremainder" :
-	 rslt = CashewValue.numericValue(DOUBLE_TYPE,StrictMath.IEEEremainder(getDouble(0),getDouble(1)));
+	 rslt = CashewValue.numericValue(DOUBLE_TYPE,StrictMath.IEEEremainder(getDouble(0),getDouble(2)));
 	 break;
       case "log" :
 	 rslt = CashewValue.numericValue(DOUBLE_TYPE,StrictMath.log(getDouble(0)));
@@ -474,13 +489,13 @@ void checkMathMethods()
 	 break;
       case "max" :
 	 if (getDataType(0) == DOUBLE_TYPE || getDataType(1) == DOUBLE_TYPE) {
-	    rslt = CashewValue.numericValue(DOUBLE_TYPE,StrictMath.max(getDouble(0),getDouble(1)));
+	    rslt = CashewValue.numericValue(DOUBLE_TYPE,StrictMath.max(getDouble(0),getDouble(2)));
 	  }
 	 else if (getDataType(0) == FLOAT_TYPE || getDataType(1) == FLOAT_TYPE) {
 	    rslt = CashewValue.numericValue(FLOAT_TYPE,StrictMath.max(getFloat(0),getFloat(1)));
 	  }
 	 else if (getDataType(0) == LONG_TYPE || getDataType(1) == LONG_TYPE) {
-	    rslt = CashewValue.numericValue(LONG_TYPE,StrictMath.max(getLong(0),getLong(1)));
+	    rslt = CashewValue.numericValue(LONG_TYPE,StrictMath.max(getLong(0),getLong(2)));
 	  }
 	 else {
 	    rslt = CashewValue.numericValue(INT_TYPE,StrictMath.max(getInt(0),getInt(1)));
@@ -488,13 +503,13 @@ void checkMathMethods()
 	 break;
       case "min" :
 	 if (getDataType(0) == DOUBLE_TYPE || getDataType(1) == DOUBLE_TYPE) {
-	    rslt = CashewValue.numericValue(DOUBLE_TYPE,StrictMath.min(getDouble(0),getDouble(1)));
+	    rslt = CashewValue.numericValue(DOUBLE_TYPE,StrictMath.min(getDouble(0),getDouble(2)));
 	  }
 	 else if (getDataType(0) == FLOAT_TYPE || getDataType(1) == FLOAT_TYPE) {
 	    rslt = CashewValue.numericValue(FLOAT_TYPE,StrictMath.min(getFloat(0),getFloat(1)));
 	  }
 	 else if (getDataType(0) == LONG_TYPE || getDataType(1) == LONG_TYPE) {
-	    rslt = CashewValue.numericValue(LONG_TYPE,StrictMath.min(getLong(0),getLong(1)));
+	    rslt = CashewValue.numericValue(LONG_TYPE,StrictMath.min(getLong(0),getLong(2)));
 	  }
 	 else {
 	    rslt = CashewValue.numericValue(INT_TYPE,StrictMath.min(getInt(0),getInt(1)));
@@ -505,7 +520,7 @@ void checkMathMethods()
 	    rslt = CashewValue.numericValue(FLOAT_TYPE,StrictMath.nextAfter(getFloat(0),getDouble(1)));
 	  }
 	 else {
-	    rslt = CashewValue.numericValue(DOUBLE_TYPE,StrictMath.nextAfter(getDouble(0),getDouble(1)));
+	    rslt = CashewValue.numericValue(DOUBLE_TYPE,StrictMath.nextAfter(getDouble(0),getDouble(2)));
 	  }
 	 break;
       case "nextUp" :
@@ -517,7 +532,7 @@ void checkMathMethods()
 	  }
 	 break;
       case "pow" :
-	 rslt = CashewValue.numericValue(DOUBLE_TYPE,StrictMath.pow(getDouble(0),getDouble(1)));
+	 rslt = CashewValue.numericValue(DOUBLE_TYPE,StrictMath.pow(getDouble(0),getDouble(2)));
 	 break;
       case "random" :
 	 rslt = CashewValue.numericValue(DOUBLE_TYPE,StrictMath.random());
@@ -538,7 +553,7 @@ void checkMathMethods()
 	    rslt = CashewValue.numericValue(FLOAT_TYPE,StrictMath.scalb(getFloat(0),getInt(1)));
 	  }
 	 else {
-	    rslt = CashewValue.numericValue(DOUBLE_TYPE,StrictMath.scalb(getDouble(0),getInt(1)));
+	    rslt = CashewValue.numericValue(DOUBLE_TYPE,StrictMath.scalb(getDouble(0),getInt(2)));
 	  }
 	 break;
       case "signum" :
@@ -754,7 +769,7 @@ void checkSystemMethods()
 
    switch (getMethod().getName()) {
       case "arraycopy" :
-         handleArrayCopy(getValue(0),getInt(1),getValue(2),getInt(3),getInt(4));
+	 handleArrayCopy(getValue(0),getInt(1),getValue(2),getInt(3),getInt(4));
 	 break;
       case "currentTimeMillis" :
 	 rslt = CashewValue.numericValue(LONG_TYPE,System.currentTimeMillis());
@@ -794,7 +809,7 @@ void checkSystemMethods()
 private void handleArrayCopy(CashewValue src,int spos,CashewValue dst,int dpos,int len)
 {
    if (src.isNull(getClock()) || dst.isNull(getClock())) CuminEvaluator.throwException(NULL_PTR_EXC);
-   
+
    int sdim = -1;
    int ddim = -1;
    try {
@@ -805,21 +820,21 @@ private void handleArrayCopy(CashewValue src,int spos,CashewValue dst,int dpos,i
       CuminEvaluator.throwException(ARRAY_STORE_EXC);
     }
    // check array element types
-   
-   if (spos < 0 || dpos < 0 || len < 0 || spos+len > sdim || dpos+len > ddim) 
+
+   if (spos < 0 || dpos < 0 || len < 0 || spos+len > sdim || dpos+len > ddim)
       CuminEvaluator.throwException(IDX_BNDS_EXC);
-   
+
    if (src == dst && spos < dpos) {
       for (int i = len-1; i >= 0; --i) {
-         CashewValue cv = src.getIndexValue(getClock(),spos+i);
-         dst.setIndexValue(getClock(),dpos+i,cv.getActualValue(getClock()));
+	 CashewValue cv = src.getIndexValue(getClock(),spos+i);
+	 dst.setIndexValue(getClock(),dpos+i,cv.getActualValue(getClock()));
        }
     }
    else {
       for (int i = 0; i < len; ++i) {
-         CashewValue cv = src.getIndexValue(getClock(),spos+i);
-         // should type check the assignment here
-         dst.setIndexValue(getClock(),dpos+i,cv.getActualValue(getClock()));
+	 CashewValue cv = src.getIndexValue(getClock(),spos+i);
+	 // should type check the assignment here
+	 dst.setIndexValue(getClock(),dpos+i,cv.getActualValue(getClock()));
        }
     }
 }
@@ -880,9 +895,9 @@ void checkThreadMethods()
    if (getMethod().isStatic()) {
       switch (getMethod().getName()) {
 	 case "currentThread" :
-            rslt = exec_runner.getLookupContext().findStaticFieldReference(
-                  CURRENT_THREAD_FIELD,"java.lang.Thread");
-	    break; 
+	    rslt = exec_runner.getLookupContext().findStaticFieldReference(
+		  CURRENT_THREAD_FIELD,"java.lang.Thread");
+	    break;
 	 default :
 	    return;
        }
@@ -953,53 +968,127 @@ void checkThrowableMethods()
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Handle sun.misc.FloatingDecimal for efficiency                          */
-/*                                                                              */
+/*										*/
+/*	Handle sun.misc.FloatingDecimal for efficiency				*/
+/*										*/
 /********************************************************************************/
 
 void checkFloatingDecimalMehtods()
 {
    CashewValue rslt = null;
    String s1;
-   
-   switch (getMethod().getName()) { 
+
+   switch (getMethod().getName()) {
       case "toJavaFormatString" :
-         if (getDataType(0) == FLOAT_TYPE) {
-            s1 = String.valueOf(getFloat(0));
-          }
-         else s1 = String.valueOf(getDouble(0));
-         rslt = CashewValue.stringValue(s1);
-         break;
+	 if (getDataType(0) == FLOAT_TYPE) {
+	    s1 = String.valueOf(getFloat(0));
+	  }
+	 else s1 = String.valueOf(getDouble(0));
+	 rslt = CashewValue.stringValue(s1);
+	 break;
       case "parseDouble" :
-         try {
-            double d1 = Double.parseDouble(getString(0));
-            rslt = CashewValue.numericValue(DOUBLE_TYPE,d1);
-          }
-         catch (NumberFormatException e) {
-            CuminEvaluator.throwException(NUM_FMT_EXC);
-          }
-         break;
+	 try {
+	    double d1 = Double.parseDouble(getString(0));
+	    rslt = CashewValue.numericValue(DOUBLE_TYPE,d1);
+	  }
+	 catch (NumberFormatException e) {
+	    CuminEvaluator.throwException(NUM_FMT_EXC);
+	  }
+	 break;
       case "parseFloat" :
-         try {
-            float f1 = Float.parseFloat(getString(0));
-            rslt = CashewValue.numericValue(FLOAT_TYPE,f1);
-          }
-         catch (NumberFormatException e) {
-            CuminEvaluator.throwException(NUM_FMT_EXC);
-          }
-         break; 
+	 try {
+	    float f1 = Float.parseFloat(getString(0));
+	    rslt = CashewValue.numericValue(FLOAT_TYPE,f1);
+	  }
+	 catch (NumberFormatException e) {
+	    CuminEvaluator.throwException(NUM_FMT_EXC);
+	  }
+	 break;
       default  :
-         return;
+	 return;
     }
-   
-   throw new CuminRunError(CuminRunError.Reason.RETURN,rslt);    
+
+   throw new CuminRunError(CuminRunError.Reason.RETURN,rslt);
+}
+
+
+
+/********************************************************************************/
+/*										*/
+/*	Handle java.io.FileOuptutStream methods 				*/
+/*										*/
+/********************************************************************************/
+
+void checkOutputStreamMethods()
+{
+   CashewValue thisarg = getValue(0);
+   CashewValue fdval = thisarg.getFieldValue(getClock(),"java.io.FileOutputStream.fd");
+   if (fdval.isNull(getClock())) return;
+   CashewValue fd = fdval.getFieldValue(getClock(),"java.io.FileDescriptor.fd");
+   int fdv = fd.getNumber(getClock()).intValue();
+   String path = null;
+   try {
+      CashewValue pathv = thisarg.getFieldValue(getClock(),"java.io.FileOutputStream.path");
+      if (!pathv.isNull(getClock())) path = pathv.getString(getClock());
+    }
+   catch (Throwable t) {
+      // path is not defined before jdk 1.8
+    }
+
+   int narg = getNumArgs();
+   CashewInputOutputModel mdl = getContext().getIOModel();
+
+   CashewValue rslt = null;
+   byte [] wbuf = null;
+
+   switch (getMethod().getName()) {
+      case "open" :
+	 break;
+      case "write" :
+	 if (narg != 3) return;
+	 wbuf = new byte[1];
+	 wbuf[0] = (byte) getInt(1);
+	 mdl.fileWrite(getClock(),fdv,path,wbuf,0,1,getBoolean(2));
+	 break;
+      case "writeBytes" :
+	 wbuf = getByteArray(1);
+	 mdl.fileWrite(getClock(),fdv,path,wbuf,getInt(2),getInt(3),getBoolean(4));
+	 break;
+      case "close" :
+	 break;
+      case "initIDs" :
+	 break;
+      default :
+	 return;
+    }
+
+   throw new CuminRunError(CuminRunError.Reason.RETURN,rslt);
 }
 
 
 
 
+/********************************************************************************/
+/*										*/
+/*	java.io.File methods							*/
+/*										*/
+/********************************************************************************/
 
+void checkFileMethods()
+{
+   CashewValue rslt = null;
+
+   switch (getMethod().getName()) {
+      default :
+	 return;
+      case "isInvalid" :
+	 // access to java.io.File.PathStatus.CHECKED fails for now
+	 rslt = CashewValue.booleanValue(false);
+	 break;
+    }
+
+   throw new CuminRunError(CuminRunError.Reason.RETURN,rslt);
+}
 
 
 

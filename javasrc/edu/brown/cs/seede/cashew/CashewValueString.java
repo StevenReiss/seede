@@ -27,6 +27,8 @@ package edu.brown.cs.seede.cashew;
 import java.util.HashMap;
 import java.util.Map;
 
+import edu.brown.cs.ivy.xml.IvyXmlWriter;
+
 
 
 public class CashewValueString extends CashewValue implements CashewConstants
@@ -195,6 +197,11 @@ public void setInitialValue(String s)
    value_field = null;
    hash_field = null;
    hash32_field = null;
+}
+
+@Override public void outputLocalXml(IvyXmlWriter xw,CashewOutputContext ctx)
+{
+   xw.cdata(string_value);
 }
 
 

@@ -27,6 +27,8 @@ package edu.brown.cs.seede.sesame;
 import java.util.HashMap;
 import java.util.Map;
 
+import edu.brown.cs.seede.cashew.CashewValue;
+
 class SesameSessionCache implements SesameConstants
 {
 
@@ -38,6 +40,7 @@ class SesameSessionCache implements SesameConstants
 /********************************************************************************/
 
 private Map<String,Map<String,SesameValueData>> thread_map;
+private Map<String,CashewValue> initial_map;
 
 
 
@@ -51,6 +54,7 @@ private Map<String,Map<String,SesameValueData>> thread_map;
 SesameSessionCache()
 {
    thread_map = new HashMap<>();
+   initial_map = new HashMap<>();
 }
 
 
@@ -65,6 +69,11 @@ SesameValueData lookup(String thread,String expr)
 {
    if (thread == null || thread.equals("")) thread = "*";
    
+   if (thread.equals("*")) {
+      CashewValue cv = initial_map.get(expr);
+      if (cv != null) return new SesameValueData(cv);
+    }    
+   
    synchronized (thread_map) {
       Map<String,SesameValueData> mapr = thread_map.get(thread);
       if (mapr == null) return null;
@@ -76,6 +85,7 @@ SesameValueData lookup(String thread,String expr)
 
 void cacheValue(String thread,String expr,SesameValueData svd)
 {
+   if (svd == null) return;
    if (thread == null || thread.equals("")) thread = "*";
    
    synchronized (thread_map) {
@@ -88,6 +98,13 @@ void cacheValue(String thread,String expr,SesameValueData svd)
     }
 }
 
+
+
+void setInitialValue(String expr,CashewValue cv)
+{
+   if (cv == null) initial_map.remove(expr);
+   else initial_map.put(expr,cv);
+}
 
 
 

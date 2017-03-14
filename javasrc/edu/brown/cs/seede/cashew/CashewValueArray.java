@@ -1,21 +1,21 @@
 /********************************************************************************/
-/*                                                                              */
-/*              CashewValueArray.java                                           */
-/*                                                                              */
-/*      description of class                                                    */
-/*                                                                              */
+/*										*/
+/*		CashewValueArray.java						*/
+/*										*/
+/*	description of class							*/
+/*										*/
 /********************************************************************************/
-/*      Copyright 2011 Brown University -- Steven P. Reiss                    */
+/*	Copyright 2011 Brown University -- Steven P. Reiss		      */
 /*********************************************************************************
- *  Copyright 2011, Brown University, Providence, RI.                            *
- *                                                                               *
- *                        All Rights Reserved                                    *
- *                                                                               *
- * This program and the accompanying materials are made available under the      *
+ *  Copyright 2011, Brown University, Providence, RI.				 *
+ *										 *
+ *			  All Rights Reserved					 *
+ *										 *
+ * This program and the accompanying materials are made available under the	 *
  * terms of the Eclipse Public License v1.0 which accompanies this distribution, *
- * and is available at                                                           *
- *      http://www.eclipse.org/legal/epl-v10.html                                *
- *                                                                               *
+ * and is available at								 *
+ *	http://www.eclipse.org/legal/epl-v10.html				 *
+ *										 *
  ********************************************************************************/
 
 /* SVN: $Id$ */
@@ -34,9 +34,9 @@ public class CashewValueArray extends CashewValue implements CashewConstants
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Private Storage                                                         */
-/*                                                                              */
+/*										*/
+/*	Private Storage 							*/
+/*										*/
 /********************************************************************************/
 
 private int dim_size;
@@ -46,9 +46,9 @@ private CashewRef [] array_values;
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Constructors                                                            */
-/*                                                                              */
+/*										*/
+/*	Constructors								*/
+/*										*/
 /********************************************************************************/
 
 CashewValueArray(JcompType jt,int dim,Map<Integer,Object> inits) {
@@ -58,13 +58,13 @@ CashewValueArray(JcompType jt,int dim,Map<Integer,Object> inits) {
    for (int i = 0; i < dim; ++i) {
       CashewValue cv = CashewValue.createDefaultValue(jt.getBaseType());
       if (inits != null) {
-         Object ival = inits.get(i);
-         if (ival instanceof CashewValue) cv = (CashewValue) ival;
-         else if (ival instanceof CashewDeferredValue) {
-            CashewDeferredValue dcv = (CashewDeferredValue) ival;
-            array_values[i] = new CashewRef(dcv);
-            continue;
-          }
+	 Object ival = inits.get(i);
+	 if (ival instanceof CashewValue) cv = (CashewValue) ival;
+	 else if (ival instanceof CashewDeferredValue) {
+	    CashewDeferredValue dcv = (CashewDeferredValue) ival;
+	    array_values[i] = new CashewRef(dcv);
+	    continue;
+	  }
        }
       array_values[i] = new CashewRef(cv);
     }
@@ -72,21 +72,21 @@ CashewValueArray(JcompType jt,int dim,Map<Integer,Object> inits) {
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Access methods                                                          */
-/*                                                                              */
+/*										*/
+/*	Access methods								*/
+/*										*/
 /********************************************************************************/
 
 @Override public CashewValue getFieldValue(CashewClock cc,String nm) {
-   if (nm == "length") {
-      return CashewValue.numericValue(null,dim_size);
+   if (nm != null && nm.equals("length")) {
+      return CashewValue.numericValue(INT_TYPE,dim_size);
     }
    return super.getFieldValue(cc,nm);
 }
 
 @Override public int getDimension(CashewClock cc)
 {
-   return dim_size; 
+   return dim_size;
 }
 
 @Override public CashewValue getIndexValue(CashewClock cc,int idx) {
@@ -107,8 +107,8 @@ CashewValueArray(JcompType jt,int dim,Map<Integer,Object> inits) {
       int sz = dim_size;
       if (dbg) sz = Math.min(sz,10);
       for (int i = 0; i < sz; ++i) {
-         if (i != 0) buf.append(",");
-         buf.append(getIndexValue(cc,i).getString(cc,lvl,dbg));
+	 if (i != 0) buf.append(",");
+	 buf.append(getIndexValue(cc,i).getString(cc,lvl,dbg));
        }
       if (sz < dim_size) buf.append("...");
     }
@@ -118,11 +118,11 @@ CashewValueArray(JcompType jt,int dim,Map<Integer,Object> inits) {
 }
 
 
-@Override public String getInternalRepresentation(CashewClock cc) 
+@Override public String getInternalRepresentation(CashewClock cc)
 {
    String rslt = super.getInternalRepresentation(cc);
    if (rslt != null) return rslt;
-   
+
    StringBuffer buf = new StringBuffer();
    buf.append("new " + getDataType(cc).getBaseType().getName() + "[" + dim_size + "|");
    buf.append("{");
@@ -132,16 +132,16 @@ CashewValueArray(JcompType jt,int dim,Map<Integer,Object> inits) {
       buf.append(r);
     }
    buf.append("}");
-   
+
    return buf.toString();
 }
 
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Output methods                                                          */
-/*                                                                              */
+/*										*/
+/*	Output methods								*/
+/*										*/
 /********************************************************************************/
 
 @Override public void outputLocalXml(IvyXmlWriter xw,CashewOutputContext outctx) {
@@ -154,17 +154,17 @@ CashewValueArray(JcompType jt,int dim,Map<Integer,Object> inits) {
    else {
       xw.field("SIZE",dim_size);
       for (int i = 0; i < array_values.length; ++i) {
-         xw.begin("ELEMENT");
-         xw.field("INDEX",i);
-         array_values[i].outputXml(outctx);
-         xw.end("ELEMENT");
+	 xw.begin("ELEMENT");
+	 xw.field("INDEX",i);
+	 array_values[i].outputXml(outctx);
+	 xw.end("ELEMENT");
        }
     }
 }
 
 
 
-}       // end of class CashewValueArray
+}	// end of class CashewValueArray
 
 
 

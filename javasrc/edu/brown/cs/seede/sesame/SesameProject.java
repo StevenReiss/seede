@@ -150,15 +150,15 @@ String getName()			{ return project_name; }
 
 void addFile(SesameFile sf)
 {
-   active_files.add(sf);
-   clearProject();
+   if (active_files.add(sf))
+      clearProject();
 }
 
 
 void removeFile(SesameFile sf)
 {
-   active_files.remove(sf);
-   clearProject();
+   if (active_files.remove(sf))
+      clearProject();
 }
 
 
@@ -180,6 +180,9 @@ private synchronized void clearProject()
       JcompControl jc = SesameMain.getJcompBase();
       jc.freeProject(base_project);
       base_project = null;
+      for (SesameFile sf : active_files) {
+         sf.resetProject(this);
+       }
     }
 }
 

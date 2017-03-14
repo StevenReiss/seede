@@ -26,7 +26,9 @@ package edu.brown.cs.seede.sesame;
 
 import java.io.File;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
@@ -35,10 +37,12 @@ import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.Position;
+import org.w3c.dom.Element;
 
 import edu.brown.cs.ivy.jcomp.JcompProject;
 import edu.brown.cs.ivy.jcomp.JcompSemantics;
 import edu.brown.cs.ivy.jcomp.JcompSource;
+import edu.brown.cs.ivy.xml.IvyXml;
 import edu.brown.cs.seede.acorn.AcornLog;
 
 
@@ -52,9 +56,10 @@ class SesameFile implements SesameConstants, JcompSource
 /*										*/
 /********************************************************************************/
 
-private IDocument               edit_document;
-private File                    for_file;
-private Map<String,ASTNode>     ast_roots;
+private IDocument		edit_document;
+private File			for_file;
+private Map<String,ASTNode>	ast_roots;
+private Set<Integer>		error_lines;
 
 
 private static final String NO_PROJECT = "*NOPROJECT*";
@@ -72,14 +77,15 @@ SesameFile(File f,String cnts,String linesep)
    for_file = f;
    edit_document = new Document(cnts);
    ast_roots = new HashMap<String,ASTNode>();
+   error_lines = new HashSet<>();
 }
 
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Action methods                                                          */
-/*                                                                              */
+/*										*/
+/*	Action methods								*/
+/*										*/
 /********************************************************************************/
 
 void editFile(int len,int off,String txt,boolean complete)
@@ -91,20 +97,49 @@ void editFile(int len,int off,String txt,boolean complete)
    catch (BadLocationException e) {
       AcornLog.logE("Problem doing file edit",e);
     }
-   
+
    synchronized (ast_roots) {
       ast_roots.clear();
       JcompSemantics semdata = SesameMain.getJcompBase().getSemanticData(this);
-      if (semdata != null) semdata.reparse();
+      try {
+	 if (semdata != null && semdata.getProject() != null) semdata.reparse();
+       }
+      catch (Throwable t) {
+	 AcornLog.logE("Problem reparsing",t);
+       }
     }
 }
 
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Abstract syntax tree methods                                            */
-/*                                                                              */
+/*										*/
+/*	Track errors in file							*/
+/*										*/
+/********************************************************************************/
+
+boolean handleErrors(Element msgs)
+{
+   Set<Integer> lines = new HashSet<>();
+   for (Element e : IvyXml.children(msgs,"PROBLEM")) {
+      if (!IvyXml.getAttrBool(e,"ERROR")) continue;
+      int lno = IvyXml.getAttrInt(e,"LINE");
+      if (lno <= 0) continue;
+      lines.add(lno);
+    }
+
+   if (lines.equals(error_lines)) return false;
+
+   error_lines = lines;
+   return true;
+}
+
+
+
+/********************************************************************************/
+/*										*/
+/*	Abstract syntax tree methods						*/
+/*										*/
 /********************************************************************************/
 
 synchronized ASTNode getAst()
@@ -114,21 +149,22 @@ synchronized ASTNode getAst()
       an = ast_roots.get(NO_PROJECT);
       if (an != null) return an;
     }
-   
+
    ASTParser parser = ASTParser.newParser(AST.JLS4);
    parser.setKind(ASTParser.K_COMPILATION_UNIT);
    parser.setSource(edit_document.get().toCharArray());
    parser.setResolveBindings(false);
    an = parser.createAST(null);
-   
+
    synchronized (ast_roots) {
       ASTNode nan = ast_roots.get(NO_PROJECT);
       if (nan != null) an = nan;
       else ast_roots.put(NO_PROJECT,an);
     }
-   
+
    return an;
 }
+
 
 
 synchronized ASTNode getResolvedAst(SesameProject sp)
@@ -138,19 +174,27 @@ synchronized ASTNode getResolvedAst(SesameProject sp)
       an = ast_roots.get(sp.getName());
       if (an != null) return an;
     }
-   
+
    JcompProject proj = sp.getJcompProject();
    proj.resolve();
    JcompSemantics semdata = SesameMain.getJcompBase().getSemanticData(this);
    an = semdata.getAstNode();
-   
+
    synchronized (ast_roots) {
       ASTNode nan = ast_roots.get(sp.getName());
       if (nan != null) an = nan;
       else ast_roots.put(sp.getName(),an);
     }
-   
+
    return an;
+}
+
+
+void resetProject(SesameProject sp)
+{
+   synchronized (ast_roots) {
+      ast_roots.remove(sp.getName());
+    }
 }
 
 
@@ -164,14 +208,14 @@ Position createPosition(int pos)
    catch (BadLocationException e) {
       return null;
     }
-   
+
    return p;
 }
 
 /********************************************************************************/
-/*                                                                              */
-/*      JcompSource methods                                                     */
-/*                                                                              */
+/*										*/
+/*	JcompSource methods							*/
+/*										*/
 /********************************************************************************/
 
 @Override public String getFileContents()

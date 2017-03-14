@@ -240,6 +240,12 @@ public void enableAccess(String type)
 }
 
 
+public CashewInputOutputModel getIOModel()
+{
+   if (parent_context != null) return parent_context.getIOModel();
+   return null;
+}
+
 
 
 /********************************************************************************/

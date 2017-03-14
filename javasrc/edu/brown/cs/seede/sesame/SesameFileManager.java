@@ -61,6 +61,8 @@ SesameFileManager(SesameMain sm)
 
 
 
+
+
 /********************************************************************************/
 /*										*/
 /*	Setup methods								*/
@@ -125,6 +127,22 @@ void handleEdit(File f,int len,int offset,boolean complete,String txt)
     }
    sf.editFile(len,offset,txt,complete);
 }
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Error handling methods                                                  */
+/*                                                                              */
+/********************************************************************************/
+
+boolean handleErrors(File f,Element msgs)
+{
+   SesameFile sf = known_files.get(f);
+   if (sf == null) return false;
+   return sf.handleErrors(msgs);
+}
+
 
 
 

@@ -38,7 +38,9 @@ import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.w3c.dom.Element;
 
 import edu.brown.cs.ivy.jcomp.JcompAst;
+import edu.brown.cs.ivy.mint.MintDefaultReply;
 import edu.brown.cs.ivy.xml.IvyXml;
+import edu.brown.cs.seede.cashew.CashewInputOutputModel;
 import edu.brown.cs.seede.cashew.CashewValue;
 import edu.brown.cs.seede.cumin.CuminRunner;
 
@@ -85,6 +87,7 @@ private SesameProject	for_project;
 private Map<String,SesameLocation> location_map;
 private Map<CuminRunner,SesameLocation> runner_location;
 private Set<SesameExecRunner> exec_runners;
+private CashewInputOutputModel  cashew_iomodel;
 
 
 
@@ -115,6 +118,7 @@ protected SesameSession(SesameMain sm,String sid,Element xml)
 
    exec_runners = new HashSet<SesameExecRunner>();
    runner_location = new WeakHashMap<CuminRunner,SesameLocation>();
+   cashew_iomodel = new CashewInputOutputModel();
 }
 
 
@@ -171,7 +175,47 @@ protected void addLocation(SesameLocation sl)
 }
 
 
-void noteContinue(String launch,String thread)          { }
+void noteContinue(String launch,String thread)                  { }
+
+
+
+void setInitialValue(String what,Element value) throws SesameException     { }
+
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Request methods                                                         */
+/*                                                                              */
+/********************************************************************************/
+
+void requestInitialValue(String what) 
+{
+   CommandArgs args = new CommandArgs("WHAT",what,"SID",session_id);
+  
+   SesameMonitor mon = sesame_control.getMonitor();
+   MintDefaultReply rply = new MintDefaultReply();
+   mon.sendCommand("INITIALVALUE",args,null,rply);
+   Element rslt = rply.waitForXml();
+   if (rslt == null) return;
+   Element val = IvyXml.getChild(rslt,"VALUE");
+   try {
+      setInitialValue(what,val);
+    }
+   catch (SesameException _ex) { }
+}
+
+
+String requestInput(String file)
+{
+   CommandArgs args = new CommandArgs("FILE",file,"SID",session_id);
+   SesameMonitor mon = sesame_control.getMonitor();
+   MintDefaultReply rply = new MintDefaultReply();
+   mon.sendCommand("INPUT",args,null,rply);
+   String rslt = rply.waitForString();
+   return rslt;
+}
 
 
 
@@ -204,9 +248,9 @@ MethodDeclaration getRunnerMethod(CuminRunner cr)
 
 
 
-synchronized void addRunner(SesameExecRunner th)
+synchronized void addRunner(SesameExecRunner er)
 {
-   exec_runners.add(th);
+   exec_runners.add(er);
 }
 
 
@@ -233,6 +277,37 @@ synchronized void startRunners()
       run.startExecution();
     }
 }
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Handle project changes                                                  */
+/*                                                                              */
+/********************************************************************************/
+
+synchronized void resetRunners()
+{
+   for (SesameExecRunner run : exec_runners) {
+      resetRunners(run);
+    }
+}
+
+
+
+private void resetRunners(SesameExecRunner run)
+{
+   run.removeAllRunners();
+   SesameContext gblctx = run.getBaseContext();
+   for (SesameLocation loc : getActiveLocations()) {
+      CuminRunner cr = createRunner(loc,gblctx);
+      run.addRunner(cr);
+    }
+   if (run.isContinuous()) {
+      run.startExecution();
+    }
+}
+
 
 
 
@@ -270,6 +345,20 @@ void evaluateVoid(String expr)
 
 
 void enableAccess(String type)		{ }
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      File management methods                                                 */
+/*                                                                              */
+/********************************************************************************/
+
+CashewInputOutputModel getIOModel()
+{
+   return cashew_iomodel;
+}
+
 
 
 

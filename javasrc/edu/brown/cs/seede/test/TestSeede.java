@@ -64,10 +64,12 @@ private static final String		SOURCE_ID = "SEED_12345";
 private static final String		TEST1_SID = "SEED_12346";
 private static final String		TEST2_SID = "SEED_12347";
 private static final String		TEST3_SID = "SEED_12348";
+private static final String		TEST4_SID = "SEED_12349";
 
 private static final String		TEST_PROJECT = "sample1";
 private static final String		LAUNCH1_NAME = "test1";
 private static final String		LAUNCH2_NAME = "test2";
+private static final String		LAUNCH4_NAME = "test3";
 private static final String		REL_PATH1 = "src/edu/brown/cs/seede/sample/Tester.java";
 
 
@@ -96,7 +98,7 @@ public TestSeede()
    seede_result = null;
 
    mint_control.register("<BEDROCK SOURCE='ECLIPSE' TYPE='_VAR_0' />",new IDEHandler());
-   mint_control.register("<SEEDE TYPE='_VAR_0' />",new SeedeHandler());
+   mint_control.register("<SEEDEXEC TYPE='_VAR_0' />",new SeedeHandler());
 }
 
 
@@ -269,6 +271,9 @@ private static class LaunchData {
 
 }	// end of inner class LaunchData
 
+
+
+
 /********************************************************************************/
 /*										*/
 /*	Handle messages coming back						*/
@@ -413,6 +418,37 @@ private static class SeedeThread extends Thread {
    seede_result = null;
    CommandArgs args = new CommandArgs("EXECID","test3");
    sendSeedeMessage("EXEC",TEST3_SID,args,cnts,rply);
+   String sstatus = rply.waitForString();
+   System.err.println("RESULT IS " + sstatus);
+   Element xml = waitForSeedeResult();
+   System.err.println("SEED RESULT IS " + IvyXml.convertXmlToString(xml));
+}
+
+
+
+@Test public void test4()
+{
+   System.err.println("Start TEST4");
+   LaunchData ld = startLaunch(LAUNCH4_NAME);
+
+   IvyXmlWriter xw = new IvyXmlWriter();
+   xw.begin("SESSION");
+   xw.field("TYPE","LAUNCH");
+   xw.field("PROJECT",TEST_PROJECT);
+   xw.field("LAUNCHID",ld.getLaunchId());
+   xw.field("THREADID",ld.getThreadId());
+   xw.end("SESSION");
+   String cnts = xw.toString();
+   xw.close();
+   MintDefaultReply rply = new MintDefaultReply();
+   sendSeedeMessage("BEGIN",TEST4_SID,null,cnts,rply);
+   Element status = rply.waitForXml();
+   Assert.assertTrue(IvyXml.isElement(status,"RESULT"));
+
+   rply = new MintDefaultReply();
+   seede_result = null;
+   CommandArgs args = new CommandArgs("EXECID","test4");
+   sendSeedeMessage("EXEC",TEST4_SID,args,cnts,rply);
    String sstatus = rply.waitForString();
    System.err.println("RESULT IS " + sstatus);
    Element xml = waitForSeedeResult();
@@ -584,12 +620,12 @@ private class SeedeHandler implements MintHandler {
       String what = args.getArgument(0);
       Element xml = msg.getXml();
       switch (what) {
-         case "EXEC" :
-            synchronized (TestSeede.this) {
-               seede_result = xml;
-               TestSeede.this.notifyAll();
-             }
-            break;
+	 case "EXEC" :
+	    synchronized (TestSeede.this) {
+	       seede_result = xml;
+	       TestSeede.this.notifyAll();
+	     }
+	    break;
        }
       msg.replyTo();
     }

@@ -61,6 +61,8 @@ static CashewValue evaluate(CashewClock cc,CuminOperator op,CashewValue v1,Cashe
    Boolean crslt = null;
    int irslt = 0;
 
+   // AcornLog.logD("START EVAL " + op + " " + v1 + " " + v2 );
+
    switch (op) {
       case ADD :
 	 if (isstr) {
@@ -359,6 +361,8 @@ static CashewValue evaluate(CashewClock cc,CuminOperator op,CashewValue v1,Cashe
 	 break;
     }
 
+   // AcornLog.logD("EVAL " + op + " " + v1 + " " + v2 + " " + rslt + " " + crslt);
+
    if (rslt == null) {
       if (crslt != null) {
 	 rslt = CashewValue.booleanValue(crslt.booleanValue());
@@ -417,6 +421,9 @@ static CashewValue evaluateAssign(CuminRunner cr,CuminOperator op,CashewValue v1
 	 break;
     }
 
+   //AcornLog.logD("ASSIGN " + op + " " + v1.getDebugString(cc) + " " + v2.getDebugString(cc) + " " +
+		    // rslt.getDebugString(cc) + " " + tgt);
+
    assignValue(cr,v1,rslt,tgt);
 
    return rslt;
@@ -429,6 +436,7 @@ static void assignValue(CuminRunner cr,CashewValue vr,CashewValue cv,JcompType t
    CashewClock cc = cr.getClock();
    cv = castValue(cr,cv,tgt);
    cv = cv.getActualValue(cc);
+   // AcornLog.logD("DOASSIGN " + vr + " " + vr.getDebugString(cc) + " " + cv.getDebugString(cc));
    vr.setValueAt(cc,cv);
 }
 
@@ -716,6 +724,10 @@ static CashewValue evaluate(CashewClock cc,CuminOperator op,CashewValue v1)
 	    rslt = CashewValue.numericValue(INT_TYPE,fnv);
 	  }
 	 break;
+      case NOT :
+	 boolean notv = !v1.getBoolean(cc);
+	 rslt = CashewValue.booleanValue(notv);
+	 break;
       case NOP :
 	 rslt = v1.getActualValue(cc);
 	 break;
@@ -754,60 +766,3 @@ static void throwException(JcompType typ)
 
 
 /* end of CuminEvaluator.java */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

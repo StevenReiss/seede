@@ -218,7 +218,13 @@ public static CashewValue numericValue(JcompType t,String v)
     }
    else if (t == CHAR_TYPE) {
       char cv = 0;
-      if (v != null && v.length() > 0) cv = v.charAt(0);
+      if (v.startsWith("&#x")) {
+	 String hx = v.substring(3);
+	 int idx = hx.indexOf(";");
+	 if (idx > 0) hx = hx.substring(0,idx);
+	 cv = (char)  Integer.parseInt(hx,16);
+       }
+      else if (v != null && v.length() > 0) cv = v.charAt(0);
       return characterValue(t,cv);
     }
    else {
@@ -298,9 +304,9 @@ public static CashewValue arrayValue(char [] arr)
    for (int i = 0; i < arr.length; ++i) {
       inits.put(i,CashewValue.characterValue(CHAR_TYPE,arr[i]));
     }
-   
+
    JcompType jty = JcompType.createArrayType(CHAR_TYPE);
-   
+
    return arrayValue(jty,arr.length,inits);
 }
 
