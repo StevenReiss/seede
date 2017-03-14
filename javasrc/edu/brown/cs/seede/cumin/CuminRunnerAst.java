@@ -261,7 +261,6 @@ private void setupContext()
 {
    JcompSymbol js = JcompAst.getDefinition(method_node);
    JcompSource src = JcompAst.getSource(method_node.getRoot());
-   JcompTyper typer = JcompAst.getTyper(method_node);
    
    File file = null;
    if (src != null) file = new File(src.getFileName());

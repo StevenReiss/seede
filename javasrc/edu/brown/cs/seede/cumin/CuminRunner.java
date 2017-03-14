@@ -24,12 +24,14 @@
 
 package edu.brown.cs.seede.cumin;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 
 import edu.brown.cs.ivy.jcode.JcodeClass;
+import edu.brown.cs.ivy.jcode.JcodeDataType;
 import edu.brown.cs.ivy.jcode.JcodeFactory;
 import edu.brown.cs.ivy.jcode.JcodeMethod;
 import edu.brown.cs.ivy.jcomp.JcompProject;
@@ -139,6 +141,17 @@ CuminStack getStack()			{ return execution_stack; }
 public CashewContext getLookupContext() 	{ return lookup_context; }
 List<CashewValue> getCallArgs() 	{ return call_args; }
 
+protected JcompType convertType(JcodeDataType cty)   
+{
+   JcompTyper typer = getTyper();
+   String tnm = cty.getName();
+   JcompType rslt = typer.findType(tnm);
+   if (rslt != null) return rslt;
+   rslt = typer.findSystemType(tnm);
+   return rslt;
+}
+
+
 protected void setLookupContext(CashewContext ctx)
 {
    lookup_context = ctx;
@@ -243,9 +256,8 @@ protected CuminRunner handleCall(CashewClock cc,JcompSymbol method,List<CashewVa
    JcompType type = cmethod.getClassType();
    if (!type.isKnownType()) {
       MethodDeclaration md = (MethodDeclaration) cmethod.getDefinitionNode();
-      if (md == null)  
-         md = findAstForMethod(cmethod.getFullName());
       if (md != null) return doCall(cc,md,args);
+      AcornLog.logE("Missing AST for method declaration " + md);
     }
 
    JcodeClass mcls = getCodeFactory().findClass(type.getName());
@@ -276,7 +288,20 @@ CuminRunner handleCall(CashewClock cc,JcodeMethod method,List<CashewValue> args,
 
    JcompType type = getTyper().findType(cmethod.getDeclaringClass().getName());
    if (type != null && !type.isKnownType()) {
-      MethodDeclaration md = findAstForMethod(cmethod.getFullName());
+      int narg = cmethod.getNumArguments();
+      List<JcompType> argtyps = new ArrayList<JcompType>();
+      for (int i = 0; i < narg; ++i) {
+         JcodeDataType cotyp = cmethod.getArgType(i);
+         JcompType cmtyp = convertType(cotyp);
+         if (cmtyp != null && argtyps != null) argtyps.add(cmtyp);
+         else argtyps = null;
+       }
+      JcompType rtyp = convertType(cmethod.getReturnType());
+      JcompType mtyp = null;
+      if (argtyps != null) {
+         mtyp = JcompType.createMethodType(rtyp,argtyps,false);
+       }
+      MethodDeclaration md = findAstForMethod(cmethod.getFullName(),mtyp);
       if (md != null) return doCall(cc,md,args);
     }
 
@@ -347,7 +372,7 @@ private JcodeMethod findTargetMethod(CashewClock cc,JcodeMethod method,
 
 
 
-private MethodDeclaration findAstForMethod(String nm)
+private MethodDeclaration findAstForMethod(String nm,JcompType mtyp)
 {
    JcompProject jp = base_project.getJcompProject();
    String typ = "METHOD";
@@ -359,8 +384,8 @@ private MethodDeclaration findAstForMethod(String nm)
    JcompSearcher js = jp.findSymbols(nm,typ);
    for (JcompSymbol sr : js.getSymbols()) {
       ASTNode an = sr.getDefinitionNode();
+      if (mtyp !=  null && !sr.getType().isCompatibleWith(mtyp)) continue;
       if (an != null && an instanceof MethodDeclaration) {
-	 // Need to Check Data Type here
 	 return ((MethodDeclaration) an);
        }
     }

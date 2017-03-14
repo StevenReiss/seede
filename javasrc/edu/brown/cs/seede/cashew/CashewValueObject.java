@@ -172,6 +172,9 @@ private CashewRef findFieldForName(String nm)
 @Override public void outputLocalXml(IvyXmlWriter xw,CashewOutputContext outctx)
 {
    xw.field("OBJECT",true);
+   if (getDataType().isCompatibleWith(COMPONENT_TYPE)) {
+      xw.field("COMPONENT",true);
+    }
    int rvl = outctx.noteValue(this);
    xw.field("ID",Math.abs(rvl));
    if (rvl > 0) {

@@ -952,15 +952,6 @@ private void evaluateInstruction() throws CuminRunError
 /*										*/
 /********************************************************************************/
 
-private JcompType convertType(JcodeDataType cty)
-{
-   String tnm = cty.getName();
-   JcompType rslt = type_converter.findType(tnm);
-   if (rslt != null) return rslt;
-   rslt = type_converter.findSystemType(tnm);
-
-   return rslt;
-}
 
 
 
