@@ -24,6 +24,7 @@
 
 package edu.brown.cs.seede.cashew;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -80,11 +81,16 @@ public static CashewValue createValue(JcompTyper typer,Element xml) throws Cashe
       if (vtyp == null) throw new CashewException("Unknown type name " + s);
       return classValue(vtyp);
     }
+   else if (jtype == FILE_TYPE) {
+      String path = IvyXml.getTextElement(xml,"VALUE");
+      if (path == null) return nullValue();
+      return fileValue(path);
+    }
    else if (jtype.getName().endsWith("[]")) {
       int dim = IvyXml.getAttrInt(xml,"DIM");
       Map<Integer,Object> inits = new HashMap<Integer,Object>();
       //TODO: set up contents of va
-      CashewValueArray va = new CashewValueArray(jtype,dim,inits);
+      CashewValueArray va = new CashewValueArray(jtype,dim,inits,true);
       return va;
     }
    else if (jtype.isPrimitiveType()) {
@@ -114,9 +120,9 @@ public static CashewValue createDefaultValue(JcompType type)
    return CashewValue.nullValue();
 }
 
-public static CashewValue createReference(CashewValue base)
+public static CashewValue createReference(CashewValue base,boolean caninit)
 {
-   CashewRef cr = new CashewRef(base);
+   CashewRef cr = new CashewRef(base,caninit);
    return cr;
 }
 
@@ -277,7 +283,7 @@ public static CashewValue classValue(JcompType vtyp)
    synchronized (class_values) {
       CashewValueObject cv = class_values.get(vtyp);
       if (cv == null) {
-	 cv = new CashewValueObject.ValueClass(vtyp);
+	 cv = new CashewValueClass(vtyp);
 	 class_values.put(vtyp,cv);
        }
       return cv;
@@ -285,16 +291,31 @@ public static CashewValue classValue(JcompType vtyp)
 }
 
 
+
+public static CashewValue fileValue(String path)
+{
+   CashewValueFile cv = new CashewValueFile(path);
+   
+   return cv;
+}
+
+public static CashewValue fileValue()
+{
+   CashewValueFile cv = new CashewValueFile((File) null);
+   return cv;
+}
+
+
 public static CashewValue arrayValue(JcompType atyp,int dim)
 {
    // might want to create multidimensional arrays here
-   return new CashewValueArray(atyp,dim,null);
+   return new CashewValueArray(atyp,dim,null,false);
 }
 
 
 public static CashewValue arrayValue(JcompType atyp,int dim,Map<Integer,Object> inits)
 {
-   return new CashewValueArray(atyp,dim,inits);
+   return new CashewValueArray(atyp,dim,inits,true);
 }
 
 
@@ -312,14 +333,14 @@ public static CashewValue arrayValue(char [] arr)
 
 public static CashewValue objectValue(JcompType otyp)
 {
-   return objectValue(otyp,null);
+   return objectValue(otyp,null,false);
 }
 
 
-public static CashewValue objectValue(JcompType otyp,Map<String,Object> inits)
+public static CashewValue objectValue(JcompType otyp,Map<String,Object> inits,boolean caninit)
 {
    if (otyp.isParameterizedType()) otyp = otyp.getBaseType();
-   CashewValueObject vo = new CashewValueObject(otyp,inits);
+   CashewValueObject vo = new CashewValueObject(otyp,inits,caninit);
    return vo;
 }
 

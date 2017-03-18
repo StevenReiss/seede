@@ -269,6 +269,7 @@ private void loadInitialValues()
    for (Element telt : IvyXml.children(stack,"THREAD")) {
       String teid = IvyXml.getAttrString(telt,"ID");
       if (!thread_ids.contains(teid)) continue;
+      String thnm = IvyXml.getAttrString(telt,"NAME");
       Element frm = IvyXml.getChild(telt,"STACKFRAME");
       String feid = IvyXml.getAttrString(frm,"ID");
       thread_frame.put(teid,feid);
@@ -288,7 +289,7 @@ private void loadInitialValues()
 	 svd = getUniqueValue(svd);
 	 valmap.put(nm,svd);
        }
-      SesameLocation loc = new SesameLocation(source_file,method_name,line_number,teid);
+      SesameLocation loc = new SesameLocation(source_file,method_name,line_number,teid,thnm);
       addLocation(loc);
     }
 }

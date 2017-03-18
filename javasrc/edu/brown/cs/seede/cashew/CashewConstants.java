@@ -58,6 +58,7 @@ enum CashewValueKind {
 
 String HASH_CODE_FIELD = "@hashCode";
 String CURRENT_THREAD_FIELD = "@currentThread";
+String CURRENT_THREAD_NAME_FIELD = "@currentThreadName";
 
 
 
@@ -120,6 +121,9 @@ JcompType BOOLEAN_BOX_TYPE = JCOMP_BASE.getSystemType("java.lang.Boolean");
 
 JcompType COMPONENT_TYPE = JCOMP_BASE.getSystemType("java.awt.Component");
 JcompType GRAPHICS2D_TYPE = JCOMP_BASE.getSystemType("java.awt.Graphics2D");
+
+JcompType FILE_TYPE = JCOMP_BASE.getSystemType("java.io.File");
+JcompType IO_EXCEPTION = JCOMP_BASE.getSystemType("java.io.IOException");
 
 
 

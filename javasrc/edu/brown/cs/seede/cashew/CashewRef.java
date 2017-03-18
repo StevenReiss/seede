@@ -52,6 +52,7 @@ private SortedMap<Long,CashewValue>	value_map;
 private long	last_update;
 private CashewValue last_value;
 private CashewDeferredValue deferred_value;
+private boolean can_initialize;
 
 
 
@@ -62,10 +63,11 @@ private CashewDeferredValue deferred_value;
 /*										*/
 /********************************************************************************/
 
-CashewRef(CashewValue v)
+CashewRef(CashewValue v,boolean caninit)
 {
    last_update = 0;
    last_value = v;
+   can_initialize = caninit;
 }
 
 CashewRef(CashewDeferredValue deferred)
@@ -73,6 +75,7 @@ CashewRef(CashewDeferredValue deferred)
    last_update = -1;
    last_value = null;
    deferred_value = deferred;
+   can_initialize = true;
 }
 
 
@@ -289,13 +292,19 @@ private CashewValue getValueAt(CashewClock cc)
 {
    IvyXmlWriter xw = outctx.getXmlWriter();
    if (value_map == null) {
-      if (last_value != null) last_value.outputXml(outctx);
+      if (last_value != null) {
+         xw.begin("VALUE");
+         if (can_initialize) xw.field("CANINIT",true);        xw.field("TYPE",last_value.getDataType());
+         last_value.outputLocalXml(xw,outctx);
+         xw.end("VALUE");
+       }
     }
    else {
       for (Map.Entry<Long,CashewValue> ent : value_map.entrySet()) {
 	 long when = ent.getKey();
 	 xw.begin("VALUE");
 	 xw.field("TIME",when);
+         if (can_initialize) xw.field("CANINIT",true);
          xw.field("TYPE",ent.getValue().getDataType());
 	 if (ent.getValue() != null) {
 	    ent.getValue().outputLocalXml(xw,outctx);

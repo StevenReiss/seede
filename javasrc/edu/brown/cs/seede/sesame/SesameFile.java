@@ -99,14 +99,17 @@ void editFile(int len,int off,String txt,boolean complete)
     }
 
    synchronized (ast_roots) {
-      ast_roots.clear();
-      JcompSemantics semdata = SesameMain.getJcompBase().getSemanticData(this);
-      try {
-	 if (semdata != null && semdata.getProject() != null) semdata.reparse();
-       }
-      catch (Throwable t) {
-	 AcornLog.logE("Problem reparsing",t);
-       }
+      ast_roots.remove(NO_PROJECT);
+    }
+}
+
+
+void resetSemantics(SesameProject sp)
+{
+   // might need to be project specific if we have multiple sesssions active
+   
+   synchronized (ast_roots) {
+      ast_roots.remove(sp);
     }
 }
 

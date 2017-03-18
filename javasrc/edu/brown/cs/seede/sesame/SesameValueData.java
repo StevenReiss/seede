@@ -216,7 +216,7 @@ CashewValue getCashewValue()
 	    CashewValue hvl = CashewValue.numericValue(CashewConstants.INT_TYPE,hash_code);
 	    inits.put(CashewConstants.HASH_CODE_FIELD,hvl);
 	  }
-	 result_value = CashewValue.objectValue(typ,inits);
+	 result_value = CashewValue.objectValue(typ,inits,true);
 	 for (Map.Entry<String,SesameValueData> ent : sets.entrySet()) {
 	    CashewValue cv = ent.getValue().getCashewValue();
 	    result_value.setFieldValue(null,ent.getKey(),cv);

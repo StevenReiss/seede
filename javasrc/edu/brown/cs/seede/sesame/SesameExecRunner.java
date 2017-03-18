@@ -66,9 +66,9 @@ private boolean 	is_continuous;
 private boolean 	run_again;
 private List<CashewValue> swing_components;
 private SesameContext   base_context;
+private long            max_time;
 
-
-
+ 
 
 
 /********************************************************************************/
@@ -78,7 +78,7 @@ private SesameContext   base_context;
 /********************************************************************************/
 
 SesameExecRunner(SesameSession ss,String rid,SesameContext ctx,
-      boolean contin,CuminRunner... rs)
+      boolean contin,long maxtime,CuminRunner... rs)
 {
    for_session = ss;
    for_monitor = ss.getControl().getMonitor();
@@ -89,6 +89,7 @@ SesameExecRunner(SesameSession ss,String rid,SesameContext ctx,
    run_status = new HashMap<CuminRunner,CuminRunError>();
    is_continuous = contin;
    swing_components = new ArrayList<CashewValue>();
+   max_time = maxtime;
 
    for (CuminRunner r : rs) {
       cumin_runners.add(r);
@@ -170,8 +171,6 @@ void restartExecution()
 
    if (is_continuous) startRunner();
 }
-
-
 
 
 private synchronized void stopCurrentRun()
@@ -268,6 +267,7 @@ private void outputResult(IvyXmlWriter xw,CuminRunner cr,CuminRunError sts)
       xw.field("METHOD",loc.getMethodName());
       xw.field("LINE",loc.getLineNumber());
       xw.field("THREAD",loc.getThread());
+      xw.field("THREADNAME",loc.getThreadName());
     }
 
    xw.begin("RETURN");
@@ -317,38 +317,54 @@ private class MasterThread extends Thread {
          run_status.clear();
          for_session.getIOModel().clear();
          List<RunnerThread> waits = new ArrayList<RunnerThread>();
-         synchronized (this) {
-            for (CuminRunner cr : cumin_runners) {
-               if (i != 0) {
-        	  MethodDeclaration mthd = for_session.getRunnerMethod(cr);
-        	  if (mthd == null) continue;
-        	  cr.reset(mthd);
-        	}
-               RunnerThread rt = new RunnerThread(SesameExecRunner.this,cr);
-               runner_threads.put(cr,rt);
-               waits.add(rt);
-               rt.start();
-             }
+         SesameProject proj = for_session.getProject();
+         
+         if (i != 0 && reply_id != null) {
+            CommandArgs args = new CommandArgs();
+            if (reply_id != null) args.put("ID",reply_id);
+            for_monitor.sendCommand("RESET",args,null,null);
           }
-   
-         // wait for all to exit
-         while (!waits.isEmpty()) {
-            for (Iterator<RunnerThread> it = waits.iterator(); it.hasNext(); ) {
-               RunnerThread rt = it.next();
-               try {
-        	  rt.join();
-        	  synchronized (this) {
-        	     runner_threads.remove(rt.getRunner());
-        	     if (runner_threads.isEmpty()) {
-        		notifyAll();
-        	      }
-        	   }
-        	  it.remove();
-        	}
-               catch (InterruptedException e) { }
+         
+         proj.compileProject();
+         proj.executionLock();
+         try {
+            synchronized (this) {
+               for (CuminRunner cr : cumin_runners) {
+                  if (i != 0) {
+                     MethodDeclaration mthd = for_session.getRunnerMethod(cr);
+                     if (mthd == null) continue;
+                     cr.reset(mthd);
+                   }
+                  RunnerThread rt = new RunnerThread(SesameExecRunner.this,cr);
+                  runner_threads.put(cr,rt);
+                  waits.add(rt);
+                  rt.start();
+                }
              }
+            
+            // wait for all to exit
+            while (!waits.isEmpty()) {
+               for (Iterator<RunnerThread> it = waits.iterator(); it.hasNext(); ) {
+                  RunnerThread rt = it.next();
+                  try {
+                     rt.join();
+                     synchronized (this) {
+                        runner_threads.remove(rt.getRunner());
+                        if (runner_threads.isEmpty()) {
+                           notifyAll();
+                         }
+                      }
+                     it.remove();
+                   }
+                  catch (InterruptedException e) { }
+                }
+             }
+            runSwingThreads();
           }
-         runSwingThreads();
+         finally {
+            proj.executionUnlock();
+          }
+         
          report();
          synchronized (this) {
             if (!is_continuous) break;
@@ -406,15 +422,15 @@ private static class RunnerThread extends Thread {
    @Override public void run() {
       CuminRunError sts = null;
       try {
-	 cumin_runner.interpret(CuminConstants.EvalType.RUN);
+         cumin_runner.interpret(CuminConstants.EvalType.RUN);
        }
       catch (CuminRunError r) {
-	 sts = r;
+         sts = r;
        }
       catch (Throwable t) {
-	 sts = new CuminRunError(t);
+         sts = new CuminRunError(t);
        }
-
+   
       exec_runner.setStatus(cumin_runner,sts);
     }
 

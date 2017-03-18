@@ -75,7 +75,7 @@ static CashewValue evaluate(CashewClock cc,CuminOperator op,CashewValue v1,Cashe
 	  }
 	 else if (isflt) {
 	    double v0 = v1.getNumber(cc).doubleValue() + v2.getNumber(cc).doubleValue();
-	    rslt = CashewValue.numericValue(DOUBLE_TYPE,v0);
+	    rslt = CashewValue.numericValue(FLOAT_TYPE,v0);
 	  }
 	 else if (islng) {
 	    long v0 = v1.getNumber(cc).longValue() + v2.getNumber(cc).longValue();
@@ -244,7 +244,7 @@ static CashewValue evaluate(CashewClock cc,CuminOperator op,CashewValue v1,Cashe
 	  }
 	 else if (isflt) {
 	    double v0 = v1.getNumber(cc).doubleValue() * v2.getNumber(cc).doubleValue();
-	    rslt = CashewValue.numericValue(DOUBLE_TYPE,v0);
+	    rslt = CashewValue.numericValue(FLOAT_TYPE,v0);
 	  }
 	 else if (islng) {
 	    long v0 = v1.getNumber(cc).longValue() * v2.getNumber(cc).longValue();
@@ -312,7 +312,7 @@ static CashewValue evaluate(CashewClock cc,CuminOperator op,CashewValue v1,Cashe
 	  }
 	 else if (isflt) {
 	    double v0 = v1.getNumber(cc).doubleValue() - v2.getNumber(cc).doubleValue();
-	    rslt = CashewValue.numericValue(DOUBLE_TYPE,v0);
+	    rslt = CashewValue.numericValue(FLOAT_TYPE,v0);
 	  }
 	 else if (islng) {
 	    long v0 = v1.getNumber(cc).longValue() - v2.getNumber(cc).longValue();
@@ -742,7 +742,7 @@ static CashewValue evaluate(CashewClock cc,CuminOperator op,CashewValue v1)
 
 
 /********************************************************************************/
-/*										*/
+/*									c	*/
 /*	Throw exception 							*/
 /*										*/
 /********************************************************************************/

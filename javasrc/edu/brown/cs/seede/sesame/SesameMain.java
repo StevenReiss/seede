@@ -143,6 +143,12 @@ private void badArgs()
 static JcompControl getJcompBase()		{ return jcomp_base; }
 
 SesameFileManager getFileManager()		{ return file_manager; }
+
+
+void noteFileChanged(SesameFile sf)
+{
+   message_monitor.noteFileChanged(sf);
+}
 SesameMonitor getMonitor()			{ return message_monitor; }
 
 String getMintId()				{ return message_id; }

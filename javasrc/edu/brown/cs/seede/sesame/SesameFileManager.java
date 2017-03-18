@@ -126,6 +126,7 @@ void handleEdit(File f,int len,int offset,boolean complete,String txt)
       return;
     }
    sf.editFile(len,offset,txt,complete);
+   sesame_control.noteFileChanged(sf);
 }
 
 

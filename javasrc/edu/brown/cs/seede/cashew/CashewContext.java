@@ -34,9 +34,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 
+import edu.brown.cs.ivy.jcode.JcodeDataType;
 import edu.brown.cs.ivy.jcode.JcodeField;
 import edu.brown.cs.ivy.jcode.JcodeMethod;
 import edu.brown.cs.ivy.jcomp.JcompSymbol;
+import edu.brown.cs.ivy.jcomp.JcompType;
 import edu.brown.cs.ivy.xml.IvyXmlWriter;
 
 public class CashewContext implements CashewConstants
@@ -70,14 +72,51 @@ private static AtomicInteger id_counter = new AtomicInteger();
 
 public CashewContext(JcompSymbol js,File f,CashewContext par)
 {
-   this(js.getFullName(),f,par);
+   this(getNameWithSignature(js),f,par);
+}
+
+
+
+private static String getNameWithSignature(JcompSymbol js)
+{
+   StringBuffer buf = new StringBuffer();
+   buf.append(js.getFullName());
+   
+   buf.append("(");
+   JcompType jt = js.getType();
+   int i = 0;
+   for (JcompType aty : jt.getComponents()) {
+      if (i++ > 0) buf.append(",");
+      buf.append(aty.getName());
+    }
+   buf.append(")");
+   
+   return buf.toString();
 }
 
 
 public CashewContext(JcodeMethod jm,CashewContext par)
 {
-   this(jm.getFullName(),null,par);
+   this(getNameWithSignature(jm),null,par);
 }
+
+
+
+private static String getNameWithSignature(JcodeMethod jm)
+{
+   StringBuffer buf = new StringBuffer();
+   buf.append(jm.getFullName());
+   buf.append("(");
+   for (int i = 0; i < jm.getNumArguments(); ++i) {
+      JcodeDataType dt = jm.getArgType(i);
+      if (i > 0) buf.append(",");
+      buf.append(dt.getName());
+    }
+   buf.append(")");
+   
+   return buf.toString();
+}
+
 
 
 public CashewContext(String js,File f,CashewContext par)

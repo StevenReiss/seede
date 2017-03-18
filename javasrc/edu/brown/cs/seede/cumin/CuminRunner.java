@@ -41,11 +41,12 @@ import edu.brown.cs.ivy.jcomp.JcompTyper;
 import edu.brown.cs.ivy.jcomp.JcompType;
 import edu.brown.cs.seede.acorn.AcornLog;
 import edu.brown.cs.seede.cashew.CashewClock;
+import edu.brown.cs.seede.cashew.CashewConstants;
 import edu.brown.cs.seede.cashew.CashewContext;
 import edu.brown.cs.seede.cashew.CashewValue;
 
 
-public abstract class CuminRunner implements CuminConstants
+public abstract class CuminRunner implements CuminConstants, CashewConstants 
 {
 
 
@@ -394,7 +395,29 @@ private MethodDeclaration findAstForMethod(String nm,JcompType mtyp)
 }
 
 
+/********************************************************************************/
+/*                                                                              */
+/*      Handle special cases of NEW                                             */
+/*                                                                              */
+/********************************************************************************/
 
+protected CashewValue handleNew(JcompType nty)
+{
+   CashewValue rslt = null;
+   
+   if (nty == STRING_TYPE) {
+      rslt = CashewValue.stringValue("");
+    }
+   else if (nty == FILE_TYPE) {
+      rslt = CashewValue.fileValue();
+    }
+   else {
+      nty.defineAll(getTyper());
+      rslt = CashewValue.objectValue(nty);
+    }
+   
+   return rslt;
+}
 }	// end of class CuminRunner
 
 

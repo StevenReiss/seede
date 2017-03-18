@@ -271,7 +271,7 @@ private void setupContext()
    for (JcompSymbol lcl : lf.getLocalVars()) {
       JcompType lty = lcl.getType();
       CashewValue nv = CashewValue.createDefaultValue(lty);
-      nv = CashewValue.createReference(nv);
+      nv = CashewValue.createReference(nv,false);
       ctx.define(lcl,nv);
     }
 
@@ -287,7 +287,7 @@ private void setupContext()
 	 if (ty != cty && !sty.isStatic()) {
 	    String nm = sty.getFullName() + ".this";
 	    CashewValue nv = CashewValue.nullValue();
-	    nv = CashewValue.createReference(nv);
+	    nv = CashewValue.createReference(nv,false);
 	    ctx.define(nm,nv);
 	  }
        }
@@ -297,7 +297,7 @@ private void setupContext()
    int lno = cu.getLineNumber(method_node.getStartPosition());
    if (lno < 0) lno = 0;
    CashewValue zv = CashewValue.numericValue(CashewConstants.INT_TYPE,lno);
-   ctx.define(LINE_NAME,CashewValue.createReference(zv));
+   ctx.define(LINE_NAME,CashewValue.createReference(zv,false));
    setLookupContext(ctx);
 }
 
@@ -1086,13 +1086,12 @@ private void visit(ClassInstanceCreation v, ASTNode after)
     }
 
    JcompType rty = JcompAst.getJavaType(v.getType());
-   rty.defineAll(JcompAst.getTyper(v));
    JcompSymbol csym = JcompAst.getReference(v);
 
    JcompType ctyp = csym.getType();
    List<JcompType> atyps = ctyp.getComponents();
 
-   CashewValue rval = CashewValue.objectValue(rty);
+   CashewValue rval = handleNew (rty);
    List<CashewValue> argv = new ArrayList<CashewValue>();
    for (int i = 0; i < args.size(); ++i) {
       CashewValue cv = execution_stack.pop();

@@ -194,17 +194,17 @@ private void setupContext(List<CashewValue> args)
    int vct = 0;
    for (CashewValue cv : args) {
       // AcornLog.logD("ARG " + vct + " " + cv);
-      CashewValue ref = CashewValue.createReference(cv);
+      CashewValue ref = CashewValue.createReference(cv,false);
       ctx.define(Integer.valueOf(vct),ref);
       ++vct;
       if (cv != null && cv.isCategory2(execution_clock)) {
-	 ref = CashewValue.createReference(CashewValue.nullValue());
+	 ref = CashewValue.createReference(CashewValue.nullValue(),false);
 	 ctx.define(Integer.valueOf(vct),ref);
 	 ++vct;
        }
     }
    while (vct < nlcl) {
-      CashewValue ref = CashewValue.createReference(CashewValue.nullValue());
+      CashewValue ref = CashewValue.createReference(CashewValue.nullValue(),false);
       ctx.define(Integer.valueOf(vct),ref);
       ++vct;
     }
@@ -214,7 +214,7 @@ private void setupContext(List<CashewValue> args)
    if (jins != null) lno = jins.getLineNumber();
    if (lno < 0) lno = 0;
    CashewValue zv = CashewValue.numericValue(CashewConstants.INT_TYPE,lno);
-   ctx.define(LINE_NAME,CashewValue.createReference(zv));
+   ctx.define(LINE_NAME,CashewValue.createReference(zv,false));
 
    setLookupContext(ctx);
 }
@@ -972,20 +972,7 @@ private void handleCall(JcodeMethod method,CallType cty)
 
 
 
-private CashewValue handleNew(JcompType nty)
-{
-   CashewValue rslt = null;
 
-   if (nty == STRING_TYPE) {
-      rslt = CashewValue.stringValue("");
-    }
-   else {
-      nty.defineAll(type_converter);
-      rslt = CashewValue.objectValue(nty);
-    }
-
-   return rslt;
-}
 
 
 private CashewValue buildArray(int idx,int [] bnds,JcompType base)

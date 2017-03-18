@@ -31,6 +31,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.w3c.dom.Element;
@@ -60,9 +62,11 @@ public class SesameProject implements SesameConstants, CuminProject
 private String		project_name;
 private List<String>	class_paths;
 private Set<SesameFile> active_files;
+private Set<SesameFile> changed_files;
 private JcompProject	base_project;
 private JcodeFactory	binary_control;
 private SesameMain	sesame_control;
+private ReadWriteLock   project_lock;
 
 
 
@@ -80,7 +84,10 @@ SesameProject(SesameMain sm,String name)
    class_paths = new ArrayList<String>();
 
    active_files = new HashSet<SesameFile>();
-
+   changed_files = new HashSet<SesameFile>();
+   
+   project_lock = new ReentrantReadWriteLock();
+ 
    boolean havepoppy = false;
 
    // compute class path for project
@@ -150,15 +157,17 @@ String getName()			{ return project_name; }
 
 void addFile(SesameFile sf)
 {
-   if (active_files.add(sf))
-      clearProject();
+   if (active_files.add(sf)) {
+      noteFileChanged(sf,false);
+    }
 }
 
 
 void removeFile(SesameFile sf)
 {
-   if (active_files.remove(sf))
-      clearProject();
+   if (active_files.remove(sf)) {
+      noteFileChanged(sf,true);
+    }
 }
 
 
@@ -174,7 +183,73 @@ Collection<SesameFile> getActiveFiles()
 }
 
 
-private synchronized void clearProject()
+
+/********************************************************************************/
+/*                                                                              */
+/*      Locking methods                                                         */
+/*                                                                              */
+/********************************************************************************/
+
+void executionLock()
+{
+   project_lock.readLock().lock();
+}
+
+
+
+void executionUnlock()
+{
+   project_lock.readLock().unlock();
+}
+
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Compilation related methods                                             */
+/*                                                                              */
+/********************************************************************************/
+
+boolean noteFileChanged(SesameFile sf,boolean force)
+{
+   project_lock.writeLock().lock();
+   try {
+      if (force || active_files.contains(sf)) {
+         changed_files.add(sf);
+         return true;
+       }
+    }
+   finally {
+      project_lock.writeLock().unlock();
+    }
+   
+   return false;
+}
+
+
+void compileProject()
+{
+   if (!changed_files.isEmpty()) {
+      project_lock.writeLock().lock();
+      try {
+         for (SesameFile sf : changed_files) {
+            sf.resetSemantics(this);
+          }
+         clearProject();
+         getJcompProject();
+         getTyper();
+         changed_files.clear();
+       }
+      finally {
+         project_lock.writeLock().unlock();
+       }
+    }
+}
+
+
+
+synchronized void clearProject()
 {
    if (base_project != null) {
       JcompControl jc = SesameMain.getJcompBase();
@@ -189,8 +264,9 @@ private synchronized void clearProject()
 
 @Override public synchronized JcompProject getJcompProject()
 {
+   
    if (base_project != null) return base_project;
-
+   
    JcompControl jc = SesameMain.getJcompBase();
    Collection<JcompSource> srcs = new ArrayList<JcompSource>(active_files);
    base_project = jc.getProject(class_paths,srcs,false);

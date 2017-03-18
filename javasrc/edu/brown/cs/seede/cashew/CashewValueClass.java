@@ -1,8 +1,8 @@
 /********************************************************************************/
 /*                                                                              */
-/*              SesameThreadContext.java                                        */
+/*              CashewValueClass.java                                           */
 /*                                                                              */
-/*      Context information for thread-specific information                     */
+/*      Representation of java.lang.Class objects                               */
 /*                                                                              */
 /********************************************************************************/
 /*      Copyright 2011 Brown University -- Steven P. Reiss                    */
@@ -22,12 +22,12 @@
 
 
 
-package edu.brown.cs.seede.sesame;
+package edu.brown.cs.seede.cashew;
 
-import edu.brown.cs.seede.cashew.CashewContext;
-import edu.brown.cs.seede.cashew.CashewValue;
+import edu.brown.cs.ivy.jcomp.JcompType;
+import edu.brown.cs.ivy.xml.IvyXmlWriter;
 
-class SesameThreadContext extends CashewContext implements SesameConstants
+class CashewValueClass extends CashewValueObject implements CashewConstants
 {
 
 
@@ -37,10 +37,7 @@ class SesameThreadContext extends CashewContext implements SesameConstants
 /*                                                                              */
 /********************************************************************************/
 
-private String  thread_id;
-private String  thread_name;
-private SesameSession for_session;
-
+private JcompType       class_value;
 
 
 
@@ -50,50 +47,46 @@ private SesameSession for_session;
 /*                                                                              */
 /********************************************************************************/
 
-SesameThreadContext(String tid,String tnm,SesameSession sess,SesameContext gbl)
+CashewValueClass(JcompType c) 
 {
-   super("THREAD_CONTEXT",null,gbl);
-   
-   thread_id = tid;
-   thread_name = tnm;
-   for_session = sess;
+   super(CLASS_TYPE,null,false);
+   class_value = c;
+}
+
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Access methods                                                          */
+/*                                                                              */
+/********************************************************************************/
+
+@Override public String getString(CashewClock cc,int idx,boolean dbg) 
+{
+   return class_value.toString();
 }
 
 
 
 /********************************************************************************/
 /*                                                                              */
-/*      Overridden methods                                                      */
+/*      Output methods                                                          */
 /*                                                                              */
 /********************************************************************************/
 
-public CashewValue findStaticFieldReference(String name,String type)
+@Override public void outputLocalXml(IvyXmlWriter xw,CashewOutputContext outctx)
 {
-   if (name.equals(CURRENT_THREAD_FIELD)) {
-      CashewValue cv = findReference(name);
-      if (cv != null) return cv;
-      SesameValueData svd = for_session.evaluateData("java.lang.Thread.currentThread()",thread_id);
-      if (svd != null) {
-         cv = svd.getCashewValue();
-         if (cv != null) {
-            define(name,cv);
-            return cv;
-          }
-       }
-    }
-   else if (name.equals(CURRENT_THREAD_NAME_FIELD)) {
-      return CashewValue.stringValue(thread_name);
-    }
-   
-   return super.findStaticFieldReference(name,type);
+   xw.field("OBJECT",true);
+   if (class_value == null) xw.field("CLASS","*UNKNOWN*");
+   else xw.field("CLASS",class_value.toString());
 }
 
 
-
-}       // end of class SesameThreadContext
-
+}       // end of class CashewValueClass
 
 
 
-/* end of SesameThreadContext.java */
+
+/* end of CashewValueClass.java */
 

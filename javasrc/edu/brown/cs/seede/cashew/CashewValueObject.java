@@ -28,9 +28,12 @@ import edu.brown.cs.ivy.jcomp.JcompScope;
 import edu.brown.cs.ivy.jcomp.JcompSymbol;
 import edu.brown.cs.ivy.jcomp.JcompType;
 import edu.brown.cs.ivy.xml.IvyXmlWriter;
+import edu.brown.cs.seede.acorn.AcornLog;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 public class CashewValueObject extends CashewValue implements CashewConstants
 {
@@ -43,6 +46,7 @@ public class CashewValueObject extends CashewValue implements CashewConstants
 /********************************************************************************/
 
 private Map<String,CashewRef> field_values;
+private Set<String> new_fields;
 
 private static Map<String,CashewRef> static_values;
 
@@ -57,11 +61,12 @@ static {
 /*										*/
 /********************************************************************************/
 
-CashewValueObject(JcompType jt,Map<String,Object> inits)
+CashewValueObject(JcompType jt,Map<String,Object> inits,boolean caninit)
 {
    super(jt);
 
    field_values = new HashMap<String,CashewRef>();
+   new_fields = null;
    for (JcompType jt0 = jt; jt0 != null; jt0 = jt0.getSuperType()) {
       JcompScope tscp = jt0.getScope();
       for (JcompSymbol fsym : tscp.getDefinedFields()) {
@@ -77,8 +82,13 @@ CashewValueObject(JcompType jt,Map<String,Object> inits)
 		  cr = new CashewRef(dv);
 		}
 	     }
+            else if (!fsym.isStatic()) {
+               // first check if user has definition for the field and use it if so
+               if (new_fields == null) new_fields = new HashSet<String>();
+               new_fields.add(key);
+             }
 	  }
-	 if (cr == null) cr = new CashewRef(cv);
+	 if (cr == null) cr = new CashewRef(cv,caninit);
 
 	 if (fsym.isStatic()) {
 	    if (!static_values.containsKey(key)) static_values.put(key,cr);
@@ -88,7 +98,7 @@ CashewValueObject(JcompType jt,Map<String,Object> inits)
     }
     if (field_values.get(HASH_CODE_FIELD) == null) {
        CashewValue chvl = CashewValue.numericValue(INT_TYPE,hashCode());
-       field_values.put(HASH_CODE_FIELD,new CashewRef(chvl));
+       field_values.put(HASH_CODE_FIELD,new CashewRef(chvl,false));
      }
 }
 
@@ -103,6 +113,9 @@ CashewValueObject(JcompType jt,Map<String,Object> inits)
 @Override public CashewValue getFieldValue(CashewClock cc,String nm)
 {
    CashewValue cv = findFieldForName(nm);
+   if (cv == null) {
+      AcornLog.logE("Missing field " + nm);
+    }
    return cv;
 }
 
@@ -184,6 +197,8 @@ private CashewRef findFieldForName(String nm)
       for (Map.Entry<String,CashewRef> ent : field_values.entrySet()) {
 	 xw.begin("FIELD");
 	 xw.field("NAME",ent.getKey());
+         if (new_fields != null && new_fields.contains(ent.getKey()))
+            xw.field("NEWFIELD",true);
 	 ent.getValue().outputXml(outctx);
 	 xw.end("FIELD");
        }
@@ -204,37 +219,6 @@ private CashewRef findFieldForName(String nm)
 {
    return getDebugString(null);
 }
-
-
-
-
-/********************************************************************************/
-/*										*/
-/*     Class Object value							*/
-/*										*/
-/********************************************************************************/
-
-static class ValueClass extends CashewValueObject
-{
-   private JcompType	 class_value;
-
-   ValueClass(JcompType c) {
-      super(CLASS_TYPE,null);
-      class_value = c;
-    }
-
-   @Override public String getString(CashewClock cc,int idx,boolean dbg) {
-      return class_value.toString();
-    }
-
-   @Override public void outputLocalXml(IvyXmlWriter xw,CashewOutputContext outctx) {
-      xw.field("OBJECT",true);
-      if (class_value == null) xw.field("CLASS","*UNKNOWN*");
-      else xw.field("CLASS",class_value.toString());
-    }
-
-}	// end of inner class ValueClass
-
 
 
 

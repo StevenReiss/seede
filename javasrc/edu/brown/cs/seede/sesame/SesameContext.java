@@ -79,7 +79,7 @@ SesameContext(SesameSession ss)
    
    cv = for_session.lookupValue(name,type);
    if (cv != null) {
-      cv = CashewValue.createReference(cv);
+      cv = CashewValue.createReference(cv,true);
       define(name,cv);
     }
    

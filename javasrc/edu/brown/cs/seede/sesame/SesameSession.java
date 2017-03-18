@@ -174,6 +174,14 @@ protected void addLocation(SesameLocation sl)
    for_project.addFile(sl.getFile());
 }
 
+void noteFileChanged(SesameFile sf)
+{
+   if (for_project.noteFileChanged(sf,false)) {
+      restartRunners();
+    }
+}
+
+
 
 void noteContinue(String launch,String thread)                  { }
 
@@ -230,7 +238,8 @@ CuminRunner createRunner(SesameLocation loc,SesameContext gblctx)
 {
    MethodDeclaration mthd = getCallMethod(loc);
    List<CashewValue> args = getCallArgs(loc);
-   SesameThreadContext tctx = new SesameThreadContext(loc.getThread(),this,gblctx);
+   SesameThreadContext tctx = new SesameThreadContext(loc.getThread(),
+         loc.getThreadName(),this,gblctx);
    CuminRunner cr = CuminRunner.createRunner(getProject(),tctx,mthd,args);
    runner_location.put(cr,loc);
    

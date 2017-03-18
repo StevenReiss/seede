@@ -1,8 +1,8 @@
 /********************************************************************************/
 /*                                                                              */
-/*              SesameThreadContext.java                                        */
+/*              CashewValueFile.java                                            */
 /*                                                                              */
-/*      Context information for thread-specific information                     */
+/*      Representation of java.io.File objects                                  */
 /*                                                                              */
 /********************************************************************************/
 /*      Copyright 2011 Brown University -- Steven P. Reiss                    */
@@ -22,12 +22,13 @@
 
 
 
-package edu.brown.cs.seede.sesame;
+package edu.brown.cs.seede.cashew;
 
-import edu.brown.cs.seede.cashew.CashewContext;
-import edu.brown.cs.seede.cashew.CashewValue;
+import java.io.File;
 
-class SesameThreadContext extends CashewContext implements SesameConstants
+import edu.brown.cs.ivy.xml.IvyXmlWriter;
+
+public class CashewValueFile extends CashewValueObject implements CashewConstants
 {
 
 
@@ -37,11 +38,7 @@ class SesameThreadContext extends CashewContext implements SesameConstants
 /*                                                                              */
 /********************************************************************************/
 
-private String  thread_id;
-private String  thread_name;
-private SesameSession for_session;
-
-
+private File            user_file;
 
 
 /********************************************************************************/
@@ -50,50 +47,100 @@ private SesameSession for_session;
 /*                                                                              */
 /********************************************************************************/
 
-SesameThreadContext(String tid,String tnm,SesameSession sess,SesameContext gbl)
+CashewValueFile(String path)
 {
-   super("THREAD_CONTEXT",null,gbl);
-   
-   thread_id = tid;
-   thread_name = tnm;
-   for_session = sess;
+   this(new File(path));
 }
+
+
+public CashewValueFile(File path)
+{
+   super(FILE_TYPE,null,false);
+   user_file = path;
+}
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Access methods                                                          */
+/*                                                                              */
+/********************************************************************************/
+
+public void setInitialValue(File f) 
+{
+   user_file = f;
+}
+
+
+@Override public String getString(CashewClock cc,int idx,boolean dbg)
+{
+   return user_file.toString();
+}
+
+
+
+public File getFile()                   { return user_file; }
+
+
+
+@Override public CashewValue getFieldValue(CashewClock cc,String nm)
+{
+   switch (nm) {
+      case "path" :
+         return CashewValue.stringValue(user_file.getPath());
+      case "status" :
+         // return PathStatus.CHECKED
+         break;
+      case "prefixLength" :
+         return CashewValue.numericValue(INT_TYPE,0);
+         
+      // static fields   
+      case "fs" :
+         // return DefaultFileSystem.getFileSystem()
+         break;
+      case "separator" :
+         return CashewValue.stringValue(File.separator);
+      case "separatorChar" :
+         return CashewValue.numericValue(CHAR_TYPE,File.separatorChar);
+      case "pathSeparator" :
+         return CashewValue.stringValue(File.pathSeparator);     
+      case "pathSeparatorChar" :
+         return CashewValue.numericValue(CHAR_TYPE,File.pathSeparatorChar);
+    }
+   
+   return null;
+}
+
+
+
+@Override public CashewValue setFieldValue(CashewClock cc,String nm,CashewValue cv)
+{
+   return this;
+}
+
 
 
 
 /********************************************************************************/
 /*                                                                              */
-/*      Overridden methods                                                      */
+/*      Output methods                                                          */
 /*                                                                              */
 /********************************************************************************/
 
-public CashewValue findStaticFieldReference(String name,String type)
+@Override public void outputLocalXml(IvyXmlWriter xw,CashewOutputContext outctx)
 {
-   if (name.equals(CURRENT_THREAD_FIELD)) {
-      CashewValue cv = findReference(name);
-      if (cv != null) return cv;
-      SesameValueData svd = for_session.evaluateData("java.lang.Thread.currentThread()",thread_id);
-      if (svd != null) {
-         cv = svd.getCashewValue();
-         if (cv != null) {
-            define(name,cv);
-            return cv;
-          }
-       }
-    }
-   else if (name.equals(CURRENT_THREAD_NAME_FIELD)) {
-      return CashewValue.stringValue(thread_name);
-    }
-   
-   return super.findStaticFieldReference(name,type);
+   xw.field("OBJECT",true);
+   if (user_file == null) xw.field("FILE","*UNKNOWN*");
+   else xw.field("FILE",user_file.toString());
 }
 
 
 
-}       // end of class SesameThreadContext
+
+}       // end of class CashewValueFile
 
 
 
 
-/* end of SesameThreadContext.java */
+/* end of CashewValueFile.java */
 

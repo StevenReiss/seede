@@ -51,7 +51,7 @@ private CashewRef [] array_values;
 /*										*/
 /********************************************************************************/
 
-CashewValueArray(JcompType jt,int dim,Map<Integer,Object> inits) {
+CashewValueArray(JcompType jt,int dim,Map<Integer,Object> inits,boolean caninit) {
    super(jt);
    dim_size = dim;
    array_values = new CashewRef[dim];
@@ -66,7 +66,7 @@ CashewValueArray(JcompType jt,int dim,Map<Integer,Object> inits) {
 	    continue;
 	  }
        }
-      array_values[i] = new CashewRef(cv);
+      array_values[i] = new CashewRef(cv,caninit);
     }
 }
 

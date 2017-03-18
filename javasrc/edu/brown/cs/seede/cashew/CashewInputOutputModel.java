@@ -24,9 +24,13 @@
 
 package edu.brown.cs.seede.cashew;
 
+import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 import edu.brown.cs.ivy.xml.IvyXmlWriter;
@@ -42,6 +46,16 @@ public class CashewInputOutputModel implements CashewConstants
 /********************************************************************************/
 
 private Map<Integer,OutputData> 	output_files;
+private Set<File>                       files_created;
+private Set<File>                       files_removed;
+private Map<File,Integer>               file_permissions;
+
+
+private int     READ_PERM = 1;
+private int     WRITE_PERM = 2;
+private int     EXEC_PERM = 4;
+
+private int     DIRECTORY_PERM = 32;
 
 
 
@@ -55,13 +69,16 @@ private Map<Integer,OutputData> 	output_files;
 public CashewInputOutputModel()
 {
    output_files = new TreeMap<Integer,OutputData>();
+   files_created = new HashSet<File>();
+   files_removed = new HashSet<File>();
+   file_permissions = new HashMap<File,Integer>();
 }
 
 
 
 /********************************************************************************/
 /*										*/
-/*	Update methods								*/
+/*	Output methods								*/
 /*										*/
 /********************************************************************************/
 
@@ -100,6 +117,183 @@ public void outputXml(IvyXmlWriter xw)
     }
    xw.end("IOMODEL");
 }
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      File methods                                                            */
+/*                                                                              */
+/********************************************************************************/
+
+public boolean canExecute(File f)
+{
+   Boolean fg = checkPermission(f,EXEC_PERM);
+   if (fg != null) return fg;
+   return f.canExecute();
+}
+
+
+public boolean canRead(File f)
+{
+   Boolean fg = checkPermission(f,READ_PERM);
+   if (fg != null) return fg;
+   return f.canExecute();
+}
+
+
+
+public boolean canWrite(File f)
+{
+   Boolean fg = checkPermission(f,WRITE_PERM);
+   if (fg != null) return fg;
+   return f.canExecute();
+}
+
+
+
+public boolean isDirectory(File f)
+{
+   Boolean fg = checkPermission(f,DIRECTORY_PERM);
+   if (fg != null) return fg;
+   return f.isDirectory();
+}
+
+
+public boolean isFile(File f)
+{
+   if (!exists(f)) return false;
+   Boolean fg = checkPermission(f,DIRECTORY_PERM);
+   if (fg != null) return !fg;
+   return f.isFile();
+}
+
+
+
+public void setExecutable(File f)
+{
+   setPermission(f,EXEC_PERM,0);
+}
+
+
+
+public void setWritable(File f)
+{
+   setPermission(f,WRITE_PERM,0);
+}
+
+
+public void setReadable(File f)
+{
+   setPermission(f,READ_PERM,0);
+}
+
+
+
+public void setReadOnly(File f)
+{
+   setPermission(f,READ_PERM,WRITE_PERM|EXEC_PERM);
+}
+
+
+public boolean exists(File f)
+{
+   if (files_removed.contains(f)) return false;
+   else if (files_created.contains(f)) return true;
+   return f.exists();
+}
+
+
+public boolean delete(File f)
+{
+   if (!exists(f)) return false;
+   files_created.remove(f);
+   files_removed.add(f);
+   return true;
+}
+
+
+public boolean mkdir(File f)
+{
+   if (exists(f)) return false;
+   if (!exists(f.getParentFile())) return false;
+   if (!canWrite(f.getParentFile())) return false;
+   files_removed.remove(f);
+   files_created.add(f);
+   file_permissions.put(f,DIRECTORY_PERM|EXEC_PERM|WRITE_PERM|READ_PERM);
+   return true;
+}
+
+
+
+public boolean mkdirs(File f)
+{
+   if (exists(f)) return false;
+   if (!testMkdirs(f.getParentFile())) return false;
+   return mkdir(f);   
+}
+
+
+public boolean renameTo(File s,File d)
+{
+   File dpar = d.getParentFile();
+   if (!exists(dpar) || isDirectory(dpar) || !canWrite(dpar)) return false;
+   File spar = s.getParentFile();
+   if (!exists(s) || !isDirectory(spar) || !canWrite(spar)) return false;
+   int perm = getPermission(s);
+   if (!delete(s)) return false;
+   files_removed.remove(d);
+   files_created.add(d);
+   file_permissions.put(d,perm);
+   return true;
+}
+
+
+
+private boolean testMkdirs(File f)
+{
+   if (f == null) return false;
+   if (exists(f) && isDirectory(f) && canWrite(f)) return true;
+   if (exists(f)) return false;
+   if (testMkdirs(f.getParentFile())) return false;
+   if (!mkdir(f)) return false;
+   return true;
+}
+
+
+private Boolean checkPermission(File f,int sts)
+{
+   Integer perm = file_permissions.get(f);
+   if (perm == null) return null;
+   return (perm & sts) != 0;
+}
+
+
+
+private void setPermission(File f,int set,int unset)
+{
+   int perm = getPermission(f);
+   perm |= set;
+   perm &= ~unset;
+   file_permissions.put(f,perm);
+}
+
+
+
+private int getPermission(File f)
+{
+   Integer p = file_permissions.get(f);
+   if (p != null) return p;
+   
+   int perm = 0;
+   if (f.canRead()) perm |= READ_PERM;
+   if (f.canWrite()) perm |= WRITE_PERM;
+   if (f.canExecute()) perm |= EXEC_PERM;
+   if (f.isDirectory()) perm |= DIRECTORY_PERM;
+   
+   return perm;
+}
+
 
 
 /********************************************************************************/

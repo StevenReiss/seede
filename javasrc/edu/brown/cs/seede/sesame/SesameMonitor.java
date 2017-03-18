@@ -129,26 +129,27 @@ private class WaitForExit extends Thread {
     }
 
    @Override public void run() {
-      synchronized (this) {
-	 for ( ; ; ) {
-	    if (checkEclipse()) break;
-	    try {
-	       wait(30000l);
-	     }
-	    catch (InterruptedException e) { }
-	  }
-
-	 while (!is_done) {
-	    if (!checkEclipse()) is_done = true;
-	    else {
-	       try {
-		  wait(30000l);
-		}
-	       catch (InterruptedException e) { }
-	     }
-	  }
+      SesameMonitor mon = SesameMonitor.this;
+      synchronized (mon) {
+         for ( ; ; ) {
+            if (checkEclipse()) break;
+            try {
+               mon.wait(30000l);
+             }
+            catch (InterruptedException e) { }
+          }
+   
+         while (!is_done) {
+            if (!checkEclipse()) is_done = true;
+            else {
+               try {
+        	  mon.wait(30000l);
+        	}
+               catch (InterruptedException e) { }
+             }
+          }
        }
-
+   
       System.exit(0);
     }
 
@@ -156,6 +157,18 @@ private class WaitForExit extends Thread {
 
 
 
+/********************************************************************************/
+/*                                                                              */
+/*      Update methods                                                          */
+/*                                                                              */
+/********************************************************************************/
+
+void noteFileChanged(SesameFile sf)
+{
+   for (SesameSession ss : session_map.values()) {
+      ss.noteFileChanged(sf);
+    }
+}
 
 /********************************************************************************/
 /*										*/
@@ -307,6 +320,7 @@ private void handleExec(String sid,Element xml,IvyXmlWriter xw)
 {
    String xid = IvyXml.getAttrString(xml,"EXECID","TEST_XID");
    boolean iscont = IvyXml.getAttrBool(xml,"CONTINUOUS");
+   long maxtime = IvyXml.getAttrLong(xml,"MAXTIME",100000);
 
    SesameSession ss = session_map.get(sid);
    if (ss == null) throw new SesameException("Session " + sid + " not found");
@@ -316,7 +330,7 @@ private void handleExec(String sid,Element xml,IvyXmlWriter xw)
    for (SesameLocation loc : ss.getActiveLocations()) {
       CuminRunner cr = ss.createRunner(loc,gblctx);
       if (execer == null) {
-	 execer = new SesameExecRunner(ss,xid,gblctx,iscont,cr);
+	 execer = new SesameExecRunner(ss,xid,gblctx,iscont,maxtime,cr);
 	 ss.addRunner(execer);
        }
       else {
@@ -367,6 +381,24 @@ private void handleSetValue(String sid,Element xml) throws SesameException
    String var = IvyXml.getAttrString(xml,"VAR");
    Element val = IvyXml.getChild(xml,"VALUE");
    ss.setInitialValue(var,val);
+}
+
+
+private void handleDefField(String sid,Element xml) throws SesameException
+{
+   SesameSession ss = session_map.get(sid);
+   if (ss == null) return;
+   
+   String cls = IvyXml.getAttrString(xml,"CLASS");
+   String fld = IvyXml.getAttrString(xml,"FIELD");
+   Element val = IvyXml.getChild(xml,"VALUE");
+   if (val != null) {
+      // handle simple value given for field
+    }
+   else {
+      // handle expression given for field
+    }
+   System.err.println("HANDLE DEFINE FIELD" + cls + " " + fld);
 }
 
 
@@ -518,6 +550,9 @@ private String processCommand(String cmd,String sid,Element e) throws SesameExce
       case "SETVALUE" :
 	 handleSetValue(sid,e);
 	 break;
+      case "DEFFIELD" :
+         handleDefField(sid,e);
+         break;
       case "SWING" :
 	 handleSwingComponent(sid,e);
 	 break;
@@ -542,39 +577,39 @@ private class CommandHandler implements MintHandler {
       Element e = msg.getXml();
       String rslt = null;
       try {
-	 rslt = processCommand(cmd,sid,e);
-	 AcornLog.logD("COMMAND RESULT: " + rslt);
+         rslt = processCommand(cmd,sid,e);
+         AcornLog.logD("COMMAND RESULT: " + rslt);
        }
       catch (SesameException t) {
-	 String xmsg = "BEDROCK: error in command " + cmd + ": " + t;
-	 AcornLog.logE(xmsg,t);
-	 IvyXmlWriter xw = new IvyXmlWriter();
-	 xw.cdataElement("ERROR",xmsg);
-	 rslt = xw.toString();
-	 xw.close();
+         String xmsg = "BEDROCK: error in command " + cmd + ": " + t;
+         AcornLog.logE(xmsg,t);
+         IvyXmlWriter xw = new IvyXmlWriter();
+         xw.cdataElement("ERROR",xmsg);
+         rslt = xw.toString();
+         xw.close();
        }
       catch (Throwable t) {
-	 String xmsg = "Problem processing command " + cmd + ": " + t;
-	 AcornLog.logE(xmsg,t);
-	 StringWriter sw = new StringWriter();
-	 PrintWriter pw = new PrintWriter(sw);
-	 t.printStackTrace(pw);
-	 Throwable xt = t;
-	 for ( ; xt.getCause() != null; xt = xt.getCause());
-	 if (xt != null && xt != t) {
-	    pw.println();
-	    xt.printStackTrace(pw);
-	  }
-	 AcornLog.logE("TRACE: " + sw.toString());
-	 IvyXmlWriter xw = new IvyXmlWriter();
-	 xw.begin("ERROR");
-	 xw.textElement("MESSAGE",xmsg);
-	 xw.cdataElement("EXCEPTION",t.toString());
-	 xw.cdataElement("STACK",sw.toString());
-	 xw.end("ERROR");
-	 rslt = xw.toString();
-	 xw.close();
-	 pw.close();
+         String xmsg = "Problem processing command " + cmd + ": " + t;
+         AcornLog.logE(xmsg,t);
+         StringWriter sw = new StringWriter();
+         PrintWriter pw = new PrintWriter(sw);
+         t.printStackTrace(pw);
+         Throwable xt = t;
+         for ( ; xt.getCause() != null; xt = xt.getCause());
+         if (xt != null && xt != t) {
+            pw.println();
+            xt.printStackTrace(pw);
+          }
+         AcornLog.logE("TRACE: " + sw.toString());
+         IvyXmlWriter xw = new IvyXmlWriter();
+         xw.begin("ERROR");
+         xw.textElement("MESSAGE",xmsg);
+         xw.cdataElement("EXCEPTION",t.toString());
+         xw.cdataElement("STACK",sw.toString());
+         xw.end("ERROR");
+         rslt = xw.toString();
+         xw.close();
+         pw.close();
        }
       msg.replyTo(rslt);
     }
