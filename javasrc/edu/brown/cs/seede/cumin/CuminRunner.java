@@ -46,7 +46,7 @@ import edu.brown.cs.seede.cashew.CashewContext;
 import edu.brown.cs.seede.cashew.CashewValue;
 
 
-public abstract class CuminRunner implements CuminConstants, CashewConstants 
+public abstract class CuminRunner implements CuminConstants, CashewConstants
 {
 
 
@@ -65,6 +65,41 @@ public static CuminRunner createRunner(CuminProject cp,CashewContext glblctx,
 
 
 
+public CashewValue executeCall(String method,CashewValue ... args)
+{
+   List<CashewValue> arglist = new ArrayList<CashewValue>();
+   for (CashewValue argv : args) arglist.add(argv);
+
+   JcodeMethod cmethod = getCodeFactory().findMethod(method,null,null,null);
+   if (cmethod == null) return null;
+   CuminRunner cr = handleCall(execution_clock,cmethod,arglist,CallType.VIRTUAL);
+   if (cr == null) return null;
+
+   try {
+      cr.interpret(EvalType.RUN);
+    }
+   catch (CuminRunError e) {
+      switch (e.getReason()) {
+	 case RETURN :
+	    return e.getValue();
+	 default :
+	    AcornLog.logE("Unexpected return value from internal call",e);
+	    break;
+       }
+    }
+
+   return null;
+}
+
+
+public void ensureLoaded(String cls)
+{
+   getCodeFactory().findClass(cls);
+}
+
+
+
+
 /********************************************************************************/
 /*										*/
 /*	Private Storage 							*/
@@ -79,6 +114,9 @@ protected CashewClock	execution_clock;
 protected CashewContext lookup_context;
 protected CashewContext global_context;
 protected List<CashewValue> call_args;
+
+protected long		max_time;
+
 
 
 
@@ -102,6 +140,7 @@ protected CuminRunner(CuminProject cp,CashewContext gblctx,CashewClock cc,List<C
    call_args = args;
    global_context = gblctx;
    lookup_context = null;
+   max_time = 0;
 }
 
 
@@ -135,14 +174,14 @@ JcodeFactory getCodeFactory()		{ return base_project.getJcodeFactory(); }
 
 JcompProject getCompProjoect()		{ return base_project.getJcompProject(); }
 
-CashewClock getClock()			{ return execution_clock; }
+public CashewClock getClock()		{ return execution_clock; }
 
 CuminStack getStack()			{ return execution_stack; }
 
 public CashewContext getLookupContext() 	{ return lookup_context; }
 List<CashewValue> getCallArgs() 	{ return call_args; }
 
-protected JcompType convertType(JcodeDataType cty)   
+protected JcompType convertType(JcodeDataType cty)
 {
    JcompTyper typer = getTyper();
    String tnm = cty.getName();
@@ -159,6 +198,40 @@ protected void setLookupContext(CashewContext ctx)
    ctx.setStartTime(execution_clock);
 }
 
+
+
+public void setMaxTime(long t)
+{
+   max_time = t;
+}
+
+
+
+public String findReferencedVariableName(String name)
+{
+   int idx = name.indexOf("?");
+   if (idx < 0) return null;
+   String ctxname = name.substring(0,idx);
+   String varname = name.substring(idx+1);
+   int idx1 = ctxname.indexOf("#");
+   if (idx1 > 0) ctxname = ctxname.substring(0,idx1);
+   if (!ctxname.equals(lookup_context.getName())) return null;
+   return lookup_context.findReferencedVariableName(varname);
+}
+
+
+
+public CashewValue findReferencedVariableValue(String name)
+{
+   int idx = name.indexOf("?");
+   if (idx < 0) return null;
+   String ctxname = name.substring(0,idx);
+   String varname = name.substring(idx+1);
+   int idx1 = ctxname.indexOf("#");
+   if (idx1 > 0) ctxname = ctxname.substring(0,idx1);
+   if (!ctxname.equals(lookup_context.getName())) return null;
+   return lookup_context.findReferencedVariableValue(varname);
+}
 
 
 /********************************************************************************/
@@ -229,6 +302,15 @@ protected void saveReturn(CashewValue cv)
 }
 
 
+protected void checkTimeout() throws CuminRunError
+{
+   if (max_time <= 0) return;
+   if (execution_clock.getTimeValue() > max_time)
+      throw new CuminRunError(CuminRunError.Reason.TIMEOUT);
+}
+
+
+
 
 /********************************************************************************/
 /*										*/
@@ -287,22 +369,31 @@ CuminRunner handleCall(CashewClock cc,JcodeMethod method,List<CashewValue> args,
        }
     }
 
-   JcompType type = getTyper().findType(cmethod.getDeclaringClass().getName());
+   String cmcname = cmethod.getDeclaringClass().getName();
+   JcompType type = getTyper().findType(cmcname);
+   if (type == null) {
+      int idx = cmcname.lastIndexOf("$");
+      if (idx > 0) {
+         cmcname = cmcname.replace("$",".");
+         type = getTyper().findType(cmcname);
+       }
+    }
    if (type != null && !type.isKnownType()) {
+      String fullname = cmcname + "." + cmethod.getName();
       int narg = cmethod.getNumArguments();
       List<JcompType> argtyps = new ArrayList<JcompType>();
       for (int i = 0; i < narg; ++i) {
-         JcodeDataType cotyp = cmethod.getArgType(i);
-         JcompType cmtyp = convertType(cotyp);
-         if (cmtyp != null && argtyps != null) argtyps.add(cmtyp);
-         else argtyps = null;
+	 JcodeDataType cotyp = cmethod.getArgType(i);
+	 JcompType cmtyp = convertType(cotyp);
+	 if (cmtyp != null && argtyps != null) argtyps.add(cmtyp);
+	 else argtyps = null;
        }
       JcompType rtyp = convertType(cmethod.getReturnType());
       JcompType mtyp = null;
       if (argtyps != null) {
-         mtyp = JcompType.createMethodType(rtyp,argtyps,false);
+	 mtyp = JcompType.createMethodType(rtyp,argtyps,false);
        }
-      MethodDeclaration md = findAstForMethod(cmethod.getFullName(),mtyp);
+      MethodDeclaration md = findAstForMethod(fullname,mtyp);
       if (md != null) return doCall(cc,md,args);
     }
 
@@ -396,15 +487,15 @@ private MethodDeclaration findAstForMethod(String nm,JcompType mtyp)
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Handle special cases of NEW                                             */
-/*                                                                              */
+/*										*/
+/*	Handle special cases of NEW						*/
+/*										*/
 /********************************************************************************/
 
 protected CashewValue handleNew(JcompType nty)
 {
    CashewValue rslt = null;
-   
+
    if (nty == STRING_TYPE) {
       rslt = CashewValue.stringValue("");
     }
@@ -415,7 +506,7 @@ protected CashewValue handleNew(JcompType nty)
       nty.defineAll(getTyper());
       rslt = CashewValue.objectValue(nty);
     }
-   
+
    return rslt;
 }
 }	// end of class CuminRunner

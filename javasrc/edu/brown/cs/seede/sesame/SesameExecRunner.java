@@ -41,7 +41,6 @@ import edu.brown.cs.seede.cashew.CashewContext;
 import edu.brown.cs.seede.cashew.CashewOutputContext;
 import edu.brown.cs.seede.cashew.CashewValue;
 import edu.brown.cs.seede.cumin.CuminConstants;
-import edu.brown.cs.seede.cumin.CuminGraphics;
 import edu.brown.cs.seede.cumin.CuminRunError;
 import edu.brown.cs.seede.cumin.CuminRunner;
 
@@ -64,11 +63,11 @@ private Map<CuminRunner,CuminRunError> run_status;
 private MasterThread	master_thread;
 private boolean 	is_continuous;
 private boolean 	run_again;
-private List<CashewValue> swing_components;
-private SesameContext   base_context;
-private long            max_time;
+private List<String>	swing_components;
+private SesameContext	base_context;
+private long		max_time;
 
- 
+
 
 
 /********************************************************************************/
@@ -88,10 +87,11 @@ SesameExecRunner(SesameSession ss,String rid,SesameContext ctx,
    runner_threads = new HashMap<CuminRunner,RunnerThread>();
    run_status = new HashMap<CuminRunner,CuminRunError>();
    is_continuous = contin;
-   swing_components = new ArrayList<CashewValue>();
+   swing_components = new ArrayList<>();
    max_time = maxtime;
 
    for (CuminRunner r : rs) {
+      r.setMaxTime(maxtime);
       cumin_runners.add(r);
     }
    master_thread = null;
@@ -106,8 +106,8 @@ SesameExecRunner(SesameSession ss,String rid,SesameContext ctx,
 /*										*/
 /********************************************************************************/
 
-SesameContext getBaseContext()                  { return base_context; }
-boolean isContinuous()                          { return is_continuous; }
+SesameContext getBaseContext()			{ return base_context; }
+boolean isContinuous()				{ return is_continuous; }
 
 
 void addRunner(CuminRunner cr)
@@ -119,6 +119,7 @@ void addRunner(CuminRunner cr)
 void addRunner(CuminRunner cr,boolean start)
 {
    stopCurrentRun();
+   cr.setMaxTime(max_time);
    cumin_runners.add(cr);
    if (is_continuous && start) startRunner();
 }
@@ -139,11 +140,17 @@ void removeAllRunners()
 }
 
 
+void addSwingComponent(String name)
+{
+   swing_components.add(name);
+}
+
+
 
 /********************************************************************************/
-/*                                                                              */
-/*      Execution methods                                                       */
-/*                                                                              */
+/*										*/
+/*	Execution methods							*/
+/*										*/
 /********************************************************************************/
 
 void startExecution()
@@ -214,7 +221,7 @@ private synchronized void startRunner()
 }
 
 
-	
+
 /********************************************************************************/
 /*										*/
 /*	Output methods								*/
@@ -318,30 +325,31 @@ private class MasterThread extends Thread {
          for_session.getIOModel().clear();
          List<RunnerThread> waits = new ArrayList<RunnerThread>();
          SesameProject proj = for_session.getProject();
-         
+   
          if (i != 0 && reply_id != null) {
             CommandArgs args = new CommandArgs();
             if (reply_id != null) args.put("ID",reply_id);
             for_monitor.sendCommand("RESET",args,null,null);
           }
-         
+   
          proj.compileProject();
          proj.executionLock();
          try {
             synchronized (this) {
                for (CuminRunner cr : cumin_runners) {
-                  if (i != 0) {
-                     MethodDeclaration mthd = for_session.getRunnerMethod(cr);
-                     if (mthd == null) continue;
-                     cr.reset(mthd);
-                   }
-                  RunnerThread rt = new RunnerThread(SesameExecRunner.this,cr);
-                  runner_threads.put(cr,rt);
-                  waits.add(rt);
-                  rt.start();
-                }
+        	  if (i != 0) {
+        	     MethodDeclaration mthd = for_session.getRunnerMethod(cr);
+        	     if (mthd == null) continue;
+        	     cr.reset(mthd);
+        	     cr.setMaxTime(max_time);
+        	   }
+        	  RunnerThread rt = new RunnerThread(SesameExecRunner.this,cr);
+        	  runner_threads.put(cr,rt);
+        	  waits.add(rt);
+        	  rt.start();
+        	}
              }
-            
+   
             // wait for all to exit
             while (!waits.isEmpty()) {
                for (Iterator<RunnerThread> it = waits.iterator(); it.hasNext(); ) {
@@ -364,7 +372,7 @@ private class MasterThread extends Thread {
          finally {
             proj.executionUnlock();
           }
-         
+   
          report();
          synchronized (this) {
             if (!is_continuous) break;
@@ -386,12 +394,27 @@ private class MasterThread extends Thread {
 
    private void runSwingThreads() {
       if (swing_components == null || swing_components.isEmpty()) return;
-      for (CashewValue cv : swing_components) {
-	 CuminGraphics cgr = new CuminGraphics(cv,null);
-	 // invoke cv.paint(cgr)
-	 String rpt = cgr.getReport();
-	 System.err.println("SWING REPORT: " + rpt);
-	 // add report to output
+      for (String cvname : swing_components) {
+         for (CuminRunner cr : cumin_runners) {
+            String cvn = cr.findReferencedVariableName(cvname);
+            CashewValue cv = cr.findReferencedVariableValue(cvname);
+            if (cvn != null) {
+               CashewValue rv = null;
+               cr.ensureLoaded("edu.brown.cs.seede.poppy.PoppyGraphics");
+               CashewValue cv1 = cr.getLookupContext().evaluate(
+                     "edu.brown.cs.seede.poppy.PoppyGraphics.computeGraphics(" + cvn + ")");
+   
+               // rv = cr.getLookupContext().evaluate(
+               // "edu.brown.cs.seede.poppy.PoppyGraphics.computeDrawing(" + cvn + ")");
+               rv = cr.executeCall("edu.brown.cs.seede.poppy.PoppyGraphics.computeDrawingG",cv,cv1);
+               if (rv != null) {
+                  String rpt = rv.getString(cr.getClock());
+                  System.err.println("SWING REPORT: " + rpt);
+                  // add report to output
+                }
+               break;
+             }
+          }
        }
     }
 

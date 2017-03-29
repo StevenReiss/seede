@@ -467,6 +467,12 @@ public CashewValue getActualValue(CashewClock cc)
 
 public CashewValue getFieldValue(CashewClock cc,String name)
 {
+   return getFieldValue(cc,name,true);
+}
+
+
+public CashewValue getFieldValue(CashewClock cc,String name,boolean force)
+{
    throw new Error("Value is not an object");
 }
 
@@ -524,6 +530,31 @@ public int getHashCode(CashewClock cc,CashewContext ctx)
 {
    return 0;
 }
+
+
+CashewValue lookupVariableName(String name)
+{
+   if (name == null || name.length() == 0) return this;
+   
+   CashewValue val = this;
+   int idx = name.indexOf("?");
+   String rest = null;
+   if (idx > 0) {
+      rest = name.substring(idx+1);
+      name = name.substring(0,idx);
+    }
+   if (getDataType().isArrayType()) {
+      int index = Integer.parseInt(name);
+      val = val.getIndexValue(null,index);
+    }
+   else {
+      val = val.getFieldValue(null,name);
+    }
+   if (rest != null) val = val.lookupVariableName(rest);
+   
+   return val;
+}
+
 
 
 
@@ -651,7 +682,7 @@ private static class ValueNull extends CashewValue
 
    @Override public boolean isNull(CashewClock cc)	{ return true; }
 
-   @Override public CashewValue getFieldValue(CashewClock cc,String nm) {
+   @Override public CashewValue getFieldValue(CashewClock cc,String nm,boolean force) {
       throw new NullPointerException();
     }
 
@@ -672,6 +703,11 @@ private static class ValueNull extends CashewValue
     }
 
 }	// end of inner class ValueNull
+
+
+
+
+
 
 
 

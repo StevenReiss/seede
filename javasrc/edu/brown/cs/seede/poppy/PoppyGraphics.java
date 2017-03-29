@@ -1,45 +1,51 @@
 /********************************************************************************/
-/*                                                                              */
-/*              CuminGraphics.java                                              */
-/*                                                                              */
-/*      Graphics implementation for interpreting SWING/AWT views                */
-/*                                                                              */
+/*										*/
+/*		PoppyGraphics.java						*/
+/*										*/
+/*	Graphics implementation for interpreting SWING/AWT views		*/
+/*										*/
 /********************************************************************************/
-/*      Copyright 2011 Brown University -- Steven P. Reiss                    */
+/*	Copyright 2011 Brown University -- Steven P. Reiss		      */
 /*********************************************************************************
- *  Copyright 2011, Brown University, Providence, RI.                            *
- *                                                                               *
- *                        All Rights Reserved                                    *
- *                                                                               *
- * This program and the accompanying materials are made available under the      *
+ *  Copyright 2011, Brown University, Providence, RI.				 *
+ *										 *
+ *			  All Rights Reserved					 *
+ *										 *
+ * This program and the accompanying materials are made available under the	 *
  * terms of the Eclipse Public License v1.0 which accompanies this distribution, *
- * and is available at                                                           *
- *      http://www.eclipse.org/legal/epl-v10.html                                *
- *                                                                               *
+ * and is available at								 *
+ *	http://www.eclipse.org/legal/epl-v10.html				 *
+ *										 *
  ********************************************************************************/
 
 /* SVN: $Id$ */
 
 
 
-package edu.brown.cs.seede.cumin;
+package edu.brown.cs.seede.poppy;
 
 import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Composite;
 import java.awt.Font;
 import java.awt.FontMetrics;
+import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GraphicsConfiguration;
 import java.awt.Image;
+import java.awt.LinearGradientPaint;
+import java.awt.MultipleGradientPaint;
 import java.awt.Paint;
 import java.awt.Polygon;
+import java.awt.RadialGradientPaint;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.Stroke;
+import java.awt.TexturePaint;
 import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
 import java.awt.geom.AffineTransform;
@@ -58,29 +64,54 @@ import java.awt.image.ImageObserver;
 import java.awt.image.RenderedImage;
 import java.awt.image.renderable.RenderableImage;
 import java.text.AttributedCharacterIterator;
+import java.text.CharacterIterator;
 import java.util.Map;
 
-import edu.brown.cs.ivy.xml.IvyXmlWriter;
-import edu.brown.cs.seede.cashew.CashewClock;
-import edu.brown.cs.seede.cashew.CashewConstants;
-import edu.brown.cs.seede.cashew.CashewValue;
-
-public class CuminGraphics extends Graphics2D implements CuminConstants
+public class PoppyGraphics extends Graphics2D implements PoppyConstants
 {
 
 
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Private Storage                                                         */
-/*                                                                              */
+/*										*/
+/*	Computation methods							*/
+/*										*/
+/********************************************************************************/
+
+public static String computeDrawing(Component c)
+{
+   PoppyGraphics pg = new PoppyGraphics(c.getGraphics());
+   c.paint(pg);
+   return pg.getReport();
+}
+
+
+public static PoppyGraphics computeGraphics(Component c)
+{
+   return new PoppyGraphics(c.getGraphics());
+}
+
+
+public static String computeDrawingG(Component c,Graphics g)
+{
+   c.paint(g);
+   PoppyGraphics pg = (PoppyGraphics) g;
+   return pg.getReport();
+}
+
+
+
+/********************************************************************************/
+/*										*/
+/*	Private Storage 							*/
+/*										*/
 /********************************************************************************/
 
 private Shape		user_clip;
 private AffineTransform user_transform;
 private Color		fg_color;
-private Paint   	user_paint;
+private Paint		user_paint;
 private Color		bg_color;
 private Stroke		user_stroke;
 private Composite	user_composite;
@@ -88,30 +119,18 @@ private GraphicsConfiguration graphics_config;
 private RenderingHints	user_hints;
 private Font		user_font;
 private Graphics	base_graphics;
-private IvyXmlWriter    xml_output;
+private StringBuilder   output_buffer;
+
 
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Constructors                                                            */
-/*                                                                              */
+/*										*/
+/*	Constructors								*/
+/*										*/
 /********************************************************************************/
 
-public CuminGraphics(CashewValue b,CashewClock cc)
-{
-   CashewValue gv = null;
-   if (b.getDataType(cc).isCompatibleWith(CashewConstants.COMPONENT_TYPE)) {
-      // gv = evaluate b.getGraphics();
-    }
-   initialize(gv);
-   
-   xml_output = new IvyXmlWriter();
-   xml_output.begin("SWING");
-   xml_output.field("OBJECT",b.getString(cc));
-}
-
-private CuminGraphics(CuminGraphics g)
+private PoppyGraphics(Graphics g)
 {
    initialize(g);
 }
@@ -120,25 +139,11 @@ private CuminGraphics(CuminGraphics g)
 
 @Override public Graphics create()
 {
-   return new CuminGraphics(this);
+   return new PoppyGraphics(this);
 }
 
 
-@Override public void dispose() 			{ }
-
-
-
-
-/********************************************************************************/
-/*										*/
-/*	Access methods								*/
-/*										*/
-/********************************************************************************/
-
-String getResult()
-{
-   return xml_output.toString();
-}
+@Override public void dispose() 		{ }
 
 
 
@@ -161,7 +166,7 @@ private void initialize(Graphics g)
    user_stroke = new BasicStroke();
    user_font = g.getFont();
    base_graphics = g;
-   
+
    if (g != null && g instanceof Graphics2D) {
       Graphics2D g2 = (Graphics2D) g;
       user_transform = g2.getTransform();
@@ -172,45 +177,15 @@ private void initialize(Graphics g)
       user_hints = g2.getRenderingHints();
       user_stroke = g2.getStroke();
     }
-   
-   if (g != null && g instanceof CuminGraphics) {
-      CuminGraphics bg = (CuminGraphics) g;
-      xml_output = bg.xml_output;
+
+   if (g != null && g instanceof PoppyGraphics) {
+      PoppyGraphics bg = (PoppyGraphics) g;
+      copyXmlOutput(bg);
     }
    else {
-      xml_output = new IvyXmlWriter();
+      createXmlOutput();
     }
 }
-
-
-
-void initialize(CashewValue cv)
-{
-   // user_clip = g.getClip();
-   user_transform = new AffineTransform();
-   // fg_color = g.getColor();
-   bg_color = null;
-   user_paint = null;
-   user_composite = null;
-   graphics_config = null;
-   user_hints = null;
-   user_stroke = new BasicStroke();
-   // user_font = g.getFont();
-   // base_graphics = g;
-   
-   if (cv.getDataType(null).isCompatibleWith(CashewConstants.GRAPHICS2D_TYPE)) {
-      // user_transform = g2.getTransform();
-      // bg_color = g2.getBackground();
-      // user_paint = g2.getPaint();
-      // user_composite = g2.getComposite();
-      // graphics_config = g2.getDeviceConfiguration();
-      // user_hints = g2.getRenderingHints();
-      // user_stroke = g2.getStroke();
-    }
-   
-   xml_output = new IvyXmlWriter();
-}
-
 
 
 
@@ -277,7 +252,7 @@ void initialize(CashewValue cv)
 @Override public void drawPolyline(int [] xp,int [] yp,int n)
 {
    if (n == 0) return;
-   
+
    Path2D.Float p2 = new Path2D.Float();
    p2.moveTo(xp[0],yp[0]);
    for (int i = 1; i < n; ++i) {
@@ -303,16 +278,13 @@ void initialize(CashewValue cv)
 
 @Override public void draw(Shape s)
 {
-   if (user_stroke == null) user_stroke = new BasicStroke();
-   
-   Shape ss = user_stroke.createStrokedShape(s);
-   fill(ss);
+   generateReport(s,false);
 }
 
 
 @Override public void fill(Shape s)
 {
-   generateReport(s);
+   generateReport(s,true);
 }
 
 
@@ -331,7 +303,7 @@ void initialize(CashewValue cv)
 @Override public void copyArea(int x,int y,int w,int h,int dx,int dy)
 {
    Rectangle r = new Rectangle(x+dx,y+dy,w,h);
-   
+
    // change this if we care what the contents are
    fill(r);
 }
@@ -348,7 +320,7 @@ void initialize(CashewValue cv)
 @Override public boolean drawImage(Image img,int x,int y,int w,int h,Color bg,ImageObserver o)
 {
    fillRect(x,y,w,h);
-   
+
    return true;
 }
 
@@ -357,7 +329,7 @@ void initialize(CashewValue cv)
       int sx1,int sy1,int xs2,int sy2,Color bg,ImageObserver o)
 {
    fillRect(Math.min(dx1,dx2),Math.min(dy1,dy2),Math.abs(dx2-dx1),Math.abs(dy2-dy1));
-   
+
    return true;
 }
 
@@ -374,14 +346,14 @@ void initialize(CashewValue cv)
    Point2D p2 = new Point2D.Double(img.getWidth(o),img.getHeight(o));
    p1 = xf.transform(p1,p1);
    p2 = xf.transform(p2,p2);
-   
+
    int x0 = (int) Math.min(p1.getX(),p2.getX());
    int y0 = (int) Math.min(p1.getY(),p2.getY());
    int w0 = (int) Math.abs(p2.getX() - p1.getX());
    int h0 = (int) Math.abs(p2.getY() - p1.getY());
-   
+
    fillRect(x0,y0,w0,h0);
-   
+
    return true;
 }
 
@@ -392,12 +364,12 @@ void initialize(CashewValue cv)
    Point2D p2 = new Point2D.Double(img.getWidth(),img.getHeight());
    p1 = xf.transform(p1,p1);
    p2 = xf.transform(p2,p2);
-   
+
    int x0 = (int) Math.min(p1.getX(),p2.getX());
    int y0 = (int) Math.min(p1.getY(),p2.getY());
    int w0 = (int) Math.abs(p2.getX() - p1.getX());
    int h0 = (int) Math.abs(p2.getY() - p1.getY());
-   
+
    fillRect(x0,y0,w0,h0);
 }
 
@@ -411,12 +383,12 @@ void initialize(CashewValue cv)
       p1 = xf.transform(p1,p1);
       p2 = xf.transform(p2,p2);
     }
-   
+
    int x0 = (int) Math.min(p1.getX(),p2.getX());
    int y0 = (int) Math.min(p1.getY(),p2.getY());
    int w0 = (int) Math.abs(p2.getX() - p1.getX());
    int h0 = (int) Math.abs(p2.getY() - p1.getY());
-   
+
    fillRect(x0,y0,w0,h0);
 }
 
@@ -437,12 +409,7 @@ void initialize(CashewValue cv)
 {
    if (s == null) return;
    
-   Font f = getFont();
-   FontRenderContext ctx = getFontRenderContext();
-   Rectangle2D rc = f.getStringBounds(s,ctx);
-   rc.setFrame(rc.getX() + x,rc.getY() + y,rc.getWidth(),rc.getHeight());
-   
-   fill(rc);
+   generateDrawString(s,x,y);
 }
 
 
@@ -455,13 +422,8 @@ void initialize(CashewValue cv)
 @Override public void drawString(AttributedCharacterIterator it,float x,float y)
 {
    if (it == null) return;
-   
-   Font f = getFont();
-   FontRenderContext ctx = getFontRenderContext();
-   Rectangle2D rc = f.getStringBounds(it,0,it.getEndIndex(),ctx);
-   rc.setFrame(rc.getX() + x,rc.getY() + y,rc.getWidth(),rc.getHeight());
-   
-   fill(rc);
+
+   generateDrawString(it,x,y);
 }
 
 
@@ -470,7 +432,7 @@ void initialize(CashewValue cv)
 {
    Rectangle2D rc = g.getLogicalBounds();
    rc.setFrame(rc.getX() + x,rc.getY() + y,rc.getWidth(),rc.getHeight());
-   
+
    fill(rc);
 }
 
@@ -512,7 +474,7 @@ void initialize(CashewValue cv)
 @Override public Shape getClip()
 {
    if (user_clip == null) return null;
-   
+
    return untransformShape(user_clip);
 }
 
@@ -520,9 +482,9 @@ void initialize(CashewValue cv)
 @Override public Rectangle getClipBounds()
 {
    if (user_clip == null) return null;
-   
+
    Rectangle r = getClip().getBounds();
-   
+
    return r;
 }
 
@@ -532,7 +494,7 @@ private Shape transformShape(Shape s)
 {
    if (s == null) return null;
    if (user_transform == null || user_transform.isIdentity()) return s;
-   
+
    return user_transform.createTransformedShape(s);
 }
 
@@ -542,12 +504,12 @@ private Shape untransformShape(Shape s)
 {
    if (s == null) return null;
    if (user_transform == null || user_transform.isIdentity()) return s;
-   
+
    try {
       s = user_transform.createInverse().createTransformedShape(s);
     }
    catch (NoninvertibleTransformException e) { }
-   
+
    return s;
 }
 
@@ -583,7 +545,7 @@ private Shape intersectRectShape(Rectangle2D r,Shape s)
       return out;
     }
    if (r.contains(s.getBounds2D())) return s;
-   
+
    return intersectByArea(r,s);
 }
 
@@ -862,7 +824,7 @@ private Shape intersectByArea(Shape s1,Shape s2)
       s = user_stroke.createStrokedShape(s);
     }
    s = transformShape(s);
-   
+
    return s.intersects(r);
 }
 
@@ -870,75 +832,150 @@ private Shape intersectByArea(Shape s1,Shape s2)
 
 /********************************************************************************/
 /*										*/
-/*	Reporting methods							*/
+/*	Dummy methods for handling output					*/
 /*										*/
 /********************************************************************************/
 
-private void generateReport(Shape s)
+private void createXmlOutput()		
 {
-   if (xml_output == null) return;
-   
-   xml_output.begin("DRAW");
-   if (user_paint != null) {
-      xml_output.begin("PAINT");
-      xml_output.xmlText(user_paint.toString());
-      xml_output.end();
-    }
-   if (user_stroke != null) {
-      xml_output.begin("STROKE");
-      xml_output.xmlText(user_stroke.toString());
-      xml_output.end();
-    }
-   if (fg_color != null) {
-      xml_output.begin("COLOR");
-      xml_output.xmlText(fg_color.toString());
-      xml_output.end();
-    }
-   
-   xml_output.begin("SHAPE");
-   Shape s1 = untransformShape(s);
-   // output shape information here. Shape should be in top-level coordinates
-   xml_output.text(s1.toString());
-   xml_output.end("SHAPE");
-   
-   xml_output.end();
+   output_buffer = new StringBuilder();
+   output_buffer.append("BEGIN\n");
+}
+private void copyXmlOutput(PoppyGraphics pg) 
+{
+   output_buffer = pg.output_buffer;
 }
 
-
-
-
-public String getReport()
+private void generateReport(Shape s,boolean fill)
 {
-   if (xml_output == null) return null;
+   if (output_buffer == null) return;
    
-   xml_output.end("SWING");
+   if (user_paint != null) {
+      output_buffer.append("PAINT ");
+      outputPaint(user_paint,output_buffer);
+      output_buffer.append("\n");
+    }
+   if (user_stroke != null) {
+      output_buffer.append("STROKE ");
+      output_buffer.append(user_stroke.toString());
+      output_buffer.append("\n");
+    }
+   if (fg_color != null) {
+      output_buffer.append("COLOR ");
+      output_buffer.append(fg_color.toString());
+      output_buffer.append("\n");
+    }
    
-   String rslt = xml_output.toString();
-   xml_output = null;
+   output_buffer.append("SHAPE ");
+   output_buffer.append(fill);
+   output_buffer.append(" ");
+   Shape s1 = untransformShape(s);
+   output_buffer.append(s1.toString());
+   output_buffer.append("\n");
+}
+
+private String getReport()
+{
+   if (output_buffer == null) return "NO OUTPUT";
+   
+   output_buffer.append("END\n");   
+   
+   String rslt = output_buffer.toString();
+   
+   output_buffer = null;
    
    return rslt;
 }
 
 
-
-
-/********************************************************************************/
-/*                                                                              */
-/*      Methods to invoke graphics methods                                      */
-/*                                                                              */
-/********************************************************************************/
-
-CashewValue invokeMethodOn(CashewValue base,String method)
+private void outputPaint(Paint pt,StringBuilder buf)
 {
-   return null;
+   if (pt instanceof Color) {
+      outputColor((Color) pt,buf);
+    }
+   else if (pt instanceof GradientPaint) {
+      outputGradient((GradientPaint) pt,buf);
+    }
+   else if (pt instanceof LinearGradientPaint) {
+      
+    }
+   else if (pt instanceof MultipleGradientPaint) {
+      
+    }
+   else if (pt instanceof RadialGradientPaint) {
+      
+    }
+   else if (pt instanceof TexturePaint) {
+      
+    }
 }
 
 
 
-}       // end of class CuminGraphics
+private void outputGradient(GradientPaint gp,StringBuilder buf)
+{
+   buf.append("GRADIENT ");
+   outputColor(gp.getColor1(),buf);
+   buf.append(" ");
+   outputColor(gp.getColor2(),buf);
+   buf.append(" ");
+   outputPoint(gp.getPoint1(),buf);
+   buf.append(" ");
+   outputPoint(gp.getPoint2(),buf);
+   buf.append(" ");
+   buf.append(gp.getTransparency());
+   buf.append(" ");
+   buf.append(gp.isCyclic()); 
+}
+
+
+
+private void outputColor(Color c,StringBuilder buf)
+{
+   buf.append("#" + Integer.toHexString(c.getRGB()));
+}
+
+
+private void outputPoint(Point2D pt,StringBuilder buf)
+{
+   
+}
+
+private void generateDrawString(String s,float x,float y)
+{
+   output_buffer.append("STRING ");
+   output_buffer.append(x);
+   output_buffer.append(" ");
+   output_buffer.append(y);
+   output_buffer.append(" ");
+   s = s.replace("\n","\\n");
+   output_buffer.append(s);
+}
+
+
+private void generateDrawString(AttributedCharacterIterator it,float x,float y)
+{
+   output_buffer.append("STRING ");
+   output_buffer.append(x);
+   output_buffer.append(" ");
+   output_buffer.append(y);
+   output_buffer.append(" ");
+   for (char c = it.first(); c != CharacterIterator.DONE; c = it.next()) {
+      output_buffer.append(c);
+      Map<AttributedCharacterIterator.Attribute,Object> attrs = it.getAttributes();
+      if (attrs != null) {
+         // output attributes
+       }
+    }
+}
 
 
 
 
-/* end of CuminGraphics.java */
+}	// end of class PoppyGraphics
+
+
+
+
+/* end of PoppyGraphics.java */
 

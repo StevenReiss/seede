@@ -156,11 +156,11 @@ CashewRef(CashewDeferredValue deferred)
 
 
 
-@Override public CashewValue getFieldValue(CashewClock cc,String name)
+@Override public CashewValue getFieldValue(CashewClock cc,String name,boolean force)
 {
    CashewValue cv = getValueAt(cc);
    if (cv == null) return null;
-   return cv.getFieldValue(cc,name);
+   return cv.getFieldValue(cc,name,force);
 }
 
 

@@ -129,7 +129,7 @@ CashewValueString(String s)
 
 
 
-@Override synchronized public CashewValue getFieldValue(CashewClock cc,String name)
+@Override synchronized public CashewValue getFieldValue(CashewClock cc,String name,boolean force)
 {
    switch (name) {
       case "value" :
@@ -156,7 +156,10 @@ CashewValueString(String s)
 	  }
 	 return hash32_field;
       default :
-	 throw new Error("Illegal string field access for " + name);
+         if (force) {
+            throw new Error("Illegal string field access for " + name);
+          }
+         else return null;
     }
 }
 

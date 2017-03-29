@@ -52,7 +52,7 @@ public class CashewContext implements CashewConstants
 /********************************************************************************/
 
 private Map<Object,CashewValue> context_map;
-private CashewContext parent_context;
+protected CashewContext parent_context;
 private File   context_file;
 private String context_owner;
 private List<CashewContext> nested_contexts;
@@ -147,6 +147,9 @@ public void reset()
 /*										*/
 /********************************************************************************/
 
+public String getName()                         { return context_owner; }
+
+
 public CashewValue findReference(JcompSymbol js)
 {
    CashewValue cv = null;
@@ -202,6 +205,121 @@ public CashewValue findReference(Integer lv)
 }
 
 
+
+
+
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Find operations for user variables                                      */
+/*                                                                              */
+/********************************************************************************/
+
+public String findReferencedVariableName(String name)
+{
+   int idx = name.indexOf("?");
+   if (idx > 0) {
+      String outname = name.substring(0,idx);
+      name = name.substring(idx+1);
+      int idx1 = outname.indexOf("#");
+      if (idx1 > 0) {
+         String ctxname = outname.substring(0,idx1);
+         for (CashewContext ictx : nested_contexts) {
+            if (ictx.getName().equals(ctxname)) {
+               return ictx.findReferencedVariableName(name);
+             }
+          }
+         return null;
+       }
+      else {
+         return outname;
+       }
+    }
+   else {
+      return name;
+    }
+}
+
+
+
+public CashewValue findReferencedVariableValue(String name)
+{
+   int idx = name.indexOf("?");
+   if (idx > 0) {
+      String outname = name.substring(0,idx);
+      name = name.substring(idx+1);
+      int idx1 = outname.indexOf("#");
+      if (idx1 > 0) {
+         String ctxname = outname.substring(0,idx1);
+         for (CashewContext ictx : nested_contexts) {
+            if (ictx.getName().equals(ctxname)) {
+               return ictx.findReferencedVariableValue(name);
+             }
+          }
+         return null;
+       }
+      else {
+         return lookupVariableValue(outname);
+       }
+    }
+   else {
+      return lookupVariableValue(name);
+    }
+}
+
+
+private CashewValue lookupVariableValue(String name)
+{
+   int idx = name.indexOf("?");
+   String lookup = name;
+   String next = null;
+   if (idx > 0) {
+      lookup = name.substring(0,idx);
+      next = name.substring(idx+1);
+    }
+   int line = 0;
+   int bestline = 0;
+   CashewValue bestvalue = null;
+   int idx1 = lookup.indexOf("@");
+   if (idx1 > 0) {
+      line = Integer.parseInt(lookup.substring(idx1+1));
+      lookup = lookup.substring(0,idx);   
+    }
+   
+   for (Map.Entry<Object,CashewValue> ent : context_map.entrySet()) {
+      Object key = ent.getKey();
+      if (key.toString().equals(lookup)) {
+         if (line == 0) {
+            bestvalue = ent.getValue();
+            break;
+          }
+         if (key instanceof JcompSymbol) {
+            JcompSymbol js = (JcompSymbol) key;
+            ASTNode defn = js.getDefinitionNode();
+            CompilationUnit cu = (CompilationUnit) defn.getRoot();
+            int lno = cu.getLineNumber(defn.getStartPosition());
+            if (bestline == 0 || Math.abs(bestline - line) > Math.abs(lno-line)) {
+               bestvalue = ent.getValue();
+               bestline = lno;
+             }
+          }
+       }
+    }  
+   
+   if (bestvalue != null && next != null) {
+      //TODO: lookup field next in best value
+      return null;
+    }
+   
+   return bestvalue;
+}
+
+
+
+
+
 /********************************************************************************/
 /*										*/
 /*	Context Operators							*/
@@ -219,6 +337,7 @@ public CashewValue findReference(Object var)
 
    return cv;
 }
+
 
 
 public void define(JcompSymbol sym,CashewValue addr)
@@ -257,8 +376,14 @@ public void setEndTime(CashewClock cc)		{ end_time = cc.getTimeValue(); }
 
 public CashewValue evaluate(String expr)
 {
-   if (parent_context != null) return parent_context.evaluate(expr);
+   return evaluate(expr,null);
+}
 
+
+public CashewValue evaluate(String expr,String tid)
+{
+   if (parent_context != null) return parent_context.evaluate(expr,tid);
+   
    return null;
 }
 
@@ -335,6 +460,11 @@ public void outputXml(CashewOutputContext outctx)
     }
    xw.end("CONTEXT");
 }
+
+
+
+
+
 
 
 

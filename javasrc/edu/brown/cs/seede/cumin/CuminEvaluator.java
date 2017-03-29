@@ -97,16 +97,13 @@ static CashewValue evaluate(CashewClock cc,CuminOperator op,CashewValue v1,Cashe
 	  }
 	 break;
       case DIV :
-	 //TODO: check if v2 = 0 and provide exception
 	 if (isdbl) {
 	    double vx = v2.getNumber(cc).doubleValue();
-	    if (vx == 0) throwException(ARITH_EXC);
 	    double v0 = v1.getNumber(cc).doubleValue() / vx;
 	    rslt = CashewValue.numericValue(DOUBLE_TYPE,v0);
 	  }
 	 else if (isflt) {
 	    float vx = v2.getNumber(cc).floatValue();
-	    if (vx == 0) throwException(ARITH_EXC);
 	    float v0 = v1.getNumber(cc).floatValue() / vx;
 	    rslt = CashewValue.numericValue(FLOAT_TYPE,v0);
 	  }
@@ -222,7 +219,17 @@ static CashewValue evaluate(CashewClock cc,CuminOperator op,CashewValue v1,Cashe
 	  }
 	 break;
       case MOD :
-	 if (islng) {
+         if (isdbl) {
+            double vx = v2.getNumber(cc).doubleValue();
+	    double v0 = v1.getNumber(cc).doubleValue() % vx;
+            rslt = CashewValue.numericValue(DOUBLE_TYPE,v0);
+          }
+         else if (isflt) {
+            float vx = v2.getNumber(cc).floatValue();
+	    float v0 = v1.getNumber(cc).floatValue() % vx;
+            rslt = CashewValue.numericValue(FLOAT_TYPE,v0);
+          }
+	 else if (islng) {
 	    long vx = v2.getNumber(cc).longValue();
 	    if (vx == 0) throwException(ARITH_EXC);
 	    long v0 = v1.getNumber(cc).longValue() % vx;
@@ -755,7 +762,27 @@ static void throwException(JcompType typ)
 
 
 
+/********************************************************************************/
+/*                                                                              */
+/*      Array helper methods                                                    */
+/*                                                                              */
+/********************************************************************************/
 
+static CashewValue buildArray(CuminRunner runner,int idx,int [] bnds,JcompType base)
+{
+   JcompType atyp = base;
+   for (int i = idx; i < bnds.length; ++i) {
+      atyp = runner.getTyper().findArrayType(atyp);
+    }
+   CashewValue cv = CashewValue.arrayValue(atyp,bnds[idx]);
+   if (idx+1 < bnds.length) {
+      for (int i = 0; i < bnds[idx]; ++i) {
+	 cv.setIndexValue(runner.getClock(),i,buildArray(runner,idx+1,bnds,base));
+       }
+    }
+   
+   return cv;
+}
 
 
 

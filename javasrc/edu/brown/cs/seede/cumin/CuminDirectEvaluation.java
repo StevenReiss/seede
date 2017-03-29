@@ -26,6 +26,7 @@ package edu.brown.cs.seede.cumin;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import edu.brown.cs.ivy.jcode.JcodeMethod;
 import edu.brown.cs.ivy.jcomp.JcompType;
@@ -34,7 +35,9 @@ import edu.brown.cs.seede.cashew.CashewConstants;
 import edu.brown.cs.seede.cashew.CashewContext;
 import edu.brown.cs.seede.cashew.CashewInputOutputModel;
 import edu.brown.cs.seede.cashew.CashewValue;
+import edu.brown.cs.seede.cashew.CashewValueClass;
 import edu.brown.cs.seede.cashew.CashewValueFile;
+import edu.brown.cs.seede.cashew.CashewValueObject;
 import edu.brown.cs.seede.cashew.CashewValueString;
 import edu.brown.cs.seede.acorn.AcornLog;
 
@@ -49,6 +52,9 @@ class CuminDirectEvaluation implements CuminConstants, CashewConstants
 /********************************************************************************/
 
 private CuminRunnerByteCode	exec_runner;
+
+private static AtomicInteger    file_counter = new AtomicInteger(1024);
+
 
 
 
@@ -131,6 +137,19 @@ private byte [] getByteArray(int idx)
    return rslt;
 }
 
+
+private int [] getIntArray(int idx)
+{
+   CashewValue cv = getContext().findReference(idx).getActualValue(getClock());
+   int dim = cv.getDimension(getClock());
+   int [] rslt = new int[dim];
+   for (int i = 0; i < dim; ++i) {
+      rslt[i] = cv.getIndexValue(getClock(),i).getNumber(getClock()).intValue();
+    }
+   return rslt;
+}
+
+
 private boolean getBoolean(int idx)
 {
    return getContext().findReference(idx).getBoolean(getClock());
@@ -155,6 +174,20 @@ private CashewValue getValue(int idx)
 
 
 
+private CashewValue getArrayValue(int idx)
+{
+   CashewValue array = getValue(idx);
+   if (array.isNull(getClock()))  CuminEvaluator.throwException(NULL_PTR_EXC);
+   if (!array.getDataType(getClock()).isArrayType()) CuminEvaluator.throwException(ILL_ARG_EXC);
+   return array;
+}
+
+
+private CashewValueClass getTypeValue(int idx)
+{
+   CashewValue typev = getValue(idx);
+   return (CashewValueClass) typev;
+}
 
 /********************************************************************************/
 /*										*/
@@ -389,11 +422,21 @@ void checkStringMethods()
 	    break;
 
 	 case "getBytes" :
-	 case "getChars" :
 	 case "intern":
 	 case "split" :
 	    return;
-
+            
+	 case "getChars" :
+            int srcbegin = getInt(1);
+            int srcend = getInt(2);
+            CashewValue carr = getArrayValue(3);
+            int dstbegin = getInt(4);
+            for (int i = srcbegin; i < srcend; ++i) {
+               CashewValue charv = CashewValue.characterValue(CHAR_TYPE,thisstr.charAt(i));
+               carr.setIndexValue(getClock(),dstbegin+i-srcbegin,charv);
+             }
+            break;
+            
 	 case "toCharArray" :
 	    rslt = CashewValue.arrayValue(thisstr.toCharArray());
 	    return;
@@ -875,8 +918,9 @@ void checkObjectMethods()
 	       getNumber(getClock()).intValue());
 	 break;
       case "clone" :
-	 // TODO: handle clone
-	 return;
+         CashewValueObject obj = (CashewValueObject) getValue(0);
+         rslt = obj.cloneObject(getClock());
+	 break;
       case "notify" :
       case "notifyAll" :
       case "wait" :
@@ -889,6 +933,53 @@ void checkObjectMethods()
 
    throw new CuminRunError(CuminRunError.Reason.RETURN,rslt);
 }
+
+
+
+
+
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Class methods                                                           */
+/*                                                                              */
+/********************************************************************************/
+
+void checkClassMethods()
+{
+   CashewValue rslt = null;
+   JcompType rtype = null;
+   
+   if (getMethod().isStatic()) {
+      return;
+    }
+   else {
+      CashewValue thisarg = getValue(0);
+      JcompType thistype = ((CashewValueClass) thisarg).getJcompType();
+      switch (getMethod().getName()) {
+         case "getComponentType" :
+            if (thistype.isArrayType()) {
+               rtype = thistype.getBaseType();
+             }
+            else rslt = CashewValue.nullValue();
+            break;
+         case "getName" :
+            rslt = CashewValue.stringValue(thistype.getName());
+            break;
+         default :
+            AcornLog.logE("Unknown call to java.lang.Class." + getMethod());
+            return;
+       }
+    }
+   if (rslt == null && rtype != null) {
+      rslt = CashewValue.classValue(rtype);
+    }
+   
+   throw new CuminRunError(CuminRunError.Reason.RETURN,rslt);
+}
+
 
 
 
@@ -1053,6 +1144,17 @@ void checkOutputStreamMethods()
 
    switch (getMethod().getName()) {
       case "open" :
+         if (path != null && fdv < 0) {
+            File f = new File(path);
+            if (!f.canWrite()) {
+               CuminEvaluator.throwException(IO_EXCEPTION);
+             }
+          }
+         if (fdv < 0) {
+            fdv = file_counter.incrementAndGet();
+            fdval.setFieldValue(getClock(),"java.io.FileDescriptor.fd",
+                  CashewValue.numericValue(INT_TYPE,fdv));
+          }
 	 break;
       case "write" :
 	 if (narg != 3) return;
@@ -1100,7 +1202,7 @@ void checkFileMethods()
        }
     }
    else if (getMethod().isConstructor()) {
-      if (getNumArgs() == 1) {
+      if (getNumArgs() == 2) {
          if (getDataType(1) == STRING_TYPE) {
             rfile = new File(getString(1));
           }
@@ -1282,7 +1384,159 @@ void checkFileMethods()
 
 
 
+/********************************************************************************/
+/*                                                                              */
+/*      Swing handling methods                                                  */
+/*                                                                              */
+/********************************************************************************/
 
+void checkSwingUtilityMethods()
+{
+   CashewValue rslt = null;
+   
+   switch (getMethod().getName()) {
+      case "isEventDispatchThread" :
+         rslt = CashewValue.booleanValue(true);
+         break;
+      default :
+         return;
+    }
+   
+   throw new CuminRunError(CuminRunError.Reason.RETURN,rslt);
+}
+
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Reflection methods                                                      */
+/*                                                                              */
+/********************************************************************************/
+
+void checkReflectArrayMethods()
+{
+   CashewValue rslt = null;
+      
+   switch (getMethod().getName()) {
+      case "get" :
+         rslt = getArrayValue(0).getIndexValue(getClock(),getInt(1));
+         break;
+      case "getBoolean" :
+         rslt = getArrayValue(0).getIndexValue(getClock(),getInt(1));
+         rslt = CuminEvaluator.castValue(exec_runner,rslt,BOOLEAN_TYPE);
+         break;
+      case "getByte" :
+         rslt = getArrayValue(0).getIndexValue(getClock(),getInt(1));
+         rslt = CuminEvaluator.castValue(exec_runner,rslt,BYTE_TYPE);
+         break;
+      case "getChar" :
+         rslt = getArrayValue(0).getIndexValue(getClock(),getInt(1));
+         rslt = CuminEvaluator.castValue(exec_runner,rslt,CHAR_TYPE);
+         break;
+      case "getDouble" :
+         rslt = getArrayValue(0).getIndexValue(getClock(),getInt(1));
+         rslt = CuminEvaluator.castValue(exec_runner,rslt,DOUBLE_TYPE);
+         break;
+      case "getFloat" :
+         rslt = getArrayValue(0).getIndexValue(getClock(),getInt(1));
+         rslt = CuminEvaluator.castValue(exec_runner,rslt,FLOAT_TYPE);
+         break;
+      case "getInt" :
+         rslt = getArrayValue(0).getIndexValue(getClock(),getInt(1));
+         rslt = CuminEvaluator.castValue(exec_runner,rslt,INT_TYPE);
+         break;
+      case "getLong" :
+         rslt = getArrayValue(0).getIndexValue(getClock(),getInt(1));
+         rslt = CuminEvaluator.castValue(exec_runner,rslt,LONG_TYPE);
+         break;
+      case "getShort" :
+         rslt = getArrayValue(0).getIndexValue(getClock(),getInt(1));
+         rslt = CuminEvaluator.castValue(exec_runner,rslt,SHORT_TYPE);
+         break;
+      case "set" :
+         getArrayValue(0).setIndexValue(getClock(),getInt(1),getValue(2));
+         break;
+      case "setBoolean" :
+         CashewValue cv = CuminEvaluator.castValue(exec_runner,getValue(2),BOOLEAN_TYPE);
+         getArrayValue(0).setIndexValue(getClock(),getInt(1),cv);
+         break;
+      case "setByte" :
+         cv = CuminEvaluator.castValue(exec_runner,getValue(2),BYTE_TYPE);
+         getArrayValue(0).setIndexValue(getClock(),getInt(1),cv);
+         break;
+      case "setChar" :
+         cv = CuminEvaluator.castValue(exec_runner,getValue(2),CHAR_TYPE);
+         getArrayValue(0).setIndexValue(getClock(),getInt(1),cv);
+         break;
+      case "setDouble" :
+         cv = CuminEvaluator.castValue(exec_runner,getValue(2),DOUBLE_TYPE);
+         getArrayValue(0).setIndexValue(getClock(),getInt(1),cv);
+         break;
+      case "setFloat" :
+         cv = CuminEvaluator.castValue(exec_runner,getValue(2),FLOAT_TYPE);
+         getArrayValue(0).setIndexValue(getClock(),getInt(1),cv);
+         break;
+      case "setInt" :
+         cv = CuminEvaluator.castValue(exec_runner,getValue(2),INT_TYPE);
+         getArrayValue(0).setIndexValue(getClock(),getInt(1),cv);
+         break;
+      case "setLong" :
+         cv = CuminEvaluator.castValue(exec_runner,getValue(2),LONG_TYPE);
+         getArrayValue(0).setIndexValue(getClock(),getInt(1),cv);
+         break; 
+      case "setShort" :
+         cv = CuminEvaluator.castValue(exec_runner,getValue(2),SHORT_TYPE);
+         getArrayValue(0).setIndexValue(getClock(),getInt(1),cv);
+         break; 
+      case "newArray" :
+         JcompType atype = getTypeValue(0).getJcompType();
+         atype = exec_runner.getTyper().findArrayType(atype);
+         rslt = CashewValue.arrayValue(atype,getInt(1));
+         break;
+      case "multiNewArray" :
+         atype = getTypeValue(0).getJcompType();
+         int [] dims = getIntArray(1);
+         rslt = CuminEvaluator.buildArray(exec_runner,0,dims,atype);
+         break;
+      default :
+         return;
+    }
+   
+   throw new CuminRunError(CuminRunError.Reason.RETURN,rslt);
+}
+
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Access controller methods                                               */
+/*                                                                              */
+/********************************************************************************/
+
+void checkAccessControllerMethods()
+{
+   CashewValue rslt = null;
+   
+   switch (getMethod().getName()) {
+      case "doPrivileged" :
+         CashewValue action = getValue(0);
+         String rtn = null;
+         if (action.getDataType(getClock()).isCompatibleWith(PRIV_ACTION_TYPE)) {
+            rtn = "java.security.PrivilegedAction.run";
+          }
+         else {
+            rtn = "java.security.PrivilegedExceptionAction.run";
+          }
+         rslt = exec_runner.executeCall(rtn,action);
+         break;
+      default :
+         return;
+    }
+   
+   throw new CuminRunError(CuminRunError.Reason.RETURN,rslt);
+}
 }	// end of class CuminDirectEvaluation
 
 

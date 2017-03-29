@@ -343,10 +343,11 @@ private static class LocalFinder extends ASTVisitor {
 
 private void evalNode(ASTNode node,ASTNode afterchild) throws CuminRunError
 {
-   if (node instanceof Statement && afterchild == null) {
+   if (node instanceof Statement) {
       CompilationUnit cu = (CompilationUnit) node.getRoot();
       int lno = cu.getLineNumber(node.getStartPosition());
       if (lno != last_line && lno > 0) {
+         checkTimeout();
 	 last_line = lno;
 	 CashewValue lvl = CashewValue.numericValue(CashewConstants.INT_TYPE,lno);
 	 lookup_context.findReference(LINE_NAME).setValueAt(execution_clock,lvl);
@@ -706,9 +707,10 @@ private void visit(MethodDeclaration md,ASTNode after)
    if (after == null) {
       List<CashewValue> argvals = getCallArgs();
 
-      for (int i = 0; i < argvals.size(); ++i)
+      for (int i = 0; i < argvals.size(); ++i) {
 	 AcornLog.logD("ARG " + i + " = " + argvals.get(i).getDebugString(execution_clock));
-
+       }
+      
       List<?> args = md.parameters();
       int off = 0;
       int idx = 0;
@@ -716,6 +718,13 @@ private void visit(MethodDeclaration md,ASTNode after)
       if (!vsym.isStatic()) {
 	 off = 1;
 	 lookup_context.define(THIS_NAME,argvals.get(0));
+         if (md.isConstructor()) {
+            JcompType jtyp = JcompAst.getDefinition(md).getClassType();
+            if (jtyp.needsOuterClass()) {
+               lookup_context.define(OUTER_NAME,argvals.get(1));
+               off = 2;
+             }
+          }
        }
       //TODO:  need to handle nested this values as well
       int nparm = args.size();
@@ -927,6 +936,9 @@ private void visit(SuperFieldAccess v)
 
 private void visit(InfixExpression v,ASTNode after)
 {
+   if (v.toString().equals("d.width + i.left")) {
+      System.err.println("CHECK EXPR");
+    }
    if (after == null) next_node = v.getLeftOperand();
    else if (after == v.getLeftOperand()) {
       if (v.getOperator() == InfixExpression.Operator.CONDITIONAL_AND) {
@@ -982,8 +994,15 @@ private void visit(SimpleName v)
       if (js.isStatic()) cv = handleStaticFieldAccess(js);
       else {
 	 CashewValue tv = lookup_context.findReference(THIS_NAME);
-	 execution_stack.push(tv);
-	 cv = handleFieldAccess(js);
+         cv = tv.getFieldValue(execution_clock,js.getFullName(),false);
+         while (cv == null) {
+            tv = tv.getFieldValue(execution_clock,OUTER_NAME,false);
+            if (tv == null) break;
+            cv = tv.getFieldValue(execution_clock,js.getFullName(),false);
+          }
+         if (cv == null) {
+            AcornLog.logE("Missing Field " + js.getFullName());
+          }
        }
     }
    else {
@@ -1008,7 +1027,8 @@ private void visit(QualifiedName v,ASTNode after)
       else next_node = v.getName();
     }
    if (after == v.getQualifier() && sym != null) {
-      handleFieldAccess(sym);
+      CashewValue rslt = handleFieldAccess(sym);
+      execution_stack.push(rslt);
     }
    else if (after == v.getQualifier() && sym == null &&
 	       v.getName().getIdentifier().equals("length")) {
@@ -1058,10 +1078,11 @@ private void visit(PrefixExpression v,ASTNode after)
 private void visit(ThisExpression v)
 {
    String name = THIS_NAME;
+   JcompType base = null;
    if (v.getQualifier() != null) {
-      name = v.getQualifier().getFullyQualifiedName() + "." + THIS_NAME;
+      base = JcompAst.getExprType(v.getQualifier());
     }
-   CashewValue cv = lookup_context.findReference(name);
+   CashewValue cv = handleThisAccess(base);
    execution_stack.push(cv);
 }
 
@@ -1091,7 +1112,7 @@ private void visit(ClassInstanceCreation v, ASTNode after)
    JcompType ctyp = csym.getType();
    List<JcompType> atyps = ctyp.getComponents();
 
-   CashewValue rval = handleNew (rty);
+   CashewValue rval = handleNew(rty);
    List<CashewValue> argv = new ArrayList<CashewValue>();
    for (int i = 0; i < args.size(); ++i) {
       CashewValue cv = execution_stack.pop();
@@ -1103,6 +1124,10 @@ private void visit(ClassInstanceCreation v, ASTNode after)
 			  cv.getDataType(execution_clock) );
        }
       argv.add(ncv);
+    }
+   if (rty.needsOuterClass()) {
+      CashewValue outerv = handleThisAccess(rty.getOuterType());
+      argv.add(outerv);
     }
    argv.add(rval);
    execution_stack.push(rval);
@@ -1259,12 +1284,11 @@ private void visit(SuperMethodInvocation v,ASTNode after)
    JcompSymbol js = JcompAst.getReference(v.getName());
    CallType cty = CallType.VIRTUAL;
    if (!js.isStatic()) {
-      String nm = THIS_NAME;
+      JcompType base = null;
       if (v.getQualifier() != null) {
-	 JcompType jty = JcompAst.getExprType(v.getQualifier());
-	 nm = jty.getName() + "." + THIS_NAME;
+	 base = JcompAst.getExprType(v.getQualifier());
        }
-      CashewValue thisv = lookup_context.findReference(nm);
+      CashewValue thisv = handleThisAccess(base);
       thisv = thisv.getActualValue(execution_clock);
       argv.add(thisv);
       cty = CallType.STATIC;
@@ -1362,7 +1386,7 @@ private void visit(ExpressionStatement s,ASTNode after)
 {
    if (after == null) next_node = s.getExpression();
    else {
-      JcompType typ = JcompAst.getJavaType(s.getExpression());
+      JcompType typ = JcompAst.getExprType(s.getExpression());
       if (typ != null && !typ.isVoidType())
 	 execution_stack.pop();
     }
@@ -1572,7 +1596,7 @@ private void enhancedBody(EnhancedForStatement s,CashewValue next)
 
 private void enhancedCheck(EnhancedForStatement s)
 {
-   Object val = execution_stack.popMarker(s);
+   Object val = execution_stack.popUntil(s);
    CashewValue iter = execution_stack.pop().getActualValue(execution_clock);
    if (val instanceof Integer) {
       int idx = (Integer) val;
@@ -1997,7 +2021,31 @@ private CashewValue handleStaticFieldAccess(JcompSymbol sym)
    return rslt;
 }
 
+private CashewValue handleThisAccess(JcompType base)
+{
+   CashewValue cv = lookup_context.findReference(THIS_NAME);
+   if (cv == null) return null;
+   if (base == null) return cv;
+   JcompType thistyp = cv.getDataType(execution_clock);
+   if (thistyp.isCompatibleWith(base)) return cv;
+   
+   CashewValue cv1 = lookup_context.findReference(OUTER_NAME);
+   cv1 = handleThisAccess(base,cv1);
+   if (cv1 != null) return cv1;
+   
+   return handleThisAccess(base,cv);
+}
 
+
+private CashewValue handleThisAccess(JcompType base,CashewValue cv)
+{
+   if (cv == null) return null;
+   if (base == null) return cv;
+   JcompType thistyp = cv.getDataType(execution_clock);
+   if (thistyp.isCompatibleWith(base)) return cv;
+   CashewValue cv1 = cv.getFieldValue(execution_clock,OUTER_NAME,false);
+   return handleThisAccess(base,cv1);
+}
 }	// end of class CuminRunnerAst
 
 

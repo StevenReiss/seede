@@ -88,6 +88,7 @@ enum CuminOperator {
 
 String LINE_NAME = "*LINE*";
 String THIS_NAME = "this";
+String OUTER_NAME = "this$0";
 
 
 }	// end of interface CuminConstants

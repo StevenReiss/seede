@@ -78,6 +78,34 @@ SesameContext(SesameSession ss)
     }
    
    cv = for_session.lookupValue(name,type);
+   if (cv == null) {
+      String suffix = "";
+      if (type == null) type = "java.lang.Object";
+      switch (type) {
+         case "boolean" :
+            suffix = "Boolean";
+            break;
+         case "int" :
+            suffix = "Int";
+            break;
+         case "long" :
+            suffix = "Long";
+            break;
+         case "short" :
+            suffix = "Short";
+            break;
+         case "double" :
+            suffix = "Double";
+            break;
+         case "float" :
+            suffix = "Float";
+            break;
+       }
+      String expr = "edu.brown.cs.seede.poppy.PoppyValue.getStaticFieldValue";
+      expr += suffix + "(\"" + name + "\")";
+      cv = for_session.lookupValue(expr,type);
+      System.err.println("HANDLE PROBLEM FIELDS " + cv);
+    }
    if (cv != null) {
       cv = CashewValue.createReference(cv,true);
       define(name,cv);
@@ -90,6 +118,11 @@ SesameContext(SesameSession ss)
 @Override public CashewValue evaluate(String expr)
 {
    return for_session.evaluate(expr,null);
+}
+
+@Override public CashewValue evaluate(String expr,String tid)
+{
+   return for_session.evaluate(expr,tid);
 }
 
 

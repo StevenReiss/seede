@@ -110,10 +110,10 @@ CashewValueObject(JcompType jt,Map<String,Object> inits,boolean caninit)
 /*										*/
 /********************************************************************************/
 
-@Override public CashewValue getFieldValue(CashewClock cc,String nm)
+@Override public CashewValue getFieldValue(CashewClock cc,String nm,boolean force)
 {
-   CashewValue cv = findFieldForName(nm);
-   if (cv == null) {
+   CashewValue cv = findFieldForName(nm,force);
+   if (cv == null && force) {
       AcornLog.logE("Missing field " + nm);
     }
    return cv;
@@ -121,14 +121,14 @@ CashewValueObject(JcompType jt,Map<String,Object> inits,boolean caninit)
 
 @Override public CashewValue setFieldValue(CashewClock cc,String nm,CashewValue cv)
 {
-   CashewRef ov = findFieldForName(nm);
+   CashewRef ov = findFieldForName(nm,true);
    ov.setValueAt(cc,cv);
    return this;
 }
 
 
 
-private CashewRef findFieldForName(String nm)
+private CashewRef findFieldForName(String nm,boolean force)
 {
    CashewRef ov = field_values.get(nm);
    if (ov == null) {
@@ -142,7 +142,7 @@ private CashewRef findFieldForName(String nm)
       if (ov == null) ov = static_values.get(anm);
     }
 
-   if (ov == null) {
+   if (ov == null && force) {
       throw new Error("UndefinedField: " + nm);
     }
 
@@ -159,7 +159,7 @@ private CashewRef findFieldForName(String nm)
 {
    StringBuffer buf = new StringBuffer();
    buf.append(getDataType(cc));
-   if (lvl > 0) {
+   if (lvl > 0 && field_values != null) {
       buf.append("{");
       int ctr = 0;
       for (String fldname : field_values.keySet()) {
@@ -173,6 +173,27 @@ private CashewRef findFieldForName(String nm)
     }
    return buf.toString();
 }
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Cloning methods                                                         */
+/*                                                                              */
+/********************************************************************************/
+
+public CashewValueObject cloneObject(CashewClock cc)
+{
+   Map<String,Object> inits = new HashMap<String,Object>();
+   for (Map.Entry<String,CashewRef> ent : field_values.entrySet()) {
+      String key = ent.getKey();
+      if (key.startsWith("@")) continue;
+      CashewValue cv = ent.getValue().getActualValue(cc);
+      inits.put(key,cv);
+    }
+   return new CashewValueObject(getDataType(),inits,false);
+}
+
 
 
 

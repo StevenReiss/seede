@@ -74,6 +74,7 @@ public void setInitialValue(File f)
 
 @Override public String getString(CashewClock cc,int idx,boolean dbg)
 {
+   if (user_file == null) return null;
    return user_file.toString();
 }
 
@@ -83,7 +84,7 @@ public File getFile()                   { return user_file; }
 
 
 
-@Override public CashewValue getFieldValue(CashewClock cc,String nm)
+@Override public CashewValue getFieldValue(CashewClock cc,String nm,boolean force)
 {
    switch (nm) {
       case "path" :

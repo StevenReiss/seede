@@ -109,6 +109,7 @@ JcompType ARITH_EXC = JCOMP_BASE.getSystemType("java.lang.ArithmeticException");
 JcompType CAST_EXC = JCOMP_BASE.getSystemType("java.lang.ClassCastException");
 JcompType ARRAY_STORE_EXC = JCOMP_BASE.getSystemType("java.lang.ArrayStoreException");
 JcompType NUM_FMT_EXC = JCOMP_BASE.getSystemType("java.lang.NumberFormatException");
+JcompType ILL_ARG_EXC = JCOMP_BASE.getSystemType("java.lang.IllegalArgumentException");
 
 JcompType INT_BOX_TYPE = JCOMP_BASE.getSystemType("java.lang.Integer");
 JcompType SHORT_BOX_TYPE = JCOMP_BASE.getSystemType("java.lang.Short");
@@ -125,6 +126,7 @@ JcompType GRAPHICS2D_TYPE = JCOMP_BASE.getSystemType("java.awt.Graphics2D");
 JcompType FILE_TYPE = JCOMP_BASE.getSystemType("java.io.File");
 JcompType IO_EXCEPTION = JCOMP_BASE.getSystemType("java.io.IOException");
 
+JcompType PRIV_ACTION_TYPE = JCOMP_BASE.getSystemType("java.security.PrivilegedAction");
 
 
 

@@ -77,11 +77,11 @@ CashewValueArray(JcompType jt,int dim,Map<Integer,Object> inits,boolean caninit)
 /*										*/
 /********************************************************************************/
 
-@Override public CashewValue getFieldValue(CashewClock cc,String nm) {
+@Override public CashewValue getFieldValue(CashewClock cc,String nm,boolean force) {
    if (nm != null && nm.equals("length")) {
       return CashewValue.numericValue(INT_TYPE,dim_size);
     }
-   return super.getFieldValue(cc,nm);
+   return super.getFieldValue(cc,nm,force);
 }
 
 @Override public int getDimension(CashewClock cc)

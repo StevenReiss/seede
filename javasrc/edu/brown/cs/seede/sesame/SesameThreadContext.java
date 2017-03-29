@@ -67,6 +67,18 @@ SesameThreadContext(String tid,String tnm,SesameSession sess,SesameContext gbl)
 /*                                                                              */
 /********************************************************************************/
 
+@Override public CashewValue evaluate(String expr,String tid)
+{
+   if (parent_context != null) {
+      if (tid == null) tid = thread_id;
+      return parent_context.evaluate(expr,tid);
+    }
+   
+   return null;
+}
+
+
+
 public CashewValue findStaticFieldReference(String name,String type)
 {
    if (name.equals(CURRENT_THREAD_FIELD)) {

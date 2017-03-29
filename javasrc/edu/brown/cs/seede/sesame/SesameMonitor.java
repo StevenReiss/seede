@@ -405,7 +405,12 @@ private void handleDefField(String sid,Element xml) throws SesameException
 
 private void handleSwingComponent(String sid,Element xml) throws SesameException
 {
-
+   SesameSession ss = session_map.get(sid);
+   if (ss == null) return;
+   
+   String name = IvyXml.getAttrString(xml,"VARIABLE");
+   ss.addSwingComponent(name);
+   ss.restartRunners();
 }
 
 
@@ -508,9 +513,9 @@ private class BubblesHandler implements MintHandler {
       String cmd = args.getArgument(0);
       // Element e = msg.getXml();
       switch (cmd) {
-	 case "EXIT" :
-	    serverDone();
-	    break;
+         case "EXIT" :
+            serverDone();
+            break;
        }
     }
 
@@ -644,7 +649,7 @@ Element waitForEvaluation(String id)
 
 
 
-private class EvalData {
+private static class EvalData {
 
    private Element eval_result;
 

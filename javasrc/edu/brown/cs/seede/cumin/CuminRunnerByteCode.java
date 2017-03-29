@@ -236,8 +236,11 @@ private void evaluateInstruction() throws CuminRunError
 
    JcodeInstruction jins = jcode_method.getInstruction(current_instruction);
 
+   if (jins == null) 
+      throw new CuminRunError(CuminRunError.Reason.ERROR,"Native method " + jcode_method);
    int lno = jins.getLineNumber();
    if (lno > 0 && lno != last_line) {
+      checkTimeout();
       last_line = lno;
       CashewValue lvl = CashewValue.numericValue(CashewConstants.INT_TYPE,lno);
       lookup_context.findReference(LINE_NAME).setValueAt(execution_clock,lvl);
@@ -823,8 +826,7 @@ private void evaluateInstruction() throws CuminRunError
 	 v0 = execution_stack.peek(0);
 	 jty = convertType(jins.getTypeReference());
 	 if (!v0.getDataType(execution_clock).isCompatibleWith(jty)) {
-	    //TODO:  need to create an exception here for type conversion
-	    throw new CuminRunError(CuminRunError.Reason.EXCEPTION);
+            CuminEvaluator.throwException(CAST_EXC);
 	  }
 	 break;
 
@@ -920,7 +922,7 @@ private void evaluateInstruction() throws CuminRunError
 	 for (int i = 0; i < mnact; ++i) {
 	    bnds[i] = execution_stack.pop().getNumber(execution_clock).intValue();
 	  }
-	 vstack = buildArray(0,bnds,arrtyp);
+	 vstack = CuminEvaluator.buildArray(this,0,bnds,arrtyp);
 	 break;
 
       case MONITORENTER :
@@ -975,21 +977,7 @@ private void handleCall(JcodeMethod method,CallType cty)
 
 
 
-private CashewValue buildArray(int idx,int [] bnds,JcompType base)
-{
-   JcompType atyp = base;
-   for (int i = idx; i < bnds.length; ++i) {
-      atyp = type_converter.findArrayType(atyp);
-    }
-   CashewValue cv = CashewValue.arrayValue(atyp,bnds[idx]);
-   if (idx+1 < bnds.length) {
-      for (int i = 0; i < bnds[idx]; ++i) {
-	 cv.setIndexValue(execution_clock,i,buildArray(idx+1,bnds,base));
-       }
-    }
 
-   return cv;
-}
 
 
 
@@ -1029,7 +1017,8 @@ private void checkSpecial()
 	 // handle class loader methods
 	 break;
       case "java.lang.Class" :
-	 // handle class methods
+         cde = new CuminDirectEvaluation(this);
+         cde.checkClassMethods();
 	 break;
       case "java.lang.Object" :
 	 cde = new CuminDirectEvaluation(this);
@@ -1068,6 +1057,18 @@ private void checkSpecial()
 	 cde = new CuminDirectEvaluation(this);
 	 cde.checkFloatingDecimalMehtods();
 	 break;      // also want to handle Random, I/O methods
+      case "javax.swing.SwingUtilities" :
+         cde = new CuminDirectEvaluation(this);
+         cde.checkSwingUtilityMethods(); 
+         break;
+      case "java.lang.reflect.Array" :
+         cde = new CuminDirectEvaluation(this);
+         cde.checkReflectArrayMethods();
+         break;
+      case "java.security.AccessController" :
+         cde = new CuminDirectEvaluation(this);
+         cde.checkAccessControllerMethods();
+         break;
     }
 }
 

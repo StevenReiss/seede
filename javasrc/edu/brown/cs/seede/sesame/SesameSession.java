@@ -318,6 +318,13 @@ private void resetRunners(SesameExecRunner run)
 }
 
 
+void addSwingComponent(String name)
+{
+   for (SesameExecRunner ser : exec_runners) {
+      ser.addSwingComponent(name);
+    }
+}
+
 
 
 /********************************************************************************/
