@@ -1077,7 +1077,6 @@ private void visit(PrefixExpression v,ASTNode after)
 
 private void visit(ThisExpression v)
 {
-   String name = THIS_NAME;
    JcompType base = null;
    if (v.getQualifier() != null) {
       base = JcompAst.getExprType(v.getQualifier());

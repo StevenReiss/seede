@@ -28,11 +28,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import edu.brown.cs.ivy.jcode.JcodeMethod;
 import edu.brown.cs.ivy.jcomp.JcompType;
-import edu.brown.cs.seede.cashew.CashewClock;
 import edu.brown.cs.seede.cashew.CashewConstants;
-import edu.brown.cs.seede.cashew.CashewContext;
 import edu.brown.cs.seede.cashew.CashewInputOutputModel;
 import edu.brown.cs.seede.cashew.CashewValue;
 import edu.brown.cs.seede.cashew.CashewValueClass;
@@ -41,7 +38,7 @@ import edu.brown.cs.seede.cashew.CashewValueObject;
 import edu.brown.cs.seede.cashew.CashewValueString;
 import edu.brown.cs.seede.acorn.AcornLog;
 
-class CuminDirectEvaluation implements CuminConstants, CashewConstants
+class CuminDirectEvaluation extends CuminNativeEvaluator
 {
 
 
@@ -50,8 +47,6 @@ class CuminDirectEvaluation implements CuminConstants, CashewConstants
 /*	Private Storage 							*/
 /*										*/
 /********************************************************************************/
-
-private CuminRunnerByteCode	exec_runner;
 
 private static AtomicInteger    file_counter = new AtomicInteger(1024);
 
@@ -66,128 +61,10 @@ private static AtomicInteger    file_counter = new AtomicInteger(1024);
 
 CuminDirectEvaluation(CuminRunnerByteCode bc)
 {
-   exec_runner = bc;
+   super(bc);
 }
 
 
-
-/********************************************************************************/
-/*										*/
-/*	Local access methods							*/
-/*										*/
-/********************************************************************************/
-
-private JcodeMethod getMethod() 	{ return exec_runner.getCodeMethod(); }
-private CashewClock getClock()		{ return exec_runner.getClock(); }
-private int getNumArgs()		{ return exec_runner.getNumArg(); }
-private CashewContext getContext()	{ return exec_runner.getLookupContext(); }
-
-
-private String getString(int idx)
-{
-   return getContext().findReference(idx).getString(getClock());
-}
-
-private int getInt(int idx)
-{
-   return getContext().findReference(idx).getNumber(getClock()).intValue();
-}
-
-private double getDouble(int idx)
-{
-   return getContext().findReference(idx).getNumber(getClock()).doubleValue();
-}
-
-private float getFloat(int idx)
-{
-   return getContext().findReference(idx).getNumber(getClock()).floatValue();
-}
-
-private long getLong(int idx)
-{
-   return getContext().findReference(idx).getNumber(getClock()).longValue();
-}
-
-
-private char getChar(int idx)
-{
-   return getContext().findReference(idx).getChar(getClock());
-}
-
-private char [] getCharArray(int idx)
-{
-   CashewValue cv = getContext().findReference(idx).getActualValue(getClock());
-   int dim = cv.getDimension(getClock());
-   char [] rslt = new char[dim];
-   for (int i = 0; i < dim; ++i) {
-      rslt[i] = cv.getIndexValue(getClock(),i).getChar(getClock());
-    }
-   return rslt;
-}
-
-
-private byte [] getByteArray(int idx)
-{
-   CashewValue cv = getContext().findReference(idx).getActualValue(getClock());
-   int dim = cv.getDimension(getClock());
-   byte [] rslt = new byte[dim];
-   for (int i = 0; i < dim; ++i) {
-      rslt[i] = cv.getIndexValue(getClock(),i).getNumber(getClock()).byteValue();
-    }
-   return rslt;
-}
-
-
-private int [] getIntArray(int idx)
-{
-   CashewValue cv = getContext().findReference(idx).getActualValue(getClock());
-   int dim = cv.getDimension(getClock());
-   int [] rslt = new int[dim];
-   for (int i = 0; i < dim; ++i) {
-      rslt[i] = cv.getIndexValue(getClock(),i).getNumber(getClock()).intValue();
-    }
-   return rslt;
-}
-
-
-private boolean getBoolean(int idx)
-{
-   return getContext().findReference(idx).getBoolean(getClock());
-}
-
-
-private File getFile(int idx)
-{
-   CashewValueFile cvf = (CashewValueFile) getValue(idx);
-   return cvf.getFile();
-}
-
-private JcompType getDataType(int idx)
-{
-   return getContext().findReference(idx).getDataType(getClock());
-}
-
-private CashewValue getValue(int idx)
-{
-   return getContext().findReference(idx).getActualValue(getClock());
-}
-
-
-
-private CashewValue getArrayValue(int idx)
-{
-   CashewValue array = getValue(idx);
-   if (array.isNull(getClock()))  CuminEvaluator.throwException(NULL_PTR_EXC);
-   if (!array.getDataType(getClock()).isArrayType()) CuminEvaluator.throwException(ILL_ARG_EXC);
-   return array;
-}
-
-
-private CashewValueClass getTypeValue(int idx)
-{
-   CashewValue typev = getValue(idx);
-   return (CashewValueClass) typev;
-}
 
 /********************************************************************************/
 /*										*/

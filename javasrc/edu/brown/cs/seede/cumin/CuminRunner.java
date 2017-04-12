@@ -178,8 +178,8 @@ public CashewClock getClock()		{ return execution_clock; }
 
 CuminStack getStack()			{ return execution_stack; }
 
-public CashewContext getLookupContext() 	{ return lookup_context; }
-List<CashewValue> getCallArgs() 	{ return call_args; }
+public CashewContext getLookupContext() { return lookup_context; }
+public List<CashewValue> getCallArgs()  { return call_args; }
 
 protected JcompType convertType(JcodeDataType cty)
 {

@@ -31,21 +31,16 @@ import java.awt.Component;
 import java.awt.Composite;
 import java.awt.Font;
 import java.awt.FontMetrics;
-import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GraphicsConfiguration;
 import java.awt.Image;
-import java.awt.LinearGradientPaint;
-import java.awt.MultipleGradientPaint;
 import java.awt.Paint;
 import java.awt.Polygon;
-import java.awt.RadialGradientPaint;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.Stroke;
-import java.awt.TexturePaint;
 import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
 import java.awt.geom.AffineTransform;
@@ -53,7 +48,6 @@ import java.awt.geom.Arc2D;
 import java.awt.geom.Area;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
-import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
@@ -64,7 +58,6 @@ import java.awt.image.ImageObserver;
 import java.awt.image.RenderedImage;
 import java.awt.image.renderable.RenderableImage;
 import java.text.AttributedCharacterIterator;
-import java.text.CharacterIterator;
 import java.util.Map;
 
 public class PoppyGraphics extends Graphics2D implements PoppyConstants
@@ -79,25 +72,32 @@ public class PoppyGraphics extends Graphics2D implements PoppyConstants
 /*										*/
 /********************************************************************************/
 
-public static String computeDrawing(Component c)
+public static PoppyGraphics computeGraphics(Component c,String id)
 {
-   PoppyGraphics pg = new PoppyGraphics(c.getGraphics());
-   c.paint(pg);
-   return pg.getReport();
+   // note that this is executed in the user process, not in simulation
+   
+   return new PoppyGraphics(c.getGraphics(),c,id);
 }
 
-
-public static PoppyGraphics computeGraphics(Component c)
-{
-   return new PoppyGraphics(c.getGraphics());
-}
 
 
 public static String computeDrawingG(Component c,Graphics g)
 {
    c.paint(g);
+   
    PoppyGraphics pg = (PoppyGraphics) g;
-   return pg.getReport();
+   
+   return  pg.finalReport();
+}
+
+
+public String finalReport()
+{
+   String rslt = getReport(); 
+   
+   dispose();
+   
+   return rslt;
 }
 
 
@@ -119,7 +119,11 @@ private GraphicsConfiguration graphics_config;
 private RenderingHints	user_hints;
 private Font		user_font;
 private Graphics	base_graphics;
-private StringBuilder   output_buffer;
+private String          poppy_id;
+private int             poppy_width;
+private int             poppy_height;
+private int             poppy_dx;
+private int             poppy_dy;
 
 
 
@@ -130,8 +134,24 @@ private StringBuilder   output_buffer;
 /*										*/
 /********************************************************************************/
 
-private PoppyGraphics(Graphics g)
+private PoppyGraphics(Graphics g,Component c,String id)
 {
+   poppy_id = id;
+   
+   if (c != null) {
+      poppy_width = c.getWidth();
+      poppy_height = c.getHeight();
+      poppy_dx = 0;
+      poppy_dy = 0;
+      for (Component p = c; p != null ; p = p.getParent()) {
+         if (p.isLightweight()) {
+            poppy_dx += p.getX();
+            poppy_dy += p.getY();
+          }
+         else break;
+       }
+    }
+   
    initialize(g);
 }
 
@@ -139,7 +159,7 @@ private PoppyGraphics(Graphics g)
 
 @Override public Graphics create()
 {
-   return new PoppyGraphics(this);
+   return new PoppyGraphics(this,null,poppy_id);
 }
 
 
@@ -169,7 +189,6 @@ private void initialize(Graphics g)
 
    if (g != null && g instanceof Graphics2D) {
       Graphics2D g2 = (Graphics2D) g;
-      user_transform = g2.getTransform();
       bg_color = g2.getBackground();
       user_paint = g2.getPaint();
       user_composite = g2.getComposite();
@@ -177,14 +196,17 @@ private void initialize(Graphics g)
       user_hints = g2.getRenderingHints();
       user_stroke = g2.getStroke();
     }
-
+   
    if (g != null && g instanceof PoppyGraphics) {
-      PoppyGraphics bg = (PoppyGraphics) g;
-      copyXmlOutput(bg);
+      PoppyGraphics pg = (PoppyGraphics) g;
+      user_transform = new AffineTransform(pg.user_transform);
     }
-   else {
-      createXmlOutput();
-    }
+}
+
+
+public void constrain(int x,int y,int w,int h)
+{
+   // track local constraints
 }
 
 
@@ -278,13 +300,13 @@ private void initialize(Graphics g)
 
 @Override public void draw(Shape s)
 {
-   generateReport(s,false);
+   // generateReport(s,false);
 }
 
 
 @Override public void fill(Shape s)
 {
-   generateReport(s,true);
+   // generateReport(s,true);
 }
 
 
@@ -306,6 +328,27 @@ private void initialize(Graphics g)
 
    // change this if we care what the contents are
    fill(r);
+}
+
+
+@Override public void drawRect(int x,int y,int width,int height)
+{
+   Shape s = new Rectangle(x,y,width,height);
+   draw(s);
+}
+
+
+@Override public void draw3DRect(int x,int y,int width,int height,boolean raised)
+{
+   Shape s = new Rectangle(x,y,width,height);
+   draw(s);
+}
+
+
+@Override public void fill3DRect(int x,int y,int width,int height,boolean raised)
+{
+   Shape s = new Rectangle(x,y,width,height);
+   fill(s);
 }
 
 
@@ -409,7 +452,7 @@ private void initialize(Graphics g)
 {
    if (s == null) return;
    
-   generateDrawString(s,x,y);
+   // generateDrawString(s,x,y);
 }
 
 
@@ -423,7 +466,7 @@ private void initialize(Graphics g)
 {
    if (it == null) return;
 
-   generateDrawString(it,x,y);
+   // generateDrawString(it,x,y);
 }
 
 
@@ -446,36 +489,56 @@ private void initialize(Graphics g)
 
 @Override public void clipRect(int x,int y,int w,int h)
 {
-   clip(new Rectangle(x,y,w,h));
+   Rectangle s = new Rectangle(x,y,w,h);
+   doClip(s);
 }
 
 
 @Override public void setClip(int x,int y,int w,int h)
 {
-   setClip(new Rectangle(x,y,w,h));
+   user_clip = new Rectangle(x,y,w,h);
 }
 
 
 
 @Override public void setClip(Shape sh)
 {
-   user_clip = transformShape(sh);
+   user_clip = sh;
 }
 
 
 @Override public void clip(Shape s)
 {
-   s = transformShape(s);
-   if (user_clip != null) s = intersectShapes(user_clip,s);
-   user_clip = s;
+   doClip(s);
+}
+
+
+private void doClip(Shape s)
+{
+   if (user_clip == null) user_clip = s;
+   else if (user_clip instanceof Rectangle | s instanceof Rectangle) {
+      Rectangle r = (Rectangle) user_clip;
+      Rectangle r1 = (Rectangle) s;
+      user_clip = r.intersection(r1);
+    }
+   else {
+      Area a1,a2;
+      a1 = new Area(user_clip);
+      if (s instanceof Area) {
+         a2 = (Area) s;
+       }
+      else a2 = new Area(s);
+      a1.intersect(a2);
+      // nmed to interset shpaes here
+      user_clip = a1;
+    }
+   
 }
 
 
 @Override public Shape getClip()
 {
-   if (user_clip == null) return null;
-
-   return untransformShape(user_clip);
+   return user_clip;
 }
 
 
@@ -490,79 +553,7 @@ private void initialize(Graphics g)
 
 
 
-private Shape transformShape(Shape s)
-{
-   if (s == null) return null;
-   if (user_transform == null || user_transform.isIdentity()) return s;
-
-   return user_transform.createTransformedShape(s);
-}
-
-
-
-private Shape untransformShape(Shape s)
-{
-   if (s == null) return null;
-   if (user_transform == null || user_transform.isIdentity()) return s;
-
-   try {
-      s = user_transform.createInverse().createTransformedShape(s);
-    }
-   catch (NoninvertibleTransformException e) { }
-
-   return s;
-}
-
-
-private Shape intersectShapes(Shape s1,Shape s2)
-{
-   if (s1 instanceof Rectangle && s2 instanceof Rectangle) {
-      return ((Rectangle) s1).intersection((Rectangle) s2);
-    }
-   if (s1 instanceof Rectangle2D) {
-      return intersectRectShape((Rectangle2D) s1,s2);
-    }
-   if (s2 instanceof Rectangle2D) {
-      return intersectRectShape((Rectangle2D) s2,s1);
-    }
-   return intersectByArea(s1,s2);
-}
-
-
-private Shape intersectRectShape(Rectangle2D r,Shape s)
-{
-   if (s instanceof Rectangle2D) {
-      Rectangle2D r2 = (Rectangle2D) s;
-      Rectangle2D out = new Rectangle2D.Float();
-      double x1 = Math.max(r.getX(), r2.getX());
-      double x2 = Math.min(r.getX()  + r.getWidth(), r2.getX() + r2.getWidth());
-      double y1 = Math.max(r.getY(), r2.getY());
-      double y2 = Math.min(r.getY()  + r.getHeight(), r2.getY() + r2.getHeight());
-      if (((x2 - x1) < 0) || ((y2 - y1) < 0))
-	 out.setFrameFromDiagonal(0, 0, 0, 0);
-      else
-	 out.setFrameFromDiagonal(x1, y1, x2, y2);
-      return out;
-    }
-   if (r.contains(s.getBounds2D())) return s;
-
-   return intersectByArea(r,s);
-}
-
-
-private Shape intersectByArea(Shape s1,Shape s2)
-{
-   Area a1 = new Area(s1);
-   Area a2;
-   if (s2 instanceof Area) a2 = (Area) s2;
-   else a2 = new Area(s2);
-   a1.intersect(a2);
-   if (a1.isRectangular()) return a1.getBounds();
-   return a1;
-}
-
-
-
+ 
 
 /********************************************************************************/
 /*										*/
@@ -820,153 +811,32 @@ private Shape intersectByArea(Shape s1,Shape s2)
 
 @Override public boolean hit(Rectangle r,Shape s,boolean onstroke)
 {
+   if (s == null) return false;
+   
    if (onstroke) {
       s = user_stroke.createStrokedShape(s);
     }
-   s = transformShape(s);
+   
+   if (user_transform != null && !user_transform.isIdentity()) {
+      s = user_transform.createTransformedShape(s);
+    }
 
    return s.intersects(r);
 }
 
 
-
 /********************************************************************************/
-/*										*/
-/*	Dummy methods for handling output					*/
-/*										*/
+/*                                                                              */
+/*      Output methods                                                          */
+/*                                                                              */
 /********************************************************************************/
-
-private void createXmlOutput()		
-{
-   output_buffer = new StringBuilder();
-   output_buffer.append("BEGIN\n");
-}
-private void copyXmlOutput(PoppyGraphics pg) 
-{
-   output_buffer = pg.output_buffer;
-}
-
-private void generateReport(Shape s,boolean fill)
-{
-   if (output_buffer == null) return;
-   
-   if (user_paint != null) {
-      output_buffer.append("PAINT ");
-      outputPaint(user_paint,output_buffer);
-      output_buffer.append("\n");
-    }
-   if (user_stroke != null) {
-      output_buffer.append("STROKE ");
-      output_buffer.append(user_stroke.toString());
-      output_buffer.append("\n");
-    }
-   if (fg_color != null) {
-      output_buffer.append("COLOR ");
-      output_buffer.append(fg_color.toString());
-      output_buffer.append("\n");
-    }
-   
-   output_buffer.append("SHAPE ");
-   output_buffer.append(fill);
-   output_buffer.append(" ");
-   Shape s1 = untransformShape(s);
-   output_buffer.append(s1.toString());
-   output_buffer.append("\n");
-}
 
 private String getReport()
 {
-   if (output_buffer == null) return "NO OUTPUT";
-   
-   output_buffer.append("END\n");   
-   
-   String rslt = output_buffer.toString();
-   
-   output_buffer = null;
+   String rslt = "FOR " + poppy_width + " " + poppy_height + " " +
+        poppy_dx + " " + poppy_dy + " " + poppy_id;
    
    return rslt;
-}
-
-
-private void outputPaint(Paint pt,StringBuilder buf)
-{
-   if (pt instanceof Color) {
-      outputColor((Color) pt,buf);
-    }
-   else if (pt instanceof GradientPaint) {
-      outputGradient((GradientPaint) pt,buf);
-    }
-   else if (pt instanceof LinearGradientPaint) {
-      
-    }
-   else if (pt instanceof MultipleGradientPaint) {
-      
-    }
-   else if (pt instanceof RadialGradientPaint) {
-      
-    }
-   else if (pt instanceof TexturePaint) {
-      
-    }
-}
-
-
-
-private void outputGradient(GradientPaint gp,StringBuilder buf)
-{
-   buf.append("GRADIENT ");
-   outputColor(gp.getColor1(),buf);
-   buf.append(" ");
-   outputColor(gp.getColor2(),buf);
-   buf.append(" ");
-   outputPoint(gp.getPoint1(),buf);
-   buf.append(" ");
-   outputPoint(gp.getPoint2(),buf);
-   buf.append(" ");
-   buf.append(gp.getTransparency());
-   buf.append(" ");
-   buf.append(gp.isCyclic()); 
-}
-
-
-
-private void outputColor(Color c,StringBuilder buf)
-{
-   buf.append("#" + Integer.toHexString(c.getRGB()));
-}
-
-
-private void outputPoint(Point2D pt,StringBuilder buf)
-{
-   
-}
-
-private void generateDrawString(String s,float x,float y)
-{
-   output_buffer.append("STRING ");
-   output_buffer.append(x);
-   output_buffer.append(" ");
-   output_buffer.append(y);
-   output_buffer.append(" ");
-   s = s.replace("\n","\\n");
-   output_buffer.append(s);
-}
-
-
-private void generateDrawString(AttributedCharacterIterator it,float x,float y)
-{
-   output_buffer.append("STRING ");
-   output_buffer.append(x);
-   output_buffer.append(" ");
-   output_buffer.append(y);
-   output_buffer.append(" ");
-   for (char c = it.first(); c != CharacterIterator.DONE; c = it.next()) {
-      output_buffer.append(c);
-      Map<AttributedCharacterIterator.Attribute,Object> attrs = it.getAttributes();
-      if (attrs != null) {
-         // output attributes
-       }
-    }
 }
 
 

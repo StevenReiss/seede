@@ -1,4 +1,4 @@
-<project name='seede.poppy' default='compile'>
+<project name='seede.poppy' default='jar'>
 
    <property file='../../../../../../build.properties' />
    <property name='PRO' value='/pro' />

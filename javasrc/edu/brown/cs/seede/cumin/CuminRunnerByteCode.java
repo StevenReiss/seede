@@ -1069,6 +1069,15 @@ private void checkSpecial()
          cde = new CuminDirectEvaluation(this);
          cde.checkAccessControllerMethods();
          break;
+         
+      case "edu.brown.cs.seede.poppy.PoppyGraphics" :
+         CuminGraphicsEvaluator cge = new CuminGraphicsEvaluator(this);
+         cge.checkPoppyGraphics();
+         break;
+      case "sun.awt.SunGraphicsCallback" :
+         cge = new CuminGraphicsEvaluator(this);
+         cge.checkGraphicsCallback();
+         break;
     }
 }
 
