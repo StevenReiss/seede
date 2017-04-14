@@ -27,6 +27,7 @@ package edu.brown.cs.seede.cashew;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import org.w3c.dom.Element;
 
@@ -556,6 +557,26 @@ CashewValue lookupVariableName(String name)
 }
 
 
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Reset methods                                                           */
+/*                                                                              */
+/********************************************************************************/
+
+public void resetValues(Set<CashewValue> done)   
+{
+   if (done.contains(this)) return;
+   done.add(this);
+   localResetValue(done);
+}
+
+
+protected void localResetValue(Set<CashewValue> done)
+{
+   
+}
 
 
 /********************************************************************************/

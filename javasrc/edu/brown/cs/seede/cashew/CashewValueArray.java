@@ -25,6 +25,7 @@
 package edu.brown.cs.seede.cashew;
 
 import java.util.Map;
+import java.util.Set;
 
 import edu.brown.cs.ivy.jcomp.JcompType;
 import edu.brown.cs.ivy.xml.IvyXmlWriter;
@@ -134,6 +135,21 @@ CashewValueArray(JcompType jt,int dim,Map<Integer,Object> inits,boolean caninit)
    buf.append("}");
 
    return buf.toString();
+}
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Reset methods                                                           */
+/*                                                                              */
+/********************************************************************************/
+
+@Override protected void localResetValue(Set<CashewValue> done)
+{
+   for (CashewRef cr : array_values) {
+      cr.resetValues(done);
+    }
 }
 
 

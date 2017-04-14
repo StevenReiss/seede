@@ -268,6 +268,10 @@ private void report()
       AcornLog.logD("Message result: " + mrslt);
     }
 
+   for (CuminRunner cr : run_status.keySet()) {
+      cr.resetValues();
+    }
+   
    run_status.clear();
 }
 

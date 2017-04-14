@@ -27,12 +27,15 @@ package edu.brown.cs.seede.cashew;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.swt.internal.C;
 
 import edu.brown.cs.ivy.jcode.JcodeDataType;
 import edu.brown.cs.ivy.jcode.JcodeField;
@@ -148,6 +151,8 @@ public void reset()
 /********************************************************************************/
 
 public String getName()                         { return context_owner; }
+
+public CashewContext getParentContext()         { return parent_context; }
 
 
 public CashewValue findReference(JcompSymbol js)
@@ -408,6 +413,25 @@ public CashewInputOutputModel getIOModel()
 {
    if (parent_context != null) return parent_context.getIOModel();
    return null;
+}
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Reset methods                                                           */
+/*                                                                              */
+/********************************************************************************/
+
+public void resetValues(Set<CashewValue> done) 
+{
+   for (CashewValue cv : context_map.values()) {
+      cv.resetValues(done);
+    }
+   if (nested_contexts != null) {
+      for (CashewContext nctx : nested_contexts) {
+         nctx.resetValues(done);
+       }
+    }
 }
 
 

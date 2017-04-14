@@ -32,6 +32,7 @@
 package edu.brown.cs.seede.cashew;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -128,7 +129,7 @@ CashewRef(CashewDeferredValue deferred)
 
    long tv = 0;
    if (cc != null) tv = cc.getTimeValue();
-
+   
    if (last_update < 0 || (tv == 0 && last_update == 0)) {
       // first time -- just record value
       last_update = tv;
@@ -153,6 +154,23 @@ CashewRef(CashewDeferredValue deferred)
    return this;
 }
 
+
+
+@Override protected void localResetValue(Set<CashewValue> done)
+{
+   if (value_map != null) {
+      long v0 = value_map.firstKey();
+      last_update = v0;
+      last_value = value_map.get(v0);
+      value_map = null;
+    }
+   if (last_update > 0) {
+      last_update = 0;
+      last_value = null;
+    }
+   
+   if (last_value != null) last_value.resetValues(done);
+}
 
 
 
@@ -294,7 +312,8 @@ private CashewValue getValueAt(CashewClock cc)
    if (value_map == null) {
       if (last_value != null) {
          xw.begin("VALUE");
-         if (can_initialize) xw.field("CANINIT",true);        xw.field("TYPE",last_value.getDataType());
+         if (can_initialize) xw.field("CANINIT",true);       
+         xw.field("TYPE",last_value.getDataType());
          last_value.outputLocalXml(xw,outctx);
          xw.end("VALUE");
        }

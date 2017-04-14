@@ -46,6 +46,7 @@ public class CashewInputOutputModel implements CashewConstants
 /********************************************************************************/
 
 private Map<Integer,OutputData> 	output_files;
+private Map<Integer,InputData>          input_files;
 private Set<File>                       files_created;
 private Set<File>                       files_removed;
 private Map<File,Integer>               file_permissions;
@@ -69,6 +70,7 @@ private int     DIRECTORY_PERM = 32;
 public CashewInputOutputModel()
 {
    output_files = new TreeMap<Integer,OutputData>();
+   input_files = new TreeMap<Integer,InputData>();
    files_created = new HashSet<File>();
    files_removed = new HashSet<File>();
    file_permissions = new HashMap<File,Integer>();
@@ -85,6 +87,7 @@ public CashewInputOutputModel()
 synchronized public void clear()
 {
    output_files.clear();
+   input_files.clear();
 }
 
 
@@ -103,9 +106,44 @@ synchronized public void fileWrite(CashewClock clk,int fd,String path,byte [] bu
 
 
 
+
+/********************************************************************************/
+/*                                                                              */
+/*      Input methods                                                           */
+/*                                                                              */
+/********************************************************************************/
+
+synchronized public long fileRead(CashewClock clk,int fd,byte [] buf,int off,long len)
+{
+   // note buf can be null to indicate a skip
+   
+   return 0;
+}
+
+
+synchronized public long fileAvailable(CashewClock clk,int fd)
+{
+   return 0;
+}
+
+
+synchronized public void checkInputFile(CashewValue cv,int fd,String path,boolean prior)
+{
+   InputData id = input_files.get(fd);
+   if (id != null) return;
+   
+   // if we know of input file fd, just return
+   // else if prior == false, open a new input file using path,fd
+   // else open a new input file using path,fd and set its position to the current file
+   //   position if available
+}
+
+
+
+
 /********************************************************************************/
 /*										*/
-/*	Output methods								*/
+/*	Model output methods				        		*/
 /*										*/
 /********************************************************************************/
 
@@ -373,6 +411,41 @@ private static class WriteData {
 }	// end of inner class WriteData
 
 
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Input file modeling                                                     */
+/*                                                                              */
+/********************************************************************************/
+
+private static class InputData {
+
+   private int file_fd;
+   private String file_path;
+   private long current_pos;
+   private long start_pos;
+   private long file_length;
+   
+   InputData() {
+      file_fd = 0;
+      file_path = null;
+      current_pos = 0;
+      start_pos = 0;
+      file_length = 0;
+    }
+   
+   void outputXml(IvyXmlWriter xw) {
+      xw.begin("INPUT");
+      xw.field("FD",file_fd);
+      xw.field("PATH",file_path);
+      xw.field("POSITION",current_pos);
+      xw.field("START",start_pos);
+      xw.field("LENGTH",file_length);
+      xw.end("INPUT");
+    }
+   
+}
 
 
 }	// end of class CashewInputOutputModel

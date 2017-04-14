@@ -1036,23 +1036,28 @@ private void checkSpecial()
 	 cde = new CuminDirectEvaluation(this);
 	 cde.checkThrowableMethods();
 	 break;
+         
       case "java.io.Console" :
       case "java.io.FileDescriptor" :
-      case "java.io.FileInputStraem" :
       case "java.io.ObjectInputStream" :
       case "java.io.ObjectOutputStream" :
       case "java.io.RandomAccessFile" :
       case "java.io.UnixFileSystem" :
 	 // TODO: handle other IO methods
 	 break;
-      case "java.io.FileOutputStream" :
-	 cde = new CuminDirectEvaluation(this);
-	 cde.checkOutputStreamMethods();
-	 break;
       case "java.io.File" :
-	 cde = new CuminDirectEvaluation(this);
-	 cde.checkFileMethods();
+	 CuminIOEvaluator cie = new CuminIOEvaluator(this);
+	 cie.checkFileMethods();
 	 break;
+      case "java.io.FileOutputStream" :
+	 cie = new CuminIOEvaluator(this);
+	 cie.checkOutputStreamMethods();
+	 break;
+      case "java.io.FileInputStraem" :
+         cie = new CuminIOEvaluator(this);
+         cie.checkInputStreamMethods();
+         break;
+         
       case "sun.misc.FloatingDecimal" :
 	 cde = new CuminDirectEvaluation(this);
 	 cde.checkFloatingDecimalMehtods();

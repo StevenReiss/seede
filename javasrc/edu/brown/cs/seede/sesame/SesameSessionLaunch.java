@@ -135,11 +135,14 @@ String getAnyThread()
       if (val != null) {
          CashewValue argval = val.getCashewValue();
          JcompType jtyp = argval.getDataType(null);
+         // need to check that 'this' is  compatible with COMPONENT
+         
          if (jtyp.isCompatibleWith(CashewConstants.GRAPHICS2D_TYPE)) {
             if (!jtyp.getName().contains("PoppyGraphics")) {
                String gname = "MAIN_" + loc.getThreadName();
                getProject().getJcodeFactory().findClass("edu.brown.cs.seede.poppy.PoppyGraphics");
-               String expr = "edu.brown.cs.seede.poppy.PoppyGraphics.computeGraphics(";
+               String expr = "edu.brown.cs.seede.poppy.PoppyGraphics.computeGraphics1(";
+               expr += "this,";
                expr += psym.getName() +  ",\"" + gname + "\")";
                SesameValueData nval = evaluateData(expr,loc.getThread());
                if (nval != null) {

@@ -25,7 +25,9 @@
 package edu.brown.cs.seede.cumin;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
@@ -485,6 +487,26 @@ private MethodDeclaration findAstForMethod(String nm,JcompType mtyp)
    return null;
 }
 
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Reset values after run                                                  */
+/*                                                                              */
+/********************************************************************************/
+
+public void resetValues()
+{
+   Set<CashewValue> done = new HashSet<CashewValue>();  
+   
+   for (CashewContext ctx = global_context; ctx != null; ctx = ctx.getParentContext()) {
+      ctx.resetValues(done); 
+    }
+   if (lookup_context != null) lookup_context.resetValues(done);
+   for (CashewValue cv : call_args) {
+      cv.resetValues(done);
+    }
+}
 
 /********************************************************************************/
 /*										*/

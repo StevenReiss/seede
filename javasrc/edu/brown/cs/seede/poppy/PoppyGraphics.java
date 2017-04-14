@@ -80,6 +80,12 @@ public static PoppyGraphics computeGraphics(Component c,String id)
 }
 
 
+public static PoppyGraphics computeGraphics1(Component c,Graphics g,String id)
+{
+   return new PoppyGraphics(g,c,id);
+}
+
+
 
 public static String computeDrawingG(Component c,Graphics g)
 {
@@ -115,15 +121,16 @@ private Paint		user_paint;
 private Color		bg_color;
 private Stroke		user_stroke;
 private Composite	user_composite;
-private GraphicsConfiguration graphics_config;
 private RenderingHints	user_hints;
 private Font		user_font;
 private Graphics	base_graphics;
 private String          poppy_id;
 private int             poppy_width;
 private int             poppy_height;
-private int             poppy_dx;
-private int             poppy_dy;
+private int             poppy_index;
+private int             parent_index;
+
+private static int      poppy_counter = 0;
 
 
 
@@ -137,22 +144,17 @@ private int             poppy_dy;
 private PoppyGraphics(Graphics g,Component c,String id)
 {
    poppy_id = id;
+   poppy_index = nextIndex();
+   parent_index = 0;
    
    if (c != null) {
       poppy_width = c.getWidth();
       poppy_height = c.getHeight();
-      poppy_dx = 0;
-      poppy_dy = 0;
-      for (Component p = c; p != null ; p = p.getParent()) {
-         if (p.isLightweight()) {
-            poppy_dx += p.getX();
-            poppy_dy += p.getY();
-          }
-         else break;
-       }
     }
    
    initialize(g);
+   
+   setupComplete(g);
 }
 
 
@@ -164,6 +166,12 @@ private PoppyGraphics(Graphics g,Component c,String id)
 
 
 @Override public void dispose() 		{ }
+
+
+private static synchronized int nextIndex() 
+{
+   return ++poppy_counter;
+}
 
 
 
@@ -181,7 +189,6 @@ private void initialize(Graphics g)
    bg_color = null;
    user_paint = null;
    user_composite = null;
-   graphics_config = null;
    user_hints = null;
    user_stroke = new BasicStroke();
    user_font = g.getFont();
@@ -192,16 +199,20 @@ private void initialize(Graphics g)
       bg_color = g2.getBackground();
       user_paint = g2.getPaint();
       user_composite = g2.getComposite();
-      graphics_config = g2.getDeviceConfiguration();
       user_hints = g2.getRenderingHints();
       user_stroke = g2.getStroke();
+      user_transform = new AffineTransform(g2.getTransform());
     }
    
    if (g != null && g instanceof PoppyGraphics) {
       PoppyGraphics pg = (PoppyGraphics) g;
-      user_transform = new AffineTransform(pg.user_transform);
+      base_graphics = pg.base_graphics;
+      parent_index = pg.poppy_index;
     }
 }
+
+private void setupComplete(Graphics g)                  { }
+
 
 
 public void constrain(int x,int y,int w,int h)
@@ -609,10 +620,9 @@ private void doClip(Shape s)
 }
 
 
-
 @Override public GraphicsConfiguration getDeviceConfiguration()
 {
-   return graphics_config;
+   return ((Graphics2D) base_graphics).getDeviceConfiguration();
 }
 
 
@@ -833,11 +843,12 @@ private void doClip(Shape s)
 
 private String getReport()
 {
-   String rslt = "FOR " + poppy_width + " " + poppy_height + " " +
-        poppy_dx + " " + poppy_dy + " " + poppy_id;
+   String rslt = "FOR " + poppy_width + " " + poppy_height + " " + " " + " " + 
+      poppy_index + " " + parent_index + " " + poppy_id;
    
    return rslt;
 }
+
 
 
 

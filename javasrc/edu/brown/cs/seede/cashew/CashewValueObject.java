@@ -123,6 +123,7 @@ CashewValueObject(JcompType jt,Map<String,Object> inits,boolean caninit)
 {
    CashewRef ov = findFieldForName(nm,true);
    ov.setValueAt(cc,cv);
+   
    return this;
 }
 
@@ -194,6 +195,21 @@ public CashewValueObject cloneObject(CashewClock cc)
    return new CashewValueObject(getDataType(),inits,false);
 }
 
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Reset methods                                                           */
+/*                                                                              */
+/********************************************************************************/
+
+@Override protected void localResetValue(Set<CashewValue> done)
+{
+   for (CashewRef cr : field_values.values()) {
+      cr.resetValues(done);
+    }
+}
 
 
 
