@@ -147,7 +147,10 @@ SesameContext(SesameSession ss)
    return for_session.getIOModel();
 }
 
-
+@Override public String findNameForValue(CashewValue cv,String thread)
+{
+   return for_session.getValueName(cv,thread);
+}
 
 
 

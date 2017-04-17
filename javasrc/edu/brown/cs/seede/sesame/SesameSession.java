@@ -189,8 +189,10 @@ void noteContinue(String launch,String thread)                  { }
 
 void setInitialValue(String what,Element value) throws SesameException     { }
 
-
-
+String getValueName(CashewValue cv,String thread)
+{
+   return null; 
+}
 
 /********************************************************************************/
 /*                                                                              */

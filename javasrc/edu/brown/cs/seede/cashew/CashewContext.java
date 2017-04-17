@@ -27,7 +27,6 @@ package edu.brown.cs.seede.cashew;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -35,7 +34,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.CompilationUnit;
-import org.eclipse.swt.internal.C;
 
 import edu.brown.cs.ivy.jcode.JcodeDataType;
 import edu.brown.cs.ivy.jcode.JcodeField;
@@ -414,6 +412,22 @@ public CashewInputOutputModel getIOModel()
    if (parent_context != null) return parent_context.getIOModel();
    return null;
 }
+
+
+public String findNameForValue(CashewValue cv)
+{
+   if (parent_context != null) return parent_context.findNameForValue(cv);
+   return null;
+}
+
+
+public String findNameForValue(CashewValue cv,String thread)
+{
+   if (parent_context != null) return parent_context.findNameForValue(cv,thread);
+   return null;
+}
+      
+
 
 
 /********************************************************************************/

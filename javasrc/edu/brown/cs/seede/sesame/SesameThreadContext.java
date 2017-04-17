@@ -101,6 +101,12 @@ public CashewValue findStaticFieldReference(String name,String type)
 }
 
 
+public String findNameForValue(CashewValue cv)
+{
+   return findNameForValue(cv,thread_id);
+}
+
+
 
 }       // end of class SesameThreadContext
 

@@ -162,8 +162,7 @@ String getMintId()				{ return message_id; }
 /*										*/
 /********************************************************************************/
 
-SesameProject getProject(String name)
-{
+SesameProject getProject(String name) {
    if (name == null) return null;
 
    synchronized (project_map) {

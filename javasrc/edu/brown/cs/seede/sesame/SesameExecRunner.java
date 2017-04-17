@@ -272,6 +272,8 @@ private void report()
       cr.resetValues();
     }
    
+   for_session.getIOModel().reset();
+   
    run_status.clear();
 }
 
@@ -414,7 +416,7 @@ private class MasterThread extends Thread {
    private void runSwingThreads() {
       if (swing_components == null || swing_components.isEmpty()) return;
       for (String cvname : swing_components) {
-         for (CuminRunner cr    : cumin_runners) {
+         for (CuminRunner cr : cumin_runners) {
             String cvn = cr.findReferencedVariableName(cvname);
             CashewValue cv = cr.findReferencedVariableValue(cvname);
             if (cvn != null) {

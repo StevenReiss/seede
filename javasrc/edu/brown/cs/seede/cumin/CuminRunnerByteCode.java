@@ -1042,9 +1042,12 @@ private void checkSpecial()
       case "java.io.ObjectInputStream" :
       case "java.io.ObjectOutputStream" :
       case "java.io.RandomAccessFile" :
-      case "java.io.UnixFileSystem" :
+      case "java.nio.file.FileSystem" :
+      case "java.nio.file.spi.FileSystemProvider" :
+      case "java.nio.file.Files" :
 	 // TODO: handle other IO methods
 	 break;
+         
       case "java.io.File" :
 	 CuminIOEvaluator cie = new CuminIOEvaluator(this);
 	 cie.checkFileMethods();

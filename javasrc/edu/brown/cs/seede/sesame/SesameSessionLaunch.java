@@ -273,6 +273,26 @@ String getAnyThread()
 
 
 
+@Override String getValueName(CashewValue cv,String thread)
+{
+   for (Map.Entry<String,Map<String,SesameValueData>> emaps : thread_values.entrySet()) {
+      String tid = emaps.getKey();
+      Map<String,SesameValueData> maps = emaps.getValue();
+      if (thread != null && !thread.equals(tid)) continue;
+      for (Map.Entry<String,SesameValueData> ent : maps.entrySet()) {
+         String key = ent.getKey();
+         SesameValueData svd = ent.getValue();
+         String find = svd.findValue(cv,1);
+         if (find != null) {
+            return key + find;
+          }
+       }
+    }
+   
+   return null;
+}
+
+
 
 /********************************************************************************/
 /*										*/

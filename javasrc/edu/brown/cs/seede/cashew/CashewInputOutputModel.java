@@ -25,6 +25,8 @@
 package edu.brown.cs.seede.cashew;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -80,17 +82,32 @@ public CashewInputOutputModel()
 
 /********************************************************************************/
 /*										*/
-/*	Output methods								*/
+/*	Setup methods    							*/
 /*										*/
 /********************************************************************************/
 
 synchronized public void clear()
 {
    output_files.clear();
-   input_files.clear();
 }
 
 
+synchronized public void reset()
+{ 
+   output_files.clear();
+   
+   for (InputData id : input_files.values()) {
+      id.reset();
+    }
+}
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Output methods                                                          */
+/*                                                                              */
+/********************************************************************************/
 
 synchronized public void fileWrite(CashewClock clk,int fd,String path,byte [] buf,int off,int len,boolean app)
 {
@@ -114,28 +131,64 @@ synchronized public void fileWrite(CashewClock clk,int fd,String path,byte [] bu
 /********************************************************************************/
 
 synchronized public long fileRead(CashewClock clk,int fd,byte [] buf,int off,long len)
+        throws IOException
 {
-   // note buf can be null to indicate a skip
+   InputData id = input_files.get(fd);
+   if (id == null) throw new IOException("No such file");
    
-   return 0;
+   if (buf == null) {
+      return id.skip(len);
+    }
+   
+   return id.read(buf,off,(int) len);
 }
+
 
 
 synchronized public long fileAvailable(CashewClock clk,int fd)
+        throws IOException
 {
-   return 0;
+   InputData id = input_files.get(fd);
+   if (id == null) throw new IOException("No such file");
+   
+   return id.available();
 }
 
 
-synchronized public void checkInputFile(CashewValue cv,int fd,String path,boolean prior)
+
+synchronized public void checkInputFile(CashewContext ctx,CashewClock cc,CashewValue cv,int fd,String path,
+      boolean prior) throws IOException
 {
    InputData id = input_files.get(fd);
-   if (id != null) return;
    
-   // if we know of input file fd, just return
-   // else if prior == false, open a new input file using path,fd
-   // else open a new input file using path,fd and set its position to the current file
-   //   position if available
+   if (id == null && path.equals("*STDIN*")) {
+      id = new StandardInput();
+      input_files.put(fd,id);
+    }
+   
+   if (id == null) {
+      long pos = 0;
+      
+      if (prior) {
+         String name = ctx .findNameForValue(cv);
+         if (name != null) {
+            String expr = "edu.brown.cs.seede.poppy.PoppyValue.getFileData(" + name  + ")";
+            CashewValue rv = ctx.evaluate(expr);
+            if (rv != null && rv.getDataType() == STRING_TYPE) {
+               String finfo = rv.getString(cc);
+               if (finfo.equals("*")) {
+                  throw new IOException("File not open");
+                }
+               int idx = finfo.indexOf("@");
+               pos = Long.parseLong(finfo.substring(idx+1));
+             }
+          }
+       }
+      id = new InputData(path,pos);
+      input_files.put(fd,id);
+    }
+   id.ensureOpen();
+     
 }
 
 
@@ -421,31 +474,113 @@ private static class WriteData {
 
 private static class InputData {
 
-   private int file_fd;
    private String file_path;
-   private long current_pos;
    private long start_pos;
-   private long file_length;
+   private FileInputStream input_stream;
    
-   InputData() {
-      file_fd = 0;
-      file_path = null;
-      current_pos = 0;
-      start_pos = 0;
-      file_length = 0;
+   InputData(String path,long pos) {
+      file_path = path;
+      start_pos = pos;
+      input_stream = null;
     }
    
-   void outputXml(IvyXmlWriter xw) {
-      xw.begin("INPUT");
-      xw.field("FD",file_fd);
-      xw.field("PATH",file_path);
-      xw.field("POSITION",current_pos);
-      xw.field("START",start_pos);
-      xw.field("LENGTH",file_length);
-      xw.end("INPUT");
+   void ensureOpen() throws IOException {
+      if (input_stream != null) return;
+      input_stream = new FileInputStream(file_path);
+      if (start_pos != 0) input_stream.skip(start_pos);
     }
    
-}
+   void reset() {
+      try {
+         if (input_stream != null) {
+            input_stream.close();
+          }
+       }
+      catch (IOException e) { }
+      input_stream = null;
+    }
+   
+   long skip(long len) throws IOException {
+      return input_stream.skip(len);
+    }
+   
+   int read(byte [] buf,int off,int len) throws IOException {
+      return input_stream.read(buf,off,len);
+    }
+   
+   long available() throws IOException {
+      return input_stream.available();
+    }
+   
+}       // end of inner class InputData
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Handler for standard input                                              */
+/*                                                                              */        /*            We need to determine how this should work from user's pov         */        
+/*                                                                              */
+/********************************************************************************/
+
+
+private static class StandardInput extends InputData {
+   
+   private List<byte []> input_strings;
+   private int          string_index;
+   private int          string_offset;
+
+   StandardInput() {
+      super("*STDIN*",0);
+      input_strings = new ArrayList<>();
+      string_index = 0;
+      string_offset = 0;
+    }
+   
+   void ensureOpen()                            { }
+   
+   void reset() {
+      string_index = 0;
+      string_offset = 0;
+    }
+   
+   long skip(long len) {
+      return 0L;
+    }
+   
+   int read(byte [] buf,int off,int len) throws IOException {
+      byte [] cur;
+      for ( ; ; ) {
+         if (string_index >= input_strings.size()) {
+            // get new input string
+            return 0;
+          }
+         cur = input_strings.get(string_index);
+         if (cur.length == 0) return 0;                 // handle EOF
+         if (string_offset >= cur.length) {
+            ++string_index;
+            string_offset = 0;
+          }
+         else break;
+       }
+      int rlen = Math.min(len,buf.length-string_offset);
+      System.arraycopy(cur,string_offset,buf,off,rlen);
+      string_offset += rlen;
+      if (string_offset >= cur.length) {
+         ++string_index;
+         string_offset = 0;
+       }
+      return rlen;
+    }
+   
+   long available() throws IOException {
+      if (string_index < input_strings.size()) {
+         byte [] cur = input_strings.get(string_index);
+         return cur.length - string_offset;
+       }
+      return 0;
+    }
+   
+}       // end of inner class StandardInput
 
 
 }	// end of class CashewInputOutputModel

@@ -27,7 +27,10 @@ package edu.brown.cs.seede.poppy;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.lang.reflect.Field;
+import java.nio.channels.FileChannel;
 
 
 public class PoppyValue implements PoppyConstants
@@ -219,6 +222,28 @@ public static float getStaticFieldValueFloat(String itm)
 {
    Number nv = (Number) getStaticFieldValue(itm);
    return nv.floatValue();
+}
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      File calls                                                              */
+/*                                                                              */
+/********************************************************************************/
+
+public static String getFileData(FileInputStream fis)
+{
+   FileChannel fc = fis.getChannel();
+   if (!fc.isOpen()) return "*";
+   try {
+      long pos = fc.position();
+      return "@" + pos;
+    }
+   catch (IOException e) {
+    }
+   
+   return null;
 }
 
 

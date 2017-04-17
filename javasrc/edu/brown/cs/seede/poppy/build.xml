@@ -6,6 +6,7 @@
    <available file="${PRO}/bubbles" type="dir" property="bubbles.present" />
    <property name='IVYBIN' value='${PRO}/ivy/java' />
    <property name='BUBBLESBIN' value='${PRO}/bubbles/java' />
+   <property name='BUBBLESLIB' value='${PRO}/bubbles/lib' />
    <property name='SEEDE' value='${basedir}/../../../../../..' />
 
    <target name='init'>
@@ -62,6 +63,7 @@
 	 <fileset dir='${SEEDE}/java' includes='**/poppy/*.class' />
       </jar>
       <copy file='poppy.jar' tofile='${SEEDE}/lib/poppy.jar' />
+      <copy file='poppy.jar' tofile='${BUBBLESLIB}/poppy.jar' />
    </target>
 
 </project>

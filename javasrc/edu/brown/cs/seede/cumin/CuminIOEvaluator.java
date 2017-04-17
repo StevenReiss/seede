@@ -351,61 +351,62 @@ void checkInputStreamMethods()
       // path is not defined before jdk 1.8
     }
    
-   int narg = getNumArgs();
    CashewInputOutputModel mdl = getContext().getIOModel();
    
    CashewValue rslt = null;
    byte [] wbuf = null;
    
-   switch (getMethod().getName()) {
-      case "open" :
-         if (path != null && fdv < 0) {
-            File f = new File(path);
-            if (!f.canRead()) {
-               CuminEvaluator.throwException(IO_EXCEPTION);
+   try {
+      switch (getMethod().getName()) {
+         case "open" :
+            if (path != null && fdv < 0) {
+               File f = new File(path);
+               if (!f.canRead()) {
+                  CuminEvaluator.throwException(IO_EXCEPTION);
+                }
              }
-          }
-         if (fdv < 0) {
-            fdv = file_counter.incrementAndGet();
-            fdval.setFieldValue(getClock(),"java.io.FileDescriptor.fd",
-                  CashewValue.numericValue(INT_TYPE,fdv));
-            mdl.checkInputFile(thisarg,fdv,path,false);
-          }
-         else {
-            mdl.checkInputFile(thisarg,fdv,path,true);
-          }
-	 break;
-      case "read0" :
-         mdl.checkInputFile(thisarg,fdv,path,true);
-	 wbuf = new byte[1];
-	 wbuf[0] = (byte) getInt(1);
-	 long lenread = mdl.fileRead(getClock(),fdv,wbuf,0,1);
-         rslt = CashewValue.numericValue(INT_TYPE,lenread);
-	 break;
-      case "readBytes" :
-         mdl.checkInputFile(thisarg,fdv,path,true);
-         int len = getInt(3);
-         wbuf = new byte[len];
-	 lenread = mdl.fileRead(getClock(),fdv,wbuf,0,len);
-         // copy wbuf into byteArray(1), offset getInt(2), for lenread 
-         rslt = CashewValue.numericValue(INT_TYPE,lenread);
-	 break;
-      case "skip" :
-         mdl.checkInputFile(thisarg,fdv,path,true);
-         lenread = mdl.fileRead(getClock(),fdv,null,0,getLong(1));
-         rslt = CashewValue.numericValue(LONG_TYPE,lenread);
-         break;
-      case "available" :
-         mdl.checkInputFile(thisarg,fdv,path,true);
-         lenread = mdl.fileAvailable(getClock(),fdv);
-         rslt = CashewValue.numericValue(INT_TYPE,lenread);
-         break;
-      case "close" :
-	 break;
-      case "initIDs" :
-	 break;
-      default :
-	 return;
+            if (fdv < 0) {
+               fdv = file_counter.incrementAndGet();
+               fdval.setFieldValue(getClock(),"java.io.FileDescriptor.fd",
+                     CashewValue.numericValue(INT_TYPE,fdv));
+               mdl.checkInputFile(getContext(),getClock(),thisarg,fdv,path,false);
+             }
+            break;
+         case "read0" :
+            mdl.checkInputFile(getContext(),getClock(),thisarg,fdv,path,true);
+            wbuf = new byte[1];
+            wbuf[0] = (byte) getInt(1);
+            long lenread = mdl.fileRead(getClock(),fdv,wbuf,0,1);
+            rslt = CashewValue.numericValue(INT_TYPE,lenread);
+            break;
+         case "readBytes" :
+            mdl.checkInputFile(getContext(),getClock(),thisarg,fdv,path,true);
+            int len = getInt(3);
+            wbuf = new byte[len];
+            lenread = mdl.fileRead(getClock(),fdv,wbuf,0,len);
+            // copy wbuf into byteArray(1), offset getInt(2), for lenread 
+            rslt = CashewValue.numericValue(INT_TYPE,lenread);
+            break;
+         case "skip" :
+            mdl.checkInputFile(getContext(),getClock(),thisarg,fdv,path,true);
+            lenread = mdl.fileRead(getClock(),fdv,null,0,getLong(1));
+            rslt = CashewValue.numericValue(LONG_TYPE,lenread);
+            break;
+         case "available" :
+            mdl.checkInputFile(getContext(),getClock(),thisarg,fdv,path,true);
+            lenread = mdl.fileAvailable(getClock(),fdv);
+            rslt = CashewValue.numericValue(INT_TYPE,lenread);
+            break;
+         case "close" :
+            break;
+         case "initIDs" :
+            break;
+         default :
+            return;
+       }
+    }
+   catch (IOException e) {
+      CuminEvaluator.throwException(IO_EXCEPTION);
     }
    
    throw new CuminRunError(CuminRunError.Reason.RETURN,rslt);

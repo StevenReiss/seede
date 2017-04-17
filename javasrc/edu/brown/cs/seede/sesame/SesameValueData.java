@@ -295,6 +295,26 @@ SesameValueData getValue(String var)
 }
 
 
+String findValue(CashewValue cv,int lvl)
+{
+   if (result_value == null) return null;
+   if (result_value == cv) return "";
+   if (lvl == 0 || sub_values == null) return null;
+   
+   for (Map.Entry<String,SesameValueData> ent : sub_values.entrySet()) {
+      String r = ent.getValue().findValue(cv,lvl-1);
+      if (r != null) {
+         if (array_length > 0) {
+            return "[" + ent.getKey() + "]";
+          }
+         else return "." + ent.getKey();
+       }
+    }
+   
+   return null;
+}
+
+
 
 /********************************************************************************/
 /*										*/

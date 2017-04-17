@@ -1,5 +1,8 @@
 <project name='seede' default='jar'>
 
+   <property name='PRO' value='/pro' />
+   <property name='BUBBLESLIB' value='${PRO}/bubbles/lib' />
+
    <target name='all'>
       <ant antfile="build.xml" dir="javasrc" />
    </target>
@@ -21,6 +24,7 @@
 	 </manifest>
 	 <fileset dir='./java' includes='**/*.class' />
       </jar>
+      <copy file='seede.jar' tofile='${BUBBLESLIB}/seede.jar' />
    </target>
 
 </project>
