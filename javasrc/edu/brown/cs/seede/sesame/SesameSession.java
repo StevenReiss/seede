@@ -329,6 +329,10 @@ void addSwingComponent(String name)
 
 
 
+void resetCache()                               { }
+
+
+
 /********************************************************************************/
 /*										*/
 /*	Methods to get global values from underlying execution			*/

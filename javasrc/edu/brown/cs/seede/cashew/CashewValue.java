@@ -573,10 +573,28 @@ public void resetValues(Set<CashewValue> done)
 }
 
 
-protected void localResetValue(Set<CashewValue> done)
+protected void localResetValue(Set<CashewValue> done)           { }
+
+
+
+public void resetType(JcompTyper typer,Set<CashewValue> done)
 {
-   
+   if (done.contains(this)) return;
+   done.add(this);
+   if (decl_type != null && !decl_type.isKnownType() && !decl_type.isPrimitiveType()) {
+      JcompType ntyp = typer.findType(decl_type.getName());
+      if (ntyp != decl_type && ntyp != null) {
+         decl_type = ntyp;
+       }
+    }
+   localResetType(typer,done);
 }
+
+
+
+protected void localResetType(JcompTyper typer,Set<CashewValue> done)            { }
+
+
 
 
 /********************************************************************************/

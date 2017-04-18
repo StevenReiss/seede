@@ -153,6 +153,12 @@ SesameContext(SesameSession ss)
 }
 
 
+@Override public String getNextInputLine(String file)
+{
+   String inp = for_session.requestInput(file);
+   return inp;
+}
+
 
 }       // end of class SesameContext
 

@@ -37,6 +37,7 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 import edu.brown.cs.ivy.jcomp.JcompType;
+import edu.brown.cs.ivy.jcomp.JcompTyper;
 import edu.brown.cs.ivy.xml.IvyXmlWriter;
 
 class CashewRef extends CashewValue implements CashewConstants
@@ -170,6 +171,17 @@ CashewRef(CashewDeferredValue deferred)
     }
    
    if (last_value != null) last_value.resetValues(done);
+}
+
+
+@Override protected void localResetType(JcompTyper typer,Set<CashewValue> done)
+{
+   if (last_value != null) last_value.resetType(typer,done);
+   if (value_map != null) {
+      for (CashewValue cv : value_map.values()) {
+         cv.resetType(typer,done);
+       }
+    }
 }
 
 

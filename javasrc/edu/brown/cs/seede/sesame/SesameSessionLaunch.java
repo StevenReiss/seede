@@ -293,6 +293,14 @@ String getAnyThread()
 }
 
 
+@Override void resetCache()
+{
+   JcompTyper typer = getProject().getTyper();
+   value_cache.updateCache(typer);
+}
+
+
+
 
 /********************************************************************************/
 /*										*/

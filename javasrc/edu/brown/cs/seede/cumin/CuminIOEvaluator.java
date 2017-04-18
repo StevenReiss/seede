@@ -398,6 +398,7 @@ void checkInputStreamMethods()
             rslt = CashewValue.numericValue(INT_TYPE,lenread);
             break;
          case "close" :
+            mdl.closeFile(fdv);
             break;
          case "initIDs" :
             break;

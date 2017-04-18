@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Set;
 
 import edu.brown.cs.ivy.jcomp.JcompType;
+import edu.brown.cs.ivy.jcomp.JcompTyper;
 import edu.brown.cs.ivy.xml.IvyXmlWriter;
 
 public class CashewValueArray extends CashewValue implements CashewConstants
@@ -149,6 +150,15 @@ CashewValueArray(JcompType jt,int dim,Map<Integer,Object> inits,boolean caninit)
 {
    for (CashewRef cr : array_values) {
       cr.resetValues(done);
+    }
+}
+
+
+
+@Override protected void localResetType(JcompTyper typer,Set<CashewValue> done)
+{
+   for (CashewRef cr : array_values) {
+      cr.resetType(typer,done);
     }
 }
 

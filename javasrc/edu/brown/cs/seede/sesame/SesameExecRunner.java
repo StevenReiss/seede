@@ -340,6 +340,8 @@ private class MasterThread extends Thread {
          for_session.getIOModel().clear();
          List<RunnerThread> waits = new ArrayList<RunnerThread>();
          SesameProject proj = for_session.getProject();
+         
+         for_session.resetCache();
    
          if (i != 0 && reply_id != null) {
             CommandArgs args = new CommandArgs();
@@ -401,8 +403,8 @@ private class MasterThread extends Thread {
                if (isInterrupted()) break;
                if (!is_continuous) break;
                try {
-        	  wait(5000);
-        	}
+                  wait(5000);
+                }
                catch (InterruptedException e) { }
              }
             run_again = false;

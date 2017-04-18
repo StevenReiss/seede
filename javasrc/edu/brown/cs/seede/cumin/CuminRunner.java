@@ -456,8 +456,17 @@ private JcodeMethod findTargetMethod(CashewClock cc,JcodeMethod method,
    if (method.isStatic() || ctyp == CallType.STATIC || ctyp == CallType.SPECIAL) {
       return method;
     }
-
-   JcodeClass cls = getCodeFactory().findClass(base.getName());
+   
+   String bnm = base.getName();
+   JcodeClass cls = null;
+   
+   for ( ; ; ) {
+      cls = getCodeFactory().findClass(bnm);
+      if (cls != null) break;
+      int idx = bnm.lastIndexOf(".");
+      if (idx < 0) break;
+      bnm = bnm.substring(0,idx) + "$" + bnm.substring(idx+1);
+    }
    if (cls == null) cls = getCodeFactory().findClass("java.lang.Object");
    JcodeMethod cmethod = cls.findInheritedMethod(method.getName(),method.getDescription());
 

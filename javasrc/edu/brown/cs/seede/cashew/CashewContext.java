@@ -426,6 +426,13 @@ public String findNameForValue(CashewValue cv,String thread)
    if (parent_context != null) return parent_context.findNameForValue(cv,thread);
    return null;
 }
+
+
+public String getNextInputLine(String file)
+{
+   if (parent_context != null) return parent_context.getNextInputLine(file);
+   return null;
+}
       
 
 

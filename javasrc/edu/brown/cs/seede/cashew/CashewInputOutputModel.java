@@ -187,8 +187,15 @@ synchronized public void checkInputFile(CashewContext ctx,CashewClock cc,CashewV
       id = new InputData(path,pos);
       input_files.put(fd,id);
     }
-   id.ensureOpen();
-     
+   id.ensureOpen(ctx);
+}
+
+
+
+synchronized public void closeFile(int fd) throws IOException
+{
+   InputData id = input_files.get(fd);
+   if (id != null) id.reset();
 }
 
 
@@ -484,7 +491,7 @@ private static class InputData {
       input_stream = null;
     }
    
-   void ensureOpen() throws IOException {
+   void ensureOpen(CashewContext ctx) throws IOException {
       if (input_stream != null) return;
       input_stream = new FileInputStream(file_path);
       if (start_pos != 0) input_stream.skip(start_pos);
@@ -512,6 +519,8 @@ private static class InputData {
       return input_stream.available();
     }
    
+   String getFileName()                 { return file_path; }
+   
 }       // end of inner class InputData
 
 
@@ -528,32 +537,39 @@ private static class StandardInput extends InputData {
    private List<byte []> input_strings;
    private int          string_index;
    private int          string_offset;
+   private CashewContext using_context;
 
    StandardInput() {
       super("*STDIN*",0);
       input_strings = new ArrayList<>();
       string_index = 0;
       string_offset = 0;
+      using_context = null;
     }
    
-   void ensureOpen()                            { }
+   @Override void ensureOpen(CashewContext ctx) {
+      if (using_context == null) using_context = ctx;
+    }
    
-   void reset() {
+   @Override void reset() {
       string_index = 0;
       string_offset = 0;
+      using_context = null;
     }
    
-   long skip(long len) {
+   @Override long skip(long len) {
       return 0L;
     }
    
-   int read(byte [] buf,int off,int len) throws IOException {
+   @Override int read(byte [] buf,int off,int len) throws IOException {
       byte [] cur;
       for ( ; ; ) {
-         if (string_index >= input_strings.size()) {
-            // get new input string
-            return 0;
+         if (string_index == input_strings.size()) {
+            String next = using_context.getNextInputLine(getFileName());
+            if (next == null) return 0;
+            input_strings.add(next.getBytes());
           }
+         else if (string_index > input_strings.size()) return 0;
          cur = input_strings.get(string_index);
          if (cur.length == 0) return 0;                 // handle EOF
          if (string_offset >= cur.length) {
@@ -572,7 +588,7 @@ private static class StandardInput extends InputData {
       return rlen;
     }
    
-   long available() throws IOException {
+   @Override long available() throws IOException {
       if (string_index < input_strings.size()) {
          byte [] cur = input_strings.get(string_index);
          return cur.length - string_offset;

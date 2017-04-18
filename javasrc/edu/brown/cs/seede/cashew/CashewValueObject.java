@@ -27,6 +27,7 @@ package edu.brown.cs.seede.cashew;
 import edu.brown.cs.ivy.jcomp.JcompScope;
 import edu.brown.cs.ivy.jcomp.JcompSymbol;
 import edu.brown.cs.ivy.jcomp.JcompType;
+import edu.brown.cs.ivy.jcomp.JcompTyper;
 import edu.brown.cs.ivy.xml.IvyXmlWriter;
 import edu.brown.cs.seede.acorn.AcornLog;
 
@@ -208,6 +209,14 @@ public CashewValueObject cloneObject(CashewClock cc)
 {
    for (CashewRef cr : field_values.values()) {
       cr.resetValues(done);
+    }
+}
+
+
+@Override protected void localResetType(JcompTyper typer,Set<CashewValue> done)
+{
+   for (CashewRef cr : field_values.values()) {
+      cr.resetType(typer,done);
     }
 }
 

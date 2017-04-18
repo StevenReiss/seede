@@ -29,6 +29,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import org.w3c.dom.Element;
 
@@ -396,6 +397,12 @@ private synchronized void computeValues()
     }
 }
 
+
+
+void resetType(JcompTyper typer,Set<CashewValue> done)
+{
+   if (result_value != null) result_value.resetType(typer,done);
+}
 
 
 

@@ -25,8 +25,11 @@
 package edu.brown.cs.seede.sesame;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
+import edu.brown.cs.ivy.jcomp.JcompTyper;
 import edu.brown.cs.seede.cashew.CashewValue;
 
 class SesameSessionCache implements SesameConstants
@@ -71,7 +74,9 @@ SesameValueData lookup(String thread,String expr)
    
    if (thread.equals("*")) {
       CashewValue cv = initial_map.get(expr);
-      if (cv != null) return new SesameValueData(cv);
+      if (cv != null) {
+         return new SesameValueData(cv);
+       }
     }    
    
    synchronized (thread_map) {
@@ -112,6 +117,24 @@ void clearCache()
 {
    thread_map.clear();
 }
+
+
+
+void updateCache(JcompTyper typer)
+{
+   Set<CashewValue> done = new HashSet<>();
+   
+   for (CashewValue cv : initial_map.values()) {
+      cv.resetType(typer,done);
+    }
+   for (Map<String,SesameValueData> mp1 : thread_map.values()) {
+      for (SesameValueData svd : mp1.values()) {
+         svd.resetType(typer,done);
+       }
+    }
+}
+
+
 
 
 }       // end of class SesameSessionCache
