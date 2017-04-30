@@ -75,7 +75,7 @@ CashewValue push(CashewValue cv)
 CashewValue pop()
 {
    if (execution_stack.isEmpty()) {
-      System.err.println("ATTEMPT TO POP EMTPY STACK");
+      AcornLog.logE("ATTEMPT TO POP EMTPY STACK");
     }
    return (CashewValue) execution_stack.pop();
 }

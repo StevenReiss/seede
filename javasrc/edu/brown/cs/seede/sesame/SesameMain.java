@@ -108,9 +108,15 @@ private void scanArgs(String [] args)
 {
    for (int i = 0; i < args.length; ++i) {
       if (args[i].startsWith("-")) {
-	 if (args[i].startsWith("-m") && i+1 < args.length) {
+	 if (args[i].startsWith("-m") && i+1 < args.length) {           // -m <MINTID>
 	    message_id = args[++i];
 	  }
+         else if (args[i].startsWith("-T")) {                           // -Trace
+            AcornLog.setTracing(true);
+          }
+         else if (args[i].startsWith("-D")) {                           // -Debug
+            AcornLog.setLogLevel(AcornLog.LogLevel.DEBUG);
+          }
 	 else badArgs();
        }
       else badArgs();

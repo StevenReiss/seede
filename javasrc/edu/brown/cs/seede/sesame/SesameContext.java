@@ -1,21 +1,21 @@
 /********************************************************************************/
-/*                                                                              */
-/*              SesameContext.java                                              */
-/*                                                                              */
-/*      description of class                                                    */
-/*                                                                              */
+/*										*/
+/*		SesameContext.java						*/
+/*										*/
+/*	description of class							*/
+/*										*/
 /********************************************************************************/
-/*      Copyright 2011 Brown University -- Steven P. Reiss                    */
+/*	Copyright 2011 Brown University -- Steven P. Reiss		      */
 /*********************************************************************************
- *  Copyright 2011, Brown University, Providence, RI.                            *
- *                                                                               *
- *                        All Rights Reserved                                    *
- *                                                                               *
- * This program and the accompanying materials are made available under the      *
+ *  Copyright 2011, Brown University, Providence, RI.				 *
+ *										 *
+ *			  All Rights Reserved					 *
+ *										 *
+ * This program and the accompanying materials are made available under the	 *
  * terms of the Eclipse Public License v1.0 which accompanies this distribution, *
- * and is available at                                                           *
- *      http://www.eclipse.org/legal/epl-v10.html                                *
- *                                                                               *
+ * and is available at								 *
+ *	http://www.eclipse.org/legal/epl-v10.html				 *
+ *										 *
  ********************************************************************************/
 
 /* SVN: $Id$ */
@@ -33,24 +33,24 @@ public class SesameContext extends CashewContext implements SesameConstants
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Private Storage                                                         */
-/*                                                                              */
+/*										*/
+/*	Private Storage 							*/
+/*										*/
 /********************************************************************************/
 
-private SesameSession   for_session;
+private SesameSession	for_session;
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Constructors                                                            */
-/*                                                                              */
+/*										*/
+/*	Constructors								*/
+/*										*/
 /********************************************************************************/
 
 SesameContext(SesameSession ss)
 {
    super("GLOBAL_CONTEXT",null,null);
-   
+
    for_session = ss;
 }
 
@@ -58,16 +58,16 @@ SesameContext(SesameSession ss)
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Overridden methods                                                      */
-/*                                                                              */
+/*										*/
+/*	Overridden methods							*/
+/*										*/
 /********************************************************************************/
 
 @Override public CashewValue findStaticFieldReference(String name,String type)
 {
    CashewValue cv = super.findStaticFieldReference(name,type);
    if (cv != null) return cv;
-   
+
    if (name.endsWith(".$assertionsDisabled")) {
       cv = CashewValue.booleanValue(false);
       return cv;
@@ -76,30 +76,30 @@ SesameContext(SesameSession ss)
       cv = CashewValue.booleanValue(true);
       return cv;
     }
-   
+
    cv = for_session.lookupValue(name,type);
    if (cv == null) {
       String suffix = "";
       if (type == null) type = "java.lang.Object";
       switch (type) {
-         case "boolean" :
-            suffix = "Boolean";
-            break;
-         case "int" :
-            suffix = "Int";
-            break;
-         case "long" :
-            suffix = "Long";
-            break;
-         case "short" :
-            suffix = "Short";
-            break;
-         case "double" :
-            suffix = "Double";
-            break;
-         case "float" :
-            suffix = "Float";
-            break;
+	 case "boolean" :
+	    suffix = "Boolean";
+	    break;
+	 case "int" :
+	    suffix = "Int";
+	    break;
+	 case "long" :
+	    suffix = "Long";
+	    break;
+	 case "short" :
+	    suffix = "Short";
+	    break;
+	 case "double" :
+	    suffix = "Double";
+	    break;
+	 case "float" :
+	    suffix = "Float";
+	    break;
        }
       String expr = "edu.brown.cs.seede.poppy.PoppyValue.getStaticFieldValue";
       expr += suffix + "(\"" + name + "\")";
@@ -110,7 +110,7 @@ SesameContext(SesameSession ss)
       cv = CashewValue.createReference(cv,true);
       define(name,cv);
     }
-   
+
    return cv;
 }
 
@@ -119,6 +119,7 @@ SesameContext(SesameSession ss)
 {
    return for_session.evaluate(expr,null);
 }
+
 
 @Override public CashewValue evaluate(String expr,String tid)
 {
@@ -129,7 +130,7 @@ SesameContext(SesameSession ss)
 @Override public CashewValue evaluateVoid(String expr)
 {
    for_session.evaluateVoid(expr);
-   
+
    return null;
 }
 
@@ -160,7 +161,7 @@ SesameContext(SesameSession ss)
 }
 
 
-}       // end of class SesameContext
+}	// end of class SesameContext
 
 
 

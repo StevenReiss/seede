@@ -43,6 +43,7 @@ public class CashewValueArray extends CashewValue implements CashewConstants
 
 private int dim_size;
 private CashewRef [] array_values;
+private int old_ref;
 
 
 
@@ -57,6 +58,7 @@ CashewValueArray(JcompType jt,int dim,Map<Integer,Object> inits,boolean caninit)
    super(jt);
    dim_size = dim;
    array_values = new CashewRef[dim];
+   old_ref = 0;
    for (int i = 0; i < dim; ++i) {
       CashewValue cv = CashewValue.createDefaultValue(jt.getBaseType());
       if (inits != null) {
@@ -170,14 +172,36 @@ CashewValueArray(JcompType jt,int dim,Map<Integer,Object> inits,boolean caninit)
 /*										*/
 /********************************************************************************/
 
+@Override public boolean checkChanged(CashewOutputContext outctx)
+{
+   if (outctx.noteChecked(this)) return (old_ref == 0);
+   
+   boolean fg = (old_ref == 0);
+   
+   for (CashewValue cv : array_values) {
+      if (cv != null) {
+         fg |= cv.checkChanged(outctx);
+       }
+    }
+   
+   if (fg) old_ref = 0;
+   
+   return fg;
+}
+
+
+
 @Override public void outputLocalXml(IvyXmlWriter xw,CashewOutputContext outctx) {
    xw.field("ARRAY",true);
    int rvl = outctx.noteValue(this);
-   xw.field("ID",Math.abs(rvl));
+   int oref = old_ref;
+   old_ref = Math.abs(rvl);
+   xw.field("ID",old_ref);
    if (rvl > 0) {
       xw.field("REF",true);
     }
    else {
+      if (oref != 0) xw.field("OREF",oref);
       xw.field("SIZE",dim_size);
       for (int i = 0; i < array_values.length; ++i) {
 	 xw.begin("ELEMENT");

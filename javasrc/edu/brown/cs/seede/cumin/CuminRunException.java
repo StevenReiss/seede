@@ -1,8 +1,8 @@
 /********************************************************************************/
 /*										*/
-/*		CuminConstants.java						*/
+/*		CuminRunError.java						*/
 /*										*/
-/*	ContinUous (M) Interpreter constant definitions 			*/
+/*	description of class							*/
 /*										*/
 /********************************************************************************/
 /*	Copyright 2011 Brown University -- Steven P. Reiss		      */
@@ -24,84 +24,79 @@
 
 package edu.brown.cs.seede.cumin;
 
-import edu.brown.cs.ivy.jcode.JcodeFactory;
-import edu.brown.cs.ivy.jcomp.JcompProject;
-import edu.brown.cs.ivy.jcomp.JcompTyper;
+import edu.brown.cs.seede.cashew.CashewValue;
 
-public interface CuminConstants
+public class CuminRunException extends Exception implements CuminRunStatus
 {
 
 
+/********************************************************************************/
+/*										*/
+/*	Private Storage 							*/
+/*										*/
+/********************************************************************************/
+
+private Reason		throw_reason;
+private CashewValue	associated_value;
+private CuminRunner	call_value;
+
+private final static long serialVersionUID = 1;
+
+
 
 /********************************************************************************/
 /*										*/
-/*	Information needed about a project					*/
+/*	Constructors								*/
 /*										*/
 /********************************************************************************/
 
-interface CuminProject {
+CuminRunException(Reason r,String msg,Throwable cause,CashewValue v)
+{
+   super(msg,cause);
 
-   JcompTyper getTyper();
-   JcodeFactory getJcodeFactory();
-   JcompProject getJcompProject();
+   throw_reason = r;
+   associated_value = v;
+   call_value = null;
+}
 
+
+CuminRunException(Reason r) 
+{
+   this(r,r.toString(),null,null);
+}
+
+
+CuminRunException(Reason r,String label)
+{
+   this(r,label,null,null);
+}
+
+
+public CuminRunException(Throwable t)
+{
+   this(Reason.ERROR,t.getMessage(),t,null);
 }
 
 
 
 /********************************************************************************/
 /*										*/
-/*	Evaluation methods							*/
+/*	Access methods								*/
 /*										*/
 /********************************************************************************/
 
-enum EvalType {
-   RUN, STEP
-}
+@Override public Reason getReason()		{ return throw_reason; }
+
+@Override public CashewValue getValue()	{ return associated_value; }
+
+@Override public CuminRunner getCallRunner()	{ return call_value; }
 
 
-enum CallType {
-   STATIC, SPECIAL, INTERFACE, DYNAMIC, VIRTUAL
-}
 
-
-public enum Reason {
-   ERROR, EXCEPTION, BREAKPOINT, TIMEOUT, COMPILER_ERROR,
-   STEP_END, BREAK, CONTINUE, RETURN, CALL, STOPPED, HALTED, WAIT
-}
+}	// end of class CuminRunError
 
 
 
 
-/********************************************************************************/
-/*										*/
-/*	Operators								*/
-/*										*/
-/********************************************************************************/
-
-enum CuminOperator {
-   MUL, DIV, MOD, ADD, SUB, LSH, RSH, RSHU, LSS, GTR, LEQ, GEQ, EQL, NEQ,
-   XOR, AND, OR, POSTINCR, POSTDECR, INCR, DECR, COMP, NEG, NOP, NOT,
-   ASG, ASG_ADD, ASG_SUB, ASG_MUL, ASG_DIV, ASG_AND, ASG_OR, ASG_XOR, ASG_MOD,
-   ASG_LSH, ASG_RSH, ASG_RSHU, SIG
-}
-
-
-/********************************************************************************/
-/*										*/
-/*	Special context names							*/
-/*										*/
-/********************************************************************************/
-
-String LINE_NAME = "*LINE*";
-String THIS_NAME = "this";
-String OUTER_NAME = "this$0";
-
-
-}	// end of interface CuminConstants
-
-
-
-
-/* end of CuminConstants.java */
+/* end of CuminRunError.java */
 

@@ -165,7 +165,7 @@ protected CashewValue getValue(int idx)
 
 
 
-protected CashewValue getArrayValue(int idx)
+protected CashewValue getArrayValue(int idx) throws CuminRunException
 {
    CashewValue array = getValue(idx);
    if (array.isNull(getClock()))  CuminEvaluator.throwException(NULL_PTR_EXC);

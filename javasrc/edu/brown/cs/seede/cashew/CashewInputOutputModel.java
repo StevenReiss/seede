@@ -48,17 +48,17 @@ public class CashewInputOutputModel implements CashewConstants
 /********************************************************************************/
 
 private Map<Integer,OutputData> 	output_files;
-private Map<Integer,InputData>          input_files;
-private Set<File>                       files_created;
-private Set<File>                       files_removed;
-private Map<File,Integer>               file_permissions;
+private Map<Integer,InputData>		input_files;
+private Set<File>			files_created;
+private Set<File>			files_removed;
+private Map<File,Integer>		file_permissions;
 
 
-private int     READ_PERM = 1;
-private int     WRITE_PERM = 2;
-private int     EXEC_PERM = 4;
+private int	READ_PERM = 1;
+private int	WRITE_PERM = 2;
+private int	EXEC_PERM = 4;
 
-private int     DIRECTORY_PERM = 32;
+private int	DIRECTORY_PERM = 32;
 
 
 
@@ -82,7 +82,7 @@ public CashewInputOutputModel()
 
 /********************************************************************************/
 /*										*/
-/*	Setup methods    							*/
+/*	Setup methods								*/
 /*										*/
 /********************************************************************************/
 
@@ -93,9 +93,9 @@ synchronized public void clear()
 
 
 synchronized public void reset()
-{ 
+{
    output_files.clear();
-   
+
    for (InputData id : input_files.values()) {
       id.reset();
     }
@@ -104,9 +104,9 @@ synchronized public void reset()
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Output methods                                                          */
-/*                                                                              */
+/*										*/
+/*	Output methods								*/
+/*										*/
 /********************************************************************************/
 
 synchronized public void fileWrite(CashewClock clk,int fd,String path,byte [] buf,int off,int len,boolean app)
@@ -125,32 +125,32 @@ synchronized public void fileWrite(CashewClock clk,int fd,String path,byte [] bu
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Input methods                                                           */
-/*                                                                              */
+/*										*/
+/*	Input methods								*/
+/*										*/
 /********************************************************************************/
 
 synchronized public long fileRead(CashewClock clk,int fd,byte [] buf,int off,long len)
-        throws IOException
+	throws IOException
 {
    InputData id = input_files.get(fd);
    if (id == null) throw new IOException("No such file");
-   
+
    if (buf == null) {
       return id.skip(len);
     }
-   
+
    return id.read(buf,off,(int) len);
 }
 
 
 
 synchronized public long fileAvailable(CashewClock clk,int fd)
-        throws IOException
+	throws IOException
 {
    InputData id = input_files.get(fd);
    if (id == null) throw new IOException("No such file");
-   
+
    return id.available();
 }
 
@@ -160,29 +160,29 @@ synchronized public void checkInputFile(CashewContext ctx,CashewClock cc,CashewV
       boolean prior) throws IOException
 {
    InputData id = input_files.get(fd);
-   
+
    if (id == null && path.equals("*STDIN*")) {
       id = new StandardInput();
       input_files.put(fd,id);
     }
-   
+
    if (id == null) {
       long pos = 0;
-      
+
       if (prior) {
-         String name = ctx .findNameForValue(cv);
-         if (name != null) {
-            String expr = "edu.brown.cs.seede.poppy.PoppyValue.getFileData(" + name  + ")";
-            CashewValue rv = ctx.evaluate(expr);
-            if (rv != null && rv.getDataType() == STRING_TYPE) {
-               String finfo = rv.getString(cc);
-               if (finfo.equals("*")) {
-                  throw new IOException("File not open");
-                }
-               int idx = finfo.indexOf("@");
-               pos = Long.parseLong(finfo.substring(idx+1));
-             }
-          }
+	 String name = ctx .findNameForValue(cv);
+	 if (name != null) {
+	    String expr = "edu.brown.cs.seede.poppy.PoppyValue.getFileData(" + name  + ")";
+	    CashewValue rv = ctx.evaluate(expr);
+	    if (rv != null && rv.getDataType() == STRING_TYPE) {
+	       String finfo = rv.getString(cc);
+	       if (finfo.equals("*")) {
+		  throw new IOException("File not open");
+		}
+	       int idx = finfo.indexOf("@");
+	       pos = Long.parseLong(finfo.substring(idx+1));
+	     }
+	  }
        }
       id = new InputData(path,pos);
       input_files.put(fd,id);
@@ -203,7 +203,7 @@ synchronized public void closeFile(int fd) throws IOException
 
 /********************************************************************************/
 /*										*/
-/*	Model output methods				        		*/
+/*	Model output methods							*/
 /*										*/
 /********************************************************************************/
 
@@ -219,9 +219,9 @@ public void outputXml(IvyXmlWriter xw)
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      File methods                                                            */
-/*                                                                              */
+/*										*/
+/*	File methods								*/
+/*										*/
 /********************************************************************************/
 
 public boolean canExecute(File f)
@@ -328,7 +328,7 @@ public boolean mkdirs(File f)
 {
    if (exists(f)) return false;
    if (!testMkdirs(f.getParentFile())) return false;
-   return mkdir(f);   
+   return mkdir(f);
 }
 
 
@@ -382,13 +382,13 @@ private int getPermission(File f)
 {
    Integer p = file_permissions.get(f);
    if (p != null) return p;
-   
+
    int perm = 0;
    if (f.canRead()) perm |= READ_PERM;
    if (f.canWrite()) perm |= WRITE_PERM;
    if (f.canExecute()) perm |= EXEC_PERM;
    if (f.isDirectory()) perm |= DIRECTORY_PERM;
-   
+
    return perm;
 }
 
@@ -474,9 +474,9 @@ private static class WriteData {
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Input file modeling                                                     */
-/*                                                                              */
+/*										*/
+/*	Input file modeling							*/
+/*										*/
 /********************************************************************************/
 
 private static class InputData {
@@ -484,59 +484,59 @@ private static class InputData {
    private String file_path;
    private long start_pos;
    private FileInputStream input_stream;
-   
+
    InputData(String path,long pos) {
       file_path = path;
       start_pos = pos;
       input_stream = null;
     }
-   
+
    void ensureOpen(CashewContext ctx) throws IOException {
       if (input_stream != null) return;
       input_stream = new FileInputStream(file_path);
       if (start_pos != 0) input_stream.skip(start_pos);
     }
-   
+
    void reset() {
       try {
-         if (input_stream != null) {
-            input_stream.close();
-          }
+	 if (input_stream != null) {
+	    input_stream.close();
+	  }
        }
       catch (IOException e) { }
       input_stream = null;
     }
-   
+
    long skip(long len) throws IOException {
       return input_stream.skip(len);
     }
-   
+
    int read(byte [] buf,int off,int len) throws IOException {
       return input_stream.read(buf,off,len);
     }
-   
+
    long available() throws IOException {
       return input_stream.available();
     }
-   
-   String getFileName()                 { return file_path; }
-   
-}       // end of inner class InputData
+
+   String getFileName() 		{ return file_path; }
+
+}	// end of inner class InputData
+
+
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Handler for standard input                                              */
-/*                                                                              */        /*            We need to determine how this should work from user's pov         */        
-/*                                                                              */
+/*										*/
+/*	Handler for standard input						*/
+/*										*/
 /********************************************************************************/
-
 
 private static class StandardInput extends InputData {
-   
+
    private List<byte []> input_strings;
-   private int          string_index;
-   private int          string_offset;
+   private int		string_index;
+   private int		string_offset;
    private CashewContext using_context;
 
    StandardInput() {
@@ -546,57 +546,57 @@ private static class StandardInput extends InputData {
       string_offset = 0;
       using_context = null;
     }
-   
+
    @Override void ensureOpen(CashewContext ctx) {
       if (using_context == null) using_context = ctx;
     }
-   
+
    @Override void reset() {
       string_index = 0;
       string_offset = 0;
       using_context = null;
     }
-   
+
    @Override long skip(long len) {
       return 0L;
     }
-   
+
    @Override int read(byte [] buf,int off,int len) throws IOException {
       byte [] cur;
       for ( ; ; ) {
-         if (string_index == input_strings.size()) {
-            String next = using_context.getNextInputLine(getFileName());
-            if (next == null) return 0;
-            input_strings.add(next.getBytes());
-          }
-         else if (string_index > input_strings.size()) return 0;
-         cur = input_strings.get(string_index);
-         if (cur.length == 0) return 0;                 // handle EOF
-         if (string_offset >= cur.length) {
-            ++string_index;
-            string_offset = 0;
-          }
-         else break;
+	 if (string_index == input_strings.size()) {
+	    String next = using_context.getNextInputLine(getFileName());
+	    if (next == null) return 0;
+	    input_strings.add(next.getBytes());
+	  }
+	 else if (string_index > input_strings.size()) return 0;
+	 cur = input_strings.get(string_index);
+	 if (cur.length == 0) return 0; 		// handle EOF
+	 if (string_offset >= cur.length) {
+	    ++string_index;
+	    string_offset = 0;
+	  }
+	 else break;
        }
       int rlen = Math.min(len,buf.length-string_offset);
       System.arraycopy(cur,string_offset,buf,off,rlen);
       string_offset += rlen;
       if (string_offset >= cur.length) {
-         ++string_index;
-         string_offset = 0;
+	 ++string_index;
+	 string_offset = 0;
        }
       return rlen;
     }
-   
+
    @Override long available() throws IOException {
       if (string_index < input_strings.size()) {
-         byte [] cur = input_strings.get(string_index);
-         return cur.length - string_offset;
+	 byte [] cur = input_strings.get(string_index);
+	 return cur.length - string_offset;
        }
       return 0;
     }
-   
-}       // end of inner class StandardInput
+
+}	// end of inner class StandardInput
 
 
 }	// end of class CashewInputOutputModel

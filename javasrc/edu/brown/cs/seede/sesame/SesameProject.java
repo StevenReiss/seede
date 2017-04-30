@@ -24,7 +24,6 @@
 
 package edu.brown.cs.seede.sesame;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -45,7 +44,6 @@ import edu.brown.cs.ivy.jcomp.JcompSemantics;
 import edu.brown.cs.ivy.jcomp.JcompSource;
 import edu.brown.cs.ivy.jcomp.JcompTyper;
 import edu.brown.cs.ivy.xml.IvyXml;
-import edu.brown.cs.ivy.xml.IvyXmlWriter;
 import edu.brown.cs.seede.acorn.AcornLog;
 import edu.brown.cs.seede.cumin.CuminConstants.CuminProject;
 
@@ -65,8 +63,7 @@ private Set<SesameFile> active_files;
 private Set<SesameFile> changed_files;
 private JcompProject	base_project;
 private JcodeFactory	binary_control;
-private SesameMain	sesame_control;
-private ReadWriteLock   project_lock;
+private ReadWriteLock	project_lock;
 
 
 
@@ -79,15 +76,14 @@ private ReadWriteLock   project_lock;
 SesameProject(SesameMain sm,String name)
 {
    project_name = name;
-   sesame_control = sm;
    base_project = null;
    class_paths = new ArrayList<String>();
 
    active_files = new HashSet<SesameFile>();
    changed_files = new HashSet<SesameFile>();
-   
+
    project_lock = new ReentrantReadWriteLock();
- 
+
    boolean havepoppy = false;
 
    // compute class path for project
@@ -120,28 +116,7 @@ SesameProject(SesameMain sm,String name)
        }
     }
    if (!havepoppy) {
-      File poppylib = new File("/pro/seede/lib");
-      if (!poppylib.exists()) poppylib = new File("/research/people/spr/seede/lib");
-      File poppyjar = new File(poppylib,"poppy.jar");
-
-      CommandArgs args2 = new CommandArgs("LOCAL",true);
-      IvyXmlWriter xwp = new IvyXmlWriter();
-      xwp.begin("PROJECT");
-      xwp.field("NAME",getName());
-      xwp.begin("PATH");
-      xwp.field("TYPE","LIBRARY");
-      xwp.field("NEW",true);
-      xwp.field("BINARY",poppyjar.getPath());
-      xwp.field("EXPORTED",false);
-      xwp.field("OPTIONAL",true);
-      xwp.end("PATH");
-      xwp.end("PROJECT");
-      String cnts = xwp.toString();
-      xwp.close();
-      Element rslt = sesame_control.getXmlReply("EDITPROJECT",this,args2,cnts,0);
-      if (!IvyXml.isElement(rslt,"RESULT")) {
-	 AcornLog.logE("Problem adding poppy to path");
-       }
+      AcornLog.logE("POPPY.JAR missing from class path");
     }
 }
 
@@ -185,9 +160,9 @@ Collection<SesameFile> getActiveFiles()
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Locking methods                                                         */
-/*                                                                              */
+/*										*/
+/*	Locking methods 							*/
+/*										*/
 /********************************************************************************/
 
 void executionLock()
@@ -206,9 +181,9 @@ void executionUnlock()
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Compilation related methods                                             */
-/*                                                                              */
+/*										*/
+/*	Compilation related methods						*/
+/*										*/
 /********************************************************************************/
 
 boolean noteFileChanged(SesameFile sf,boolean force)
@@ -216,14 +191,14 @@ boolean noteFileChanged(SesameFile sf,boolean force)
    project_lock.writeLock().lock();
    try {
       if (force || active_files.contains(sf)) {
-         changed_files.add(sf);
-         return true;
+	 changed_files.add(sf);
+	 return true;
        }
     }
    finally {
       project_lock.writeLock().unlock();
     }
-   
+
    return false;
 }
 
@@ -233,16 +208,16 @@ void compileProject()
    if (!changed_files.isEmpty()) {
       project_lock.writeLock().lock();
       try {
-         for (SesameFile sf : changed_files) {
-            sf.resetSemantics(this);
-          }
-         clearProject();
-         getJcompProject();
-         getTyper();
-         changed_files.clear();
+	 for (SesameFile sf : changed_files) {
+	    sf.resetSemantics(this);
+	  }
+	 clearProject();
+	 getJcompProject();
+	 getTyper();
+	 changed_files.clear();
        }
       finally {
-         project_lock.writeLock().unlock();
+	 project_lock.writeLock().unlock();
        }
     }
 }
@@ -256,7 +231,7 @@ synchronized void clearProject()
       jc.freeProject(base_project);
       base_project = null;
       for (SesameFile sf : active_files) {
-         sf.resetProject(this);
+	 sf.resetProject(this);
        }
     }
 }
@@ -264,9 +239,9 @@ synchronized void clearProject()
 
 @Override public synchronized JcompProject getJcompProject()
 {
-   
+
    if (base_project != null) return base_project;
-   
+
    JcompControl jc = SesameMain.getJcompBase();
    Collection<JcompSource> srcs = new ArrayList<JcompSource>(active_files);
    base_project = jc.getProject(class_paths,srcs,false);

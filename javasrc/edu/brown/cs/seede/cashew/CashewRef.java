@@ -109,7 +109,7 @@ CashewRef(CashewDeferredValue deferred)
 @Override public String getString(CashewClock cc,int lvl,boolean dbg)
 {
    if (dbg && deferred_value != null) return "<???>";
-   
+
    CashewValue cv = getValueAt(cc);
    if (cv == null) return null;
    return cv.getString(cc,lvl,dbg);
@@ -130,7 +130,7 @@ CashewRef(CashewDeferredValue deferred)
 
    long tv = 0;
    if (cc != null) tv = cc.getTimeValue();
-   
+
    if (last_update < 0 || (tv == 0 && last_update == 0)) {
       // first time -- just record value
       last_update = tv;
@@ -169,7 +169,7 @@ CashewRef(CashewDeferredValue deferred)
       last_update = 0;
       last_value = null;
     }
-   
+
    if (last_value != null) last_value.resetValues(done);
 }
 
@@ -179,7 +179,7 @@ CashewRef(CashewDeferredValue deferred)
    if (last_value != null) last_value.resetType(typer,done);
    if (value_map != null) {
       for (CashewValue cv : value_map.values()) {
-         cv.resetType(typer,done);
+	 cv.resetType(typer,done);
        }
     }
 }
@@ -236,6 +236,12 @@ CashewRef(CashewDeferredValue deferred)
    CashewValue cv = getValueAt(cc);
    if (cv == null) return true;
    return cv.isNull(cc);
+}
+
+
+@Override public boolean isEmpty() 
+{
+   return value_map == null && last_value == null;
 }
 
 
@@ -318,16 +324,33 @@ private CashewValue getValueAt(CashewClock cc)
 /*										*/
 /********************************************************************************/
 
+@Override public boolean checkChanged(CashewOutputContext outctx)
+{
+   if (value_map == null && last_value == null) return false;
+   if (value_map == null && last_value != null) {
+      boolean fg = last_value.checkChanged(outctx);
+      if (last_update == 0) return fg;
+      return true;
+    }
+   for (CashewValue cv : value_map.values()) {
+      cv.checkChanged(outctx);
+    }
+   return true;
+}
+
+
+
+
 @Override public void outputXml(CashewOutputContext outctx)
 {
    IvyXmlWriter xw = outctx.getXmlWriter();
    if (value_map == null) {
       if (last_value != null) {
-         xw.begin("VALUE");
-         if (can_initialize) xw.field("CANINIT",true);       
-         xw.field("TYPE",last_value.getDataType());
-         last_value.outputLocalXml(xw,outctx);
-         xw.end("VALUE");
+	 xw.begin("VALUE");
+	 if (can_initialize) xw.field("CANINIT",true);
+	 xw.field("TYPE",last_value.getDataType());
+	 last_value.outputLocalXml(xw,outctx);
+	 xw.end("VALUE");
        }
     }
    else {
@@ -335,8 +358,8 @@ private CashewValue getValueAt(CashewClock cc)
 	 long when = ent.getKey();
 	 xw.begin("VALUE");
 	 xw.field("TIME",when);
-         if (can_initialize) xw.field("CANINIT",true);
-         xw.field("TYPE",ent.getValue().getDataType());
+	 if (can_initialize) xw.field("CANINIT",true);
+	 xw.field("TYPE",ent.getValue().getDataType());
 	 if (ent.getValue() != null) {
 	    ent.getValue().outputLocalXml(xw,outctx);
 	  }

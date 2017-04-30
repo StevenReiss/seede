@@ -149,6 +149,8 @@ public TestSeede()
 @BeforeClass public static void startSeede()
 {
    System.err.println("Setting Up Sesame");
+   AcornLog.setTracing(true);
+   AcornLog.setLogLevel(AcornLog.LogLevel.DEBUG);
 
    SeedeThread st = new SeedeThread();
    for (int i = 0; i < 100; ++i) {

@@ -296,7 +296,7 @@ public static CashewValue classValue(JcompType vtyp)
 public static CashewValue fileValue(String path)
 {
    CashewValueFile cv = new CashewValueFile(path);
-   
+
    return cv;
 }
 
@@ -508,6 +508,8 @@ public CashewValue setValueAt(CashewClock cc,CashewValue cv)
 
 public boolean isNull(CashewClock cc)		{ return false; }
 
+public boolean isEmpty()                        { return false; }
+
 
 public Boolean isCategory2(CashewClock cc)	{ return false; }
 
@@ -536,7 +538,7 @@ public int getHashCode(CashewClock cc,CashewContext ctx)
 CashewValue lookupVariableName(String name)
 {
    if (name == null || name.length() == 0) return this;
-   
+
    CashewValue val = this;
    int idx = name.indexOf("?");
    String rest = null;
@@ -552,7 +554,7 @@ CashewValue lookupVariableName(String name)
       val = val.getFieldValue(null,name);
     }
    if (rest != null) val = val.lookupVariableName(rest);
-   
+
    return val;
 }
 
@@ -560,12 +562,12 @@ CashewValue lookupVariableName(String name)
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Reset methods                                                           */
-/*                                                                              */
+/*										*/
+/*	Reset methods								*/
+/*										*/
 /********************************************************************************/
 
-public void resetValues(Set<CashewValue> done)   
+public void resetValues(Set<CashewValue> done)	
 {
    if (done.contains(this)) return;
    done.add(this);
@@ -573,7 +575,7 @@ public void resetValues(Set<CashewValue> done)
 }
 
 
-protected void localResetValue(Set<CashewValue> done)           { }
+protected void localResetValue(Set<CashewValue> done)		{ }
 
 
 
@@ -581,10 +583,10 @@ public void resetType(JcompTyper typer,Set<CashewValue> done)
 {
    if (done.contains(this)) return;
    done.add(this);
-   if (decl_type != null && !decl_type.isKnownType() && !decl_type.isPrimitiveType()) {
-      JcompType ntyp = typer.findType(decl_type.getName());
-      if (ntyp != decl_type && ntyp != null) {
-         decl_type = ntyp;
+   if (decl_type != null) {
+      JcompType ntyp = decl_type.resetType(typer);
+      if (ntyp != decl_type) {
+	 decl_type = ntyp;
        }
     }
    localResetType(typer,done);
@@ -592,7 +594,7 @@ public void resetType(JcompTyper typer,Set<CashewValue> done)
 
 
 
-protected void localResetType(JcompTyper typer,Set<CashewValue> done)            { }
+protected void localResetType(JcompTyper typer,Set<CashewValue> done)		 { }
 
 
 
@@ -602,6 +604,13 @@ protected void localResetType(JcompTyper typer,Set<CashewValue> done)           
 /*	Output methods								*/
 /*										*/
 /********************************************************************************/
+
+public boolean checkChanged(CashewOutputContext outctx)
+{ 
+   return false;
+}
+
+
 
 public void outputXml(CashewOutputContext ctx)
 {

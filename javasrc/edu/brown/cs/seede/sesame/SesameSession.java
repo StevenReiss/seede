@@ -87,7 +87,7 @@ private SesameProject	for_project;
 private Map<String,SesameLocation> location_map;
 private Map<CuminRunner,SesameLocation> runner_location;
 private Set<SesameExecRunner> exec_runners;
-private CashewInputOutputModel  cashew_iomodel;
+private CashewInputOutputModel	cashew_iomodel;
 
 
 
@@ -136,7 +136,7 @@ public SesameProject getProject()		{ return for_project; }
 public MethodDeclaration getCallMethod(SesameLocation loc)
 {
    if (!loc.isActive()) return null;
-   
+
    SesameFile sf = loc.getFile();
    ASTNode root = sf.getResolvedAst(for_project);
    ASTNode mnode = JcompAst.findNodeAtOffset(root,loc.getStartPositiion().getOffset());
@@ -151,11 +151,11 @@ public MethodDeclaration getCallMethod(SesameLocation loc)
 public List<SesameLocation> getActiveLocations()
 {
    List<SesameLocation> rslt = new ArrayList<SesameLocation>();
-   
+
    for (SesameLocation loc : location_map.values()) {
       if (loc.isActive()) rslt.add(loc);
     }
-   
+
    return rslt;
 }
 
@@ -183,27 +183,29 @@ void noteFileChanged(SesameFile sf)
 
 
 
-void noteContinue(String launch,String thread)                  { }
+void noteContinue(String launch,String thread)			{ }
 
 
 
-void setInitialValue(String what,Element value) throws SesameException     { }
+void setInitialValue(String what,Element value) throws SesameException	   { }
 
 String getValueName(CashewValue cv,String thread)
 {
-   return null; 
+   return null;
 }
 
+
+
 /********************************************************************************/
-/*                                                                              */
-/*      Request methods                                                         */
-/*                                                                              */
+/*										*/
+/*	Request methods 							*/
+/*										*/
 /********************************************************************************/
 
-void requestInitialValue(String what) 
+void requestInitialValue(String what)
 {
    CommandArgs args = new CommandArgs("WHAT",what,"SID",session_id);
-  
+
    SesameMonitor mon = sesame_control.getMonitor();
    MintDefaultReply rply = new MintDefaultReply();
    mon.sendCommand("INITIALVALUE",args,null,rply);
@@ -215,6 +217,7 @@ void requestInitialValue(String what)
     }
    catch (SesameException _ex) { }
 }
+
 
 
 String requestInput(String file)
@@ -241,10 +244,10 @@ CuminRunner createRunner(SesameLocation loc,SesameContext gblctx)
    MethodDeclaration mthd = getCallMethod(loc);
    List<CashewValue> args = getCallArgs(loc);
    SesameThreadContext tctx = new SesameThreadContext(loc.getThread(),
-         loc.getThreadName(),this,gblctx);
+	 loc.getThreadName(),this,gblctx);
    CuminRunner cr = CuminRunner.createRunner(getProject(),tctx,mthd,args);
    runner_location.put(cr,loc);
-   
+
    return cr;
 }
 
@@ -253,7 +256,7 @@ MethodDeclaration getRunnerMethod(CuminRunner cr)
 {
    SesameLocation loc = getLocation(cr);
    MethodDeclaration mthd = getCallMethod(loc);
-   
+
    return mthd;
 }
 
@@ -292,9 +295,9 @@ synchronized void startRunners()
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Handle project changes                                                  */
-/*                                                                              */
+/*										*/
+/*	Handle project changes							*/
+/*										*/
 /********************************************************************************/
 
 synchronized void resetRunners()
@@ -329,7 +332,7 @@ void addSwingComponent(String name)
 
 
 
-void resetCache()                               { }
+void resetCache()				{ }
 
 
 
@@ -371,9 +374,9 @@ void enableAccess(String type)		{ }
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      File management methods                                                 */
-/*                                                                              */
+/*										*/
+/*	File management methods 						*/
+/*										*/
 /********************************************************************************/
 
 CashewInputOutputModel getIOModel()

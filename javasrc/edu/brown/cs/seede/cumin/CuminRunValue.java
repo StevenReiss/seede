@@ -1,6 +1,6 @@
 /********************************************************************************/
 /*										*/
-/*		CuminRunError.java						*/
+/*		CuminRunStatus.java						*/
 /*										*/
 /*	description of class							*/
 /*										*/
@@ -26,7 +26,7 @@ package edu.brown.cs.seede.cumin;
 
 import edu.brown.cs.seede.cashew.CashewValue;
 
-public class CuminRunError extends Error
+public class CuminRunValue implements CuminRunStatus
 {
 
 
@@ -36,14 +36,11 @@ public class CuminRunError extends Error
 /*										*/
 /********************************************************************************/
 
-public enum Reason { ERROR, EXCEPTION, BREAKPOINT, TIMEOUT, COMPILER_ERROR,
-   STEP_END, BREAK, CONTINUE, RETURN, CALL, STOPPED, HALTED };
-
 private Reason		throw_reason;
 private CashewValue	associated_value;
 private CuminRunner	call_value;
+private String		associated_id;
 
-private final static long serialVersionUID = 1;
 
 
 
@@ -53,43 +50,36 @@ private final static long serialVersionUID = 1;
 /*										*/
 /********************************************************************************/
 
-CuminRunError(Reason r,String msg,Throwable cause,CashewValue v)
+CuminRunValue(Reason r,CashewValue v)
 {
-   super(msg,cause);
-
    throw_reason = r;
    associated_value = v;
    call_value = null;
-}
-
-CuminRunError(Reason r)
-{
-   this(r,r.toString(),null,null);
-}
-
-CuminRunError(Reason r,String label)
-{
-   this(r,label,null,null);
+   associated_id = r.toString();
 }
 
 
-public CuminRunError(Throwable t)
+CuminRunValue(Reason r)
 {
-   this(Reason.ERROR,t.getMessage(),t,null);
+   this(r,(CashewValue) null);
 }
 
 
-CuminRunError(Reason r,CashewValue v)
+CuminRunValue(CuminRunner r)
 {
-   this(r,r.toString(),null,v);
-}
-
-
-CuminRunError(CuminRunner r)
-{
-   this(Reason.CALL);
+   this(Reason.CALL,(CashewValue) null);
    call_value = r;
 }
+
+
+CuminRunValue(Reason r,String id)
+{
+   throw_reason = r;
+   associated_value = null;
+   associated_id = id;
+   call_value = null;
+}
+
 
 
 /********************************************************************************/
@@ -98,18 +88,117 @@ CuminRunError(CuminRunner r)
 /*										*/
 /********************************************************************************/
 
-public Reason getReason()		{ return throw_reason; }
+@Override public Reason getReason()		{ return throw_reason; }
 
-public CashewValue getValue()		{ return associated_value; }
+@Override public CashewValue getValue() { return associated_value; }
 
-public CuminRunner getCallRunner()	{ return call_value; }
+@Override public CuminRunner getCallRunner()	{ return call_value; }
 
+@Override public String getMessage()		{ return associated_id; }
 
-
-}	// end of class CuminRunError
-
-
+@Override public Throwable getCause()		{ return null; }
 
 
-/* end of CuminRunError.java */
+}	// end of class CuminRunStatus
+
+
+
+
+/* end of CuminRunStatus.java */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

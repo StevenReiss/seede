@@ -1,6 +1,4 @@
-<project name='seede.sesame' default='compile'>
-
-   <property file='../../../../../../build.properties' />
+<project name='seede.sesame' default='compile'> <property file='../../../../../../build.properties' />
    <property name='PRO' value='/pro' />
    <available file="${PRO}/ivy" type="dir" property="ivy.present" />
    <available file="${PRO}/bubbles" type="dir" property="bubbles.present" />

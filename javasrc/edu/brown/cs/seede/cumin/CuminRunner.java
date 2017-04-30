@@ -77,17 +77,19 @@ public CashewValue executeCall(String method,CashewValue ... args)
    CuminRunner cr = handleCall(execution_clock,cmethod,arglist,CallType.VIRTUAL);
    if (cr == null) return null;
 
+   CuminRunStatus sts = null;
    try {
-      cr.interpret(EvalType.RUN);
+      sts = cr.interpret(EvalType.RUN);
     }
-   catch (CuminRunError e) {
-      switch (e.getReason()) {
-	 case RETURN :
-	    return e.getValue();
-	 default :
-	    AcornLog.logE("Unexpected return value from internal call",e);
-	    break;
+   catch (CuminRunException e) {
+      if (e.getReason() != Reason.RETURN) {
+	 AcornLog.logE("Unexpected return value from internal call",e);
        }
+      sts = e;
+    }
+
+   if (sts != null && sts.getReason() == Reason.RETURN) {
+      return sts.getValue();
     }
 
    return null;
@@ -181,7 +183,7 @@ public CashewClock getClock()		{ return execution_clock; }
 CuminStack getStack()			{ return execution_stack; }
 
 public CashewContext getLookupContext() { return lookup_context; }
-public List<CashewValue> getCallArgs()  { return call_args; }
+public List<CashewValue> getCallArgs()	{ return call_args; }
 
 protected JcompType convertType(JcodeDataType cty)
 {
@@ -258,44 +260,49 @@ protected void reset()
 
 
 
-public void interpret(EvalType et) throws CuminRunError
+public CuminRunStatus interpret(EvalType et) throws CuminRunException
 {
-   CuminRunError ret = null;
+   CuminRunStatus ret = null;
 
    for ( ; ; ) {
       if (nested_call != null) {
+	 CuminRunStatus rsts = null;
 	 try {
-	    nested_call.interpret(et);
+	    rsts = nested_call.interpret(et);
 	  }
-	 catch (CuminRunError r) {
-	    if (r.getReason() == CuminRunError.Reason.RETURN ||
-		  r.getReason() == CuminRunError.Reason.EXCEPTION) {
-	       ret = r;
-	     }
-	    else {
-	       lookup_context.setEndTime(execution_clock);
-	       throw r;
-	     }
+	 catch (CuminRunException r) {
+	    rsts = r;
+	  }
+	 if (rsts.getReason() == Reason.RETURN ||
+	       rsts.getReason() == Reason.EXCEPTION) {
+	    ret = rsts;
+	  }
+	 else {
+	    lookup_context.setEndTime(execution_clock);
+	    return rsts;
 	  }
        }
 
+      CuminRunStatus nsts = null;
       try {
-	 interpretRun(ret);
-	 throw new CuminRunError(CuminRunError.Reason.RETURN);
+	 nsts = interpretRun(ret);
+	 if (nsts == null)
+	    return CuminRunStatus.Factory.createReturn();
        }
-      catch (CuminRunError r) {
-	 if (r.getReason() == CuminRunError.Reason.CALL) {
-	    nested_call = r.getCallRunner();
-	    continue;
-	  }
-	 lookup_context.setEndTime(execution_clock);
-	 throw r;
+      catch (CuminRunException r) {
+	 nsts = r;
        }
+      if (nsts.getReason() == Reason.CALL) {
+	 nested_call = nsts.getCallRunner();
+	 continue;
+       }
+      lookup_context.setEndTime(execution_clock);
+      return nsts;
     }
 }
 
 
-abstract protected void interpretRun(CuminRunError ret) throws CuminRunError;
+abstract protected CuminRunStatus interpretRun(CuminRunStatus ret) throws CuminRunException;
 
 
 protected void saveReturn(CashewValue cv)
@@ -304,11 +311,13 @@ protected void saveReturn(CashewValue cv)
 }
 
 
-protected void checkTimeout() throws CuminRunError
+protected CuminRunStatus checkTimeout() throws CuminRunException
 {
-   if (max_time <= 0) return;
+   if (max_time <= 0) return null;
    if (execution_clock.getTimeValue() > max_time)
-      throw new CuminRunError(CuminRunError.Reason.TIMEOUT);
+      return CuminRunStatus.Factory.createTimeout();
+
+   return null;
 }
 
 
@@ -321,7 +330,7 @@ protected void checkTimeout() throws CuminRunError
 /********************************************************************************/
 
 protected CuminRunner handleCall(CashewClock cc,JcompSymbol method,List<CashewValue> args,
-      CallType ctyp)
+      CallType ctyp) throws CuminRunException
 {
    CashewValue thisarg = null;
    if (args != null && args.size() > 0) {
@@ -335,7 +344,7 @@ protected CuminRunner handleCall(CashewClock cc,JcompSymbol method,List<CashewVa
       for (CashewValue cv : args) {
 	 AcornLog.logE("ARG: " + cv.getDebugString(cc));
        }
-      throw new CuminRunError(CuminRunError.Reason.ERROR,"Missing method " + method);
+      throw CuminRunStatus.Factory.createError("Missing method " + method);
     }
 
    JcompType type = cmethod.getClassType();
@@ -376,8 +385,8 @@ CuminRunner handleCall(CashewClock cc,JcodeMethod method,List<CashewValue> args,
    if (type == null) {
       int idx = cmcname.lastIndexOf("$");
       if (idx > 0) {
-         cmcname = cmcname.replace("$",".");
-         type = getTyper().findType(cmcname);
+	 cmcname = cmcname.replace("$",".");
+	 type = getTyper().findType(cmcname);
        }
     }
    if (type != null && !type.isKnownType()) {
@@ -456,10 +465,10 @@ private JcodeMethod findTargetMethod(CashewClock cc,JcodeMethod method,
    if (method.isStatic() || ctyp == CallType.STATIC || ctyp == CallType.SPECIAL) {
       return method;
     }
-   
+
    String bnm = base.getName();
    JcodeClass cls = null;
-   
+
    for ( ; ; ) {
       cls = getCodeFactory().findClass(bnm);
       if (cls != null) break;
@@ -499,17 +508,17 @@ private MethodDeclaration findAstForMethod(String nm,JcompType mtyp)
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Reset values after run                                                  */
-/*                                                                              */
+/*										*/
+/*	Reset values after run							*/
+/*										*/
 /********************************************************************************/
 
 public void resetValues()
 {
-   Set<CashewValue> done = new HashSet<CashewValue>();  
-   
+   Set<CashewValue> done = new HashSet<CashewValue>();
+
    for (CashewContext ctx = global_context; ctx != null; ctx = ctx.getParentContext()) {
-      ctx.resetValues(done); 
+      ctx.resetValues(done);
     }
    if (lookup_context != null) lookup_context.resetValues(done);
    for (CashewValue cv : call_args) {

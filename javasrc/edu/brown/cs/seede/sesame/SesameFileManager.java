@@ -117,16 +117,18 @@ void closeFile(File f)
 /*										*/
 /********************************************************************************/
 
-void handleEdit(File f,int len,int offset,boolean complete,String txt)
+SesameFile handleEdit(File f,int len,int offset,boolean complete,String txt)
 {
    SesameFile sf = known_files.get(f);
-   if (sf == null) return;
+   if (sf == null) return null;
    if (complete && txt == null) {
       closeFile(f);
-      return;
+      return null;
     }
+   
    sf.editFile(len,offset,txt,complete);
-   sesame_control.noteFileChanged(sf);
+   
+   return sf;
 }
 
 

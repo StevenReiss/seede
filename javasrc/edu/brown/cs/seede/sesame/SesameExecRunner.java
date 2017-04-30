@@ -41,7 +41,8 @@ import edu.brown.cs.seede.cashew.CashewContext;
 import edu.brown.cs.seede.cashew.CashewOutputContext;
 import edu.brown.cs.seede.cashew.CashewValue;
 import edu.brown.cs.seede.cumin.CuminConstants;
-import edu.brown.cs.seede.cumin.CuminRunError;
+import edu.brown.cs.seede.cumin.CuminRunException;
+import edu.brown.cs.seede.cumin.CuminRunStatus;
 import edu.brown.cs.seede.cumin.CuminRunner;
 
 class SesameExecRunner implements SesameConstants
@@ -57,10 +58,10 @@ class SesameExecRunner implements SesameConstants
 private SesameMonitor	for_monitor;
 private SesameSession	for_session;
 private List<CuminRunner> cumin_runners;
-private List<String>    graphics_outputs;
+private List<String>	graphics_outputs;
 private String		reply_id;
 private Map<CuminRunner,RunnerThread> runner_threads;
-private Map<CuminRunner,CuminRunError> run_status;
+private Map<CuminRunner,CuminRunStatus> run_status;
 private MasterThread	master_thread;
 private boolean 	is_continuous;
 private boolean 	run_again;
@@ -86,7 +87,7 @@ SesameExecRunner(SesameSession ss,String rid,SesameContext ctx,
    reply_id = rid;
    cumin_runners = new ArrayList<CuminRunner>();
    runner_threads = new HashMap<CuminRunner,RunnerThread>();
-   run_status = new HashMap<CuminRunner,CuminRunError>();
+   run_status = new HashMap<>();
    is_continuous = contin;
    swing_components = new ArrayList<>();
    max_time = maxtime;
@@ -186,6 +187,8 @@ private synchronized void stopCurrentRun()
 {
    if (master_thread == null) return;
 
+   AcornLog.logI("Stop current run " + runner_threads.size());
+
    for (RunnerThread rt : runner_threads.values()) {
       rt.interrupt();
     }
@@ -230,11 +233,11 @@ private synchronized void startRunner()
 /*										*/
 /********************************************************************************/
 
-private void report()
+private void report(long time)
 {
    boolean empty = false;
-   for (CuminRunError sts : run_status.values()) {
-      if (sts == null || sts.getReason() == CuminRunError.Reason.STOPPED) empty = true;
+   for (CuminRunStatus sts : run_status.values()) {
+      if (sts == null || sts.getReason() == CuminConstants.Reason.STOPPED) empty = true;
     }
 
    if (reply_id != null) {
@@ -245,19 +248,20 @@ private void report()
       else {
 	 IvyXmlWriter xw = new IvyXmlWriter();
 	 xw.begin("CONTENTS");
-         
-	 for (Map.Entry<CuminRunner,CuminRunError> ent : run_status.entrySet()) {
+	 xw.field("EXECTIME",time);
+	
+	 for (Map.Entry<CuminRunner,CuminRunStatus> ent : run_status.entrySet()) {
 	    CuminRunner cr = ent.getKey();
-	    CuminRunError sts = ent.getValue();
+	    CuminRunStatus sts = ent.getValue();
 	    outputResult(xw,cr,sts);
 	  }
-         
+	
 	 for_session.getIOModel().outputXml(xw);
-         
-         for (String s : graphics_outputs) {
-            xw.xmlText(s);
-          }
-         
+	
+	 for (String s : graphics_outputs) {
+	    xw.xmlText(s);
+	  }
+	
 	 xw.end("CONTENTS");
 	 cnts = xw.toString();
 	 xw.close();
@@ -271,18 +275,23 @@ private void report()
    for (CuminRunner cr : run_status.keySet()) {
       cr.resetValues();
     }
-   
+
    for_session.getIOModel().reset();
-   
+
    run_status.clear();
 }
 
 
 
-private void outputResult(IvyXmlWriter xw,CuminRunner cr,CuminRunError sts)
+private void outputResult(IvyXmlWriter xw,CuminRunner cr,CuminRunStatus sts)
 {
    CashewOutputContext outctx = new CashewOutputContext(xw);
-
+   CashewContext ctx = cr.getLookupContext();
+   CashewValue rval = sts.getValue();
+   
+   if (rval != null) rval.checkChanged(outctx);
+   ctx.checkChanged(outctx);
+   
    xw.begin("RUNNER");
    SesameLocation loc = for_session.getLocation(cr);
    if (loc != null) {
@@ -302,11 +311,11 @@ private void outputResult(IvyXmlWriter xw,CuminRunner cr,CuminRunError sts)
       xw.textElement("STACK",sw.toString());
       pw.close();
     }
-   if (sts.getValue() != null) {
-      sts.getValue().outputXml(outctx);
+   if (rval != null) {
+      rval.outputXml(outctx);
     }
    xw.end("RETURN");
-   CashewContext ctx = cr.getLookupContext();
+   
    ctx.outputXml(outctx);
    xw.end("RUNNER");
 }
@@ -320,7 +329,7 @@ private void outputResult(IvyXmlWriter xw,CuminRunner cr,CuminRunError sts)
 /*										*/
 /********************************************************************************/
 
-private synchronized void setStatus(CuminRunner cr,CuminRunError sts)
+private synchronized void setStatus(CuminRunner cr,CuminRunStatus sts)
 {
       run_status.put(cr,sts);
 }
@@ -340,53 +349,56 @@ private class MasterThread extends Thread {
          for_session.getIOModel().clear();
          List<RunnerThread> waits = new ArrayList<RunnerThread>();
          SesameProject proj = for_session.getProject();
-         
-         for_session.resetCache();
-   
+        
          if (i != 0 && reply_id != null) {
             CommandArgs args = new CommandArgs();
             if (reply_id != null) args.put("ID",reply_id);
             for_monitor.sendCommand("RESET",args,null,null);
           }
-         
+        
          graphics_outputs.clear();
-         
+        
          proj.compileProject();
+        
+         for_session.resetCache();
+        
          proj.executionLock();
+         AcornLog.logD("Start running");
+         long starttime = System.currentTimeMillis();
          try {
             synchronized (this) {
                for (CuminRunner cr : cumin_runners) {
-                  if (i != 0) {
-                     MethodDeclaration mthd = for_session.getRunnerMethod(cr);
-                     if (mthd == null) continue;
-                     cr.reset(mthd);
-                     cr.setMaxTime(max_time);
-                   }
-                  RunnerThread rt = new RunnerThread(SesameExecRunner.this,cr);
-                  runner_threads.put(cr,rt);
-                  waits.add(rt);
-                  rt.start();
-                }
+        	  if (i != 0) {
+        	     MethodDeclaration mthd = for_session.getRunnerMethod(cr);
+        	     if (mthd == null) continue;
+        	     cr.reset(mthd);
+        	     cr.setMaxTime(max_time);
+        	   }
+        	  RunnerThread rt = new RunnerThread(SesameExecRunner.this,cr);
+        	  runner_threads.put(cr,rt);
+        	  waits.add(rt);
+        	  rt.start();
+        	}
              }
-            
+        
             // wait for all to exit
             while (!waits.isEmpty()) {
                for (Iterator<RunnerThread> it = waits.iterator(); it.hasNext(); ) {
-                  RunnerThread rt = it.next();
-                  try {
-                     rt.join();
-                     synchronized (this) {
-                        runner_threads.remove(rt.getRunner());
-                        if (runner_threads.isEmpty()) {
-                           notifyAll();
-                         }
-                      }
-                     it.remove();
-                   }
-                  catch (InterruptedException e) { }
-                }
+        	  RunnerThread rt = it.next();
+        	  try {
+        	     rt.join();
+        	     synchronized (this) {
+        		runner_threads.remove(rt.getRunner());
+        		if (runner_threads.isEmpty()) {
+        		   notifyAll();
+        		 }
+        	      }
+        	     it.remove();
+        	   }
+        	  catch (InterruptedException e) { }
+        	}
              }
-            
+        
             for (CuminRunner cr : cumin_runners) {
                addSwingGraphics(cr);
              }
@@ -395,16 +407,18 @@ private class MasterThread extends Thread {
          finally {
             proj.executionUnlock();
           }
-         
-         report();
+        
+         long time = System.currentTimeMillis() - starttime;
+         AcornLog.logI("Execution time = " + time);
+         report(time);
          synchronized (this) {
             if (!is_continuous) break;
             while (!run_again) {
                if (isInterrupted()) break;
                if (!is_continuous) break;
                try {
-                  wait(5000);
-                }
+        	  wait(5000);
+        	}
                catch (InterruptedException e) { }
              }
             run_again = false;
@@ -418,41 +432,41 @@ private class MasterThread extends Thread {
    private void runSwingThreads() {
       if (swing_components == null || swing_components.isEmpty()) return;
       for (String cvname : swing_components) {
-         for (CuminRunner cr : cumin_runners) {
-            String cvn = cr.findReferencedVariableName(cvname);
-            CashewValue cv = cr.findReferencedVariableValue(cvname);
-            if (cvn != null) {
-               CashewValue rv = null;
-               cr.ensureLoaded("edu.brown.cs.seede.poppy.PoppyGraphics");
-               String expr =  "edu.brown.cs.seede.poppy.PoppyGraphics.computeGraphics(";
-               expr += cvn + "," + "\"" + cvname + "\"" + ")";
-               CashewValue cv1 = cr.getLookupContext().evaluate(expr);
-               rv = cr.executeCall("edu.brown.cs.seede.poppy.PoppyGraphics.computeDrawingG",cv,cv1);
-               if (rv != null) {
-                  String rpt = rv.getString(cr.getClock());
-                  AcornLog.logI("SWING REPORT: " + rpt);
-                  if (rpt != null) graphics_outputs.add(rpt);
-                }
-               break;
-             }
-          }
+	 for (CuminRunner cr : cumin_runners) {
+	    String cvn = cr.findReferencedVariableName(cvname);
+	    CashewValue cv = cr.findReferencedVariableValue(cvname);
+	    if (cvn != null) {
+	       CashewValue rv = null;
+	       cr.ensureLoaded("edu.brown.cs.seede.poppy.PoppyGraphics");
+	       String expr =  "edu.brown.cs.seede.poppy.PoppyGraphics.computeGraphics(";
+	       expr += cvn + "," + "\"" + cvname + "\"" + ")";
+	       CashewValue cv1 = cr.getLookupContext().evaluate(expr);
+	       rv = cr.executeCall("edu.brown.cs.seede.poppy.PoppyGraphics.computeDrawingG",cv,cv1);
+	       if (rv != null) {
+		  String rpt = rv.getString(cr.getClock());
+		  AcornLog.logI("SWING REPORT: " + rpt);
+		  if (rpt != null) graphics_outputs.add(rpt);
+		}
+	       break;
+	     }
+	  }
        }
     }
-      
-   
+
+
    private void addSwingGraphics(CuminRunner cr)
    {
       for (CashewValue cv : cr.getCallArgs()) {
-         if (cv.getDataType(cr.getClock()).getName().equals("edu.brown.cs.seede.poppy.PoppyGraphics")) {
-            CashewValue rv = cr.executeCall("edu.brown.cs.seede.poppy.PoppyGraphics.finalReport",cv);
-            if (rv != null) {
-               String rslt = rv.getString(cr.getClock());
-               if (rslt != null) graphics_outputs.add(rslt);
-             }
-          }
+	 if (cv.getDataType(cr.getClock()).getName().equals("edu.brown.cs.seede.poppy.PoppyGraphics")) {
+	    CashewValue rv = cr.executeCall("edu.brown.cs.seede.poppy.PoppyGraphics.finalReport",cv);
+	    if (rv != null) {
+	       String rslt = rv.getString(cr.getClock());
+	       if (rslt != null) graphics_outputs.add(rslt);
+	     }
+	  }
        }
    }
-         
+	
 
 }	// end of inner class MasterRunner
 
@@ -479,17 +493,17 @@ private static class RunnerThread extends Thread {
    CuminRunner getRunner()			{ return cumin_runner; }
 
    @Override public void run() {
-      CuminRunError sts = null;
+      CuminRunStatus sts = null;
       try {
-         cumin_runner.interpret(CuminConstants.EvalType.RUN);
+	 sts = cumin_runner.interpret(CuminConstants.EvalType.RUN);
        }
-      catch (CuminRunError r) {
-         sts = r;
+      catch (CuminRunException r) {
+	 sts = r;
        }
       catch (Throwable t) {
-         sts = new CuminRunError(t);
+	 sts = new CuminRunException(t);
        }
-   
+
       exec_runner.setStatus(cumin_runner,sts);
     }
 

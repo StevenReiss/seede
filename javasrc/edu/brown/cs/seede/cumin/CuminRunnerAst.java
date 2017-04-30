@@ -203,6 +203,12 @@ CuminRunnerAst(CuminProject cp,CashewContext gblctx,CashewClock cc,
 {
    super.reset();
 
+   JcompTyper typer = getTyper();
+   Set<CashewValue> done = new HashSet<CashewValue>();
+   for (CashewValue cv : call_args) {
+      cv.resetType(typer,done);
+    }
+
    if (md != null) method_node = md;
    current_node = method_node;
    last_line = 0;
@@ -210,20 +216,26 @@ CuminRunnerAst(CuminProject cp,CashewContext gblctx,CashewClock cc,
 }
 
 
-@Override protected void interpretRun(CuminRunError err) throws CuminRunError
+@Override protected CuminRunStatus interpretRun(CuminRunStatus err) throws CuminRunException
 {
    ASTNode afternode = null;
-   CuminRunError passerror = err;
+   CuminRunStatus passerror = err;
 
    for ( ; ; ) {
+      CuminRunStatus sts = null;
       try {
 	 if (passerror != null) {
-	    evalThrow(current_node,passerror);
+	    sts = evalThrow(current_node,passerror);
 	    passerror = null;
 	  }
 	 else {
-	    evalNode(current_node,afternode);
+	    sts = evalNode(current_node,afternode);
 	  }
+       }
+      catch (CuminRunException r) {
+	 sts = r;
+       }
+      if (sts == null) {
 	 if (next_node == null) {
 	    afternode = current_node;
 	    current_node = current_node.getParent();
@@ -233,14 +245,14 @@ CuminRunnerAst(CuminProject cp,CashewContext gblctx,CashewClock cc,
 	    afternode = null;
 	  }
        }
-      catch (CuminRunError r) {
-	 if (current_node == method_node) throw r;
-	 if (r.getReason() == CuminRunError.Reason.CALL) throw r;
-	 if (r.getReason() == CuminRunError.Reason.RETURN) {
+      else {
+	 if (current_node == method_node) return sts;
+	 if (sts.getReason() == Reason.CALL) return sts;
+	 if (sts.getReason() == Reason.RETURN) {
 	    current_node = null;
-	    throw r;
+	    return sts;
 	  }
-	 passerror = r;
+	 passerror = sts;
 	 current_node = current_node.getParent();
 	 afternode = null;
        }
@@ -261,7 +273,7 @@ private void setupContext()
 {
    JcompSymbol js = JcompAst.getDefinition(method_node);
    JcompSource src = JcompAst.getSource(method_node.getRoot());
-   
+
    File file = null;
    if (src != null) file = new File(src.getFileName());
 
@@ -341,37 +353,40 @@ private static class LocalFinder extends ASTVisitor {
 /*										*/
 /********************************************************************************/
 
-private void evalNode(ASTNode node,ASTNode afterchild) throws CuminRunError
+private CuminRunStatus evalNode(ASTNode node,ASTNode afterchild) throws CuminRunException
 {
-   if (node instanceof Statement) {
+   if (node instanceof Statement && afterchild == null) {
       CompilationUnit cu = (CompilationUnit) node.getRoot();
       int lno = cu.getLineNumber(node.getStartPosition());
       if (lno != last_line && lno > 0) {
-         checkTimeout();
+	 CuminRunStatus sts = checkTimeout();
+	 if (sts != null) return sts;
 	 last_line = lno;
 	 CashewValue lvl = CashewValue.numericValue(CashewConstants.INT_TYPE,lno);
 	 lookup_context.findReference(LINE_NAME).setValueAt(execution_clock,lvl);
        }
-      if (Thread.currentThread().isInterrupted()) {
-	 throw new CuminRunError(CuminRunError.Reason.STOPPED);
-       }
-
-      // System.err.println("EVAL: " + node);
       // check for breakpoint
       // check for step
       // check for timeout
     }
+   if (node instanceof Statement) {
+      if (Thread.currentThread().isInterrupted()) {
+	 return CuminRunStatus.Factory.createStopped();
+       }
+    }
+   
    JcompType jt = JcompAst.getExprType(node);
    if (jt != null && jt.isErrorType()) {
-      throw new CuminRunError(CuminRunError.Reason.COMPILER_ERROR);
+      return CuminRunStatus.Factory.createCompilerError();
     }
    else if ((node.getFlags() & ASTNode.MALFORMED) != 0) {
-      throw new CuminRunError(CuminRunError.Reason.COMPILER_ERROR);
+      return CuminRunStatus.Factory.createCompilerError();
     }
 
-   AcornLog.logD("EXEC: " + node.getClass());
+   AcornLog.logT(node.getClass());
 
    next_node = null;
+   CuminRunStatus sts = null;
 
    switch (node.getNodeType()) {
       // nodes that can be ignored for interpretation
@@ -409,177 +424,180 @@ private void evalNode(ASTNode node,ASTNode afterchild) throws CuminRunError
       case ASTNode.WILDCARD_TYPE :
 	 break;
       case ASTNode.ARRAY_ACCESS :
-	 visit((ArrayAccess) node,afterchild);
+	 sts = visit((ArrayAccess) node,afterchild);
 	 break;
       case ASTNode.ARRAY_CREATION :
-	 visit((ArrayCreation) node,afterchild);
+	 sts = visit((ArrayCreation) node,afterchild);
 	 break;
       case ASTNode.ARRAY_INITIALIZER :
-	 visit((ArrayInitializer) node,afterchild);
+	 sts = visit((ArrayInitializer) node,afterchild);
 	 break;
       case ASTNode.ASSERT_STATEMENT :
-	 visit((AssertStatement) node,afterchild);
+	 sts = visit((AssertStatement) node,afterchild);
 	 break;
       case ASTNode.ASSIGNMENT :
-	 visit((Assignment) node,afterchild);
+	 sts = visit((Assignment) node,afterchild);
 	 break;
       case ASTNode.BLOCK :
-	 visit((Block) node,afterchild);
+	 sts = visit((Block) node,afterchild);
 	 break;
       case ASTNode.BOOLEAN_LITERAL :
-	 visit((BooleanLiteral) node);
+	 sts = visit((BooleanLiteral) node);
 	 break;
       case ASTNode.BREAK_STATEMENT :
-	 visit((BreakStatement) node);
+	 sts = visit((BreakStatement) node);
 	 break;
       case ASTNode.CAST_EXPRESSION :
-	 visit((CastExpression) node,afterchild);
+	 sts = visit((CastExpression) node,afterchild);
 	 break;
       case ASTNode.CATCH_CLAUSE :
-	 visit((CatchClause) node,afterchild);
+	 sts = visit((CatchClause) node,afterchild);
 	 break;
       case ASTNode.CHARACTER_LITERAL :
-	 visit((CharacterLiteral) node);
+	 sts = visit((CharacterLiteral) node);
 	 break;
       case ASTNode.CLASS_INSTANCE_CREATION :
-	 visit((ClassInstanceCreation) node,afterchild);
+	 sts = visit((ClassInstanceCreation) node,afterchild);
 	 break;
       case ASTNode.CONDITIONAL_EXPRESSION :
-	 visit((ConditionalExpression) node,afterchild);
+	 sts = visit((ConditionalExpression) node,afterchild);
 	 break;
       case ASTNode.CONSTRUCTOR_INVOCATION :
-	 visit((ConstructorInvocation) node,afterchild);
+	 sts = visit((ConstructorInvocation) node,afterchild);
 	 break;
       case ASTNode.CONTINUE_STATEMENT :
-	 visit((ContinueStatement) node);
+	 sts = visit((ContinueStatement) node);
 	 break;
       case ASTNode.DO_STATEMENT :
-	 visit((DoStatement) node,afterchild);
+	 sts = visit((DoStatement) node,afterchild);
 	 break;
       case ASTNode.ENHANCED_FOR_STATEMENT :
-	 visit((EnhancedForStatement) node,afterchild);
+	 sts = visit((EnhancedForStatement) node,afterchild);
 	 break;
       case ASTNode.EXPRESSION_STATEMENT :
-	 visit((ExpressionStatement) node,afterchild);
+	 sts = visit((ExpressionStatement) node,afterchild);
 	 break;
       case ASTNode.FIELD_ACCESS :
-	 visit((FieldAccess) node,afterchild);
+	 sts = visit((FieldAccess) node,afterchild);
 	 break;
       case ASTNode.FIELD_DECLARATION :
-	 visit((FieldDeclaration) node,afterchild);
+	 sts = visit((FieldDeclaration) node,afterchild);
 	 break;
       case ASTNode.FOR_STATEMENT :
-	 visit((ForStatement) node,afterchild);
+	 sts = visit((ForStatement) node,afterchild);
 	 break;
       case ASTNode.IF_STATEMENT :
-	 visit((IfStatement) node,afterchild);
+	 sts = visit((IfStatement) node,afterchild);
 	 break;
       case ASTNode.INFIX_EXPRESSION :
-	 visit((InfixExpression) node,afterchild);
+	 sts = visit((InfixExpression) node,afterchild);
 	 break;
       case ASTNode.INITIALIZER :
 	 break;
       case ASTNode.INSTANCEOF_EXPRESSION :
-	 visit((InstanceofExpression) node,afterchild);
+	 sts = visit((InstanceofExpression) node,afterchild);
 	 break;
       case ASTNode.LABELED_STATEMENT :
-	 visit((LabeledStatement) node,afterchild);
+	 sts = visit((LabeledStatement) node,afterchild);
 	 break;
       case ASTNode.METHOD_DECLARATION :
-	 visit((MethodDeclaration) node,afterchild);
+	 sts = visit((MethodDeclaration) node,afterchild);
 	 break;
       case ASTNode.METHOD_INVOCATION :
-	 visit((MethodInvocation) node,afterchild);
+	 sts = visit((MethodInvocation) node,afterchild);
 	 break;
       case ASTNode.NULL_LITERAL :
-	 visit((NullLiteral) node);
+	 sts = visit((NullLiteral) node);
 	 break;
       case ASTNode.NUMBER_LITERAL :
-	 visit((NumberLiteral) node);
+	 sts = visit((NumberLiteral) node);
 	 break;
       case ASTNode.PARENTHESIZED_EXPRESSION :
-	 visit((ParenthesizedExpression) node,afterchild);
+	 sts = visit((ParenthesizedExpression) node,afterchild);
 	 break;
       case ASTNode.POSTFIX_EXPRESSION :
-	 visit((PostfixExpression) node,afterchild);
+	 sts = visit((PostfixExpression) node,afterchild);
 	 break;
       case ASTNode.PREFIX_EXPRESSION :
-	 visit((PrefixExpression) node,afterchild);
+	 sts = visit((PrefixExpression) node,afterchild);
 	 break;
       case ASTNode.QUALIFIED_NAME :
-	 visit((QualifiedName) node,afterchild);
+	 sts = visit((QualifiedName) node,afterchild);
 	 break;
       case ASTNode.RETURN_STATEMENT :
-	 visit((ReturnStatement) node,afterchild);
+	 sts = visit((ReturnStatement) node,afterchild);
 	 break;
       case ASTNode.SIMPLE_NAME :
-	 visit((SimpleName) node);
+	 sts = visit((SimpleName) node);
 	 break;
       case ASTNode.SINGLE_VARIABLE_DECLARATION :
-	 visit((SingleVariableDeclaration) node,afterchild);
+	 sts = visit((SingleVariableDeclaration) node,afterchild);
 	 break;
       case ASTNode.STRING_LITERAL :
-	 visit((StringLiteral) node);
+	 sts = visit((StringLiteral) node);
 	 break;
       case ASTNode.SUPER_CONSTRUCTOR_INVOCATION :
-	 visit((SuperConstructorInvocation) node,afterchild);
+	 sts = visit((SuperConstructorInvocation) node,afterchild);
 	 break;
       case ASTNode.SUPER_FIELD_ACCESS :
-	 visit((SuperFieldAccess) node);
+	 sts = visit((SuperFieldAccess) node);
 	 break;
       case ASTNode.SUPER_METHOD_INVOCATION :
-	 visit((SuperMethodInvocation) node,afterchild);
+	 sts = visit((SuperMethodInvocation) node,afterchild);
 	 break;
       case ASTNode.SWITCH_CASE :
-	 visit((SwitchCase) node,afterchild);
+	 sts = visit((SwitchCase) node,afterchild);
 	 break;
       case ASTNode.SWITCH_STATEMENT :
-	 visit((SwitchStatement) node,afterchild);
+	 sts = visit((SwitchStatement) node,afterchild);
 	 break;
       case ASTNode.SYNCHRONIZED_STATEMENT :
-	 visit((SynchronizedStatement) node,afterchild);
+	 sts = visit((SynchronizedStatement) node,afterchild);
 	 break;
       case ASTNode.THIS_EXPRESSION :
-	 visit((ThisExpression) node);
+	 sts = visit((ThisExpression) node);
 	 break;
       case ASTNode.THROW_STATEMENT :
-	 visit((ThrowStatement) node,afterchild);
+	 sts = visit((ThrowStatement) node,afterchild);
 	 break;
       case ASTNode.TRY_STATEMENT :
-	 visit((TryStatement) node,afterchild);
+	 sts = visit((TryStatement) node,afterchild);
 	 break;
       case ASTNode.TYPE_LITERAL :
-	 visit((TypeLiteral) node);
+	 sts = visit((TypeLiteral) node);
 	 break;
       case ASTNode.VARIABLE_DECLARATION_EXPRESSION :
-	 visit((VariableDeclarationExpression) node,afterchild);
+	 sts = visit((VariableDeclarationExpression) node,afterchild);
 	 break;
       case ASTNode.VARIABLE_DECLARATION_FRAGMENT :
-	 visit((VariableDeclarationFragment) node,afterchild);
+	 sts = visit((VariableDeclarationFragment) node,afterchild);
 	 break;
       case ASTNode.VARIABLE_DECLARATION_STATEMENT :
-	 visit((VariableDeclarationStatement) node,afterchild);
+	 sts = visit((VariableDeclarationStatement) node,afterchild);
 	 break;
       case ASTNode.WHILE_STATEMENT :
-	 visit((WhileStatement) node,afterchild);
+	 sts = visit((WhileStatement) node,afterchild);
 	 break;
       default :
 	 AcornLog.logE("Unknown AST node " + current_node);
+	 sts = CuminRunStatus.Factory.createError("Unknown AST Node " + current_node);
 	 break;
-
     }
+
+   return sts;
 }
 
 
 
 
-private void evalThrow(ASTNode node,CuminRunError cause) throws CuminRunError
+private CuminRunStatus evalThrow(ASTNode node,CuminRunStatus cause) throws CuminRunException
 {
    next_node = null;
 
    AcornLog.logD("EXECT: " + node.getClass() + " " + cause.getReason());
    // need to restore stack in each of these
 
+   CuminRunStatus sts = null;
    switch (node.getNodeType()) {
       // nodes that can be ignored for catching exceptions
       case ASTNode.ANNOTATION_TYPE_DECLARATION :
@@ -654,19 +672,19 @@ private void evalThrow(ASTNode node,CuminRunError cause) throws CuminRunError
       case ASTNode.VARIABLE_DECLARATION_EXPRESSION :
       case ASTNode.VARIABLE_DECLARATION_FRAGMENT :
       case ASTNode.VARIABLE_DECLARATION_STATEMENT :
-	 throw cause;
+	 return cause;
 
       case ASTNode.DO_STATEMENT :
-	 visitThrow((DoStatement) node,cause);
+	 sts = visitThrow((DoStatement) node,cause);
 	 break;
       case ASTNode.ENHANCED_FOR_STATEMENT :
-	 visitThrow((EnhancedForStatement) node,cause);
+	 sts = visitThrow((EnhancedForStatement) node,cause);
 	 break;
       case ASTNode.FOR_STATEMENT :
-	 visitThrow((ForStatement) node,cause);
+	 sts = visitThrow((ForStatement) node,cause);
 	 break;
       case ASTNode.METHOD_INVOCATION :
-	 visitThrow((MethodInvocation) node,cause);
+	 sts = visitThrow((MethodInvocation) node,cause);
 	 break;
       case ASTNode.CLASS_INSTANCE_CREATION :
 	 break;
@@ -675,22 +693,23 @@ private void evalThrow(ASTNode node,CuminRunError cause) throws CuminRunError
       case ASTNode.SUPER_METHOD_INVOCATION :
 	 break;
       case ASTNode.SWITCH_STATEMENT :
-	 visitThrow((SwitchStatement) node,cause);
+	 sts = visitThrow((SwitchStatement) node,cause);
 	 break;
       case ASTNode.SYNCHRONIZED_STATEMENT :
 	 break;
       case ASTNode.TRY_STATEMENT :
-	 visitThrow((TryStatement) node,cause);
+	 sts = visitThrow((TryStatement) node,cause);
 	 break;
       case ASTNode.WHILE_STATEMENT :
-	 visitThrow((WhileStatement) node,cause);
+	 sts = visitThrow((WhileStatement) node,cause);
 	 break;
 
       default :
 	 AcornLog.logE("Unknown AST node " + current_node);
 	 break;
-
     }
+
+   return sts;
 }
 
 
@@ -702,7 +721,7 @@ private void evalThrow(ASTNode node,CuminRunError cause) throws CuminRunError
 /*										*/
 /********************************************************************************/
 
-private void visit(MethodDeclaration md,ASTNode after)
+private CuminRunStatus visit(MethodDeclaration md,ASTNode after)
 {
    if (after == null) {
       List<CashewValue> argvals = getCallArgs();
@@ -710,7 +729,7 @@ private void visit(MethodDeclaration md,ASTNode after)
       for (int i = 0; i < argvals.size(); ++i) {
 	 AcornLog.logD("ARG " + i + " = " + argvals.get(i).getDebugString(execution_clock));
        }
-      
+
       List<?> args = md.parameters();
       int off = 0;
       int idx = 0;
@@ -718,13 +737,13 @@ private void visit(MethodDeclaration md,ASTNode after)
       if (!vsym.isStatic()) {
 	 off = 1;
 	 lookup_context.define(THIS_NAME,argvals.get(0));
-         if (md.isConstructor()) {
-            JcompType jtyp = JcompAst.getDefinition(md).getClassType();
-            if (jtyp.needsOuterClass()) {
-               lookup_context.define(OUTER_NAME,argvals.get(1));
-               off = 2;
-             }
-          }
+	 if (md.isConstructor()) {
+	    JcompType jtyp = JcompAst.getDefinition(md).getClassType();
+	    if (jtyp.needsOuterClass()) {
+	       lookup_context.define(OUTER_NAME,argvals.get(1));
+	       off = 2;
+	     }
+	  }
        }
       //TODO:  need to handle nested this values as well
       int nparm = args.size();
@@ -743,8 +762,10 @@ private void visit(MethodDeclaration md,ASTNode after)
       next_node = md.getBody();
     }
    else {
-      throw new CuminRunError(CuminRunError.Reason.RETURN);
+      return CuminRunStatus.Factory.createReturn();
     }
+
+   return null;
 }
 
 
@@ -756,27 +777,33 @@ private void visit(MethodDeclaration md,ASTNode after)
 /*										*/
 /********************************************************************************/
 
-private void visit(BooleanLiteral v)
+private CuminRunStatus visit(BooleanLiteral v)
 {
    execution_stack.push(CashewValue.booleanValue(v.booleanValue()));
+
+   return null;
 }
 
 
-private void visit(CharacterLiteral v)
+private CuminRunStatus visit(CharacterLiteral v)
 {
    JcompType ctype = JcompAst.getExprType(v);
    execution_stack.push(CashewValue.characterValue(ctype,v.charValue()));
+
+   return null;
 }
 
 
-private void visit(NullLiteral v)
+private CuminRunStatus visit(NullLiteral v)
 {
    execution_stack.push(CashewValue.nullValue());
+
+   return null;
 }
 
 
 
-private void visit(NumberLiteral v)
+private CuminRunStatus visit(NumberLiteral v)
 {
    JcompType jt = JcompAst.getExprType(v);
    switch (jt.getName()) {
@@ -790,21 +817,27 @@ private void visit(NumberLiteral v)
 	 execution_stack.push(CashewValue.numericValue(jt,lv));
 	 break;
     }
+
+   return null;
 }
 
 
 
-private void visit(StringLiteral v)
+private CuminRunStatus visit(StringLiteral v)
 {
    execution_stack.push(CashewValue.stringValue(v.getLiteralValue()));
+
+   return null;
 }
 
 
 
-private void visit(TypeLiteral v)
+private CuminRunStatus visit(TypeLiteral v)
 {
    JcompType acttyp = JcompAst.getJavaType(v.getType());
    execution_stack.push(CashewValue.classValue(acttyp));
+
+   return null;
 }
 
 
@@ -815,7 +848,7 @@ private void visit(TypeLiteral v)
 /*										*/
 /********************************************************************************/
 
-private void visit(ArrayAccess v,ASTNode after)
+private CuminRunStatus visit(ArrayAccess v,ASTNode after)
 {
    if (after == null) next_node = v.getArray();
    else if (after == v.getArray()) next_node = v.getIndex();
@@ -826,10 +859,12 @@ private void visit(ArrayAccess v,ASTNode after)
       CashewValue rv = av.getIndexValue(execution_clock,idx);
       execution_stack.push(rv);
     }
+
+   return null;
 }
 
 
-private void visit(ArrayCreation v,ASTNode after)
+private CuminRunStatus visit(ArrayCreation v,ASTNode after)
 {
    List<?> dims = v.dimensions();
    if (after == null || after != v.getInitializer()) {
@@ -837,12 +872,12 @@ private void visit(ArrayCreation v,ASTNode after)
       if (after != null) idx = dims.indexOf(after) + 1;
       if (idx < dims.size()) {
 	 next_node = (ASTNode) dims.get(idx);
-	 return;
+	 return null;
        }
     }
    if (v.getInitializer() != null) {
       next_node = v.getInitializer();
-      return;
+      return null;
     }
 
    JcompType jty = JcompAst.getExprType(v);
@@ -858,11 +893,13 @@ private void visit(ArrayCreation v,ASTNode after)
    // Need to know the size of the array to create, what dummy dims to
    //	 use or ignore, etc.
    // What are the java semantics for this?
+
+   return null;
 }
 
 
 
-private void visit(Assignment v,ASTNode after)
+private CuminRunStatus visit(Assignment v,ASTNode after) throws CuminRunException
 {
    if (after == null) next_node = v.getLeftHandSide();
    else if (after == v.getLeftHandSide()) next_node = v.getRightHandSide();
@@ -874,10 +911,12 @@ private void visit(Assignment v,ASTNode after)
       CashewValue v0 = CuminEvaluator.evaluateAssign(this,op,v1,v2,tgt);
       execution_stack.push(v0);
     }
+
+   return null;
 }
 
 
-private void visit(CastExpression v,ASTNode after)
+private CuminRunStatus visit(CastExpression v,ASTNode after) throws CuminRunException
 {
    if (after == null) next_node = v.getExpression();
    else {
@@ -886,11 +925,13 @@ private void visit(CastExpression v,ASTNode after)
       cv = CuminEvaluator.castValue(this,cv,tgt);
       execution_stack.push(cv);
     }
+
+   return null;
 }
 
 
 
-private void visit(ConditionalExpression v,ASTNode after)
+private CuminRunStatus visit(ConditionalExpression v,ASTNode after)
 {
    if (after == null) next_node = v.getExpression();
    else if (after == v.getExpression()) {
@@ -902,21 +943,25 @@ private void visit(ConditionalExpression v,ASTNode after)
 	 next_node = v.getElseExpression();
        }
     }
+
+   return null;
 }
 
 
 
-private void visit(FieldAccess v,ASTNode after)
+private CuminRunStatus visit(FieldAccess v,ASTNode after) throws CuminRunException
 {
    if (after == null) next_node = v.getExpression();
    else {
       JcompSymbol sym = JcompAst.getReference(v.getName());
       execution_stack.push(handleFieldAccess(sym));
     }
+
+   return null;
 }
 
 
-private void visit(SuperFieldAccess v)
+private CuminRunStatus visit(SuperFieldAccess v)
 {
    String var = "this";
    if (v.getQualifier() != null) {
@@ -925,20 +970,19 @@ private void visit(SuperFieldAccess v)
     }
    CashewValue obj = lookup_context.findReference(var);
    if (obj.isNull(execution_clock))
-      CuminEvaluator.throwException(CashewConstants.NULL_PTR_EXC);
+      return CuminEvaluator.returnException(CashewConstants.NULL_PTR_EXC);
 
    JcompSymbol sym = JcompAst.getReference(v.getName());
    CashewValue rslt = obj.getFieldValue(execution_clock,sym.getFullName());
    execution_stack.push(rslt);
+
+   return null;
 }
 
 
 
-private void visit(InfixExpression v,ASTNode after)
+private CuminRunStatus visit(InfixExpression v,ASTNode after) throws CuminRunException
 {
-   if (v.toString().equals("d.width + i.left")) {
-      System.err.println("CHECK EXPR");
-    }
    if (after == null) next_node = v.getLeftOperand();
    else if (after == v.getLeftOperand()) {
       if (v.getOperator() == InfixExpression.Operator.CONDITIONAL_AND) {
@@ -971,11 +1015,13 @@ private void visit(InfixExpression v,ASTNode after)
 	 execution_stack.push(v0);
        }
     }
+
+   return null;
 }
 
 
 
-private void visit(InstanceofExpression v,ASTNode after)
+private CuminRunStatus visit(InstanceofExpression v,ASTNode after) throws CuminRunException
 {
    if (after == null) next_node = v.getLeftOperand();
    else {
@@ -983,10 +1029,12 @@ private void visit(InstanceofExpression v,ASTNode after)
       CashewValue nv = CuminEvaluator.castValue(this,execution_stack.pop(),rt);
       execution_stack.push(nv);
     }
+
+   return null;
 }
 
 
-private void visit(SimpleName v)
+private CuminRunStatus visit(SimpleName v)
 {
    JcompSymbol js = JcompAst.getReference(v);
    CashewValue cv = null;
@@ -994,15 +1042,15 @@ private void visit(SimpleName v)
       if (js.isStatic()) cv = handleStaticFieldAccess(js);
       else {
 	 CashewValue tv = lookup_context.findReference(THIS_NAME);
-         cv = tv.getFieldValue(execution_clock,js.getFullName(),false);
-         while (cv == null) {
-            tv = tv.getFieldValue(execution_clock,OUTER_NAME,false);
-            if (tv == null) break;
-            cv = tv.getFieldValue(execution_clock,js.getFullName(),false);
-          }
-         if (cv == null) {
-            AcornLog.logE("Missing Field " + js.getFullName());
-          }
+	 cv = tv.getFieldValue(execution_clock,js.getFullName(),false);
+	 while (cv == null) {
+	    tv = tv.getFieldValue(execution_clock,OUTER_NAME,false);
+	    if (tv == null) break;
+	    cv = tv.getFieldValue(execution_clock,js.getFullName(),false);
+	  }
+	 if (cv == null) {
+	    AcornLog.logE("Missing Field " + js.getFullName());
+	  }
        }
     }
    else {
@@ -1010,16 +1058,18 @@ private void visit(SimpleName v)
     }
 
    execution_stack.push(cv);
+
+   return null;
 }
 
 
-private void visit(QualifiedName v,ASTNode after)
+private CuminRunStatus visit(QualifiedName v,ASTNode after) throws CuminRunException
 {
    JcompSymbol sym = JcompAst.getReference(v.getName());
    if (after == null) {
       if (sym != null && sym.isFieldSymbol() && !sym.isStatic()) {
 	 next_node = v.getQualifier();
-	 return;
+	 return null;
        }
       else if (sym == null && v.getName().getIdentifier().equals("length")) {
 	 next_node = v.getQualifier();
@@ -1034,23 +1084,27 @@ private void visit(QualifiedName v,ASTNode after)
 	       v.getName().getIdentifier().equals("length")) {
       CashewValue obj = execution_stack.pop().getActualValue(execution_clock);
       if (obj.isNull(execution_clock))
-	 CuminEvaluator.throwException(CashewConstants.NULL_PTR_EXC);
+	 return CuminEvaluator.returnException(CashewConstants.NULL_PTR_EXC);
       CashewValue rslt = obj.getFieldValue(execution_clock,"length");
       AcornLog.logD("COMPUTE LENGTH " + obj + " = " + rslt);
       execution_stack.push(rslt);
     }
+
+   return null;
 }
 
 
 
-private void visit(ParenthesizedExpression v,ASTNode after)
+private CuminRunStatus visit(ParenthesizedExpression v,ASTNode after)
 {
    if (after == null) next_node = v.getExpression();
+
+   return null;
 }
 
 
 
-private void visit(PostfixExpression v,ASTNode after)
+private CuminRunStatus visit(PostfixExpression v,ASTNode after)
 {
    if (after == null) next_node = v.getOperand();
    else {
@@ -1059,10 +1113,12 @@ private void visit(PostfixExpression v,ASTNode after)
       CashewValue v0 = CuminEvaluator.evaluate(execution_clock,op,v1);
       execution_stack.push(v0);
     }
+
+   return null;
 }
 
 
-private void visit(PrefixExpression v,ASTNode after)
+private CuminRunStatus visit(PrefixExpression v,ASTNode after)
 {
    if (after == null) next_node = v.getOperand();
    else {
@@ -1071,11 +1127,13 @@ private void visit(PrefixExpression v,ASTNode after)
       CashewValue v0 = CuminEvaluator.evaluate(execution_clock,op,v1);
       execution_stack.push(v0);
     }
+
+   return null;
 }
 
 
 
-private void visit(ThisExpression v)
+private CuminRunStatus visit(ThisExpression v)
 {
    JcompType base = null;
    if (v.getQualifier() != null) {
@@ -1083,6 +1141,8 @@ private void visit(ThisExpression v)
     }
    CashewValue cv = handleThisAccess(base);
    execution_stack.push(cv);
+
+   return null;
 }
 
 
@@ -1093,7 +1153,7 @@ private void visit(ThisExpression v)
 /*										*/
 /********************************************************************************/
 
-private void visit(ClassInstanceCreation v, ASTNode after)
+private CuminRunStatus visit(ClassInstanceCreation v, ASTNode after) throws CuminRunException
 {
    int idx = 0;
    List<?> args = v.arguments();
@@ -1102,7 +1162,7 @@ private void visit(ClassInstanceCreation v, ASTNode after)
     }
    if (idx < args.size()) {
       next_node = (ASTNode) args.get(idx);
-      return;
+      return null;
     }
 
    JcompType rty = JcompAst.getJavaType(v.getType());
@@ -1132,12 +1192,13 @@ private void visit(ClassInstanceCreation v, ASTNode after)
    execution_stack.push(rval);
    Collections.reverse(argv);
    CuminRunner crun = handleCall(execution_clock,csym,argv,CallType.SPECIAL);
-   throw new CuminRunError(crun);
+
+   return CuminRunStatus.Factory.createCall(crun);
 }
 
 
 
-private void visit(ConstructorInvocation v,ASTNode after)
+private CuminRunStatus visit(ConstructorInvocation v,ASTNode after) throws CuminRunException
 {
    int idx = 0;
    List<?> args = v.arguments();
@@ -1146,7 +1207,7 @@ private void visit(ConstructorInvocation v,ASTNode after)
     }
    if (idx < args.size()) {
       next_node = (ASTNode) args.get(idx);
-      return;
+      return null;
     }
 
    JcompSymbol csym = JcompAst.getReference(v);
@@ -1169,18 +1230,18 @@ private void visit(ConstructorInvocation v,ASTNode after)
    argv.add(rval);
    Collections.reverse(argv);
    CuminRunner crun = handleCall(execution_clock,csym,argv,CallType.SPECIAL);
-   throw new CuminRunError(crun);
+   return CuminRunStatus.Factory.createCall(crun);
 }
 
 
 
-private void visit(MethodInvocation v,ASTNode after)
+private CuminRunStatus visit(MethodInvocation v,ASTNode after) throws CuminRunException
 {
    JcompSymbol js = JcompAst.getReference(v.getName());
 
    if (after == null && v.getExpression() != null && !js.isStatic()) {
       next_node = v.getExpression();
-      return;
+      return null;
     }
    int idx = 0;
    List<?> args = v.arguments();
@@ -1189,7 +1250,7 @@ private void visit(MethodInvocation v,ASTNode after)
     }
    if (idx < args.size()) {
       next_node = (ASTNode) args.get(idx);
-      return;
+      return null;
     }
 
    // need to handle varargs
@@ -1221,22 +1282,24 @@ private void visit(MethodInvocation v,ASTNode after)
    else cty = CallType.STATIC;
    Collections.reverse(argv);
    CuminRunner crun = handleCall(execution_clock,js,argv,cty);
-   throw new CuminRunError(crun);
+   return CuminRunStatus.Factory.createCall(crun);
 }
 
 
-private void visitThrow(MethodInvocation n,CuminRunError cause)
+private CuminRunStatus visitThrow(MethodInvocation n,CuminRunStatus cause)
 {
-   if (cause.getReason() == CuminRunError.Reason.RETURN) {
+   if (cause.getReason() == Reason.RETURN) {
       CashewValue cv = cause.getValue();
       if (cv != null) execution_stack.push(cv);
     }
-   else throw cause;
+   else return cause;
+
+   return null;
 }
 
 
 
-private void visit(SuperConstructorInvocation v,ASTNode after)
+private CuminRunStatus visit(SuperConstructorInvocation v,ASTNode after) throws CuminRunException
 {
    int idx = 0;
    List<?> args = v.arguments();
@@ -1245,7 +1308,7 @@ private void visit(SuperConstructorInvocation v,ASTNode after)
     }
    if (idx < args.size()) {
       next_node = (ASTNode) args.get(idx);
-      return;
+      return null;
     }
 
    JcompSymbol csym = JcompAst.getReference(v);
@@ -1259,13 +1322,13 @@ private void visit(SuperConstructorInvocation v,ASTNode after)
    argv.add(rval);
    Collections.reverse(argv);
    CuminRunner crun = handleCall(execution_clock,csym,argv,CallType.SPECIAL);
-   throw new CuminRunError(crun);
+   return CuminRunStatus.Factory.createCall(crun);
 }
 
 
 
 
-private void visit(SuperMethodInvocation v,ASTNode after)
+private CuminRunStatus visit(SuperMethodInvocation v,ASTNode after) throws CuminRunException
 {
    int idx = 0;
    List<?> args = v.arguments();
@@ -1274,7 +1337,7 @@ private void visit(SuperMethodInvocation v,ASTNode after)
     }
    if (idx < args.size()) {
       next_node = (ASTNode) args.get(idx);
-      return;
+      return null;
     }
 
    // need to handle varargs
@@ -1299,7 +1362,7 @@ private void visit(SuperMethodInvocation v,ASTNode after)
       argv.set(args.size()-i-1+off,cv);
     }
    CuminRunner crun = handleCall(execution_clock,js,argv,cty);
-   throw new CuminRunError(crun);
+   return CuminRunStatus.Factory.createCall(crun);
 }
 
 
@@ -1310,7 +1373,7 @@ private void visit(SuperMethodInvocation v,ASTNode after)
 /*										*/
 /********************************************************************************/
 
-private void visit(AssertStatement s,ASTNode after)
+private CuminRunStatus visit(AssertStatement s,ASTNode after)
 {
    if (after == null) next_node = s.getExpression();
    else {
@@ -1318,10 +1381,11 @@ private void visit(AssertStatement s,ASTNode after)
 	 // throw assertion exception
        }
     }
+   return null;
 }
 
 
-private void visit(Block s,ASTNode after)
+private CuminRunStatus visit(Block s,ASTNode after)
 {
    int idx = 0;
    List<?> stmts = s.statements();
@@ -1331,57 +1395,61 @@ private void visit(Block s,ASTNode after)
    if (idx < stmts.size()) {
       next_node = (ASTNode) stmts.get(idx);
     }
+   return null;
 }
 
 
-private void visit(BreakStatement s)
+private CuminRunStatus visit(BreakStatement s)
 {
    if (s.getLabel() != null)
-      throw new CuminRunError(CuminRunError.Reason.BREAK,s.getLabel().getIdentifier());
+      return CuminRunStatus.Factory.createBreak(s.getLabel().getIdentifier());
    else
-      throw new CuminRunError(CuminRunError.Reason.BREAK,"");
+      return CuminRunStatus.Factory.createBreak("");
 }
 
 
-private void visit(ContinueStatement s)
+private CuminRunStatus visit(ContinueStatement s)
 {
    if (s.getLabel() != null)
-      throw new CuminRunError(CuminRunError.Reason.CONTINUE,s.getLabel().getIdentifier());
+      return CuminRunStatus.Factory.createContinue(s.getLabel().getIdentifier());
    else
-      throw new CuminRunError(CuminRunError.Reason.CONTINUE,"");
+      return CuminRunStatus.Factory.createContinue("");
 }
 
 
 
 
-private void visit(DoStatement s,ASTNode after)
+private CuminRunStatus visit(DoStatement s,ASTNode after)
 {
    if (after == null) next_node = s.getBody();
    else if (after == s.getBody()) next_node = s.getExpression();
    else {
       if (execution_stack.pop().getBoolean(execution_clock)) next_node = s.getBody();
     }
+   return null;
 }
 
 
-private void visitThrow(DoStatement s,CuminRunError r)
+private CuminRunStatus visitThrow(DoStatement s,CuminRunStatus r)
 {
    String lbl = r.getMessage();
    switch (r.getReason()) {
       case BREAK :
 	 if (checkLabel(s,lbl)) break;
-	 else throw r;
+	 else return r;
       case CONTINUE :
 	 if (checkLabel(s,lbl)) next_node = s.getExpression();
-	 else throw r;
+	 else return r;
 	 break;
       default :
-	 throw r;
+	 return r;
     }
+
+   return null;
 }
 
 
-private void visit(ExpressionStatement s,ASTNode after)
+private CuminRunStatus visit(ExpressionStatement s,ASTNode after)
 {
    if (after == null) next_node = s.getExpression();
    else {
@@ -1389,11 +1457,12 @@ private void visit(ExpressionStatement s,ASTNode after)
       if (typ != null && !typ.isVoidType())
 	 execution_stack.pop();
     }
+   return null;
 }
 
 
 
-private void visit(ForStatement s,ASTNode after)
+private CuminRunStatus visit(ForStatement s,ASTNode after)
 {
    StructuralPropertyDescriptor spd = null;
    if (after != null) spd = after.getLocationInParent();
@@ -1402,7 +1471,7 @@ private void visit(ForStatement s,ASTNode after)
       if (execution_stack.pop().getBoolean(execution_clock)) {
 	 next_node = s.getBody();
        }
-      return;
+      return null;
     }
 
    if (after == null || spd == ForStatement.INITIALIZERS_PROPERTY) {
@@ -1414,7 +1483,7 @@ private void visit(ForStatement s,ASTNode after)
        }
       if (idx < inits.size()) {
 	 next_node = (ASTNode) inits.get(idx);
-	 return;
+	 return null;
        }
     }
    if (after == s.getBody() || spd == ForStatement.UPDATERS_PROPERTY) {
@@ -1423,40 +1492,43 @@ private void visit(ForStatement s,ASTNode after)
       if (after != s.getBody()) idx = updts.indexOf(after)+1;
       if (idx < updts.size()) {
 	 next_node = (ASTNode) updts.get(idx);
-	 return;
+	 return null;
        }
     }
    if (s.getExpression() == null) next_node = s.getBody();
    else next_node = s.getExpression();
+
+   return null;
 }
 
 
 
-private void visitThrow(ForStatement s,CuminRunError r)
+private CuminRunStatus visitThrow(ForStatement s,CuminRunStatus r)
 {
    String lbl = r.getMessage();
    switch (r.getReason()) {
       case BREAK :
 	 if (checkLabel(s,lbl)) break;
-	 else throw r;
+	 else return r;
       case CONTINUE :
 	 if (checkLabel(s,lbl)) {
 	    if (s.getExpression() != null) next_node = s.getExpression();
 	    else next_node = s.getBody();
 	  }
-	 else throw r;
+	 else return r;
 	 break;
       default :
-	 throw r;
+	 return r;
     }
+   return null;
 }
 
 
-private void visit(EnhancedForStatement s,ASTNode after)
+private CuminRunStatus visit(EnhancedForStatement s,ASTNode after) throws CuminRunException
 {
    if (after == null) {
       next_node = s.getExpression();
-      return;
+      return null;
     }
 
    if (after == s.getExpression()) {
@@ -1472,21 +1544,22 @@ private void visit(EnhancedForStatement s,ASTNode after)
 	 JcompType mty = JcompType.createMethodType(rty,args,false);
 	 JcompSymbol js = jt.lookupMethod(typer,"iterator",mty);
 	 if (js == null)
-	    throw new CuminRunError(CuminRunError.Reason.COMPILER_ERROR,"Bad type for enhanced for");
+	    return CuminRunStatus.Factory.createCompilerError();
 	 List<CashewValue> argv = new ArrayList<>();
 	 argv.add(cv);
 	 execution_stack.pushMarker(s,ForState.INIT);
 	 CuminRunner crun = handleCall(execution_clock,js,argv,CallType.VIRTUAL);
-	 throw new CuminRunError(crun);
+	 return CuminRunStatus.Factory.createCall(crun);
        }
     }
 
-   enhancedCheck(s);
+   return enhancedCheck(s);
 }
 
 
 
-private void visitThrow(EnhancedForStatement s,CuminRunError r)
+private CuminRunStatus visitThrow(EnhancedForStatement s,CuminRunStatus r)
+	throws CuminRunException
 {
    String lbl = r.getMessage();
    switch (r.getReason()) {
@@ -1501,17 +1574,17 @@ private void visitThrow(EnhancedForStatement s,CuminRunError r)
 		  execution_stack.push(rval);
 		  execution_stack.pushMarker(s,ForState.HASNEXT);
 		  CuminRunner crun = forMethod(s,rval,ForState.HASNEXT);
-		  throw new CuminRunError(crun);
+		  return CuminRunStatus.Factory.createCall(crun);
 	       case HASNEXT :
 		  if (rval.getBoolean(execution_clock)) {
 		     CashewValue iter = execution_stack.peek(0);
 		     execution_stack.pushMarker(s,ForState.NEXT);
 		     CuminRunner nrun = forMethod(s,iter,ForState.NEXT);
-		     throw new CuminRunError(nrun);
+		     return CuminRunStatus.Factory.createCall(nrun);
 		   }
 		  else {
 		     execution_stack.pop();
-		     return;
+		     return null;
 		   }
 	       case NEXT :
 		  execution_stack.pushMarker(s,ForState.BODY);
@@ -1519,18 +1592,18 @@ private void visitThrow(EnhancedForStatement s,CuminRunError r)
 		  break;
 	       case BODY :
 		  execution_stack.pop();
-		  throw r;
+		  return r;
 	     }
 	  }
 	 else {
 	    execution_stack.pop();
-	    throw r;
+	    return r;
 	  }
 	 break;
       case BREAK :
 	 execution_stack.popMarker(s);
 	 execution_stack.pop();
-	 if (!checkLabel(s,lbl)) throw r;
+	 if (!checkLabel(s,lbl)) return r;
 	 break;
       case CONTINUE :
 	 if (checkLabel(s,lbl)) {
@@ -1539,17 +1612,19 @@ private void visitThrow(EnhancedForStatement s,CuminRunError r)
 	 else {
 	    execution_stack.popMarker(s);
 	    execution_stack.pop();
-	    throw r;
+	    return r;
 	  }
 	 break;
       default :
-	 throw r;
+	 return r;
     }
+
+   return null;
 }
 
 
 
-private CuminRunner forMethod(EnhancedForStatement s,CashewValue cv,ForState state)
+private CuminRunner forMethod(EnhancedForStatement s,CashewValue cv,ForState state) throws CuminRunException
 {
    JcompTyper typer = JcompAst.getTyper(s);
    List<JcompType> args = new ArrayList<>();
@@ -1576,15 +1651,16 @@ private CuminRunner forMethod(EnhancedForStatement s,CashewValue cv,ForState sta
    JcompType jt = cv.getDataType(execution_clock);
    JcompType mty = JcompType.createMethodType(rty,args,false);
    JcompSymbol js = jt.lookupMethod(typer,mnm,mty);
-   if (js == null)
-      throw new CuminRunError(CuminRunError.Reason.COMPILER_ERROR,"Bad type for enhanced for");
+   if (js == null) throw CuminRunStatus.Factory.createCompilerError();
    List<CashewValue> argv = new ArrayList<>();
    argv.add(cv);
    CuminRunner crun = handleCall(execution_clock,js,argv,CallType.VIRTUAL);
    return crun;
 }
 
-private void enhancedBody(EnhancedForStatement s,CashewValue next)
+
+
+private void enhancedBody(EnhancedForStatement s,CashewValue next) throws CuminRunException
 {
    JcompSymbol js = JcompAst.getDefinition(s.getParameter().getName());
    CashewValue cr = lookup_context.findReference(js);
@@ -1593,14 +1669,14 @@ private void enhancedBody(EnhancedForStatement s,CashewValue next)
 }
 
 
-private void enhancedCheck(EnhancedForStatement s)
+private CuminRunStatus enhancedCheck(EnhancedForStatement s) throws CuminRunException
 {
    Object val = execution_stack.popUntil(s);
    CashewValue iter = execution_stack.pop().getActualValue(execution_clock);
    if (val instanceof Integer) {
       int idx = (Integer) val;
       int len = iter.getDimension(execution_clock);
-      if (idx >= len) return;
+      if (idx >= len) return null;
       CashewValue next = iter.getIndexValue(execution_clock,idx);
       ++idx;
       execution_stack.push(iter);
@@ -1611,11 +1687,15 @@ private void enhancedCheck(EnhancedForStatement s)
       execution_stack.push(iter);
       execution_stack.pushMarker(s,ForState.HASNEXT);
       CuminRunner crun = forMethod(s,iter,ForState.HASNEXT);
-      throw new CuminRunError(crun);
+      return CuminRunStatus.Factory.createCall(crun);
     }
+
+   return null;
 }
 
-private void visit(IfStatement s,ASTNode after)
+
+
+private CuminRunStatus visit(IfStatement s,ASTNode after)
 {
    if (after == null) next_node = s.getExpression();
    else if (after == s.getExpression()) {
@@ -1627,15 +1707,21 @@ private void visit(IfStatement s,ASTNode after)
 	 next_node = s.getElseStatement();
        }
     }
+
+   return null;
 }
 
-private void visit(LabeledStatement s,ASTNode after)
+
+
+private CuminRunStatus visit(LabeledStatement s,ASTNode after)
 {
    if (after == null) next_node = s.getBody();
+
+   return null;
 }
 
 
-private void visit(ReturnStatement s,ASTNode after)
+private CuminRunStatus visit(ReturnStatement s,ASTNode after)
 {
    if (after == null && s.getExpression() != null) {
       next_node = s.getExpression();
@@ -1646,17 +1732,19 @@ private void visit(ReturnStatement s,ASTNode after)
 	 rval = execution_stack.pop();
 	 rval = rval.getActualValue(execution_clock);
        }
-      throw new CuminRunError(CuminRunError.Reason.RETURN,rval);
+      return CuminRunStatus.Factory.createReturn(rval);
     }
+
+   return null;
 }
 
 
 
-private void visit(SwitchStatement s,ASTNode after)
+private CuminRunStatus visit(SwitchStatement s,ASTNode after)
 {
    if (after == null) {
       next_node = s.getExpression();
-      return;
+      return null;
     }
 
    List<?> stmts = s.statements();
@@ -1673,7 +1761,7 @@ private void visit(SwitchStatement s,ASTNode after)
 	    next_node = stmt;
 	    break;
 	  }
-	 return;
+	 return null;
        }
       execution_stack.push(sv);
     }
@@ -1686,7 +1774,7 @@ private void visit(SwitchStatement s,ASTNode after)
 	    SwitchCase sc = (SwitchCase) stmt;
 	    if (!sc.isDefault()) {
 	       next_node = stmt;
-	       return;
+	       return null;
 	     }
 	  }
        }
@@ -1702,12 +1790,12 @@ private void visit(SwitchStatement s,ASTNode after)
 		  stmt = (Statement) stmts.get(idx);
 		  if (stmt instanceof SwitchCase) continue;
 		  next_node = stmt;
-		  return;
+		  return null;
 		}
 	     }
 	  }
        }
-      return;
+      return null;
     }
 
    int next = stmts.indexOf(after)+1;
@@ -1715,21 +1803,23 @@ private void visit(SwitchStatement s,ASTNode after)
       Statement ns = (Statement) stmts.get(next);
       if (ns instanceof SwitchCase) continue;
       next_node = ns;
-      return;
+      return null;
     }
+
+   return null;
 }
 
 
 
-private void visitThrow(SwitchStatement s,CuminRunError r)
+private CuminRunStatus visitThrow(SwitchStatement s,CuminRunStatus r)
 {
    String lbl = r.getMessage();
    switch (r.getReason()) {
       case BREAK :
-	 if (checkLabel(s,lbl)) return;
-	 else throw r;
+	 if (checkLabel(s,lbl)) return null;
+	 else return r;
       default :
-	 throw r;
+	 return r;
     }
 }
 
@@ -1737,14 +1827,16 @@ private void visitThrow(SwitchStatement s,CuminRunError r)
 
 
 
-private void visit(SwitchCase s,ASTNode after)
+private CuminRunStatus visit(SwitchCase s,ASTNode after)
 {
    if (after == null && s.getExpression() != null) next_node = s.getExpression();
+
+   return null;
 }
 
 
 
-private void visit(SynchronizedStatement s,ASTNode after)
+private CuminRunStatus visit(SynchronizedStatement s,ASTNode after)
 {
    if (after == null) {
       next_node = s.getExpression();
@@ -1758,20 +1850,24 @@ private void visit(SynchronizedStatement s,ASTNode after)
       execution_stack.pop().getActualValue(execution_clock);
       // do syn end
     }
+
+   return null;
 }
 
 
-private void visit(ThrowStatement s,ASTNode after)
+private CuminRunStatus visit(ThrowStatement s,ASTNode after)
 {
    if (after == null) next_node = s.getExpression();
    else {
-      throw new CuminRunError(CuminRunError.Reason.EXCEPTION,execution_stack.pop());
+      return CuminRunStatus.Factory.createException(execution_stack.pop());
     }
+
+   return null;
 }
 
 
 
-private void visit(TryStatement s,ASTNode after)
+private CuminRunStatus visit(TryStatement s,ASTNode after)
 {
    if (after == null) {
       execution_stack.pushMarker(s,TryState.BODY);
@@ -1779,9 +1875,9 @@ private void visit(TryStatement s,ASTNode after)
     }
    else if (after == s.getFinally()) {
       Object o = execution_stack.popMarker(s);
-      if (o instanceof CuminRunError) {
-	 CuminRunError r = (CuminRunError) o;
-	 throw r;
+      if (o instanceof CuminRunStatus) {
+	 CuminRunStatus r = (CuminRunStatus) o;
+	 return r;
        }
     }
    else {
@@ -1795,15 +1891,17 @@ private void visit(TryStatement s,ASTNode after)
 	  }
        }
     }
+
+   return null;
 }
 
 
-private void visitThrow(TryStatement s,CuminRunError r)
+private CuminRunStatus visitThrow(TryStatement s,CuminRunStatus r)
 {
    Object sts = execution_stack.popUntil(s);
    assert sts != null;
 
-   if (r.getReason() == CuminRunError.Reason.EXCEPTION && sts == TryState.BODY) {
+   if (r.getReason() == Reason.EXCEPTION && sts == TryState.BODY) {
       JcompType etyp = r.getValue().getDataType(execution_clock);
       for (Object o : s.catchClauses()) {
 	 CatchClause cc = (CatchClause) o;
@@ -1813,7 +1911,7 @@ private void visitThrow(TryStatement s,CuminRunError r)
 	    execution_stack.pushMarker(s,TryState.CATCH);
 	    execution_stack.push(r.getValue());
 	    next_node = cc;
-	    return;
+	    return null;
 	  }
        }
     }
@@ -1823,15 +1921,15 @@ private void visitThrow(TryStatement s,CuminRunError r)
       if (b != null) {
 	 execution_stack.pushMarker(s,r);
 	 next_node = b;
-	 return;
+	 return null;
        }
     }
 
-   throw r;
+   return r;
 }
 
 
-private void visit(CatchClause s,ASTNode after)
+private CuminRunStatus visit(CatchClause s,ASTNode after)
 {
    if (after == null) {
       CashewValue rv = execution_stack.pop();
@@ -1841,11 +1939,13 @@ private void visit(CatchClause s,ASTNode after)
       cv.setValueAt(execution_clock,rv);
       next_node = s.getBody();
     }
+
+   return null;
 }
 
 
 
-private void visit(WhileStatement s,ASTNode after)
+private CuminRunStatus visit(WhileStatement s,ASTNode after)
 {
    if (after == null) next_node = s.getExpression();
    else if (after == s.getExpression()) {
@@ -1853,24 +1953,28 @@ private void visit(WhileStatement s,ASTNode after)
     }
    else if (after == s.getBody())
       next_node = s.getExpression();
+
+   return null;
 }
 
 
 
-private void visitThrow(WhileStatement s,CuminRunError r)
+private CuminRunStatus visitThrow(WhileStatement s,CuminRunStatus r)
 {
    String lbl = r.getMessage();
    switch (r.getReason()) {
       case BREAK :
-	 if (checkLabel(s,lbl)) return;
-	 else throw r;
+	 if (checkLabel(s,lbl)) return null;
+	 else return r;
       case CONTINUE :
 	 if (checkLabel(s,lbl)) next_node = s.getExpression();
-	 else throw r;
+	 else return r;
 	 break;
       default :
-	 throw r;
+	 return r;
     }
+
+   return null;
 }
 
 
@@ -1882,7 +1986,7 @@ private void visitThrow(WhileStatement s,CuminRunError r)
 /*										*/
 /********************************************************************************/
 
-private void visit(ArrayInitializer n,ASTNode after)
+private CuminRunStatus visit(ArrayInitializer n,ASTNode after)
 {
    int idx = 0;
    List<?> exprs = n.expressions();
@@ -1900,21 +2004,25 @@ private void visit(ArrayInitializer n,ASTNode after)
        }
       execution_stack.push(arrval);
     }
+
+   return null;
 }
 
 
 
-private void visit(FieldDeclaration n,ASTNode after)
+private CuminRunStatus visit(FieldDeclaration n,ASTNode after)
 {
    int idx = 0;
    List<?> frags = n.fragments();
    if (after != null) idx = frags.indexOf(after)+1;
    if (idx < frags.size()) next_node = (ASTNode) frags.get(idx);
+
+   return null;
 }
 
 
 
-private void visit(SingleVariableDeclaration n,ASTNode after)
+private CuminRunStatus visit(SingleVariableDeclaration n,ASTNode after) throws CuminRunException
 {
    if (after == null && n.getInitializer() != null) next_node = n.getInitializer();
    else {
@@ -1930,38 +2038,47 @@ private void visit(SingleVariableDeclaration n,ASTNode after)
 	 handleInitialization(js,n.getInitializer());
        }
     }
+
+   return null;
 }
 
 
 
-private void visit(VariableDeclarationExpression v,ASTNode after)
+private CuminRunStatus visit(VariableDeclarationExpression v,ASTNode after)
 {
    List<?> frags = v.fragments();
    int idx = 0;
    if (after != null) idx = frags.indexOf(after)+1;
    if (idx < frags.size()) next_node = (ASTNode) frags.get(idx);
+
+   return null;
 }
 
 
 
-private void visit(VariableDeclarationFragment n,ASTNode after)
+private CuminRunStatus visit(VariableDeclarationFragment n,ASTNode after)
+	throws CuminRunException
 {
    if (after == null && n.getInitializer() != null) next_node = n.getInitializer();
    else {
       JcompSymbol js = JcompAst.getDefinition(n.getName());
       handleInitialization(js,n.getInitializer());
     }
+
+   return null;
 }
 
 
 
 
-private void visit(VariableDeclarationStatement v,ASTNode after)
+private CuminRunStatus visit(VariableDeclarationStatement v,ASTNode after)
 {
    List<?> frags = v.fragments();
    int idx = 0;
    if (after != null) idx = frags.indexOf(after)+1;
    if (idx < frags.size()) next_node = (ASTNode) frags.get(idx);
+
+   return null;
 }
 
 
@@ -1986,7 +2103,7 @@ private boolean checkLabel(Statement s,String lbl)
 
 
 
-private void handleInitialization(JcompSymbol js,ASTNode init)
+private void handleInitialization(JcompSymbol js,ASTNode init) throws CuminRunException
 {
    CashewValue cv = null;
    if (init != null) {
@@ -2000,7 +2117,7 @@ private void handleInitialization(JcompSymbol js,ASTNode init)
 }
 
 
-private CashewValue handleFieldAccess(JcompSymbol sym)
+private CashewValue handleFieldAccess(JcompSymbol sym) throws CuminRunException
 {
    CashewValue obj = execution_stack.pop().getActualValue(execution_clock);
    if (sym.isStatic()) return handleStaticFieldAccess(sym);
@@ -2027,11 +2144,11 @@ private CashewValue handleThisAccess(JcompType base)
    if (base == null) return cv;
    JcompType thistyp = cv.getDataType(execution_clock);
    if (thistyp.isCompatibleWith(base)) return cv;
-   
+
    CashewValue cv1 = lookup_context.findReference(OUTER_NAME);
    cv1 = handleThisAccess(base,cv1);
    if (cv1 != null) return cv1;
-   
+
    return handleThisAccess(base,cv);
 }
 
@@ -2045,10 +2162,6655 @@ private CashewValue handleThisAccess(JcompType base,CashewValue cv)
    CashewValue cv1 = cv.getFieldValue(execution_clock,OUTER_NAME,false);
    return handleThisAccess(base,cv1);
 }
+
+
+
+
 }	// end of class CuminRunnerAst
 
 
 
 
 /* end of CuminRunnerAst.java */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

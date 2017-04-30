@@ -106,10 +106,19 @@ public int noteValue(CashewValue cv)
    // returns -id if new, id if old
    
    Integer v = values_output.get(cv);
-   if (v != null) return v;
+   if (v != null && v != 0) return v;
    v = id_counter.incrementAndGet();
    values_output.put(cv,v);
    return -v;
+}
+
+
+public boolean noteChecked(CashewValue cv)
+{
+   Integer v = values_output.get(cv);
+   if (v != null) return true;
+   values_output.put(cv,0);
+   return false;
 }
 
 

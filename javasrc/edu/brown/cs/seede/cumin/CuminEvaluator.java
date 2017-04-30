@@ -46,6 +46,7 @@ class CuminEvaluator implements CuminConstants, CashewConstants
 /********************************************************************************/
 
 static CashewValue evaluate(CashewClock cc,CuminOperator op,CashewValue v1,CashewValue v2)
+	throws CuminRunException
 {
    CashewValue rslt = null;
 
@@ -219,16 +220,16 @@ static CashewValue evaluate(CashewClock cc,CuminOperator op,CashewValue v1,Cashe
 	  }
 	 break;
       case MOD :
-         if (isdbl) {
-            double vx = v2.getNumber(cc).doubleValue();
+	 if (isdbl) {
+	    double vx = v2.getNumber(cc).doubleValue();
 	    double v0 = v1.getNumber(cc).doubleValue() % vx;
-            rslt = CashewValue.numericValue(DOUBLE_TYPE,v0);
-          }
-         else if (isflt) {
-            float vx = v2.getNumber(cc).floatValue();
+	    rslt = CashewValue.numericValue(DOUBLE_TYPE,v0);
+	  }
+	 else if (isflt) {
+	    float vx = v2.getNumber(cc).floatValue();
 	    float v0 = v1.getNumber(cc).floatValue() % vx;
-            rslt = CashewValue.numericValue(FLOAT_TYPE,v0);
-          }
+	    rslt = CashewValue.numericValue(FLOAT_TYPE,v0);
+	  }
 	 else if (islng) {
 	    long vx = v2.getNumber(cc).longValue();
 	    if (vx == 0) throwException(ARITH_EXC);
@@ -382,6 +383,7 @@ static CashewValue evaluate(CashewClock cc,CuminOperator op,CashewValue v1,Cashe
 
 
 static CashewValue evaluateAssign(CuminRunner cr,CuminOperator op,CashewValue v1,CashewValue v2,JcompType tgt)
+	throws CuminRunException
 {
    CashewClock cc = cr.getClock();
    CashewValue rslt = null;
@@ -439,6 +441,7 @@ static CashewValue evaluateAssign(CuminRunner cr,CuminOperator op,CashewValue v1
 
 
 static void assignValue(CuminRunner cr,CashewValue vr,CashewValue cv,JcompType tgt)
+	throws CuminRunException
 {
    CashewClock cc = cr.getClock();
    cv = castValue(cr,cv,tgt);
@@ -449,6 +452,7 @@ static void assignValue(CuminRunner cr,CashewValue vr,CashewValue cv,JcompType t
 
 
 static CashewValue castValue(CuminRunner cr,CashewValue cv,JcompType target)
+	throws CuminRunException
 {
    CashewClock cc = cr.getClock();
 
@@ -539,7 +543,7 @@ static CashewValue castValue(CuminRunner cr,CashewValue cv,JcompType target)
 
 
 
-static private CashewValue boxValue(CuminRunner cr,CashewValue cv)
+static private CashewValue boxValue(CuminRunner cr,CashewValue cv) throws CuminRunException
 {
    CashewClock cc = cr.getClock();
    JcompType typ = cv.getDataType(cc);
@@ -571,22 +575,29 @@ static private CashewValue boxValue(CuminRunner cr,CashewValue cv)
 
 
 
-private static CashewValue invokeConverter(CuminRunner runner,String cls,String mthd,String sgn,
-      CashewValue arg)
+private static CashewValue invokeConverter(CuminRunner runner,String cls,
+      String mthd,String sgn,CashewValue arg) throws CuminRunException
+
 {
    JcodeClass mcls = runner.getCodeFactory().findClass(cls);
    JcodeMethod mmthd = mcls.findMethod(mthd,sgn);
    List<CashewValue> args = new ArrayList<CashewValue>();
    args.add(arg);
    CuminRunner cr = runner.handleCall(runner.getClock(),mmthd,args,CallType.VIRTUAL);
+
+   CuminRunStatus sts = null;
    try {
-      cr.interpret(EvalType.RUN);
+      sts = cr.interpret(EvalType.RUN);
     }
-   catch (CuminRunError r) {
-      if (r.getReason() == CuminRunError.Reason.RETURN) {
-	 return r.getValue();
+   catch (CuminRunException r) {
+      if (r.getReason() == Reason.RETURN) {
+	 sts = r;
        }
       else throw r;
+    }
+
+   if (sts != null && sts.getReason() == Reason.RETURN) {
+      return sts.getValue();
     }
 
    return arg;
@@ -595,7 +606,7 @@ private static CashewValue invokeConverter(CuminRunner runner,String cls,String 
 
 
 private static CashewValue invokeEvalConverter(CuminRunner runner,String cls,String mthd,String sgn,
-      CashewValue arg)
+      CashewValue arg) throws CuminRunException
 {
    String cast = arg.getDataType(runner.getClock()).getName();
    String argv = arg.getString(runner.getClock());
@@ -754,18 +765,26 @@ static CashewValue evaluate(CashewClock cc,CuminOperator op,CashewValue v1)
 /*										*/
 /********************************************************************************/
 
-static void throwException(JcompType typ)
+static void throwException(JcompType typ) throws CuminRunException
 {
    CashewValue cv = CashewValue.objectValue(typ);
-   throw new CuminRunError(CuminRunError.Reason.EXCEPTION,cv);
+   throw new CuminRunException(Reason.EXCEPTION,typ.toString(),null,cv);
+}
+
+
+
+static CuminRunStatus returnException(JcompType typ)
+{
+   CashewValue cv = CashewValue.objectValue(typ);
+   return CuminRunStatus.Factory.createException(cv);
 }
 
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Array helper methods                                                    */
-/*                                                                              */
+/*										*/
+/*	Array helper methods							*/
+/*										*/
 /********************************************************************************/
 
 static CashewValue buildArray(CuminRunner runner,int idx,int [] bnds,JcompType base)
@@ -780,7 +799,7 @@ static CashewValue buildArray(CuminRunner runner,int idx,int [] bnds,JcompType b
 	 cv.setIndexValue(runner.getClock(),i,buildArray(runner,idx+1,bnds,base));
        }
     }
-   
+
    return cv;
 }
 
@@ -793,3 +812,76 @@ static CashewValue buildArray(CuminRunner runner,int idx,int [] bnds,JcompType b
 
 
 /* end of CuminEvaluator.java */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

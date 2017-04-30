@@ -457,15 +457,27 @@ public void resetValues(Set<CashewValue> done)
 
 
 
+public void addNestedContext(CashewContext ctx)
+{
+   nested_contexts.add(ctx);
+}
+
+
+
 /********************************************************************************/
 /*										*/
 /*	Output methods								*/
 /*										*/
 /********************************************************************************/
 
-public void addNestedContext(CashewContext ctx)
+public void checkChanged(CashewOutputContext outctx)
 {
-   nested_contexts.add(ctx);
+   for (CashewValue cv : context_map.values()) {
+      cv.checkChanged(outctx);
+    }
+   for (CashewContext ctx : nested_contexts) {
+      ctx.checkChanged(outctx);
+    }
 }
 
 

@@ -42,7 +42,7 @@ public class AcornLog implements AcornConstants
 /*										*/
 /********************************************************************************/
 
-enum LogLevel {
+public enum LogLevel {
    ERROR, WARNING, INFO, DEBUG
 }
 
@@ -56,11 +56,13 @@ enum LogLevel {
 private static LogLevel log_level;
 private static boolean	use_stderr;
 private static PrintWriter log_writer;
+private static boolean  trace_execution;
 
 static {
    use_stderr = false;
-   log_level = LogLevel.DEBUG;
+   log_level = LogLevel.INFO;
    log_writer = null;
+   trace_execution = false;
 }
 
 
@@ -143,6 +145,23 @@ public static void useStdErr(boolean fg)
    use_stderr = fg;
 }
 
+
+/********************************************************************************/
+/*                                                                              */
+/*      Execution trace entries                                                 */
+/*                                                                              */
+/********************************************************************************/
+
+public static boolean isTracing()               { return trace_execution; }
+
+public static void setTracing(boolean fg)       { trace_execution = fg; }
+
+public static void logT(Object msg)       
+{
+   if (trace_execution) {
+      logD("EXEC: " + msg);
+    }
+}
 
 
 /********************************************************************************/

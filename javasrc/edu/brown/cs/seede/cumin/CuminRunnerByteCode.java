@@ -113,45 +113,60 @@ int getNumArg() 			{ return num_arg; }
 
 
 
-@Override protected void interpretRun(CuminRunError r)
+@Override protected CuminRunStatus interpretRun(CuminRunStatus r)
 {
    if (r == null) {
-      checkSpecial();
+      CuminRunStatus sts = null;
+      try {
+	 sts = checkSpecial();
+       }
+      catch (CuminRunException e) {
+	 sts = e;
+       }
+      if (sts != null) return sts;
       current_instruction = 0;
       lookup_context.enableAccess(jcode_method.getDeclaringClass().getName());
     }
-   else if (r.getReason() == CuminRunError.Reason.RETURN) {
+   else if (r.getReason() == Reason.RETURN) {
       current_instruction = current_instruction+1;
       CashewValue rv = r.getValue();
       if (rv != null) execution_stack.push(rv);
     }
-   else if (r.getReason() == CuminRunError.Reason.EXCEPTION) {
-      handleException(r);
+   else if (r.getReason() == Reason.EXCEPTION) {
+      CuminRunStatus sts = handleException(r);
+      if (sts != null) return sts;
     }
 
    try {
       while (current_instruction >= 0) {
+	 CuminRunStatus sts = null;
 	 try {
-	    evaluateInstruction();
+	    sts = evaluateInstruction();
 	  }
-	 catch (CuminRunError cr) {
-	    if (cr.getReason() == CuminRunError.Reason.EXCEPTION) {
-	       handleException(cr);
+	 catch (CuminRunException cr) {
+	    sts = cr;
+	  }
+	 if (sts != null) {
+	    if (sts.getReason() == Reason.EXCEPTION) {
+	       sts = handleException(sts);
+	       if (sts != null) return sts;
 	     }
-	    else throw cr;
+	    else return sts;
 	  }
        }
     }
    catch (Throwable t) {
-       if (t instanceof CuminRunError) throw t;
-       CuminRunError re = new CuminRunError(t);
-       throw re;
+       if (t instanceof CuminRunException) return (CuminRunException) t;
+       CuminRunException re = CuminRunStatus.Factory.createError(t);
+       return re;
     }
+
+   return null;
 }
 
 
 
-private void handleException(CuminRunError cr)
+private CuminRunStatus handleException(CuminRunStatus cr)
 {
    CashewValue ev = cr.getValue();
    JcodeTryCatchBlock tcb = null;
@@ -169,12 +184,14 @@ private void handleException(CuminRunError cr)
 	  }
        }
     }
-   if (tcb == null) throw cr;
+   if (tcb == null) return cr;
    while (execution_stack.size() > 0) {
       execution_stack.pop();
     }
    execution_stack.push(ev);
    current_instruction = tcb.getHandler().getIndex();
+
+   return null;
 }
 
 
@@ -227,7 +244,7 @@ private void setupContext(List<CashewValue> args)
 /*										*/
 /********************************************************************************/
 
-private void evaluateInstruction() throws CuminRunError
+private CuminRunStatus evaluateInstruction() throws CuminRunException
 {
    CashewValue vstack = null;
    JcodeInstruction nextins = null;
@@ -236,20 +253,21 @@ private void evaluateInstruction() throws CuminRunError
 
    JcodeInstruction jins = jcode_method.getInstruction(current_instruction);
 
-   if (jins == null) 
-      throw new CuminRunError(CuminRunError.Reason.ERROR,"Native method " + jcode_method);
+   if (jins == null)
+      return CuminRunStatus.Factory.createError("Native method " + jcode_method);
    int lno = jins.getLineNumber();
    if (lno > 0 && lno != last_line) {
-      checkTimeout();
+      CuminRunStatus tsts = checkTimeout();
+      if (tsts != null) return tsts;
       last_line = lno;
       CashewValue lvl = CashewValue.numericValue(CashewConstants.INT_TYPE,lno);
       lookup_context.findReference(LINE_NAME).setValueAt(execution_clock,lvl);
       if (Thread.currentThread().isInterrupted()) {
-	 throw new CuminRunError(CuminRunError.Reason.STOPPED);
+	 return CuminRunStatus.Factory.createStopped();
        }
     }
 
-   AcornLog.logD("EXEC: " + jins);
+   AcornLog.logT(jins);
 
    switch (jins.getOpcode()) {
 
@@ -795,12 +813,12 @@ private void evaluateInstruction() throws CuminRunError
       case IRETURN :
       case LRETURN :
 	 v0 = execution_stack.pop().getActualValue(execution_clock);
-	 throw new CuminRunError(CuminRunError.Reason.RETURN,v0);
+	 return CuminRunStatus.Factory.createReturn(v0);
       case RETURN :
-	 throw new CuminRunError(CuminRunError.Reason.RETURN);
+	 return CuminRunStatus.Factory.createReturn();
       case ATHROW :
 	 v0 = execution_stack.pop().getActualValue(execution_clock);
-	 throw new CuminRunError(CuminRunError.Reason.EXCEPTION,v0);
+	 return CuminRunStatus.Factory.createException(v0);
 
       case ARRAYLENGTH :
 	 v0 = execution_stack.pop();
@@ -826,7 +844,7 @@ private void evaluateInstruction() throws CuminRunError
 	 v0 = execution_stack.peek(0);
 	 jty = convertType(jins.getTypeReference());
 	 if (!v0.getDataType(execution_clock).isCompatibleWith(jty)) {
-            CuminEvaluator.throwException(CAST_EXC);
+	    return CuminEvaluator.returnException(CAST_EXC);
 	  }
 	 break;
 
@@ -838,7 +856,7 @@ private void evaluateInstruction() throws CuminRunError
 	    nm = fld.getDeclaringClass().getName() + "." + fld.getName();
 	  }
 	 if (v0.isNull(execution_clock))
-	    CuminEvaluator.throwException(CashewConstants.NULL_PTR_EXC);
+	    return CuminEvaluator.returnException(CashewConstants.NULL_PTR_EXC);
 	 vstack = v0.getFieldValue(execution_clock,nm);
 	 vstack = vstack.getActualValue(execution_clock);
 	 break;
@@ -859,7 +877,7 @@ private void evaluateInstruction() throws CuminRunError
 	 String dcname = fld.getDeclaringClass().getName();
 	 nm = dcname + "." + fld.getName();
 	 if (v1.isNull(execution_clock))
-	    CuminEvaluator.throwException(CashewConstants.NULL_PTR_EXC);
+	    return CuminEvaluator.returnException(CashewConstants.NULL_PTR_EXC);
 	 v1.setFieldValue(execution_clock,nm,v0);
 	 break;
       case PUTSTATIC :
@@ -876,20 +894,15 @@ private void evaluateInstruction() throws CuminRunError
 	 break;
 
       case INVOKEDYNAMIC :
-	 handleCall(jins.getMethodReference(),CallType.DYNAMIC);
-	 break;
+	 return handleCall(jins.getMethodReference(),CallType.DYNAMIC);
       case INVOKEINTERFACE :
-	 handleCall(jins.getMethodReference(),CallType.INTERFACE);
-	 break;
+	 return handleCall(jins.getMethodReference(),CallType.INTERFACE);
       case INVOKESPECIAL :
-	 handleCall(jins.getMethodReference(),CallType.SPECIAL);
-	 break;
+	 return handleCall(jins.getMethodReference(),CallType.SPECIAL);
       case INVOKESTATIC :
-	 handleCall(jins.getMethodReference(),CallType.STATIC);
-	 break;
+	 return handleCall(jins.getMethodReference(),CallType.STATIC);
       case INVOKEVIRTUAL :
-	 handleCall(jins.getMethodReference(),CallType.VIRTUAL);
-	 break;
+	 return handleCall(jins.getMethodReference(),CallType.VIRTUAL);
 
       case JSR :
 	 execution_stack.pushMarker(jins,next);
@@ -934,15 +947,18 @@ private void evaluateInstruction() throws CuminRunError
 
       default :
 	 AcornLog.logE("Unknown instruction: " + jins);
-	 throw new CuminRunError(CuminRunError.Reason.ERROR,"Unknown instruction");
+	 throw CuminRunStatus.Factory.createError("Unknown instruction");
     }
 
    if (vstack != null) {
-      AcornLog.logD("RESULT: " + vstack.getString(execution_clock,0,true));
+      if (AcornLog.isTracing())
+	 AcornLog.logD("RESULT: " + vstack.getString(execution_clock,0,true));
       execution_stack.push(vstack);
     }
    if (nextins != null) next = nextins.getIndex();
    current_instruction = next;
+
+   return null;
 }
 
 
@@ -954,10 +970,7 @@ private void evaluateInstruction() throws CuminRunError
 /*										*/
 /********************************************************************************/
 
-
-
-
-private void handleCall(JcodeMethod method,CallType cty)
+private CuminRunStatus handleCall(JcodeMethod method,CallType cty)
 {
   int act = method.getNumArguments();
   if (!method.isStatic()) ++act;
@@ -969,15 +982,9 @@ private void handleCall(JcodeMethod method,CallType cty)
   Collections.reverse(args);
 
   CuminRunner cr = handleCall(execution_clock,method,args,cty);
-  throw new CuminRunError(cr);
+
+  return CuminRunStatus.Factory.createCall(cr);
 }
-
-
-
-
-
-
-
 
 
 
@@ -987,56 +994,58 @@ private void handleCall(JcodeMethod method,CallType cty)
 /*										*/
 /********************************************************************************/
 
-private void checkSpecial()
+private CuminRunStatus checkSpecial() throws CuminRunException
 {
    String cls = jcode_method.getDeclaringClass().getName();
+
+   CuminRunStatus sts = null;
 
    switch (cls) {
       case "java.lang.String" :
 	 CuminDirectEvaluation cde = new CuminDirectEvaluation(this);
-	 cde.checkStringMethods();
+	 sts = cde.checkStringMethods();
 	 break;
       case "java.lang.StrictMath" :
       case "java.lang.Math" :
 	 cde = new CuminDirectEvaluation(this);
-	 cde.checkMathMethods();
+	 sts = cde.checkMathMethods();
 	 break;
       case "java.lang.Runtime" :
 	 cde = new CuminDirectEvaluation(this);
-	 cde.checkRuntimeMethods();
+	 sts = cde.checkRuntimeMethods();
 	 break;
       case "java.lang.Float" :
 	 cde = new CuminDirectEvaluation(this);
-	 cde.checkFloatMethods();
+	 sts = cde.checkFloatMethods();
 	 break;
       case "java.lang.Double" :
 	 cde = new CuminDirectEvaluation(this);
-	 cde.checkDoubleMethods();
+	 sts = cde.checkDoubleMethods();
 	 break;
       case "java.lang.ClassLoader" :
 	 // handle class loader methods
 	 break;
       case "java.lang.Class" :
-         cde = new CuminDirectEvaluation(this);
-         cde.checkClassMethods();
+	 cde = new CuminDirectEvaluation(this);
+	 sts = cde.checkClassMethods();
 	 break;
       case "java.lang.Object" :
 	 cde = new CuminDirectEvaluation(this);
-	 cde.checkObjectMethods();
+	 sts = cde.checkObjectMethods();
 	 break;
       case "java.lang.System" :
 	 cde = new CuminDirectEvaluation(this);
-	 cde.checkSystemMethods();
+	 sts = cde.checkSystemMethods();
 	 break;
       case "java.lang.Thread" :
 	 cde = new CuminDirectEvaluation(this);
-	 cde.checkThreadMethods();
+	 sts = cde.checkThreadMethods();
 	 break;
       case "java.lang.Throwable" :
 	 cde = new CuminDirectEvaluation(this);
-	 cde.checkThrowableMethods();
+	 sts = cde.checkThrowableMethods();
 	 break;
-         
+
       case "java.io.Console" :
       case "java.io.FileDescriptor" :
       case "java.io.ObjectInputStream" :
@@ -1047,46 +1056,48 @@ private void checkSpecial()
       case "java.nio.file.Files" :
 	 // TODO: handle other IO methods
 	 break;
-         
+
       case "java.io.File" :
 	 CuminIOEvaluator cie = new CuminIOEvaluator(this);
-	 cie.checkFileMethods();
+	 sts = cie.checkFileMethods();
 	 break;
       case "java.io.FileOutputStream" :
 	 cie = new CuminIOEvaluator(this);
-	 cie.checkOutputStreamMethods();
+	 sts = cie.checkOutputStreamMethods();
 	 break;
       case "java.io.FileInputStraem" :
-         cie = new CuminIOEvaluator(this);
-         cie.checkInputStreamMethods();
-         break;
-         
+	 cie = new CuminIOEvaluator(this);
+	 sts = cie.checkInputStreamMethods();
+	 break;
+
       case "sun.misc.FloatingDecimal" :
 	 cde = new CuminDirectEvaluation(this);
-	 cde.checkFloatingDecimalMehtods();
+	 sts = cde.checkFloatingDecimalMehtods();
 	 break;      // also want to handle Random, I/O methods
       case "javax.swing.SwingUtilities" :
-         cde = new CuminDirectEvaluation(this);
-         cde.checkSwingUtilityMethods(); 
-         break;
+	 cde = new CuminDirectEvaluation(this);
+	 sts = cde.checkSwingUtilityMethods();
+	 break;
       case "java.lang.reflect.Array" :
-         cde = new CuminDirectEvaluation(this);
-         cde.checkReflectArrayMethods();
-         break;
+	 cde = new CuminDirectEvaluation(this);
+	 sts = cde.checkReflectArrayMethods();
+	 break;
       case "java.security.AccessController" :
-         cde = new CuminDirectEvaluation(this);
-         cde.checkAccessControllerMethods();
-         break;
-         
+	 cde = new CuminDirectEvaluation(this);
+	 sts = cde.checkAccessControllerMethods();
+	 break;
+
       case "edu.brown.cs.seede.poppy.PoppyGraphics" :
-         CuminGraphicsEvaluator cge = new CuminGraphicsEvaluator(this);
-         cge.checkPoppyGraphics();
-         break;
+	 CuminGraphicsEvaluator cge = new CuminGraphicsEvaluator(this);
+	 sts = cge.checkPoppyGraphics();
+	 break;
       case "sun.awt.SunGraphicsCallback" :
-         cge = new CuminGraphicsEvaluator(this);
-         cge.checkGraphicsCallback();
-         break;
+	 cge = new CuminGraphicsEvaluator(this);
+	 sts = cge.checkGraphicsCallback();
+	 break;
     }
+
+   return sts;
 }
 
 
