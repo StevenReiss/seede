@@ -248,6 +248,7 @@ public static String getFileData(FileInputStream fis)
 
 
 
+
 /********************************************************************************/
 /*										*/
 /*	Value to return with additional information				*/
@@ -267,6 +268,25 @@ public static class Return {
     }
 
 }	// end of inner class Return
+
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Other helper routines                                                   */
+/*                                                                              */
+/********************************************************************************/
+
+public static ClassLoader getClassLoaderUsingPoppy(String cls)
+{
+   try {
+      Class<?> cl = Class.forName(cls);
+      return cl.getClassLoader();
+    }
+   catch (ClassNotFoundException e) { }
+   return null;
+}
 
 
 

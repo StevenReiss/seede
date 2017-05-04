@@ -1104,7 +1104,7 @@ private CuminRunStatus visit(ParenthesizedExpression v,ASTNode after)
 
 
 
-private CuminRunStatus visit(PostfixExpression v,ASTNode after)
+private CuminRunStatus visit(PostfixExpression v,ASTNode after) throws CuminRunException
 {
    if (after == null) next_node = v.getOperand();
    else {
@@ -1119,6 +1119,7 @@ private CuminRunStatus visit(PostfixExpression v,ASTNode after)
 
 
 private CuminRunStatus visit(PrefixExpression v,ASTNode after)
+        throws CuminRunException
 {
    if (after == null) next_node = v.getOperand();
    else {
@@ -1752,15 +1753,23 @@ private CuminRunStatus visit(SwitchStatement s,ASTNode after)
    if (after != null && after instanceof SwitchCase) {
       CashewValue cv = execution_stack.pop();
       CashewValue sv = execution_stack.pop();
-      // compare cv and sv correctly here
+      boolean match = (cv == sv);
+      if (!match && sv.getDataType(getClock()) == STRING_TYPE) {
+         String s1 = sv.getString(getClock());
+         String s2 = cv.getString(getClock());
+         match = s1.equals(s2);
+       }
       int idx = stmts.indexOf(after) + 1;
-      if (cv == sv) {
+      if (match) {
+         // execute first statement after switch case
 	 while (idx < stmts.size()) {
 	    Statement stmt = (Statement) stmts.get(idx);
-	    if (stmt instanceof SwitchCase) continue;
-	    next_node = stmt;
-	    break;
-	  }
+            if (stmt instanceof SwitchCase) ++idx;
+	    else {
+               next_node = stmt;
+               return null;
+             }
+          }
 	 return null;
        }
       execution_stack.push(sv);
@@ -1768,6 +1777,7 @@ private CuminRunStatus visit(SwitchStatement s,ASTNode after)
    if (after == s.getExpression() || after instanceof SwitchCase) {
       int idx = 0;
       if (after != s.getExpression()) idx = stmts.indexOf(after)+1;
+      // find next case to check
       while (idx < stmts.size()) {
 	 Statement stmt = (Statement) stmts.get(idx);
 	 if (stmt instanceof SwitchCase) {
@@ -1777,8 +1787,10 @@ private CuminRunStatus visit(SwitchStatement s,ASTNode after)
 	       return null;
 	     }
 	  }
+         ++idx;
        }
       execution_stack.pop();
+      // find default if nothing matched
       idx = 0;
       while (idx < stmts.size()) {
 	 Statement stmt = (Statement) stmts.get(idx);
@@ -1788,22 +1800,30 @@ private CuminRunStatus visit(SwitchStatement s,ASTNode after)
 	       ++idx;
 	       while (idx < stmts.size()) {
 		  stmt = (Statement) stmts.get(idx);
-		  if (stmt instanceof SwitchCase) continue;
-		  next_node = stmt;
-		  return null;
+                  if (stmt instanceof SwitchCase) ++idx;
+		  else {
+                     next_node = stmt;
+                     break;
+                   }
 		}
+               return null;
 	     }
 	  }
+         ++idx;
        }
       return null;
     }
 
+   // executing statements -- execute next statement in switch, ignore
+   //   SwitchCase elements
    int next = stmts.indexOf(after)+1;
    while (next < stmts.size()) {
       Statement ns = (Statement) stmts.get(next);
-      if (ns instanceof SwitchCase) continue;
-      next_node = ns;
-      return null;
+      if (ns instanceof SwitchCase) ++next;
+      else {
+         next_node = ns;
+         break;
+       }
     }
 
    return null;

@@ -1046,7 +1046,6 @@ private CuminRunStatus checkSpecial() throws CuminRunException
 	 sts = cde.checkThrowableMethods();
 	 break;
 
-      case "java.io.Console" :
       case "java.io.FileDescriptor" :
       case "java.io.ObjectInputStream" :
       case "java.io.ObjectOutputStream" :
@@ -1054,6 +1053,7 @@ private CuminRunStatus checkSpecial() throws CuminRunException
       case "java.nio.file.FileSystem" :
       case "java.nio.file.spi.FileSystemProvider" :
       case "java.nio.file.Files" :
+      case "sun.nio.cs.FastCharsetProvider" :
 	 // TODO: handle other IO methods
 	 break;
 
@@ -1069,7 +1069,19 @@ private CuminRunStatus checkSpecial() throws CuminRunException
 	 cie = new CuminIOEvaluator(this);
 	 sts = cie.checkInputStreamMethods();
 	 break;
-
+      case "java.io.Console" :
+         cie = new CuminIOEvaluator(this);
+	 sts = cie.checkConsoleMethods();
+	 break;
+      case "java.io.PrintStream" :
+         cie = new CuminIOEvaluator(this);
+         sts  = cie.checkPrintMethods("java.io.PrintStream");
+         break;
+      case "java.io.PrintWriter" :
+         cie = new CuminIOEvaluator(this);
+         sts  = cie.checkPrintMethods("java.io.PrintWriter");
+         break;
+         
       case "sun.misc.FloatingDecimal" :
 	 cde = new CuminDirectEvaluation(this);
 	 sts = cde.checkFloatingDecimalMehtods();
@@ -1095,6 +1107,9 @@ private CuminRunStatus checkSpecial() throws CuminRunException
 	 cge = new CuminGraphicsEvaluator(this);
 	 sts = cge.checkGraphicsCallback();
 	 break;
+         
+      case "sun.misc.Unsafe" :
+         break;
     }
 
    return sts;

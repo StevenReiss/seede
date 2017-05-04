@@ -165,9 +165,11 @@ private class WaitForExit extends Thread {
 
 void noteFileChanged(SesameFile sf)
 {
+   AcornLog.logD("MASTER: begin note changed");
    for (SesameSession ss : session_map.values()) {
       ss.noteFileChanged(sf);
     }
+   AcornLog.logD("MASTER: end note changed");
 }
 
 /********************************************************************************/
@@ -200,7 +202,12 @@ void sendCommand(String cmd,CommandArgs args,String cnts,MintReply rply)
    xw.close();
 
    AcornLog.logD("Send to Bubbles: " + msg);
-   sendMessage(msg,rply,MintConstants.MINT_MSG_FIRST_REPLY);
+   if (rply != null) {
+      sendMessage(msg,rply,MintConstants.MINT_MSG_FIRST_REPLY);
+    }
+   else {
+      sendMessage(msg,null,MintConstants.MINT_MSG_NO_REPLY);
+    }
 }
 
 
@@ -243,11 +250,15 @@ private void handleEdit(MintMessage msg,String bid,File file,int len,int offset,
       return;
     }
    
+   AcornLog.logD("MASTER: Begin edit");
+   
    SesameFile sf = sesame_control.getFileManager().handleEdit(file,len,offset,complete,txt);
    
    msg.replyTo("<OK/>");
    
-   sesame_control.noteFileChanged(sf);
+   if (sf != null) sesame_control.noteFileChanged(sf);
+   
+   AcornLog.logD("MASTER: End edit");
 }
 
 

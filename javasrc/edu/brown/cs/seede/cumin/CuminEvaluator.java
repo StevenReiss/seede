@@ -56,6 +56,29 @@ static CashewValue evaluate(CashewClock cc,CuminOperator op,CashewValue v1,Cashe
    JcompType t1 = v1.getDataType(cc);
    JcompType t2 = v2.getDataType(cc);
    boolean isstr = t1 == STRING_TYPE || t2 == STRING_TYPE;
+   
+   boolean dounbox = false;
+   switch (op) {
+      case EQL :
+      case NEQ :
+         break;
+      case ADD :
+         if (!isstr) dounbox = true;
+         break;
+      default :
+         dounbox = true;
+         break;
+    }
+   
+   if (dounbox) {
+      if (t1.isClassType() || t2.isClassType()) {
+         v1 = unboxValue(cc,v1);
+         v2 = unboxValue(cc,v2);
+         t1 = v1.getDataType(cc);
+         t2 = v2.getDataType(cc);
+       }
+    }
+   
    boolean isflt = t1 == FLOAT_TYPE || t2 == FLOAT_TYPE;
    boolean isdbl = t1 == DOUBLE_TYPE || t2 == DOUBLE_TYPE;
    boolean islng = t1 == LONG_TYPE || t2 == LONG_TYPE;
@@ -135,8 +158,6 @@ static CashewValue evaluate(CashewClock cc,CuminOperator op,CashewValue v1,Cashe
 	    crslt = v1.getNumber(cc).intValue() == v2.getNumber(cc).intValue();
 	  }
 	 else {
-	    v1 = v1.getActualValue(cc);
-	    v2 = v2.getActualValue(cc);
 	    crslt = (v1 == v2);
 	    AcornLog.logD("COMPARE RESULT " + crslt + " " + v1 + " " + v2 + " " + (v1==v2));
 	  }
@@ -244,8 +265,6 @@ static CashewValue evaluate(CashewClock cc,CuminOperator op,CashewValue v1,Cashe
 	  }
 	 break;
       case MUL :
-	 AcornLog.logD("MUL " + v1 + " " + v2 + " " + t1 + " " + t2);
-
 	 if (isdbl) {
 	    double v0 = v1.getNumber(cc).doubleValue() * v2.getNumber(cc).doubleValue();
 	    rslt = CashewValue.numericValue(DOUBLE_TYPE,v0);
@@ -277,10 +296,7 @@ static CashewValue evaluate(CashewClock cc,CuminOperator op,CashewValue v1,Cashe
 	    crslt = v1.getNumber(cc).intValue() != v2.getNumber(cc).intValue();
 	  }
 	 else {
-	    v1 = v1.getActualValue(cc);
-	    v2 = v2.getActualValue(cc);
 	    crslt = (v1 != v2);
-	    AcornLog.logD("COMPARE RESULT " + crslt + " " + v1 + " " + v2 + " " + (v1!=v2));
 	  }
 	 break;
       case OR :
@@ -462,6 +478,8 @@ static CashewValue castValue(CuminRunner cr,CashewValue cv,JcompType target)
    if (styp == target) return cv;
 
    if (target.isNumericType()) {
+      cv = unboxValue(cc,cv);
+      styp = cv.getDataType(cc);
       if (styp == LONG_TYPE || styp == SHORT_TYPE || styp == BYTE_TYPE ||
 	    styp == INT_TYPE || styp == CHAR_TYPE) {
 	 cv = CashewValue.numericValue(target,cv.getNumber(cc).longValue());
@@ -469,35 +487,10 @@ static CashewValue castValue(CuminRunner cr,CashewValue cv,JcompType target)
       else if (styp == DOUBLE_TYPE || styp == FLOAT_TYPE) {
 	 cv = CashewValue.numericValue(target,cv.getNumber(cc).doubleValue());
        }
-      else {
-	 switch (styp.getName()) {
-	    case "java.lang.Long" :
-	       cv = invokeConverter(cr,"java.lang.Number","longValue","()L",cv);
-	       break;
-	    case "java.lang.Integer" :
-	       cv = invokeConverter(cr,"java.lang.Number","intValue","()I",cv);
-	       break;
-	    case "java.lang.Short" :
-	       cv = invokeConverter(cr,"java.lang.Number","shortValue","()S",cv);
-	       break;
-	    case "java.lang.Byte" :
-	       cv = invokeConverter(cr,"java.lang.Number","byteValue","()B",cv);
-	       break;
-	    case "java.lang.Character" :
-	       // TODO: construct Character object
-	       break;
-	    case "java.lang.Float" :
-	       cv = invokeConverter(cr,"java.lang.Number","floatValue","()F",cv);
-	       break;
-	    case "java.lang.Double" :
-	       cv = invokeConverter(cr,"java.lang.Number","doubleValue","()D",cv);
-	       break;
-	  }
-       }
     }
    else if (target.isBooleanType()) {
       if (styp.getName().equals("java.lang.Boolean")) {
-
+         cv = unboxValue(cc,cv);
        }
     }
    else if (styp.isNumericType()) {
@@ -538,6 +531,30 @@ static CashewValue castValue(CuminRunner cr,CashewValue cv,JcompType target)
       // other special casts here
     }
 
+   return cv;
+}
+
+
+static CashewValue unboxValue(CashewClock cc,CashewValue cv)
+        throws CuminRunException
+{
+   JcompType styp = cv.getDataType(cc);
+   if (styp == NULL_TYPE) throwException(CashewConstants.NULL_PTR_EXC);
+   if (styp.isNumericType() || styp.isBooleanType()) return cv;
+   
+   switch (styp.getName()) {
+      case "java.lang.Long" :
+      case "java.lang.Integer" :
+      case "java.lang.Short" :
+      case "java.lang.Byte" :
+      case "java.lang.Character" :
+      case "java.lang.Float" :
+      case "java.lang.Double" :
+      case "java.lang.Boolean" :
+         cv = cv.getFieldValue(cc,styp.getName() + ".value");
+         break;
+    }
+   
    return cv;
 }
 
@@ -620,8 +637,13 @@ private static CashewValue invokeEvalConverter(CuminRunner runner,String cls,Str
 
 
 static CashewValue evaluate(CashewClock cc,CuminOperator op,CashewValue v1)
+        throws CuminRunException
 {
    JcompType t1 = v1.getDataType(cc);
+   if (t1.isClassType()) {
+      v1 = unboxValue(cc,v1);
+      t1 = v1.getDataType(cc);
+    }
    boolean isflt = t1 == FLOAT_TYPE;
    boolean isdbl = t1 == DOUBLE_TYPE;
    boolean islng = t1 == LONG_TYPE;
@@ -802,6 +824,11 @@ static CashewValue buildArray(CuminRunner runner,int idx,int [] bnds,JcompType b
 
    return cv;
 }
+
+
+
+
+
 
 
 

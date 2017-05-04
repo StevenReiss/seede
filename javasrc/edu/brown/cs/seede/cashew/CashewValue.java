@@ -332,6 +332,32 @@ public static CashewValue arrayValue(char [] arr)
    return arrayValue(jty,arr.length,inits);
 }
 
+
+public static CashewValue arrayValue(byte [] arr)
+{
+   Map<Integer,Object> inits = new HashMap<Integer,Object>();
+   for (int i = 0; i < arr.length; ++i) {
+      inits.put(i,CashewValue.numericValue(BYTE_TYPE,arr[i]));
+    }
+   
+   JcompType jty = JcompType.createArrayType(BYTE_TYPE);
+   
+   return arrayValue(jty,arr.length,inits);
+}
+
+
+public static CashewValue arrayValue(String [] arr)
+{
+   Map<Integer,Object> inits = new HashMap<Integer,Object>();
+   for (int i = 0; i < arr.length; ++i) {
+      inits.put(i,CashewValue.numericValue(STRING_TYPE,arr[i]));
+    }
+   
+   JcompType jty = JcompType.createArrayType(STRING_TYPE);
+   
+   return arrayValue(jty,arr.length,inits);
+}
+
 public static CashewValue objectValue(JcompType otyp)
 {
    return objectValue(otyp,null,false);

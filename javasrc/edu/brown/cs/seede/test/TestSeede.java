@@ -149,8 +149,6 @@ public TestSeede()
 @BeforeClass public static void startSeede()
 {
    System.err.println("Setting Up Sesame");
-   AcornLog.setTracing(true);
-   AcornLog.setLogLevel(AcornLog.LogLevel.DEBUG);
 
    SeedeThread st = new SeedeThread();
    for (int i = 0; i < 100; ++i) {
@@ -289,7 +287,7 @@ private static class SeedeThread extends Thread {
     }
 
    @Override public void run() {
-      SesameMain.main(new String [] { "-m", MINT_NAME });
+      SesameMain.main(new String [] { "-m", MINT_NAME, "-T", "-D", "-L", "/u/spr/seede.log" });
     }
 
 }	// end of inner class SeedeThread

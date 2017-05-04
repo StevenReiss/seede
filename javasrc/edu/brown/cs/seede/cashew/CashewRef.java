@@ -141,7 +141,7 @@ CashewRef(CashewDeferredValue deferred)
 
    if (value_map == null) {
       value_map = new TreeMap<Long,CashewValue>();
-      value_map.put(last_update,last_value);
+      if (last_value != null) value_map.put(last_update,last_value);
     }
 
    if (tv >= last_update) {
@@ -333,7 +333,7 @@ private CashewValue getValueAt(CashewClock cc)
       return true;
     }
    for (CashewValue cv : value_map.values()) {
-      cv.checkChanged(outctx);
+      if (cv != null) cv.checkChanged(outctx);
     }
    return true;
 }

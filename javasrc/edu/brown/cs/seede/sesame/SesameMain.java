@@ -87,9 +87,6 @@ private SesameMain(String [] args)
    project_map = new HashMap<String,SesameProject>();
    jcomp_base = CashewConstants.JCOMP_BASE;
 
-   AcornLog.setLogFile(new File("/u/spr/seede.log"));
-   AcornLog.useStdErr(true);
-
    scanArgs(args);
 
    file_manager = new SesameFileManager(this);
@@ -116,6 +113,10 @@ private void scanArgs(String [] args)
           }
          else if (args[i].startsWith("-D")) {                           // -Debug
             AcornLog.setLogLevel(AcornLog.LogLevel.DEBUG);
+            AcornLog.useStdErr(true);
+          }
+         else if (args[i].startsWith("-L") && i+1 < args.length) {      // -L logfile
+            AcornLog.setLogFile(new File(args[++i]));
           }
 	 else badArgs();
        }

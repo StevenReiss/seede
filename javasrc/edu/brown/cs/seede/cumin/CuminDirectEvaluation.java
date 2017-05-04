@@ -24,6 +24,8 @@
 
 package edu.brown.cs.seede.cumin;
 
+import java.io.UnsupportedEncodingException;
+
 import edu.brown.cs.ivy.jcomp.JcompType;
 import edu.brown.cs.seede.cashew.CashewValue;
 import edu.brown.cs.seede.cashew.CashewValueClass;
@@ -253,7 +255,7 @@ CuminRunStatus checkStringMethods() throws CuminRunException
 	    break;
 	 case "subSequence" :
 	 case "substring" :
-	    if (getNumArgs() == 1) {
+	    if (getNumArgs() == 2) {
 	       rslt = CashewValue.stringValue(thisstr.substring(getInt(1)));
 	     }
 	    else {
@@ -261,7 +263,7 @@ CuminRunStatus checkStringMethods() throws CuminRunException
 	     }
 	    break;
 	 case "toLowerCase" :
-	    if (getNumArgs() == 0) {
+	    if (getNumArgs() == 1) {
 	       rslt = CashewValue.stringValue(thisstr.toLowerCase());
 	     }
 	    else {
@@ -273,7 +275,7 @@ CuminRunStatus checkStringMethods() throws CuminRunException
 	    rslt = thisarg;
 	    break;
 	 case "toUpperCase" :
-	    if (getNumArgs() == 0) {
+	    if (getNumArgs() == 1) {
 	       rslt = CashewValue.stringValue(thisstr.toUpperCase());
 	     }
 	    else {
@@ -286,8 +288,24 @@ CuminRunStatus checkStringMethods() throws CuminRunException
 	    break;
 
 	 case "getBytes" :
+            byte [] bbuf = null;
+            if (getNumArgs() == 1) {
+               bbuf = thisstr.getBytes();
+             }
+            else if (getNumArgs() == 2 && getDataType(1) == STRING_TYPE) {
+               String cset = getString(1);
+               try {
+                  bbuf = thisstr.getBytes(cset);
+                }
+               catch (UnsupportedEncodingException e) {
+                  CuminEvaluator.throwException(UNSUP_ENC_EXC);
+                }
+             }
+            if (bbuf == null) return null;
+            rslt = CashewValue.arrayValue(bbuf);
+            break;
+            
 	 case "intern":
-	 case "split" :
 	    return null;
 
 	 case "getChars" :
@@ -301,6 +319,17 @@ CuminRunStatus checkStringMethods() throws CuminRunException
 	     }
 	    break;
 
+         case "split" :
+            String [] sarr = null;
+            if (getNumArgs() == 2) {
+               sarr = thisstr.split(getString(1));
+             }
+            else {
+               sarr = thisstr.split(getString(1),getInt(2));
+             }
+            rslt = CashewValue.arrayValue(sarr);
+            break;
+            
 	 case "toCharArray" :
 	    rslt = CashewValue.arrayValue(thisstr.toCharArray());
 	    break;
@@ -839,6 +868,14 @@ CuminRunStatus checkClassMethods()
 	 case "getName" :
 	    rslt = CashewValue.stringValue(thistype.getName());
 	    break;
+         case "getClassLoader" :
+         case "getClassLoader0" :
+            exec_runner.ensureLoaded("edu.brown.cs.seede.poppy.PoppyValue");
+            String expr = "edu.brown.cs.seede.poppy.PoppyValue.getClassLoaderUsingPoppy(\"" +
+                thistype.getName() + "\")";
+            rslt = exec_runner.getLookupContext().evaluate(expr);
+            break;
+            
 	 default :
 	    AcornLog.logE("Unknown call to java.lang.Class." + getMethod());
 	    return null;

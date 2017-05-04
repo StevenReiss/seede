@@ -200,6 +200,9 @@ CashewValueArray(JcompType jt,int dim,Map<Integer,Object> inits,boolean caninit)
    if (rvl > 0) {
       xw.field("REF",true);
     }
+   else if (oref != 0) {
+      xw.field("OREF",oref);
+    }
    else {
       if (oref != 0) xw.field("OREF",oref);
       xw.field("SIZE",dim_size);

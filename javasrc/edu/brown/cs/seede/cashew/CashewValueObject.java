@@ -266,6 +266,9 @@ public CashewValueObject cloneObject(CashewClock cc)
    if (rvl > 0) {
       xw.field("REF",true);
     }
+   else if (oref != 0) {
+      xw.field("OREF",oref);
+    }
    else {
       if (oref != 0) xw.field("OREF",oref);
       for (Map.Entry<String,CashewRef> ent : field_values.entrySet()) {

@@ -188,10 +188,12 @@ void executionUnlock()
 
 boolean noteFileChanged(SesameFile sf,boolean force)
 {
+   if (!force && !active_files.contains(sf)) return false;
+   
    project_lock.writeLock().lock();
    try {
       if (force || active_files.contains(sf)) {
-	 changed_files.add(sf);
+	 if (sf != null) changed_files.add(sf);
 	 return true;
        }
     }

@@ -133,26 +133,26 @@ String getAnyThread()
       SesameValueData val = valmap.get(psym.getName());
       val = getUniqueValue(val);
       if (val != null) {
-         CashewValue argval = val.getCashewValue();
-         JcompType jtyp = argval.getDataType(null);
-         // need to check that 'this' is  compatible with COMPONENT
-         
-         if (jtyp.isCompatibleWith(CashewConstants.GRAPHICS2D_TYPE)) {
-            if (!jtyp.getName().contains("PoppyGraphics")) {
-               String gname = "MAIN_" + loc.getThreadName();
-               getProject().getJcodeFactory().findClass("edu.brown.cs.seede.poppy.PoppyGraphics");
-               String expr = "edu.brown.cs.seede.poppy.PoppyGraphics.computeGraphics1(";
-               expr += "this,";
-               expr += psym.getName() +  ",\"" + gname + "\")";
-               SesameValueData nval = evaluateData(expr,loc.getThread());
-               if (nval != null) {
-                  nval = getUniqueValue(nval);
-                  argval = nval.getCashewValue();
-                }
-             }
-          }
+	 CashewValue argval = val.getCashewValue();
+	 JcompType jtyp = argval.getDataType(null);
+	 // need to check that 'this' is  compatible with COMPONENT
+	
+	 if (jtyp.isCompatibleWith(CashewConstants.GRAPHICS2D_TYPE)) {
+	    if (!jtyp.getName().contains("PoppyGraphics")) {
+	       String gname = "MAIN_" + loc.getThreadName();
+	       getProject().getJcodeFactory().findClass("edu.brown.cs.seede.poppy.PoppyGraphics");
+	       String expr = "edu.brown.cs.seede.poppy.PoppyGraphics.computeGraphics1(";
+	       expr += "this,";
+	       expr += psym.getName() +  ",\"" + gname + "\")";
+	       SesameValueData nval = evaluateData(expr,loc.getThread());
+	       if (nval != null) {
+		  nval = getUniqueValue(nval);
+		  argval = nval.getCashewValue();
+		}
+	     }
+	  }
 
-         args.add(argval);
+	 args.add(argval);
        }
     }
 
@@ -175,9 +175,9 @@ String getAnyThread()
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Evaluation methods                                                      */
-/*                                                                              */
+/*										*/
+/*	Evaluation methods							*/
+/*										*/
 /********************************************************************************/
 
 @Override void noteContinue(String launch,String thread)
@@ -186,7 +186,7 @@ String getAnyThread()
    if (thread != null) {
       if (!thread_ids.contains(thread)) return;
     }
-   
+
    value_cache.clearCache();
 }
 
@@ -211,12 +211,12 @@ String getAnyThread()
 
    SesameValueData svd0 = value_cache.lookup(thread0,expr);
    if (svd0 != null) return svd0;
-   
+
    String thread = thread0;
    if (thread0 == null) thread0 = getAnyThread();
    String frame = thread_frame.get(thread);
    CommandArgs args = new CommandArgs("THREAD",thread,
-	 "FRAME",frame,"BREAK",false,"EXPR",expr,
+	 "FRAME",frame,"BREAK",false,"EXPR",expr,"IMPLICIT",true,
 	 "LEVEL",3,"ARRAY",-1,"REPLYID",eid);
    args.put("SAVEID",eid);
    Element xml = getControl().getXmlReply("EVALUATE",getProject(),args,null,0);
@@ -243,7 +243,7 @@ String getAnyThread()
    String thread = getAnyThread();
    String frame = thread_frame.get(thread);
    CommandArgs args = new CommandArgs("THREAD",getAnyThread(),
-	 "FRAME",frame,"BREAK",false,"EXPR",expr,
+	 "FRAME",frame,"BREAK",false,"EXPR",expr,"IMPLICIT",true,
 	 "LEVEL",4,"REPLYID",eid);
    Element xml = getControl().getXmlReply("EVALUATE",getProject(),args,null,0);
    if (IvyXml.isElement(xml,"RESULT")) {
@@ -260,7 +260,7 @@ String getAnyThread()
 @Override void enableAccess(String type)
 {
    if (accessible_types.contains(type)) return;
-   
+
    String type1 = type.replace('$','.');
 
    //String expr1 = "java.lang.reflect.AccessibleObject.setAccessible(Class.forName(\"" + type + "\")";
@@ -280,15 +280,15 @@ String getAnyThread()
       Map<String,SesameValueData> maps = emaps.getValue();
       if (thread != null && !thread.equals(tid)) continue;
       for (Map.Entry<String,SesameValueData> ent : maps.entrySet()) {
-         String key = ent.getKey();
-         SesameValueData svd = ent.getValue();
-         String find = svd.findValue(cv,1);
-         if (find != null) {
-            return key + find;
-          }
+	 String key = ent.getKey();
+	 SesameValueData svd = ent.getValue();
+	 String find = svd.findValue(cv,1);
+	 if (find != null) {
+	    return key + find;
+	  }
        }
     }
-   
+
    return null;
 }
 
