@@ -454,7 +454,7 @@ protected JcompType getDataType()
 
 public Number getNumber(CashewClock cc)
 {
-   throw new Error("Illegal value conversion");
+   throw new Error("Illegal value conversion: " + this);
 }
 
 public Boolean getBoolean(CashewClock cc)
@@ -584,6 +584,11 @@ CashewValue lookupVariableName(String name)
    return val;
 }
 
+
+boolean sameValue(CashewValue cv)
+{
+   return cv == this;
+}
 
 
 

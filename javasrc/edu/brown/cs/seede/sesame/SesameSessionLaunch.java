@@ -136,7 +136,7 @@ String getAnyThread()
 	 CashewValue argval = val.getCashewValue();
 	 JcompType jtyp = argval.getDataType(null);
 	 // need to check that 'this' is  compatible with COMPONENT
-	
+
 	 if (jtyp.isCompatibleWith(CashewConstants.GRAPHICS2D_TYPE)) {
 	    if (!jtyp.getName().contains("PoppyGraphics")) {
 	       String gname = "MAIN_" + loc.getThreadName();
@@ -172,6 +172,17 @@ String getAnyThread()
       throw new SesameException("Illegal value",e);
     }
 }
+
+
+
+@Override void setInitialValue(String what,String thread,String expr)
+	throws SesameException
+{
+   CashewValue cv = evaluate(expr,thread);
+   if (cv == null) throw new SesameException("Evaluation failed");
+   value_cache.setInitialValue(what,cv);
+}
+
 
 
 /********************************************************************************/

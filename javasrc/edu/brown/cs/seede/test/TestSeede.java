@@ -213,7 +213,7 @@ private LaunchData startLaunch(String name)
 	 "REGISTER","TRUE","VMARG",dargs);
    MintDefaultReply rply = new MintDefaultReply();
    sendBubblesMessage("START",TEST_PROJECT,args,null,rply);
-   Element xml = rply.waitForXml();
+   Element xml = rply.waitForXml(20000);
    Element ldata = IvyXml.getChild(xml,"LAUNCH");
    Assert.assertNotNull(ldata);
    String launchid = IvyXml.getAttrString(ldata,"ID");

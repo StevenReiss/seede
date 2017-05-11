@@ -189,6 +189,11 @@ void noteContinue(String launch,String thread)			{ }
 
 void setInitialValue(String what,Element value) throws SesameException	   { }
 
+void setInitialValue(String what,String thread,String expr) throws SesameException 
+{
+   throw new SesameException("Initial expression value not implemented");
+}
+
 String getValueName(CashewValue cv,String thread)
 {
    return null;

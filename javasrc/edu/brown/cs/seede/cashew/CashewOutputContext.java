@@ -25,9 +25,7 @@
 package edu.brown.cs.seede.cashew;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import edu.brown.cs.ivy.xml.IvyXmlWriter;
@@ -46,7 +44,6 @@ public class CashewOutputContext implements CashewConstants
 
 private IvyXmlWriter xml_writer;
 private Map<CashewValue,Integer> values_output;
-private Set<String> fields_output;
 
 private static AtomicInteger id_counter = new AtomicInteger();
 
@@ -61,7 +58,6 @@ private static AtomicInteger id_counter = new AtomicInteger();
 public CashewOutputContext() 
 {
    values_output = new HashMap<CashewValue,Integer>();
-   fields_output = new HashSet<String>();
    xml_writer = new IvyXmlWriter();
 }
 
@@ -70,7 +66,6 @@ public CashewOutputContext()
 public CashewOutputContext(IvyXmlWriter xw)
 {
    values_output = new HashMap<CashewValue,Integer>();
-   fields_output = new HashSet<String>();
    xml_writer = xw;
 }
 
@@ -122,12 +117,7 @@ public boolean noteChecked(CashewValue cv)
 }
 
 
-public boolean noteField(String name)
-{
-   // return true if the field has been previously output
-   if (fields_output.add(name)) return false;
-   return true;
-}
+
 
 
 

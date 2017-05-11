@@ -273,7 +273,7 @@ private void continueLaunch(LaunchData ld)
 	 "PROCESS",ld.getProcessId(),"ACTION","RESUME");
    MintDefaultReply rply = new MintDefaultReply();
    sendBubblesMessage("DEBUGACTION",TEST_PROJECT,args,null,rply);
-   String x = rply.waitForString();
+   String x = rply.waitForString(10000);
    Assert.assertNotNull(x);
    String threadid = waitForStop();
    Assert.assertNotNull(threadid);

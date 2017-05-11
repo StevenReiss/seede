@@ -888,11 +888,17 @@ private CuminRunStatus visit(ArrayCreation v,ASTNode after)
     }
    CashewValue init = null;
    if (v.getInitializer() != null) init = execution_stack.pop();
-   AcornLog.logD("CREAT ARRAY " + jsize + " " + dims.size() + " " + init);
-   //TODO: what should we do here to actually create the array
-   // Need to know the size of the array to create, what dummy dims to
-   //	 use or ignore, etc.
-   // What are the java semantics for this?
+   int [] idims = new int[jsize];
+   for (int i = 0; i < jsize; ++i) {
+      idims[jsize-i-1] = execution_stack.pop().getNumber(execution_clock).intValue();
+    }
+   CashewValue cv = CuminEvaluator.buildArray(this,0,idims,base);
+   
+   if (init != null) {
+      // TODO: check that init has the right dimensions
+      execution_stack.push(init);
+    }
+   else execution_stack.push(cv);
 
    return null;
 }

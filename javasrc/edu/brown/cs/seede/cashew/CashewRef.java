@@ -314,6 +314,13 @@ private CashewValue getValueAt(CashewClock cc)
 }
 
 
+@Override boolean sameValue(CashewValue cv)
+{
+   if (value_map == null && last_value != null) 
+      return last_value.sameValue(cv);
+   
+   return false;
+}
 
 
 

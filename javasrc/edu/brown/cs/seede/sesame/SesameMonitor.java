@@ -256,6 +256,8 @@ private void handleEdit(MintMessage msg,String bid,File file,int len,int offset,
    
    msg.replyTo("<OK/>");
    
+   AcornLog.logD("MASTER: EDIT ACCEPTED");
+   
    if (sf != null) sesame_control.noteFileChanged(sf);
    
    AcornLog.logD("MASTER: End edit");
@@ -398,7 +400,14 @@ private void handleSetValue(String sid,Element xml) throws SesameException
 
    String var = IvyXml.getAttrString(xml,"VAR");
    Element val = IvyXml.getChild(xml,"VALUE");
-   ss.setInitialValue(var,val);
+   if (val != null) {
+      ss.setInitialValue(var,val);
+    }
+   else {
+      String thread = IvyXml.getTextElement(xml,"THREAD");
+      String expr = IvyXml.getTextElement(xml,"EXPR");
+      ss.setInitialValue(var,thread,expr);
+    }
 }
 
 
@@ -464,7 +473,6 @@ private class EclipseHandler implements MintHandler {
                   IvyXml.getChild(e,"MESSAGES"));
             break;
          case "EDIT" :
-            AcornLog.logD("Eclipse Message: " + msg.getText());
             String bid = IvyXml.getAttrString(e,"BID");
             if (!bid.equals(SOURCE_ID)) {
                msg.replyTo();

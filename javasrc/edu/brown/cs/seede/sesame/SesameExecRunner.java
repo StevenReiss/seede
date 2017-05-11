@@ -41,6 +41,7 @@ import edu.brown.cs.seede.acorn.AcornLog;
 import edu.brown.cs.seede.cashew.CashewContext;
 import edu.brown.cs.seede.cashew.CashewOutputContext;
 import edu.brown.cs.seede.cashew.CashewValue;
+import edu.brown.cs.seede.cashew.CashewValueObject;
 import edu.brown.cs.seede.cumin.CuminConstants;
 import edu.brown.cs.seede.cumin.CuminRunException;
 import edu.brown.cs.seede.cumin.CuminRunStatus;
@@ -268,10 +269,15 @@ private void report(long time)
 	 xw.begin("CONTENTS");
 	 xw.field("EXECTIME",time);
 	
+         boolean firsttime = true;
 	 for (Map.Entry<CuminRunner,CuminRunStatus> ent : run_status.entrySet()) {
 	    CuminRunner cr = ent.getKey();
 	    CuminRunStatus sts = ent.getValue();
-	    outputResult(xw,cr,sts);
+            if (firsttime) {
+               xw.field("TICKS",cr.getClock().getTimeValue());
+             }
+	    outputResult(xw,cr,sts,firsttime);
+            firsttime = false;
 	  }
 	
 	 for_session.getIOModel().outputXml(xw);
@@ -300,7 +306,7 @@ private void report(long time)
 
 
 
-private void outputResult(IvyXmlWriter xw,CuminRunner cr,CuminRunStatus sts)
+private void outputResult(IvyXmlWriter xw,CuminRunner cr,CuminRunStatus sts,boolean stats)
 {
    CashewOutputContext outctx = new CashewOutputContext(xw);
    CashewContext ctx = cr.getLookupContext();
@@ -335,6 +341,10 @@ private void outputResult(IvyXmlWriter xw,CuminRunner cr,CuminRunStatus sts)
    
    ctx.outputXml(outctx);
    xw.end("RUNNER");
+   
+   if (stats) {
+      CashewValueObject.outputStatics(xw,outctx);
+    }
 }
 
 

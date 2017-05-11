@@ -206,11 +206,23 @@ CashewValueArray(JcompType jt,int dim,Map<Integer,Object> inits,boolean caninit)
    else {
       if (oref != 0) xw.field("OREF",oref);
       xw.field("SIZE",dim_size);
+      CashewValue dfltval = createDefaultValue(getDataType().getBaseType());
+      int numdflt = 0;
       for (int i = 0; i < array_values.length; ++i) {
+         if (array_values[i].sameValue(dfltval)) {
+            ++numdflt;
+            continue;
+          }
 	 xw.begin("ELEMENT");
 	 xw.field("INDEX",i);
 	 array_values[i].outputXml(outctx);
 	 xw.end("ELEMENT");
+       }
+      if (numdflt != 0) {
+         xw.begin("ELEMENT");
+         xw.field("DEFAULT",true);
+         dfltval.outputXml(outctx);
+         xw.end("ELEMENT");
        }
     }
 }

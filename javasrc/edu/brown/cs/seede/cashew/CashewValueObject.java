@@ -95,7 +95,10 @@ CashewValueObject(JcompType jt,Map<String,Object> inits,boolean caninit)
 	 if (cr == null) cr = new CashewRef(cv,caninit);
 
 	 if (fsym.isStatic()) {
-	    if (!static_values.containsKey(key)) static_values.put(key,cr);
+	    if (!static_values.containsKey(key)) {
+               static_values.put(key,cr);
+               AcornLog.logD("Add static field " + key + " to " + getDataType().getName());
+             }
 	  }
 	 else field_values.put(key,cr);
        }
@@ -123,6 +126,10 @@ CashewValueObject(JcompType jt,Map<String,Object> inits,boolean caninit)
 {
    CashewRef ov = findFieldForName(nm,true);
    ov.setValueAt(cc,cv);
+   if (cc == null && new_fields != null) {
+      new_fields.remove(nm);
+      if (new_fields.isEmpty()) new_fields = null;
+    }
 
    return this;
 }
@@ -281,17 +288,21 @@ public CashewValueObject cloneObject(CashewClock cc)
             xw.end("FIELD");
           }
        }
-      for (Map.Entry<String,CashewRef> ent : static_values.entrySet()) {
-	 if (!outctx.noteField(ent.getKey())) {
-            if (!ent.getValue().isEmpty()) {
-               xw.begin("FIELD");
-               xw.field("NAME",ent.getKey());
-               ent.getValue().outputXml(outctx);
-               xw.end("FIELD");
-             }
-	  }
+    }
+}
+
+public static void outputStatics(IvyXmlWriter xw,CashewOutputContext outctx)
+{
+   xw.begin("STATICS");
+   for (Map.Entry<String,CashewRef> ent : static_values.entrySet()) {
+      if (!ent.getValue().isEmpty()) {
+         xw.begin("STATIC");
+         xw.field("NAME",ent.getKey());
+         ent.getValue().outputXml(outctx);
+         xw.end("STATIC");
        }
     }
+   xw.end("STATICS");
 }
 
 

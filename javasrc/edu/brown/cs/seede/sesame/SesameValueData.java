@@ -203,7 +203,6 @@ CashewValue getCashewValue()
 	       SesameValueData fsvd = sub_values.get(key);
 	       fsvd = sesame_session.getUniqueValue(fsvd);
 	       sets.put(fnm,fsvd);
-	       // inits.put(fnm,fsvd.getCashewValue());
 	     }
 	    else {
 	       DeferredLookup def = new DeferredLookup(fnm);

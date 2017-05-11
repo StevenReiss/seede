@@ -458,28 +458,42 @@ CuminRunStatus checkPrintMethods(String cls)
    CashewValue rslt = null;
    String ocls = cls;
    if (cls.equals("java.io.PrintStream")) ocls = "java.io.FilterOutputStream";
-    
+   String mnm = getMethod().getName();
+   
+   if (mnm.equals("flush") || mnm.equals("<init>")) return null;
+   boolean forceflush = false;
+   
    CashewValue thisarg = getValue(0);
    CashewValue fdval = thisarg.getFieldValue(getClock(),cls + ".autoFlush");
-   if (!fdval.getBoolean(getClock())) return null;
+   if (!fdval.getBoolean(getClock())) {
+      forceflush = true;
+    }
    CashewValue cv1 = thisarg.getFieldValue(getClock(),ocls + ".out");
    while (!cv1.getDataType(getClock()).getName().equals("java.io.FileOutputStream")) {
       String typ = cv1.getDataType(getClock()).getName();
+      String fld = "out";
       String nxt = null;
       switch (typ) {
+         case "java.io.PrintWriter" :
+             nxt = typ;
+             break;
+         case "java.io.FileWriter" :
+            nxt = "java.io.Writer";
+            fld = "lock";
+            break;
          case "java.io.BufferedOutputStream" :
             nxt = "java.io.FilterOutputStream";
             break;
          default : 
+            nxt = null;
             break;
        }
       if (nxt == null) return null;
-      cv1 = cv1.getFieldValue(getClock(),nxt + ".out",false);
+      cv1 = cv1.getFieldValue(getClock(),nxt + "." + fld,false);
       if (cv1 == null) return null;
     }
     
    String sfx = null;
-   String mnm = getMethod().getName();
    CashewInputOutputModel mdl = getContext().getIOModel();
    fdval = cv1.getFieldValue(getClock(),"java.io.FileOutputStream.fd");
    if (fdval.isNull(getClock())) return null;
@@ -497,13 +511,17 @@ CuminRunStatus checkPrintMethods(String cls)
     }
    
    String toout = null;
-   CashewValue argv = getValue(1);
+   CashewValue argv = null;
+   if (getNumArgs() > 1) argv = getValue(1);
    
    switch (mnm) {
       default : 
          return null;
          
       case "write" :
+         if (forceflush) {
+            exec_runner.executeCall(cls + ".flush",thisarg);
+          }
          if (cls.equals("java.io.PrintWriter") && getNumArgs() == 2 &&
                argv.getDataType(getClock()).getName().equals("java.lang.String")) {
             toout = argv.getString(getClock());
@@ -519,10 +537,14 @@ CuminRunStatus checkPrintMethods(String cls)
          break;
       case "println" :
       case "print" :
+         if (forceflush) {
+            exec_runner.executeCall(cls + ".flush",thisarg);
+          }
          if (mnm.equals("println")) 
             sfx = "\n";
-         if (getNumArgs() != 2) return null;
-         if (argv.isNull(getClock())) toout = "null";
+         if (getNumArgs() == 1) toout = "";
+         else if (getNumArgs() != 2) return null;
+         else if (argv.isNull(getClock())) toout = "null";
          else {
             switch (argv.getDataType(getClock()).getName()) {
                case "int" :

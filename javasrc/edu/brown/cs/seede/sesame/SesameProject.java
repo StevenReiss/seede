@@ -190,15 +190,17 @@ boolean noteFileChanged(SesameFile sf,boolean force)
 {
    if (!force && !active_files.contains(sf)) return false;
    
-   project_lock.writeLock().lock();
+   project_lock.readLock().lock();
    try {
       if (force || active_files.contains(sf)) {
-	 if (sf != null) changed_files.add(sf);
-	 return true;
+         synchronized (changed_files) {
+            if (sf != null) changed_files.add(sf);
+          }
+         return true;
        }
     }
    finally {
-      project_lock.writeLock().unlock();
+      project_lock.readLock().unlock();
     }
 
    return false;
@@ -207,16 +209,21 @@ boolean noteFileChanged(SesameFile sf,boolean force)
 
 void compileProject()
 {
-   if (!changed_files.isEmpty()) {
+   List<SesameFile> newfiles = null;
+   synchronized (changed_files) {
+      newfiles = new ArrayList<>(changed_files);
+      changed_files.clear();
+    }
+   
+   if (!newfiles.isEmpty()) {
       project_lock.writeLock().lock();
       try {
-	 for (SesameFile sf : changed_files) {
+	 for (SesameFile sf : newfiles) {
 	    sf.resetSemantics(this);
 	  }
 	 clearProject();
 	 getJcompProject();
 	 getTyper();
-	 changed_files.clear();
        }
       finally {
 	 project_lock.writeLock().unlock();
