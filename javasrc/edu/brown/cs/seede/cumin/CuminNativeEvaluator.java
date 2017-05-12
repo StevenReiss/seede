@@ -141,6 +141,31 @@ protected int [] getIntArray(int idx)
 }
 
 
+protected float [] getFloatArray(int idx)
+{
+   CashewValue cv = getContext().findReference(idx).getActualValue(getClock());
+   int dim = cv.getDimension(getClock());
+   float [] rslt = new float[dim];
+   for (int i = 0; i < dim; ++i) {
+      rslt[i] = cv.getIndexValue(getClock(),i).getNumber(getClock()).floatValue();
+    }
+   return rslt;
+}
+
+
+
+protected double [] getDoubleArray(int idx)
+{
+   CashewValue cv = getContext().findReference(idx).getActualValue(getClock());
+   int dim = cv.getDimension(getClock());
+   double [] rslt = new double[dim];
+   for (int i = 0; i < dim; ++i) {
+      rslt[i] = cv.getIndexValue(getClock(),i).getNumber(getClock()).doubleValue();
+    }
+   return rslt;
+}
+
+
 protected boolean getBoolean(int idx)
 {
    return getContext().findReference(idx).getBoolean(getClock());

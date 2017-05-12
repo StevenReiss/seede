@@ -578,6 +578,96 @@ CuminRunStatus checkPrintMethods(String cls)
 }
 
 
+
+/********************************************************************************/
+/*                                                                              */
+/*      Handle Object input/output streams                                      */
+/*                                                                              */
+/********************************************************************************/
+
+CuminRunStatus checkObjectStreamMethods()
+{
+   CashewValue rslt = null;
+   
+   if (getMethod().isStatic()) {
+      switch (getMethod().getName()) {
+         case "bytesToFloats" :
+            byte [] src = getByteArray(0);
+            int srcpos = getInt(1);
+            CashewValue dst = getValue(2);
+            int dstpos = getInt(3);
+            int nfloats = getInt(4);
+            for (int i = 0; i < nfloats; ++i) {
+               int v = ((src[srcpos+i*4] & 0xff) << 24) +
+                  ((src[srcpos+i*4+1] & 0xff) << 16) +
+                  ((src[srcpos+i*4+2] & 0xff) << 8) + 
+                  ((src[srcpos+i*4+3] & 0xff) << 0) ;
+               float fv = Float.intBitsToFloat(v);
+               CashewValue rv = CashewValue.numericValue(FLOAT_TYPE,fv);
+               dst.setIndexValue(getClock(),dstpos+i,rv);
+             }
+            break;
+         case "bytesToDoubles" :
+            src = getByteArray(0);
+            srcpos = getInt(1);
+            dst = getValue(2);
+            dstpos = getInt(3);
+            nfloats = getInt(4);
+            for (int i = 0; i < nfloats; ++i) {
+               long v = ((src[srcpos+i*8] & 0xff) << 56) +
+               ((src[srcpos+i*8+1] & 0xff) << 48) +
+               ((src[srcpos+i*8+2] & 0xff) << 40) + 
+               ((src[srcpos+i*8+3] & 0xff) << 32) +
+               ((src[srcpos+i*8+4] & 0xff) << 24) +
+               ((src[srcpos+i*8+5] & 0xff) << 16) +
+               ((src[srcpos+i*8+6] & 0xff) << 8) + 
+               ((src[srcpos+i*8+7] & 0xff) << 0) ;
+               double fv = Double.longBitsToDouble(v);
+               CashewValue rv = CashewValue.numericValue(FLOAT_TYPE,fv);
+               dst.setIndexValue(getClock(),dstpos+i,rv);
+             }
+            break;
+         case "flaotsToBytes" :
+            float [] fsrc = getFloatArray(0);
+            srcpos = getInt(1);
+            dst = getValue(2);
+            dstpos = getInt(3);
+            nfloats = getInt(4);
+            for (int i = 0; i < nfloats; ++i) {
+               int v = Float.floatToIntBits(fsrc[srcpos+i]);
+               for (int j = 0; j < 4; ++j) {
+                  CashewValue cv = CashewValue.numericValue(BYTE_TYPE,(v&0xff));
+                  dst.setIndexValue(getClock(),dstpos+i*4+(3-j),cv);
+                  v = v>>8;
+                }
+             }
+            break;
+         case "doublesToBytes" :
+            double [] dsrc = getDoubleArray(0);
+            srcpos = getInt(1);
+            dst = getValue(2);
+            dstpos = getInt(3);
+            nfloats = getInt(4);
+            for (int i = 0; i < nfloats; ++i) {
+               long v = Double.doubleToLongBits(dsrc[srcpos+i]);
+               for (int j = 0; j < 8; ++j) {
+                  CashewValue cv = CashewValue.numericValue(BYTE_TYPE,(v&0xff));
+                  dst.setIndexValue(getClock(),dstpos+i*8+(7-j),cv);
+                  v = v>>8;
+                }
+             }
+            break;
+         default :
+            return null;
+       }
+    }
+   else return null;
+   
+   return new CuminRunValue(Reason.RETURN,rslt); 
+}
+
+
+
 }	// end of class CuminIOEvaluator
 
 

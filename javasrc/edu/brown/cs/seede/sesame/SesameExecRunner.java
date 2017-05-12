@@ -268,6 +268,7 @@ private void report(long time)
 	 IvyXmlWriter xw = new IvyXmlWriter();
 	 xw.begin("CONTENTS");
 	 xw.field("EXECTIME",time);
+         xw.field("PROJECT",for_session.getProject().getName());
 	
          boolean firsttime = true;
 	 for (Map.Entry<CuminRunner,CuminRunStatus> ent : run_status.entrySet()) {

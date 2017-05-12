@@ -1047,8 +1047,6 @@ private CuminRunStatus checkSpecial() throws CuminRunException
 	 break;
 
       case "java.io.FileDescriptor" :
-      case "java.io.ObjectInputStream" :
-      case "java.io.ObjectOutputStream" :
       case "java.io.RandomAccessFile" :
       case "java.nio.file.FileSystem" :
       case "java.nio.file.spi.FileSystemProvider" :
@@ -1082,10 +1080,16 @@ private CuminRunStatus checkSpecial() throws CuminRunException
          sts  = cie.checkPrintMethods("java.io.PrintWriter");
          break;
          
+      case "java.io.ObjectOutputStream" :
+      case "java.io.ObjectInputStream" :
+         cie = new CuminIOEvaluator(this);
+         sts = cie.checkObjectStreamMethods();
+         break;
+         
       case "sun.misc.FloatingDecimal" :
 	 cde = new CuminDirectEvaluation(this);
 	 sts = cde.checkFloatingDecimalMehtods();
-	 break;      // also want to handle Random, I/O methods
+	 break;      
       case "javax.swing.SwingUtilities" :
 	 cde = new CuminDirectEvaluation(this);
 	 sts = cde.checkSwingUtilityMethods();
