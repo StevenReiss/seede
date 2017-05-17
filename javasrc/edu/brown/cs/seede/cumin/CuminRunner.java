@@ -103,6 +103,11 @@ public void ensureLoaded(String cls)
 
 
 
+public static void resetGraphics()
+{
+   CuminGraphicsEvaluator.resetGraphics();
+}
+
 
 /********************************************************************************/
 /*										*/
@@ -525,6 +530,9 @@ public void resetValues()
       cv.resetValues(done);
     }
 }
+
+
+
 
 /********************************************************************************/
 /*										*/

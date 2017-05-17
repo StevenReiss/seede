@@ -64,6 +64,20 @@ static {
 
 
 
+
+/********************************************************************************/
+/*                                                                              */
+/*      Static methods                                                          */
+/*                                                                              */
+/********************************************************************************/
+
+public static void resetGraphics()
+{
+   output_map.clear();
+}
+
+
+
 /********************************************************************************/
 /*										*/
 /*	Constructors								*/
@@ -92,6 +106,7 @@ CuminRunStatus checkPoppyGraphics()
    CashewValue thisarg = getValue(0);
    GraphicsOutput graphics = output_map.get(thisarg);
    if (graphics == null) {
+      AcornLog.logD("POPPY: create graphics");
       graphics = new GraphicsOutput(thisarg);
       output_map.put(thisarg,graphics);
     }
@@ -114,7 +129,7 @@ CuminRunStatus checkPoppyGraphics()
 	 break;
       case "finalReport" :
 	 return null;
-	
+
       case "drawArc" :
 	 createCommand(graphics,CommandType.DRAW_ARC);
 	 break;
@@ -189,7 +204,7 @@ CuminRunStatus checkPoppyGraphics()
       case "drawGlyphVector" :
 	 createCommand(graphics,CommandType.DRAW_GLPYH_VECTOR);
 	 break;
-	
+
       case "transform" :
 	 createCommand(graphics,CommandType.TRANSFORM);
 	 return null;
@@ -212,7 +227,7 @@ CuminRunStatus checkPoppyGraphics()
 	 if (!graphics.checkSkipTranslate())
 	    createCommand(graphics,CommandType.TRANSLATE);
 	 return null;
-	
+
       case "clipRect" :
 	 createCommand(graphics,CommandType.CLIP_RECT);
 	 return null;
@@ -225,7 +240,7 @@ CuminRunStatus checkPoppyGraphics()
       case "constrain" :
 	 createCommand(graphics,CommandType.CONSTRAIN);
 	 break;
-	
+
       case "setColor" :
       case "setPaint" :
       case "setPaintMode" :
@@ -343,6 +358,8 @@ private void createCommand(GraphicsOutput g,CommandType typ)
 private void createCommand(GraphicsOutput g,CommandType typ,int ign)
 {
    int act = getNumArgs() - ign;
+
+   AcornLog.logD("Begin command " + typ);
 
    g.addFields();
 
@@ -564,8 +581,7 @@ private class GraphicsOutput {
     }
 
 
-   private void clearCurrents()
-   {
+   private void clearCurrents() {
       current_clip = null;
       current_transform = null;
       current_fg = null;
@@ -606,9 +622,7 @@ private class GraphicsOutput {
        }
    }
 
-
-   private void addInitializations()
-   {
+   private void addInitializations() {
       IvyXmlWriter xw = getCommandList();
       if (current_transform != null) {
 	 xw.begin("DRAW");
@@ -638,6 +652,7 @@ private class GraphicsOutput {
       String fld1 = "edu.brown.cs.seede.poppy.PoppyGraphics." + fld;
       CashewValue fval = poppy_graphics.getFieldValue(getClock(),fld1);
       String nval = encodeField(fval);
+      // AcornLog.logD("Update Field " + fld + " " + cur + " " + nval);
       if (nval == null && cur == null) return cur;
       else if (nval != null && nval.equals(cur)) return cur;
       IvyXmlWriter xw = getCommandList();
