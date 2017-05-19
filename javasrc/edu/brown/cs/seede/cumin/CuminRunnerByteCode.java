@@ -1112,6 +1112,16 @@ private CuminRunStatus checkSpecial() throws CuminRunException
 	 sts = cge.checkGraphicsCallback();
 	 break;
          
+      case "java.util.concurrent.atomic.AtomicInteger" :
+      case "java.util.concurrent.atomic.AtomicLong" :
+         CuminConcurrentEvaluator cce = new CuminConcurrentEvaluator(this);
+         sts = cce.checkAtomicIntMethods();
+         break;
+      case "java.util.concurrent.atomic.AtomicBoolean" :
+         cce = new CuminConcurrentEvaluator(this);
+         sts = cce.checkAtomicBooleanMethods();
+         break;
+         
       case "sun.misc.Unsafe" :
          break;
     }

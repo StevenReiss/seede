@@ -377,6 +377,7 @@ private CuminRunStatus evalNode(ASTNode node,ASTNode afterchild) throws CuminRun
    
    JcompType jt = JcompAst.getExprType(node);
    if (jt != null && jt.isErrorType()) {
+      AcornLog.logD("COMPILER SEMANTIC ERROR " + node);
       return CuminRunStatus.Factory.createCompilerError();
     }
    else if ((node.getFlags() & ASTNode.MALFORMED) != 0) {
@@ -1175,15 +1176,31 @@ private CuminRunStatus visit(ClassInstanceCreation v, ASTNode after) throws Cumi
    JcompType rty = JcompAst.getJavaType(v.getType());
    JcompSymbol csym = JcompAst.getReference(v);
 
-   JcompType ctyp = csym.getType();
-   List<JcompType> atyps = ctyp.getComponents();
-
-   CashewValue rval = handleNew(rty);
    List<CashewValue> argv = new ArrayList<CashewValue>();
+   JcompType ctyp = csym.getType();
+   
+   List<JcompType> atyps = ctyp.getComponents();
+   CashewValue rval = handleNew(rty);
    for (int i = 0; i < args.size(); ++i) {
       CashewValue cv = execution_stack.pop();
       cv = cv.getActualValue(execution_clock);
-      JcompType argtyp = atyps.get(args.size()-1-i);
+      int atypct = args.size() - 1 - i;
+      if (ctyp.isVarArgs() && atypct >= atyps.size()) {
+         JcompType argtyp = atyps.get(atyps.size()-1);
+         int arrct = args.size() - atyps.size() + 1;
+         CashewValue arrv = CashewValue.arrayValue(argtyp,arrct);
+         for (int j = 0; j < arrct; ++j) {
+            if (j > 0) {
+               cv = execution_stack.pop();
+               cv = cv.getActualValue(execution_clock);
+               i++;
+               atypct--;
+             }
+            arrv.setIndexValue(getClock(),arrct-j-1,cv);
+          }
+         cv = arrv;
+       }
+      JcompType argtyp = atyps.get(atypct);
       CashewValue ncv = CuminEvaluator.castValue(this,cv,argtyp);
       if (ncv == null) {
 	 AcornLog.logD("Conversion problem " + cv + " " + argtyp + " " +

@@ -71,7 +71,7 @@ static {
 /*                                                                              */
 /********************************************************************************/
 
-public static void resetGraphics()
+static void resetGraphics()
 {
    output_map.clear();
 }

@@ -610,17 +610,17 @@ private static class RunnerThread extends Thread {
    @Override public void run() {
       CuminRunStatus sts = null;
       try {
-	 sts = cumin_runner.interpret(CuminConstants.EvalType.RUN);
+         sts = cumin_runner.interpret(CuminConstants.EvalType.RUN);
        }
       catch (CuminRunException r) {
-	 sts = r;
+         sts = r;
        }
       catch (Throwable t) {
-	 cumin_runner.getLookupContext().setEndTime(cumin_runner.getClock());
-	 AcornLog.logE("Problem running thread",t);
-	 sts = new CuminRunException(t);
+         cumin_runner.getLookupContext().setEndTime(cumin_runner.getClock());
+         AcornLog.logE("Problem running thread",t);
+         sts = new CuminRunException(t);
        }
-
+   
       exec_runner.setStatus(cumin_runner,sts);
     }
 

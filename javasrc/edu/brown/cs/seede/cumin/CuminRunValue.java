@@ -59,6 +59,15 @@ CuminRunValue(Reason r,CashewValue v)
 }
 
 
+CuminRunValue(Reason r,CashewValue v,String cnt)
+{
+   throw_reason = r;
+   associated_value = v;
+   call_value = null;
+   associated_id = cnt;
+}
+
+
 CuminRunValue(Reason r)
 {
    this(r,(CashewValue) null);
