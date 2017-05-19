@@ -1536,11 +1536,9 @@ private CuminRunStatus visitThrow(ForStatement s,CuminRunStatus r)
 	 else return r;
       case CONTINUE :
 	 if (checkLabel(s,lbl)) {
-	    if (s.getExpression() != null) next_node = s.getExpression();
-	    else next_node = s.getBody();
+            return visit(s,s.getBody());
 	  }
 	 else return r;
-	 break;
       default :
 	 return r;
     }

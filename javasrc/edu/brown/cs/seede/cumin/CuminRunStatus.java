@@ -91,7 +91,7 @@ public class Factory {
     }
 
    public static CuminRunStatus createContinue(String id) {
-      return new CuminRunValue(Reason.BREAK,id);
+      return new CuminRunValue(Reason.CONTINUE,id);
     }
 
    public static CuminRunStatus createTimeout() {
