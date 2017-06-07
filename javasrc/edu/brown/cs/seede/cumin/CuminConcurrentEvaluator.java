@@ -25,7 +25,6 @@
 package edu.brown.cs.seede.cumin;
 
 import edu.brown.cs.ivy.jcomp.JcompType;
-import edu.brown.cs.seede.acorn.AcornLog;
 import edu.brown.cs.seede.cashew.CashewValue;
 
 class CuminConcurrentEvaluator extends CuminNativeEvaluator

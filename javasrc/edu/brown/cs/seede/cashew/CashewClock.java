@@ -24,7 +24,7 @@
 
 package edu.brown.cs.seede.cashew;
 
-
+import java.util.concurrent.locks.ReentrantLock;
 
 public class CashewClock implements CashewConstants
 {
@@ -38,6 +38,8 @@ public class CashewClock implements CashewConstants
 
 private long            time_count;
 private long            max_time;
+private ReentrantLock   freeze_lock;
+
 
 
 /********************************************************************************/
@@ -50,6 +52,7 @@ public CashewClock()
 {
    time_count = 0;
    max_time = 0;
+   freeze_lock = new ReentrantLock();
 }
 
 
@@ -62,6 +65,8 @@ public CashewClock()
 
 public long tick()
 {
+   if (freeze_lock.isHeldByCurrentThread()) return time_count;
+   
    ++time_count;
    if (time_count > max_time) max_time = time_count;
    return time_count;
@@ -70,10 +75,20 @@ public long tick()
 
 public long getTimeValue()                      { return time_count; }
 
-public void setTime(long v) throws CashewException
+
+
+
+public synchronized void freezeTime()
 {
-   if (v > max_time || v < 0) throw new CashewException("Invalid time");
-   time_count = v;
+   freeze_lock.lock();
+}
+
+
+
+
+public void unfreezeTime()
+{
+   freeze_lock.unlock();
 }
 
 

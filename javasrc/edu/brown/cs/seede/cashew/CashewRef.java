@@ -286,7 +286,7 @@ private CashewValue getValueAt(CashewClock cc)
 {
    long tv = 0;
    if (cc == null) {
-      if (last_update >= 0) tv = last_update;
+      if (last_update >= 0) tv = last_update+1;
     }
    else tv = cc.getTimeValue();
 

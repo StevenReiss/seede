@@ -251,9 +251,22 @@ private void report(long time)
 {
    boolean empty = false;
    boolean error = false;
+   boolean complete = true;
    for (CuminRunStatus sts : run_status.values()) {
       if (sts == null || sts.getReason() == CuminConstants.Reason.STOPPED) empty = true;
-      if (sts != null && sts.getReason() == CuminConstants.Reason.ERROR) error = true;
+      else {
+         switch (sts.getReason()) {
+            case ERROR : 
+            case COMPILER_ERROR :
+               error = true;
+               break;
+            case RETURN :
+               break;
+            default :
+               complete = false;
+               break;
+          }
+       }
     }
 
    AcornLog.logD("MASTER: Start report " + reply_id + " " + empty + " " + error);
@@ -269,6 +282,8 @@ private void report(long time)
 	 xw.begin("CONTENTS");
 	 xw.field("EXECTIME",time);
 	 xw.field("PROJECT",for_session.getProject().getName());
+         xw.field("ERROR",error);
+         xw.field("COMPLETE",complete);
 
 	 boolean firsttime = true;
 	 for (Map.Entry<CuminRunner,CuminRunStatus> ent : run_status.entrySet()) {

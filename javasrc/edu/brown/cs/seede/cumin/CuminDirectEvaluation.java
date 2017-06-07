@@ -124,6 +124,10 @@ CuminRunStatus checkStringMethods() throws CuminRunException
 	 String temp = new String(getCharArray(1));
 	 cvs.setInitialValue(temp);
        }
+      else if (getNumArgs() == 3 && getDataType(1).getBaseType() == CHAR_TYPE) {        // char[],boolean
+	 String temp = new String(getCharArray(1));
+	 cvs.setInitialValue(temp);
+       }
       // handle various constructors
       else return null;
     }
@@ -313,10 +317,16 @@ CuminRunStatus checkStringMethods() throws CuminRunException
 	    int srcend = getInt(2);
 	    CashewValue carr = getArrayValue(3);
 	    int dstbegin = getInt(4);
-	    for (int i = srcbegin; i < srcend; ++i) {
-	       CashewValue charv = CashewValue.characterValue(CHAR_TYPE,thisstr.charAt(i));
-	       carr.setIndexValue(getClock(),dstbegin+i-srcbegin,charv);
-	     }
+            getClock().freezeTime();
+            try {
+               for (int i = srcbegin; i < srcend; ++i) {
+                  CashewValue charv = CashewValue.characterValue(CHAR_TYPE,thisstr.charAt(i));
+                  carr.setIndexValue(getClock(),dstbegin+i-srcbegin,charv);
+                }
+             }
+            finally {
+               getClock().unfreezeTime();
+             }
 	    break;
 
          case "split" :
@@ -773,18 +783,24 @@ private CuminRunStatus handleArrayCopy(CashewValue src,int spos,CashewValue dst,
    if (spos < 0 || dpos < 0 || len < 0 || spos+len > sdim || dpos+len > ddim)
       return CuminEvaluator.returnException(IDX_BNDS_EXC);
 
-   if (src == dst && spos < dpos) {
-      for (int i = len-1; i >= 0; --i) {
-	 CashewValue cv = src.getIndexValue(getClock(),spos+i);
-	 dst.setIndexValue(getClock(),dpos+i,cv.getActualValue(getClock()));
+   getClock().freezeTime();
+   try {
+      if (src == dst && spos < dpos) {
+         for (int i = len-1; i >= 0; --i) {
+            CashewValue cv = src.getIndexValue(getClock(),spos+i);
+            dst.setIndexValue(getClock(),dpos+i,cv.getActualValue(getClock()));
+          }
+       }
+      else {
+         for (int i = 0; i < len; ++i) {
+            CashewValue cv = src.getIndexValue(getClock(),spos+i);
+            // should type check the assignment here
+            dst.setIndexValue(getClock(),dpos+i,cv.getActualValue(getClock()));
+          }
        }
     }
-   else {
-      for (int i = 0; i < len; ++i) {
-	 CashewValue cv = src.getIndexValue(getClock(),spos+i);
-	 // should type check the assignment here
-	 dst.setIndexValue(getClock(),dpos+i,cv.getActualValue(getClock()));
-       }
+   finally {
+      getClock().unfreezeTime();
     }
 
    return null;

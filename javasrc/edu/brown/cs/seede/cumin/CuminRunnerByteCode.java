@@ -173,10 +173,11 @@ private CuminRunStatus handleException(CuminRunStatus cr)
    int len = 0;
    for (JcodeTryCatchBlock jtcb : jcode_method.getTryCatchBlocks()) {
       JcodeDataType jdt = jtcb.getException();
-      JcompType cdt = convertType(jdt);
-      if (cdt.isCompatibleWith(ev.getDataType(execution_clock))) {
-	 int sidx = tcb.getStart().getIndex();
-	 int eidx = tcb.getEnd().getIndex();
+      JcompType cdt = null;
+      if (jdt != null) cdt = convertType(jdt);
+      if (cdt == null || cdt.isCompatibleWith(ev.getDataType(execution_clock))) {
+	 int sidx = jtcb.getStart().getIndex();
+	 int eidx = jtcb.getEnd().getIndex();
 	 if (current_instruction >= sidx &&  current_instruction <= eidx) {
 	    if (tcb != null && len <= eidx - sidx) continue;
 	    tcb = jtcb;
@@ -813,10 +814,13 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException
       case IRETURN :
       case LRETURN :
 	 v0 = execution_stack.pop().getActualValue(execution_clock);
+         execution_clock.tick();
 	 return CuminRunStatus.Factory.createReturn(v0);
       case RETURN :
+         execution_clock.tick();
 	 return CuminRunStatus.Factory.createReturn();
       case ATHROW :
+         execution_clock.tick();
 	 v0 = execution_stack.pop().getActualValue(execution_clock);
 	 return CuminRunStatus.Factory.createException(v0);
 

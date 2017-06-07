@@ -268,6 +268,11 @@ public static CashewValue characterValue(JcompType t,char v)
 
 public static CashewValue stringValue(String s)
 {
+   if (s == null) {
+      CashewValueString vs = new CashewValueString("");
+      return vs;
+    }
+   
    synchronized (string_values) {
       CashewValueString vs = string_values.get(s);
       if (vs == null) {
@@ -782,6 +787,11 @@ private static class ValueNull extends CashewValue
     }
 
 }	// end of inner class ValueNull
+
+
+
+
+
 
 
 

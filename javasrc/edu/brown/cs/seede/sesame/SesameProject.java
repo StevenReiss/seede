@@ -267,6 +267,7 @@ synchronized void clearProject()
 
    int ct = Runtime.getRuntime().availableProcessors();
    ct = Math.max(1,ct/2);
+   // ct = 1;                   // for debugging only
    JcodeFactory jf = new JcodeFactory(ct);
    for (String s : class_paths) {
       jf.addToClassPath(s);

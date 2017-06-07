@@ -355,15 +355,31 @@ private static class LocalFinder extends ASTVisitor {
 
 private CuminRunStatus evalNode(ASTNode node,ASTNode afterchild) throws CuminRunException
 {
-   if (node instanceof Statement && afterchild == null) {
-      CompilationUnit cu = (CompilationUnit) node.getRoot();
-      int lno = cu.getLineNumber(node.getStartPosition());
-      if (lno != last_line && lno > 0) {
-	 CuminRunStatus sts = checkTimeout();
-	 if (sts != null) return sts;
-	 last_line = lno;
-	 CashewValue lvl = CashewValue.numericValue(CashewConstants.INT_TYPE,lno);
-	 lookup_context.findReference(LINE_NAME).setValueAt(execution_clock,lvl);
+   if (node instanceof Statement) {
+      boolean report = true;
+      if (afterchild != null) {
+         switch (node.getNodeType()) {
+            case ASTNode.FOR_STATEMENT :
+            case ASTNode.ENHANCED_FOR_STATEMENT :
+            case ASTNode.WHILE_STATEMENT :
+            case ASTNode.DO_STATEMENT :
+               report = true;
+               break;
+            default :
+               report = false;
+               break;
+          }
+       }
+      if (report) { 
+         CompilationUnit cu = (CompilationUnit) node.getRoot();
+         int lno = cu.getLineNumber(node.getStartPosition());
+         if (lno != last_line && lno > 0) {
+            CuminRunStatus sts = checkTimeout();
+            if (sts != null) return sts;
+            last_line = lno;
+            CashewValue lvl = CashewValue.numericValue(CashewConstants.INT_TYPE,lno);
+            lookup_context.findReference(LINE_NAME).setValueAt(execution_clock,lvl);
+          }
        }
       // check for breakpoint
       // check for step
@@ -384,7 +400,10 @@ private CuminRunStatus evalNode(ASTNode node,ASTNode afterchild) throws CuminRun
       return CuminRunStatus.Factory.createCompilerError();
     }
 
-   AcornLog.logT(node.getClass());
+   if (afterchild == null) 
+      AcornLog.logT(node.getClass());
+   else
+      AcornLog.logT("*" + node.getClass().getName());
 
    next_node = null;
    CuminRunStatus sts = null;
@@ -814,7 +833,17 @@ private CuminRunStatus visit(NumberLiteral v)
 	 execution_stack.push(CashewValue.numericValue(jt,dv));
 	 break;
       default :
-	 long lv = Long.parseLong(v.getToken());
+         String sv = v.getToken();
+         long lv = 0;
+         if (sv.startsWith("0x") && sv.length() > 2) {
+            sv = sv.substring(2);
+            lv = Long.parseLong(sv,16);
+          }
+         else if (sv.startsWith("0") && sv.length() > 1) {
+            sv = sv.substring(1);
+            lv = Long.parseLong(sv,8);
+          }
+	 else lv = Long.parseLong(v.getToken());
 	 execution_stack.push(CashewValue.numericValue(jt,lv));
 	 break;
     }
@@ -1012,7 +1041,7 @@ private CuminRunStatus visit(InfixExpression v,ASTNode after) throws CuminRunExc
        }
       else next_node = v.getRightOperand();
     }
-   else {
+   else if (after == v.getRightOperand() && !v.hasExtendedOperands()) {
       if (v.getOperator() != InfixExpression.Operator.CONDITIONAL_AND &&
 	    v.getOperator() != InfixExpression.Operator.CONDITIONAL_OR) {
 	 CashewValue v2 = execution_stack.pop();
@@ -1020,6 +1049,43 @@ private CuminRunStatus visit(InfixExpression v,ASTNode after) throws CuminRunExc
 	 CuminOperator op = op_map.get(v.getOperator());
 	 CashewValue v0 = CuminEvaluator.evaluate(execution_clock,op,v1,v2);
 	 execution_stack.push(v0);
+       }
+    }
+   else {
+      List<?> ext = v.extendedOperands();
+      int idx = ext.indexOf(after) + 1;
+      ASTNode nxt = null;
+      if (idx < ext.size()) nxt = (ASTNode) ext.get(idx);
+      
+      if (v.getOperator() == InfixExpression.Operator.CONDITIONAL_AND) {
+         if (nxt != null) {
+            CashewValue v1 = execution_stack.pop();
+            if (v1.getBoolean(execution_clock)) {
+               next_node = nxt;
+             }
+            else {
+               execution_stack.push(v1);
+             }
+          }
+       }
+      else if (v.getOperator() == InfixExpression.Operator.CONDITIONAL_OR) {
+         if (nxt != null) {
+            CashewValue v1 = execution_stack.pop();
+            if (v1.getBoolean(execution_clock)) {
+               execution_stack.push(v1);
+             }
+            else {
+               next_node = nxt;
+             }
+          }
+       } 
+      else {
+         CashewValue v2 = execution_stack.pop();
+	 CashewValue v1 = execution_stack.pop();
+	 CuminOperator op = op_map.get(v.getOperator());
+	 CashewValue v0 = CuminEvaluator.evaluate(execution_clock,op,v1,v2);
+	 execution_stack.push(v0); 
+         next_node = nxt;
        }
     }
 
@@ -1754,6 +1820,7 @@ private CuminRunStatus visit(ReturnStatement s,ASTNode after)
 	 rval = execution_stack.pop();
 	 rval = rval.getActualValue(execution_clock);
        }
+      execution_clock.tick();
       return CuminRunStatus.Factory.createReturn(rval);
     }
 
@@ -1774,11 +1841,19 @@ private CuminRunStatus visit(SwitchStatement s,ASTNode after)
    if (after != null && after instanceof SwitchCase) {
       CashewValue cv = execution_stack.pop();
       CashewValue sv = execution_stack.pop();
+      sv = sv.getActualValue(getClock());
       boolean match = (cv == sv);
       if (!match && sv.getDataType(getClock()) == STRING_TYPE) {
          String s1 = sv.getString(getClock());
          String s2 = cv.getString(getClock());
          match = s1.equals(s2);
+       }
+      else if (!match && cv.getDataType(getClock()).isNumericType()) {
+         Number n0 = cv.getNumber(getClock()); 
+         Number n1 = sv.getNumber(getClock());
+         if (n0 instanceof Float || n0 instanceof Double)
+            match = n0.doubleValue() == n1.doubleValue();
+         else match = n0.longValue() == n1.longValue();
        }
       int idx = stmts.indexOf(after) + 1;
       if (match) {
@@ -1900,7 +1975,10 @@ private CuminRunStatus visit(ThrowStatement s,ASTNode after)
 {
    if (after == null) next_node = s.getExpression();
    else {
-      return CuminRunStatus.Factory.createException(execution_stack.pop());
+      CashewValue cv = execution_stack.pop();
+      cv = cv.getActualValue(execution_clock);
+      execution_clock.tick();
+      return CuminRunStatus.Factory.createException(cv);
     }
 
    return null;

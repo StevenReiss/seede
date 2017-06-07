@@ -176,6 +176,12 @@ CashewValueString(String s)
       case "value" :
       case "java.lang.String.value" :
 	 value_field = v;
+         int dim = v.getDimension(cc);
+         char [] rslt = new char[dim];
+         for (int i = 0; i < dim; ++i) {
+            rslt[i] = v.getIndexValue(cc,i).getChar(cc);
+          }
+         string_value = new String(rslt);
 	 break;
       case "hash" :
       case "java.lang.String.hash" :

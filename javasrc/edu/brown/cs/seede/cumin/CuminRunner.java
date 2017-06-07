@@ -192,6 +192,8 @@ public List<CashewValue> getCallArgs()	{ return call_args; }
 
 protected JcompType convertType(JcodeDataType cty)
 {
+   if (cty == null) return null;
+   
    JcompTyper typer = getTyper();
    String tnm = cty.getName();
    JcompType rslt = typer.findType(tnm);
@@ -280,6 +282,7 @@ public CuminRunStatus interpret(EvalType et) throws CuminRunException
 	  }
 	 if (rsts.getReason() == Reason.RETURN ||
 	       rsts.getReason() == Reason.EXCEPTION) {
+            execution_clock.tick();
 	    ret = rsts;
 	  }
 	 else {
@@ -433,7 +436,7 @@ CuminRunner doCall(CashewClock cc,JcodeMethod mthd,List<CashewValue> args)
    CuminRunnerByteCode rbyt = new CuminRunnerByteCode(base_project,global_context,cc,mthd,args);
 
    AcornLog.logD("Start binary call to " + mthd + " with " + args);
-
+   
    return rbyt;
 }
 
@@ -545,7 +548,7 @@ protected CashewValue handleNew(JcompType nty)
    CashewValue rslt = null;
 
    if (nty == STRING_TYPE) {
-      rslt = CashewValue.stringValue("");
+      rslt = CashewValue.stringValue(null);
     }
    else if (nty == FILE_TYPE) {
       rslt = CashewValue.fileValue();
