@@ -215,7 +215,8 @@ CashewRef(CashewDeferredValue deferred)
 @Override public int getDimension(CashewClock cc)
 {
    CashewValue cv = getValueAt(cc);
-   if (cv == null) throw new Error("Value is not an array");
+   if (cv == null) 
+      throw new Error("Value is not an array");
    return cv.getDimension(cc);
 }
 
@@ -239,7 +240,7 @@ CashewRef(CashewDeferredValue deferred)
 }
 
 
-@Override public boolean isEmpty() 
+@Override public boolean isEmpty()
 {
    return value_map == null && last_value == null;
 }
@@ -316,9 +317,9 @@ private CashewValue getValueAt(CashewClock cc)
 
 @Override boolean sameValue(CashewValue cv)
 {
-   if (value_map == null && last_value != null) 
+   if (value_map == null && last_value != null)
       return last_value.sameValue(cv);
-   
+
    return false;
 }
 

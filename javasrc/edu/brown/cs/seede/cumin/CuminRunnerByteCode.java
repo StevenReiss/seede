@@ -866,8 +866,6 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException
 	 break;
       case GETSTATIC :
 	 fld = jins.getFieldReference();
-	 if (fld.getName().contains("CHECKED"))
-	    System.err.println("HANDLE CHECKED");
 	 JcompType fldtyp = convertType(fld.getDeclaringClass());
 	 fldtyp.defineAll(type_converter);
 	 lookup_context.enableAccess(fldtyp.getName());

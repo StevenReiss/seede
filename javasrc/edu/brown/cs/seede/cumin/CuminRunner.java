@@ -193,7 +193,7 @@ public List<CashewValue> getCallArgs()	{ return call_args; }
 protected JcompType convertType(JcodeDataType cty)
 {
    if (cty == null) return null;
-   
+
    JcompTyper typer = getTyper();
    String tnm = cty.getName();
    JcompType rslt = typer.findType(tnm);
@@ -280,9 +280,16 @@ public CuminRunStatus interpret(EvalType et) throws CuminRunException
 	 catch (CuminRunException r) {
 	    rsts = r;
 	  }
-	 if (rsts.getReason() == Reason.RETURN ||
-	       rsts.getReason() == Reason.EXCEPTION) {
-            execution_clock.tick();
+	 if (rsts.getReason() == Reason.RETURN) {
+	    if (rsts.getValue() != null)
+	       nested_call.getLookupContext().define("*RETURNS*",rsts.getValue());
+	    execution_clock.tick();
+	    ret = rsts;
+	  }
+	 else if (rsts.getReason() == Reason.EXCEPTION) {
+	    if (rsts.getValue() != null)
+	       nested_call.getLookupContext().define("*THROWS*",rsts.getValue());
+	    execution_clock.tick();
 	    ret = rsts;
 	  }
 	 else {
@@ -354,7 +361,7 @@ protected CuminRunner handleCall(CashewClock cc,JcompSymbol method,List<CashewVa
        }
       throw CuminRunStatus.Factory.createError("Missing method " + method);
     }
-
+   
    JcompType type = cmethod.getClassType();
    if (!type.isKnownType()) {
       MethodDeclaration md = (MethodDeclaration) cmethod.getDefinitionNode();
@@ -380,7 +387,7 @@ CuminRunner handleCall(CashewClock cc,JcodeMethod method,List<CashewValue> args,
     }
 
    JcodeMethod cmethod = findTargetMethod(cc,method,thisarg,ctyp);
-
+   
    if (cmethod == null) {
       AcornLog.logE("Couldn't find bc method to call " + method);
       for (CashewValue cv : args) {
@@ -434,9 +441,10 @@ private CuminRunner doCall(CashewClock cc,MethodDeclaration ast,List<CashewValue
 CuminRunner doCall(CashewClock cc,JcodeMethod mthd,List<CashewValue> args)
 {
    CuminRunnerByteCode rbyt = new CuminRunnerByteCode(base_project,global_context,cc,mthd,args);
+   lookup_context.addNestedContext(rbyt.getLookupContext());
 
    AcornLog.logD("Start binary call to " + mthd + " with " + args);
-   
+
    return rbyt;
 }
 

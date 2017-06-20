@@ -289,6 +289,16 @@ public static ClassLoader getClassLoaderUsingPoppy(String cls)
 }
 
 
+public static Object getNewInstance(String name)
+{
+   try {
+      Class<?> c = Class.forName(name);
+      return c.newInstance();
+    }
+   catch (Throwable t) {
+      return null;
+    }
+}
 
 }	// end of class PoppyValue
 

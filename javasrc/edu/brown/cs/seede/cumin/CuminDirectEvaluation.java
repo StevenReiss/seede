@@ -27,6 +27,7 @@ package edu.brown.cs.seede.cumin;
 import java.io.UnsupportedEncodingException;
 
 import edu.brown.cs.ivy.jcomp.JcompType;
+import edu.brown.cs.ivy.jcomp.JcompTyper;
 import edu.brown.cs.seede.cashew.CashewValue;
 import edu.brown.cs.seede.cashew.CashewValueClass;
 import edu.brown.cs.seede.cashew.CashewValueObject;
@@ -68,26 +69,26 @@ CuminRunStatus checkStringMethods() throws CuminRunException
    if (getMethod().isStatic()) {
       switch (getMethod().getName()) {
 	 case "valueOf" :
-	    if (getDataType(0) == BOOLEAN_TYPE) {
+            JcompType dtyp = getDataType(0);
+	    if (dtyp == BOOLEAN_TYPE) {
 	       rslt = CashewValue.stringValue(String.valueOf(getBoolean(0)));
 	     }
-	    else if (getDataType(0) == CHAR_TYPE) {
+	    else if (dtyp == CHAR_TYPE) {
 	       rslt = CashewValue.stringValue(String.valueOf(getChar(0)));
 	     }
-	    else if (getDataType(0) == DOUBLE_TYPE) {
+	    else if (dtyp == DOUBLE_TYPE) {
 	       rslt = CashewValue.stringValue(String.valueOf(getDouble(0)));
 	     }
-	    else if (getDataType(0) == FLOAT_TYPE) {
+	    else if (dtyp == FLOAT_TYPE) {
 	       rslt = CashewValue.stringValue(String.valueOf(getFloat(0)));
 	     }
-	    else if (getDataType(0) == INT_TYPE || getDataType(0) == SHORT_TYPE ||
-		  getDataType(0) == BYTE_TYPE) {
+	    else if (dtyp == INT_TYPE || dtyp == SHORT_TYPE || dtyp == BYTE_TYPE) {
 	       rslt = CashewValue.stringValue(String.valueOf(getInt(0)));
 	     }
-	    else if (getDataType(0) == LONG_TYPE) {
+	    else if (dtyp == LONG_TYPE) {
 	       rslt = CashewValue.stringValue(String.valueOf(getDouble(0)));
 	     }
-	    else if (getDataType(0).isArrayType() && getDataType(0).getBaseType() == CHAR_TYPE) {
+	    else if (dtyp.isArrayType() && dtyp.getBaseType() == CHAR_TYPE) {
 	       if (getNumArgs() == 1) {
 		  rslt = CashewValue.stringValue(String.valueOf(getCharArray(0)));
 		}
@@ -95,6 +96,9 @@ CuminRunStatus checkStringMethods() throws CuminRunException
 		  rslt = CashewValue.stringValue(String.valueOf(getCharArray(0),getInt(1),getInt(2)));
 		}
 	     }
+            else if (dtyp == STRING_TYPE) {
+               rslt = getValue(0);
+             }
 	    else {
 	       // Object
 	       return null;
@@ -232,7 +236,13 @@ CuminRunStatus checkStringMethods() throws CuminRunException
 	    rslt = CashewValue.numericValue(INT_TYPE,thisstr.offsetByCodePoints(getInt(1),getInt(2)));
 	    break;
 	 case "regionMatches" :
-	    rslt = CashewValue.booleanValue(thisstr.regionMatches(getInt(1),getString(2),getInt(3),getInt(4)));
+            if (getNumArgs() == 6) {
+               rslt = CashewValue.booleanValue(thisstr.regionMatches(getBoolean(1),getInt(2),
+                     getString(3),getInt(4),getInt(5)));
+             }
+            else {
+               rslt = CashewValue.booleanValue(thisstr.regionMatches(getInt(1),getString(2),getInt(3),getInt(4)));
+             }
 	    break;
 	 case "replace" :
 	    if (getDataType(0) == CHAR_TYPE) {
@@ -869,7 +879,18 @@ CuminRunStatus checkClassMethods()
    JcompType rtype = null;
 
    if (getMethod().isStatic()) {
-      return null;
+      switch (getMethod().getName()) {
+         case "forName" :
+            String cls = getString(0);
+            JcompTyper typer = exec_runner.getTyper();
+            JcompType typ1 = typer.findType(cls);
+            if (typ1 == null) typ1 = typer.findSystemType(cls);
+            if (typ1 == null) return null;
+            rslt = CashewValue.classValue(typ1);
+            break;
+         default :
+            return null;
+       }
     }
    else {
       CashewValue thisarg = getValue(0);
@@ -891,7 +912,12 @@ CuminRunStatus checkClassMethods()
                 thistype.getName() + "\")";
             rslt = exec_runner.getLookupContext().evaluate(expr);
             break;
-            
+         case "newInstance" :
+            exec_runner.ensureLoaded("edu.brown.cs.seede.poppy.PoppyValue");
+            expr = "edu.brown.cs.seede.poppy.PoppyValue.getNewInstance(\"" +
+            thistype.getName() + "\")";
+            rslt = exec_runner.getLookupContext().evaluate(expr);
+            break;
 	 default :
 	    AcornLog.logE("Unknown call to java.lang.Class." + getMethod());
 	    return null;

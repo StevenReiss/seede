@@ -93,7 +93,7 @@ CashewValueObject(JcompType jt,Map<String,Object> inits,boolean caninit)
 	     }
 	  }
 	 if (cr == null) cr = new CashewRef(cv,caninit);
-
+        
 	 if (fsym.isStatic()) {
 	    if (!static_values.containsKey(key)) {
                static_values.put(key,cr);
@@ -290,6 +290,8 @@ public CashewValueObject cloneObject(CashewClock cc)
        }
     }
 }
+
+
 
 public static void outputStatics(IvyXmlWriter xw,CashewOutputContext outctx)
 {

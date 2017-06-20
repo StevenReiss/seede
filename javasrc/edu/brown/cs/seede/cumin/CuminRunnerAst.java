@@ -358,28 +358,28 @@ private CuminRunStatus evalNode(ASTNode node,ASTNode afterchild) throws CuminRun
    if (node instanceof Statement) {
       boolean report = true;
       if (afterchild != null) {
-         switch (node.getNodeType()) {
-            case ASTNode.FOR_STATEMENT :
-            case ASTNode.ENHANCED_FOR_STATEMENT :
-            case ASTNode.WHILE_STATEMENT :
-            case ASTNode.DO_STATEMENT :
-               report = true;
-               break;
-            default :
-               report = false;
-               break;
-          }
+	 switch (node.getNodeType()) {
+	    case ASTNode.FOR_STATEMENT :
+	    case ASTNode.ENHANCED_FOR_STATEMENT :
+	    case ASTNode.WHILE_STATEMENT :
+	    case ASTNode.DO_STATEMENT :
+	       report = true;
+	       break;
+	    default :
+	       report = false;
+	       break;
+	  }
        }
-      if (report) { 
-         CompilationUnit cu = (CompilationUnit) node.getRoot();
-         int lno = cu.getLineNumber(node.getStartPosition());
-         if (lno != last_line && lno > 0) {
-            CuminRunStatus sts = checkTimeout();
-            if (sts != null) return sts;
-            last_line = lno;
-            CashewValue lvl = CashewValue.numericValue(CashewConstants.INT_TYPE,lno);
-            lookup_context.findReference(LINE_NAME).setValueAt(execution_clock,lvl);
-          }
+      if (report) {
+	 CompilationUnit cu = (CompilationUnit) node.getRoot();
+	 int lno = cu.getLineNumber(node.getStartPosition());
+	 if (lno != last_line && lno > 0) {
+	    CuminRunStatus sts = checkTimeout();
+	    if (sts != null) return sts;
+	    last_line = lno;
+	    CashewValue lvl = CashewValue.numericValue(CashewConstants.INT_TYPE,lno);
+	    lookup_context.findReference(LINE_NAME).setValueAt(execution_clock,lvl);
+	  }
        }
       // check for breakpoint
       // check for step
@@ -390,7 +390,7 @@ private CuminRunStatus evalNode(ASTNode node,ASTNode afterchild) throws CuminRun
 	 return CuminRunStatus.Factory.createStopped();
        }
     }
-   
+
    JcompType jt = JcompAst.getExprType(node);
    if (jt != null && jt.isErrorType()) {
       AcornLog.logD("COMPILER SEMANTIC ERROR " + node);
@@ -400,7 +400,7 @@ private CuminRunStatus evalNode(ASTNode node,ASTNode afterchild) throws CuminRun
       return CuminRunStatus.Factory.createCompilerError();
     }
 
-   if (afterchild == null) 
+   if (afterchild == null)
       AcornLog.logT(node.getClass());
    else
       AcornLog.logT("*" + node.getClass().getName());
@@ -833,16 +833,28 @@ private CuminRunStatus visit(NumberLiteral v)
 	 execution_stack.push(CashewValue.numericValue(jt,dv));
 	 break;
       default :
-         String sv = v.getToken();
-         long lv = 0;
-         if (sv.startsWith("0x") && sv.length() > 2) {
-            sv = sv.substring(2);
-            lv = Long.parseLong(sv,16);
-          }
-         else if (sv.startsWith("0") && sv.length() > 1) {
-            sv = sv.substring(1);
-            lv = Long.parseLong(sv,8);
-          }
+	 String sv = v.getToken();
+	 long lv = 0;
+	 if (sv.startsWith("0x") && sv.length() > 2) {
+	    sv = sv.substring(2);
+	    lv = Long.parseLong(sv,16);
+	  }
+	 else if (sv.startsWith("0X") && sv.length() > 2) {
+	    sv = sv.substring(2);
+	    lv = Long.parseLong(sv,16);
+	  }
+	 else if (sv.startsWith("0b") && sv.length() > 2) {
+	    sv = sv.substring(2);
+	    lv = Long.parseLong(sv,2);
+	  }
+	 else if (sv.startsWith("0B") && sv.length() > 2) {
+	    sv = sv.substring(2);
+	    lv = Long.parseLong(sv,2);
+	  }
+	 else if (sv.startsWith("0") && sv.length() > 1) {
+	    sv = sv.substring(1);
+	    lv = Long.parseLong(sv,8);
+	  }
 	 else lv = Long.parseLong(v.getToken());
 	 execution_stack.push(CashewValue.numericValue(jt,lv));
 	 break;
@@ -923,7 +935,7 @@ private CuminRunStatus visit(ArrayCreation v,ASTNode after)
       idims[jsize-i-1] = execution_stack.pop().getNumber(execution_clock).intValue();
     }
    CashewValue cv = CuminEvaluator.buildArray(this,0,idims,base);
-   
+
    if (init != null) {
       // TODO: check that init has the right dimensions
       execution_stack.push(init);
@@ -1056,36 +1068,36 @@ private CuminRunStatus visit(InfixExpression v,ASTNode after) throws CuminRunExc
       int idx = ext.indexOf(after) + 1;
       ASTNode nxt = null;
       if (idx < ext.size()) nxt = (ASTNode) ext.get(idx);
-      
+
       if (v.getOperator() == InfixExpression.Operator.CONDITIONAL_AND) {
-         if (nxt != null) {
-            CashewValue v1 = execution_stack.pop();
-            if (v1.getBoolean(execution_clock)) {
-               next_node = nxt;
-             }
-            else {
-               execution_stack.push(v1);
-             }
-          }
+	 if (nxt != null) {
+	    CashewValue v1 = execution_stack.pop();
+	    if (v1.getBoolean(execution_clock)) {
+	       next_node = nxt;
+	     }
+	    else {
+	       execution_stack.push(v1);
+	     }
+	  }
        }
       else if (v.getOperator() == InfixExpression.Operator.CONDITIONAL_OR) {
-         if (nxt != null) {
-            CashewValue v1 = execution_stack.pop();
-            if (v1.getBoolean(execution_clock)) {
-               execution_stack.push(v1);
-             }
-            else {
-               next_node = nxt;
-             }
-          }
-       } 
+	 if (nxt != null) {
+	    CashewValue v1 = execution_stack.pop();
+	    if (v1.getBoolean(execution_clock)) {
+	       execution_stack.push(v1);
+	     }
+	    else {
+	       next_node = nxt;
+	     }
+	  }
+       }
       else {
-         CashewValue v2 = execution_stack.pop();
+	 CashewValue v2 = execution_stack.pop();
 	 CashewValue v1 = execution_stack.pop();
 	 CuminOperator op = op_map.get(v.getOperator());
 	 CashewValue v0 = CuminEvaluator.evaluate(execution_clock,op,v1,v2);
-	 execution_stack.push(v0); 
-         next_node = nxt;
+	 execution_stack.push(v0);
+	 next_node = nxt;
        }
     }
 
@@ -1192,7 +1204,7 @@ private CuminRunStatus visit(PostfixExpression v,ASTNode after) throws CuminRunE
 
 
 private CuminRunStatus visit(PrefixExpression v,ASTNode after)
-        throws CuminRunException
+	throws CuminRunException
 {
    if (after == null) next_node = v.getOperand();
    else {
@@ -1244,7 +1256,7 @@ private CuminRunStatus visit(ClassInstanceCreation v, ASTNode after) throws Cumi
 
    List<CashewValue> argv = new ArrayList<CashewValue>();
    JcompType ctyp = csym.getType();
-   
+
    List<JcompType> atyps = ctyp.getComponents();
    CashewValue rval = handleNew(rty);
    for (int i = 0; i < args.size(); ++i) {
@@ -1252,19 +1264,19 @@ private CuminRunStatus visit(ClassInstanceCreation v, ASTNode after) throws Cumi
       cv = cv.getActualValue(execution_clock);
       int atypct = args.size() - 1 - i;
       if (ctyp.isVarArgs() && atypct >= atyps.size()) {
-         JcompType argtyp = atyps.get(atyps.size()-1);
-         int arrct = args.size() - atyps.size() + 1;
-         CashewValue arrv = CashewValue.arrayValue(argtyp,arrct);
-         for (int j = 0; j < arrct; ++j) {
-            if (j > 0) {
-               cv = execution_stack.pop();
-               cv = cv.getActualValue(execution_clock);
-               i++;
-               atypct--;
-             }
-            arrv.setIndexValue(getClock(),arrct-j-1,cv);
-          }
-         cv = arrv;
+	 JcompType argtyp = atyps.get(atyps.size()-1);
+	 int arrct = args.size() - atyps.size() + 1;
+	 CashewValue arrv = CashewValue.arrayValue(argtyp,arrct);
+	 for (int j = 0; j < arrct; ++j) {
+	    if (j > 0) {
+	       cv = execution_stack.pop();
+	       cv = cv.getActualValue(execution_clock);
+	       i++;
+	       atypct--;
+	     }
+	    arrv.setIndexValue(getClock(),arrct-j-1,cv);
+	  }
+	 cv = arrv;
        }
       JcompType argtyp = atyps.get(atypct);
       CashewValue ncv = CuminEvaluator.castValue(this,cv,argtyp);
@@ -1343,17 +1355,42 @@ private CuminRunStatus visit(MethodInvocation v,ASTNode after) throws CuminRunEx
       return null;
     }
 
-   // need to handle varargs
-
    AcornLog.logD("INVOKE " + args.size() + " " + v);
-
+   
    JcompType ctyp = js.getType();
+   int narg = ctyp.getComponents().size();
+   
+   if (ctyp.isVarArgs()) {
+      int ncomp = ctyp.getComponents().size();
+      JcompType vtyp = ctyp.getComponents().get(ncomp-1);
+      JcompType btyp = vtyp.getBaseType();
+      int sz = args.size() - ncomp + 1;
+      if (sz == 1) {
+         CashewValue cv = execution_stack.peek(0);
+         JcompType cvtyp = cv.getDataType(execution_clock);
+         if (cvtyp.isArrayType() && cvtyp.isCompatibleWith(vtyp)) {
+            sz = -1;
+          }
+       }
+      if (sz >= 0) {      
+         Map<Integer,Object> inits = new HashMap<Integer,Object>();
+         for (int i = ncomp; i <= args.size(); ++i) {
+            CashewValue cv = execution_stack.pop().getActualValue(execution_clock);
+            
+            CashewValue ncv = CuminEvaluator.castValue(this,cv,btyp);
+            inits.put(sz-(i-ncomp)-1,ncv);
+          }
+         CashewValue varval = CashewValue.arrayValue(vtyp,sz,inits);
+         execution_stack.push(varval);
+       }
+    }
+
    List<JcompType> atyps = ctyp.getComponents();
 
    List<CashewValue> argv = new ArrayList<CashewValue>();
-   for (int i = 0; i < args.size(); ++i) {
+   for (int i = 0; i < narg; ++i) {
       CashewValue cv = execution_stack.pop().getActualValue(execution_clock);
-      JcompType argtyp = atyps.get(args.size()-1-i);
+      JcompType argtyp = atyps.get(narg-1-i);
       CashewValue ncv = CuminEvaluator.castValue(this,cv,argtyp);
       if (ncv == null) {
 	 AcornLog.logD("Conversion problem " + cv + " " + argtyp + " " +
@@ -1430,29 +1467,90 @@ private CuminRunStatus visit(SuperMethodInvocation v,ASTNode after) throws Cumin
       return null;
     }
 
-   // need to handle varargs
-
-   List<CashewValue> argv = new ArrayList<CashewValue>();
+   //TODO: need to handle varargs
+   
+   // List<CashewValue> argv = new ArrayList<CashewValue>();
+   // JcompSymbol js = JcompAst.getReference(v.getName());
+   // CallType cty = CallType.VIRTUAL;
+   // if (!js.isStatic()) {
+      // JcompType base = null;
+      // if (v.getQualifier() != null) {
+	 // base = JcompAst.getExprType(v.getQualifier());
+       // }
+      // CashewValue thisv = handleThisAccess(base);
+      // thisv = thisv.getActualValue(execution_clock);
+      // argv.add(thisv);
+      // cty = CallType.STATIC;
+    // }
+   // for (int i = 0; i < args.size(); ++i) argv.add(null);
+   // int off = argv.size();
+   // for (int i = 0; i < args.size(); ++i) {
+      // CashewValue cv = execution_stack.pop().getActualValue(execution_clock);
+      // argv.set(args.size()-i-1+off,cv);
+    // }
+   // CuminRunner crun = handleCall(execution_clock,js,argv,cty);
+   // return CuminRunStatus.Factory.createCall(crun);
+   
+   AcornLog.logD("SUPER INVOKE " + args.size() + " " + v);
+   
    JcompSymbol js = JcompAst.getReference(v.getName());
+   JcompType ctyp = js.getType();
+   int narg = ctyp.getComponents().size();
+   
+   if (ctyp.isVarArgs()) {
+      int ncomp = ctyp.getComponents().size();
+      JcompType vtyp = ctyp.getComponents().get(ncomp-1);
+      JcompType btyp = vtyp.getBaseType();
+      int sz = args.size() - ncomp + 1;
+      if (sz == 1) {
+         CashewValue cv = execution_stack.peek(0);
+         JcompType cvtyp = cv.getDataType(execution_clock);
+         if (cvtyp.isArrayType() && cvtyp.isCompatibleWith(vtyp)) {
+            sz = -1;
+          }
+       }
+      if (sz >= 0) {      
+         Map<Integer,Object> inits = new HashMap<Integer,Object>();
+         for (int i = ncomp; i <= args.size(); ++i) {
+            CashewValue cv = execution_stack.pop().getActualValue(execution_clock);
+            
+            CashewValue ncv = CuminEvaluator.castValue(this,cv,btyp);
+            inits.put(sz-(i-ncomp)-1,ncv);
+          }
+         CashewValue varval = CashewValue.arrayValue(vtyp,sz,inits);
+         execution_stack.push(varval);
+       }
+    }
+   
+   List<JcompType> atyps = ctyp.getComponents();
+   
+   List<CashewValue> argv = new ArrayList<CashewValue>();
+   for (int i = 0; i < narg; ++i) {
+      CashewValue cv = execution_stack.pop().getActualValue(execution_clock);
+      JcompType argtyp = atyps.get(narg-1-i);
+      CashewValue ncv = CuminEvaluator.castValue(this,cv,argtyp);
+      if (ncv == null) {
+	 AcornLog.logD("Conversion problem " + cv + " " + argtyp + " " +
+               cv.getDataType(execution_clock) );
+       }
+      argv.add(ncv);
+    }
    CallType cty = CallType.VIRTUAL;
    if (!js.isStatic()) {
       JcompType base = null;
       if (v.getQualifier() != null) {
-	 base = JcompAst.getExprType(v.getQualifier());
+         base = JcompAst.getExprType(v.getQualifier());
        }
       CashewValue thisv = handleThisAccess(base);
       thisv = thisv.getActualValue(execution_clock);
       argv.add(thisv);
-      cty = CallType.STATIC;
     }
-   for (int i = 0; i < args.size(); ++i) argv.add(null);
-   int off = argv.size();
-   for (int i = 0; i < args.size(); ++i) {
-      CashewValue cv = execution_stack.pop().getActualValue(execution_clock);
-      argv.set(args.size()-i-1+off,cv);
-    }
+   else cty = CallType.STATIC;
+   Collections.reverse(argv);
    CuminRunner crun = handleCall(execution_clock,js,argv,cty);
-   return CuminRunStatus.Factory.createCall(crun);
+   return CuminRunStatus.Factory.createCall(crun);  
+   
+   
 }
 
 
@@ -1602,7 +1700,7 @@ private CuminRunStatus visitThrow(ForStatement s,CuminRunStatus r)
 	 else return r;
       case CONTINUE :
 	 if (checkLabel(s,lbl)) {
-            return visit(s,s.getBody());
+	    return visit(s,s.getBody());
 	  }
 	 else return r;
       default :
@@ -1844,28 +1942,28 @@ private CuminRunStatus visit(SwitchStatement s,ASTNode after)
       sv = sv.getActualValue(getClock());
       boolean match = (cv == sv);
       if (!match && sv.getDataType(getClock()) == STRING_TYPE) {
-         String s1 = sv.getString(getClock());
-         String s2 = cv.getString(getClock());
-         match = s1.equals(s2);
+	 String s1 = sv.getString(getClock());
+	 String s2 = cv.getString(getClock());
+	 match = s1.equals(s2);
        }
       else if (!match && cv.getDataType(getClock()).isNumericType()) {
-         Number n0 = cv.getNumber(getClock()); 
-         Number n1 = sv.getNumber(getClock());
-         if (n0 instanceof Float || n0 instanceof Double)
-            match = n0.doubleValue() == n1.doubleValue();
-         else match = n0.longValue() == n1.longValue();
+	 Number n0 = cv.getNumber(getClock());
+	 Number n1 = sv.getNumber(getClock());
+	 if (n0 instanceof Float || n0 instanceof Double)
+	    match = n0.doubleValue() == n1.doubleValue();
+	 else match = n0.longValue() == n1.longValue();
        }
       int idx = stmts.indexOf(after) + 1;
       if (match) {
-         // execute first statement after switch case
+	 // execute first statement after switch case
 	 while (idx < stmts.size()) {
 	    Statement stmt = (Statement) stmts.get(idx);
-            if (stmt instanceof SwitchCase) ++idx;
+	    if (stmt instanceof SwitchCase) ++idx;
 	    else {
-               next_node = stmt;
-               return null;
-             }
-          }
+	       next_node = stmt;
+	       return null;
+	     }
+	  }
 	 return null;
        }
       execution_stack.push(sv);
@@ -1883,7 +1981,7 @@ private CuminRunStatus visit(SwitchStatement s,ASTNode after)
 	       return null;
 	     }
 	  }
-         ++idx;
+	 ++idx;
        }
       execution_stack.pop();
       // find default if nothing matched
@@ -1896,29 +1994,29 @@ private CuminRunStatus visit(SwitchStatement s,ASTNode after)
 	       ++idx;
 	       while (idx < stmts.size()) {
 		  stmt = (Statement) stmts.get(idx);
-                  if (stmt instanceof SwitchCase) ++idx;
+		  if (stmt instanceof SwitchCase) ++idx;
 		  else {
-                     next_node = stmt;
-                     break;
-                   }
+		     next_node = stmt;
+		     break;
+		   }
 		}
-               return null;
+	       return null;
 	     }
 	  }
-         ++idx;
+	 ++idx;
        }
       return null;
     }
 
    // executing statements -- execute next statement in switch, ignore
-   //   SwitchCase elements
+   //	SwitchCase elements
    int next = stmts.indexOf(after)+1;
    while (next < stmts.size()) {
       Statement ns = (Statement) stmts.get(next);
       if (ns instanceof SwitchCase) ++next;
       else {
-         next_node = ns;
-         break;
+	 next_node = ns;
+	 break;
        }
     }
 

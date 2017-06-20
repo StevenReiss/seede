@@ -27,26 +27,35 @@ package edu.brown.cs.seede.sesame;
 import java.io.File;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTParser;
+import org.eclipse.jdt.core.dom.Block;
+import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.ConstructorInvocation;
+import org.eclipse.jdt.core.dom.MethodDeclaration;
+import org.eclipse.jdt.core.dom.SuperConstructorInvocation;
+import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.Position;
 import org.w3c.dom.Element;
 
+import edu.brown.cs.ivy.jcomp.JcompAst;
+import edu.brown.cs.ivy.jcomp.JcompAstCleaner;
 import edu.brown.cs.ivy.jcomp.JcompProject;
 import edu.brown.cs.ivy.jcomp.JcompSemantics;
-import edu.brown.cs.ivy.jcomp.JcompSource;
 import edu.brown.cs.ivy.xml.IvyXml;
 import edu.brown.cs.seede.acorn.AcornLog;
 
 
-class SesameFile implements SesameConstants, JcompSource
+class SesameFile implements SesameConstants, JcompAstCleaner
 {
 
 
@@ -61,9 +70,11 @@ private File			for_file;
 private Map<String,ASTNode>	ast_roots;
 private Set<Integer>		error_lines;
 
+private static SesameProject	current_project;
+private static Object		project_lock = new Object();
+
 
 private static final String NO_PROJECT = "*NOPROJECT*";
-
 
 
 /********************************************************************************/
@@ -107,7 +118,7 @@ void editFile(int len,int off,String txt,boolean complete)
 void resetSemantics(SesameProject sp)
 {
    // might need to be project specific if we have multiple sesssions active
-   
+
    synchronized (ast_roots) {
       ast_roots.remove(sp);
     }
@@ -141,11 +152,71 @@ boolean handleErrors(Element msgs)
 
 /********************************************************************************/
 /*										*/
+/*	Methods to provide ASTs to jcomp for current project			*/
+/*										*/
+/********************************************************************************/
+
+static void setCurrentProject(SesameProject sp)
+{
+   if (sp != null) {
+      synchronized (project_lock) {
+	 while (current_project != null) {
+	    try {
+	       project_lock.wait(5000);
+	     }
+	    catch (InterruptedException e) { }
+	  }
+	 current_project = sp;
+       }
+    }
+   else {
+      synchronized (project_lock) {
+	 current_project = null;
+	 project_lock.notifyAll();
+       }
+    }
+}
+
+
+
+
+public ASTNode getAstRootNode()                 // if we use extended source
+{
+   SesameProject sp = current_project;
+   if (sp != null) {
+      ASTNode an = null;
+      synchronized (ast_roots) {
+	 an = ast_roots.get(sp.getName());
+	 if (an != null) return an;
+       }
+      an = getAst();
+      synchronized (ast_roots) {
+	 ast_roots.put(sp.getName(),an);
+       }
+      return an;
+    }
+
+   return getAst();
+}
+
+
+
+public ASTNode cleanupAst(ASTNode n)
+{
+   cleanupAstRoot((CompilationUnit) n);
+   
+   return n;
+}
+
+
+
+/********************************************************************************/
+/*										*/
 /*	Abstract syntax tree methods						*/
 /*										*/
 /********************************************************************************/
 
-synchronized ASTNode getAst()
+ASTNode getAst()
 {
    ASTNode an = null;
    synchronized (ast_roots) {
@@ -153,11 +224,7 @@ synchronized ASTNode getAst()
       if (an != null) return an;
     }
 
-   ASTParser parser = ASTParser.newParser(AST.JLS4);
-   parser.setKind(ASTParser.K_COMPILATION_UNIT);
-   parser.setSource(edit_document.get().toCharArray());
-   parser.setResolveBindings(false);
-   an = parser.createAST(null);
+   an = buildAst();
 
    synchronized (ast_roots) {
       ASTNode nan = ast_roots.get(NO_PROJECT);
@@ -169,13 +236,59 @@ synchronized ASTNode getAst()
 }
 
 
+private ASTNode buildAst()
+{
+   ASTParser parser = ASTParser.newParser(AST.JLS4);
+   parser.setKind(ASTParser.K_COMPILATION_UNIT);
+   parser.setSource(edit_document.get().toCharArray());
+   Map<?,?> options = JavaCore.getOptions();
+   JavaCore.setComplianceOptions(JavaCore.VERSION_1_6,options);
+   parser.setCompilerOptions(options);
+   parser.setResolveBindings(false);
+   parser.setStatementsRecovery(true);
+   ASTNode an = parser.createAST(null);
+   JcompAst.setSource(an,this);
+   cleanupAstRoot((CompilationUnit) an);
 
-synchronized ASTNode getResolvedAst(SesameProject sp)
+   return an;
+}
+
+
+
+private void cleanupAstRoot(CompilationUnit an)
+{
+   for (Object typn : an.types()) {
+      if (typn instanceof TypeDeclaration) {
+	 TypeDeclaration td = (TypeDeclaration) typn;
+	 if (td.getSuperclassType()  == null) continue;
+	 for (MethodDeclaration md : td.getMethods()) {
+	    if (!md.isConstructor()) continue;
+	    Block blk = md.getBody();
+	    @SuppressWarnings("unchecked") List<Object> stmts = blk.statements();
+	    boolean fnd = false;
+	    for (Object stmtn : stmts) {
+	       if (stmtn instanceof SuperConstructorInvocation ||
+		     stmtn instanceof ConstructorInvocation) fnd = true;
+	     }
+	    if (fnd) continue;
+	    AST ast = an.getAST();
+	    SuperConstructorInvocation sci = ast.newSuperConstructorInvocation();
+	    stmts.add(0,sci);
+	  }
+       }
+
+
+    }
+}
+
+
+
+ASTNode getResolvedAst(SesameProject sp)
 {
    ASTNode an = null;
    synchronized (ast_roots) {
       an = ast_roots.get(sp.getName());
-      if (an != null) return an;
+      if (an != null && JcompAst.isResolved(an)) return an;
     }
 
    JcompProject proj = sp.getJcompProject();
@@ -215,6 +328,9 @@ Position createPosition(int pos)
    return p;
 }
 
+
+
+
 /********************************************************************************/
 /*										*/
 /*	JcompSource methods							*/
@@ -247,4 +363,184 @@ public File getFile()
 
 
 /* end of SesameFile.java */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

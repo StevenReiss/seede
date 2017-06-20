@@ -143,9 +143,9 @@ CashewValueArray(JcompType jt,int dim,Map<Integer,Object> inits,boolean caninit)
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Reset methods                                                           */
-/*                                                                              */
+/*										*/
+/*	Reset methods								*/
+/*										*/
 /********************************************************************************/
 
 @Override protected void localResetValue(Set<CashewValue> done)
@@ -175,17 +175,17 @@ CashewValueArray(JcompType jt,int dim,Map<Integer,Object> inits,boolean caninit)
 @Override public boolean checkChanged(CashewOutputContext outctx)
 {
    if (outctx.noteChecked(this)) return (old_ref == 0);
-   
+
    boolean fg = (old_ref == 0);
-   
+
    for (CashewValue cv : array_values) {
       if (cv != null) {
-         fg |= cv.checkChanged(outctx);
+	 fg |= cv.checkChanged(outctx);
        }
     }
-   
+
    if (fg) old_ref = 0;
-   
+
    return fg;
 }
 
@@ -209,20 +209,20 @@ CashewValueArray(JcompType jt,int dim,Map<Integer,Object> inits,boolean caninit)
       CashewValue dfltval = createDefaultValue(getDataType().getBaseType());
       int numdflt = 0;
       for (int i = 0; i < array_values.length; ++i) {
-         if (array_values[i].sameValue(dfltval)) {
-            ++numdflt;
-            continue;
-          }
+	 if (array_values[i].sameValue(dfltval)) {
+	    ++numdflt;
+	    continue;
+	  }
 	 xw.begin("ELEMENT");
 	 xw.field("INDEX",i);
 	 array_values[i].outputXml(outctx);
 	 xw.end("ELEMENT");
        }
       if (numdflt != 0) {
-         xw.begin("ELEMENT");
-         xw.field("DEFAULT",true);
-         dfltval.outputXml(outctx);
-         xw.end("ELEMENT");
+	 xw.begin("ELEMENT");
+	 xw.field("DEFAULT",true);
+	 dfltval.outputXml(outctx);
+	 xw.end("ELEMENT");
        }
     }
 }

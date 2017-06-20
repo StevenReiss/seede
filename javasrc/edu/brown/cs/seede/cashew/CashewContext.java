@@ -60,6 +60,7 @@ private List<CashewContext> nested_contexts;
 private int context_id;
 private long start_time;
 private long end_time;
+private boolean is_output;
 
 private static AtomicInteger id_counter = new AtomicInteger();
 
@@ -129,6 +130,7 @@ public CashewContext(String js,File f,CashewContext par)
    nested_contexts = new ArrayList<CashewContext>();
    start_time = end_time = 0;
    context_id = id_counter.incrementAndGet();
+   is_output = f != null;
 }
 
 
@@ -464,6 +466,10 @@ public void addNestedContext(CashewContext ctx)
 
 
 
+public boolean isOutput()                       { return is_output; }
+
+
+
 /********************************************************************************/
 /*										*/
 /*	Output methods								*/
@@ -484,38 +490,45 @@ public void checkChanged(CashewOutputContext outctx)
 
 public void outputXml(CashewOutputContext outctx)
 {
-   IvyXmlWriter xw = outctx.getXmlWriter();
-   xw.begin("CONTEXT");
-   xw.field("ID",context_id);
-   if (context_owner != null) {
-      xw.field("METHOD",context_owner);
-    }
-   if (context_file != null) {
-      xw.field("FILE",context_file.getAbsolutePath());
-    }
-   xw.field("START",start_time);
-   xw.field("END",end_time);
-   if (parent_context != null) xw.field("PARENT",parent_context.context_id);
-
-   for (Map.Entry<Object,CashewValue> ent : context_map.entrySet()) {
-      Object var = ent.getKey();
-      xw.begin("VARIABLE");
-      xw.field("NAME",var.toString());
-      if (var instanceof JcompSymbol) {
-	 JcompSymbol js = (JcompSymbol) var;
-	 ASTNode defn = js.getDefinitionNode();
-	 CompilationUnit cu = (CompilationUnit) defn.getRoot();
-	 int lno = cu.getLineNumber(defn.getStartPosition());
-	 xw.field("LINE",lno);
+   if (isOutput()) {
+      IvyXmlWriter xw = outctx.getXmlWriter();
+      xw.begin("CONTEXT");
+      xw.field("ID",context_id);
+      if (context_owner != null) {
+         xw.field("METHOD",context_owner);
        }
-      CashewValue cv = ent.getValue();
-      cv.outputXml(outctx);
-      xw.end("VARIABLE");
+      if (context_file != null) {
+         xw.field("FILE",context_file.getAbsolutePath());
+       }
+      xw.field("START",start_time);
+      xw.field("END",end_time);
+      if (parent_context != null) xw.field("PARENT",parent_context.context_id);
+      
+      for (Map.Entry<Object,CashewValue> ent : context_map.entrySet()) {
+         Object var = ent.getKey();
+         xw.begin("VARIABLE");
+         xw.field("NAME",var.toString());
+         if (var instanceof JcompSymbol) {
+            JcompSymbol js = (JcompSymbol) var;
+            ASTNode defn = js.getDefinitionNode();
+            CompilationUnit cu = (CompilationUnit) defn.getRoot();
+            int lno = cu.getLineNumber(defn.getStartPosition());
+            xw.field("LINE",lno);
+          }
+         CashewValue cv = ent.getValue();
+         cv.outputXml(outctx);
+         xw.end("VARIABLE");
+       }
+      for (CashewContext ctx : nested_contexts) {
+         ctx.outputXml(outctx);
+       }
+      xw.end("CONTEXT");
     }
-   for (CashewContext ctx : nested_contexts) {
-      ctx.outputXml(outctx);
+   else {
+      for (CashewContext ctx : nested_contexts) {
+         ctx.outputXml(outctx);
+       } 
     }
-   xw.end("CONTEXT");
 }
 
 

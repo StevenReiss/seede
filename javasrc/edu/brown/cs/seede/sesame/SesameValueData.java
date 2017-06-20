@@ -417,9 +417,6 @@ private class DeferredLookup implements CashewConstants.CashewDeferredValue {
 
    DeferredLookup(String name) {
       field_name = name;
-      if (name.contains("elementData?[0]")) {
-	 System.err.println("CHECK access");
-       }
     }
 
    @Override public CashewValue getValue() {

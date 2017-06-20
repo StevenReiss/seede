@@ -272,7 +272,7 @@ public static CashewValue stringValue(String s)
       CashewValueString vs = new CashewValueString("");
       return vs;
     }
-   
+
    synchronized (string_values) {
       CashewValueString vs = string_values.get(s);
       if (vs == null) {
@@ -344,9 +344,9 @@ public static CashewValue arrayValue(byte [] arr)
    for (int i = 0; i < arr.length; ++i) {
       inits.put(i,CashewValue.numericValue(BYTE_TYPE,arr[i]));
     }
-   
+
    JcompType jty = JcompType.createArrayType(BYTE_TYPE);
-   
+
    return arrayValue(jty,arr.length,inits);
 }
 
@@ -357,9 +357,9 @@ public static CashewValue arrayValue(String [] arr)
    for (int i = 0; i < arr.length; ++i) {
       inits.put(i,CashewValue.numericValue(STRING_TYPE,arr[i]));
     }
-   
+
    JcompType jty = JcompType.createArrayType(STRING_TYPE);
-   
+
    return arrayValue(jty,arr.length,inits);
 }
 
@@ -539,7 +539,7 @@ public CashewValue setValueAt(CashewClock cc,CashewValue cv)
 
 public boolean isNull(CashewClock cc)		{ return false; }
 
-public boolean isEmpty()                        { return false; }
+public boolean isEmpty()			{ return false; }
 
 
 public Boolean isCategory2(CashewClock cc)	{ return false; }
@@ -603,7 +603,7 @@ boolean sameValue(CashewValue cv)
 /*										*/
 /********************************************************************************/
 
-public void resetValues(Set<CashewValue> done)	
+public void resetValues(Set<CashewValue> done)
 {
    if (done.contains(this)) return;
    done.add(this);
@@ -642,7 +642,7 @@ protected void localResetType(JcompTyper typer,Set<CashewValue> done)		 { }
 /********************************************************************************/
 
 public boolean checkChanged(CashewOutputContext outctx)
-{ 
+{
    return false;
 }
 
@@ -806,10 +806,3 @@ private static class ValueNull extends CashewValue
 
 
 /* end of CashewValue.java */
-
-
-
-
-
-
-
