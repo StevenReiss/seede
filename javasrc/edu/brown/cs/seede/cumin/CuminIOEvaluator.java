@@ -347,7 +347,7 @@ CuminRunStatus checkInputStreamMethods()
    int fdv = fd.getNumber(getClock()).intValue();
    String path = null;
    try {
-      CashewValue pathv = thisarg.getFieldValue(getClock(),"java.io.FileOutputStream.path");
+      CashewValue pathv = thisarg.getFieldValue(getClock(),"java.io.FileInputStream.path");
       if (!pathv.isNull(getClock())) path = pathv.getString(getClock());
     }
    catch (Throwable t) {
@@ -503,7 +503,7 @@ CuminRunStatus checkPrintMethods(String cls)
    boolean app = appv.getBoolean(getClock());
    String path = null;
    try {
-      CashewValue pathv = thisarg.getFieldValue(getClock(),"java.io.FileOutputStream.path");
+      CashewValue pathv = cv1.getFieldValue(getClock(),"java.io.FileOutputStream.path");
       if (!pathv.isNull(getClock())) path = pathv.getString(getClock());
     }
    catch (Throwable t) {

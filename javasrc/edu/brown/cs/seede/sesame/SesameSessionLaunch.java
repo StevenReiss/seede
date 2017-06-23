@@ -120,6 +120,12 @@ String getAnyThread()
    MethodDeclaration md = getCallMethod(loc);
    List<CashewValue> args = new ArrayList<CashewValue>();
    JcompSymbol msym = JcompAst.getDefinition(md.getName());
+   if (msym == null) {
+      getProject().getTyper();
+      msym = JcompAst.getDefinition(md.getName());
+      if (msym == null) return null;
+    }
+
    Map<String,SesameValueData> valmap = thread_values.get(loc.getThread());
    if (!msym.isStatic()) {
       SesameValueData svd = valmap.get("this");
@@ -352,6 +358,7 @@ private void loadInitialValues()
 	 valmap.put(nm,svd);
        }
       SesameLocation loc = new SesameLocation(source_file,method_name,line_number,teid,thnm);
+      getProject().addFile(source_file);
       addLocation(loc);
     }
 }

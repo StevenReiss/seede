@@ -74,7 +74,7 @@ public void setInitialValue(File f)
 
 @Override public String getString(CashewClock cc,int idx,boolean dbg)
 {
-   if (user_file == null) return null;
+   if (user_file == null) return "File(null)";
    return user_file.toString();
 }
 

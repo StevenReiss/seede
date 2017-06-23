@@ -436,7 +436,7 @@ private class MasterThread extends Thread {
     }
 
    synchronized void restart() {
-      AcornLog.logD("MASTER: resetart request");
+      AcornLog.logD("MASTER: restart request");
       run_again = true;
       notifyAll();
     }

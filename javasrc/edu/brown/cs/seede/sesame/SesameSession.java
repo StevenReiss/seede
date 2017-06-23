@@ -189,7 +189,7 @@ void noteContinue(String launch,String thread)			{ }
 
 void setInitialValue(String what,Element value) throws SesameException	   { }
 
-void setInitialValue(String what,String thread,String expr) throws SesameException 
+void setInitialValue(String what,String thread,String expr) throws SesameException
 {
    throw new SesameException("Initial expression value not implemented");
 }
@@ -248,6 +248,7 @@ CuminRunner createRunner(SesameLocation loc,SesameContext gblctx)
 {
    MethodDeclaration mthd = getCallMethod(loc);
    List<CashewValue> args = getCallArgs(loc);
+   if (args == null) return null;
    SesameThreadContext tctx = new SesameThreadContext(loc.getThread(),
 	 loc.getThreadName(),this,gblctx);
    CuminRunner cr = CuminRunner.createRunner(getProject(),tctx,mthd,args);

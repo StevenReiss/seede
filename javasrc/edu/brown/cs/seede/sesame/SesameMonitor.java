@@ -349,6 +349,7 @@ private void handleExec(String sid,Element xml,IvyXmlWriter xw)
    SesameExecRunner execer = null;
    for (SesameLocation loc : ss.getActiveLocations()) {
       CuminRunner cr = ss.createRunner(loc,gblctx);
+      if (cr == null) continue;
       if (execer == null) {
 	 execer = new SesameExecRunner(ss,xid,gblctx,iscont,maxtime,cr);
 	 ss.addRunner(execer);

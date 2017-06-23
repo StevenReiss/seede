@@ -814,13 +814,13 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException
       case IRETURN :
       case LRETURN :
 	 v0 = execution_stack.pop().getActualValue(execution_clock);
-         execution_clock.tick();
+	 execution_clock.tick();
 	 return CuminRunStatus.Factory.createReturn(v0);
       case RETURN :
-         execution_clock.tick();
+	 execution_clock.tick();
 	 return CuminRunStatus.Factory.createReturn();
       case ATHROW :
-         execution_clock.tick();
+	 execution_clock.tick();
 	 v0 = execution_stack.pop().getActualValue(execution_clock);
 	 return CuminRunStatus.Factory.createException(v0);
 
@@ -1065,33 +1065,33 @@ private CuminRunStatus checkSpecial() throws CuminRunException
 	 cie = new CuminIOEvaluator(this);
 	 sts = cie.checkOutputStreamMethods();
 	 break;
-      case "java.io.FileInputStraem" :
+      case "java.io.FileInputStream" :
 	 cie = new CuminIOEvaluator(this);
 	 sts = cie.checkInputStreamMethods();
 	 break;
       case "java.io.Console" :
-         cie = new CuminIOEvaluator(this);
+	 cie = new CuminIOEvaluator(this);
 	 sts = cie.checkConsoleMethods();
 	 break;
       case "java.io.PrintStream" :
-         cie = new CuminIOEvaluator(this);
-         sts  = cie.checkPrintMethods("java.io.PrintStream");
-         break;
+	 cie = new CuminIOEvaluator(this);
+	 sts  = cie.checkPrintMethods("java.io.PrintStream");
+	 break;
       case "java.io.PrintWriter" :
-         cie = new CuminIOEvaluator(this);
-         sts  = cie.checkPrintMethods("java.io.PrintWriter");
-         break;
-         
+	 cie = new CuminIOEvaluator(this);
+	 sts  = cie.checkPrintMethods("java.io.PrintWriter");
+	 break;
+	
       case "java.io.ObjectOutputStream" :
       case "java.io.ObjectInputStream" :
-         cie = new CuminIOEvaluator(this);
-         sts = cie.checkObjectStreamMethods();
-         break;
-         
+	 cie = new CuminIOEvaluator(this);
+	 sts = cie.checkObjectStreamMethods();
+	 break;
+	
       case "sun.misc.FloatingDecimal" :
 	 cde = new CuminDirectEvaluation(this);
 	 sts = cde.checkFloatingDecimalMehtods();
-	 break;      
+	 break; 
       case "javax.swing.SwingUtilities" :
 	 cde = new CuminDirectEvaluation(this);
 	 sts = cde.checkSwingUtilityMethods();
@@ -1113,19 +1113,19 @@ private CuminRunStatus checkSpecial() throws CuminRunException
 	 cge = new CuminGraphicsEvaluator(this);
 	 sts = cge.checkGraphicsCallback();
 	 break;
-         
+	
       case "java.util.concurrent.atomic.AtomicInteger" :
       case "java.util.concurrent.atomic.AtomicLong" :
-         CuminConcurrentEvaluator cce = new CuminConcurrentEvaluator(this);
-         sts = cce.checkAtomicIntMethods();
-         break;
+	 CuminConcurrentEvaluator cce = new CuminConcurrentEvaluator(this);
+	 sts = cce.checkAtomicIntMethods();
+	 break;
       case "java.util.concurrent.atomic.AtomicBoolean" :
-         cce = new CuminConcurrentEvaluator(this);
-         sts = cce.checkAtomicBooleanMethods();
-         break;
-         
+	 cce = new CuminConcurrentEvaluator(this);
+	 sts = cce.checkAtomicBooleanMethods();
+	 break;
+	
       case "sun.misc.Unsafe" :
-         break;
+	 break;
     }
 
    return sts;
