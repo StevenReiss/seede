@@ -156,6 +156,20 @@ private CashewRef findFieldForName(String nm,boolean force)
       field_values.put(HASH_CODE_FIELD,ov);
     }
    
+   if (ov == null) {
+      // TODO: what if new field is static?
+      JcompType jdt = getDataType();
+      Map<String,JcompType> flds = jdt.getFields();
+      JcompType fty = flds.get(nm);
+      if (fty != null) {
+         if (new_fields == null) new_fields = new HashSet<String>();
+         new_fields.add(nm);
+         CashewValue newv = CashewValue.createDefaultValue(fty);
+         ov = new CashewRef(newv,true);
+         field_values.put(nm,ov);
+       }
+    }
+   
    if (ov == null && force) {
       throw new Error("UndefinedField: " + nm);
     }

@@ -1212,6 +1212,10 @@ CuminRunStatus checkAccessControllerMethods()
 	  }
 	 rslt = exec_runner.executeCall(rtn,action);
 	 break;
+      case "getContext" :
+         String expr = "java.security.AccessController.getContext()";
+         rslt = exec_runner.getLookupContext().evaluate(expr);
+         break;
       default :
 	 return null;
     }

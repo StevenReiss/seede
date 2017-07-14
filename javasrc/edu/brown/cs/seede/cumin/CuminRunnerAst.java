@@ -765,18 +765,13 @@ private CuminRunStatus visit(MethodDeclaration md,ASTNode after)
 	     }
 	  }
        }
+      
       //TODO:  need to handle nested this values as well
-      int nparm = args.size();
       for (Object o : args) {
 	 SingleVariableDeclaration svd = (SingleVariableDeclaration) o;
 	 JcompSymbol psym = JcompAst.getDefinition(svd.getName());
-	 if (idx == nparm-1 && md.isVarargs()) {
-	    // TODO: handle var args
-	  }
-	 else {
-	    CashewValue pv = lookup_context.findReference(psym);
-	    pv.setValueAt(execution_clock,argvals.get(idx+off));
-	  }
+         CashewValue pv = lookup_context.findReference(psym);
+         pv.setValueAt(execution_clock,argvals.get(idx+off));
 	 ++idx;
        }
       next_node = md.getBody();
@@ -1111,8 +1106,10 @@ private CuminRunStatus visit(InstanceofExpression v,ASTNode after) throws CuminR
    if (after == null) next_node = v.getLeftOperand();
    else {
       JcompType rt = JcompAst.getJavaType(v.getRightOperand());
-      CashewValue nv = CuminEvaluator.castValue(this,execution_stack.pop(),rt);
-      execution_stack.push(nv);
+      CashewValue nv = execution_stack.pop();
+      boolean fg = nv.getDataType(execution_clock).isCompatibleWith(rt); 
+      CashewValue rv = CashewValue.booleanValue(fg);
+      execution_stack.push(rv);
     }
 
    return null;
@@ -1356,32 +1353,32 @@ private CuminRunStatus visit(MethodInvocation v,ASTNode after) throws CuminRunEx
     }
 
    AcornLog.logD("INVOKE " + args.size() + " " + v);
-   
+
    JcompType ctyp = js.getType();
    int narg = ctyp.getComponents().size();
-   
+
    if (ctyp.isVarArgs()) {
       int ncomp = ctyp.getComponents().size();
       JcompType vtyp = ctyp.getComponents().get(ncomp-1);
       JcompType btyp = vtyp.getBaseType();
       int sz = args.size() - ncomp + 1;
       if (sz == 1) {
-         CashewValue cv = execution_stack.peek(0);
-         JcompType cvtyp = cv.getDataType(execution_clock);
-         if (cvtyp.isArrayType() && cvtyp.isCompatibleWith(vtyp)) {
-            sz = -1;
-          }
+	 CashewValue cv = execution_stack.peek(0);
+	 JcompType cvtyp = cv.getDataType(execution_clock);
+	 if (cvtyp.isArrayType() && cvtyp.isCompatibleWith(vtyp)) {
+	    sz = -1;
+	  }
        }
-      if (sz >= 0) {      
-         Map<Integer,Object> inits = new HashMap<Integer,Object>();
-         for (int i = ncomp; i <= args.size(); ++i) {
-            CashewValue cv = execution_stack.pop().getActualValue(execution_clock);
-            
-            CashewValue ncv = CuminEvaluator.castValue(this,cv,btyp);
-            inits.put(sz-(i-ncomp)-1,ncv);
-          }
-         CashewValue varval = CashewValue.arrayValue(vtyp,sz,inits);
-         execution_stack.push(varval);
+      if (sz >= 0) {	
+	 Map<Integer,Object> inits = new HashMap<Integer,Object>();
+	 for (int i = ncomp; i <= args.size(); ++i) {
+	    CashewValue cv = execution_stack.pop().getActualValue(execution_clock);
+	
+	    CashewValue ncv = CuminEvaluator.castValue(this,cv,btyp);
+	    inits.put(sz-(i-ncomp)-1,ncv);
+	  }
+	 CashewValue varval = CashewValue.arrayValue(vtyp,sz,inits);
+	 execution_stack.push(varval);
        }
     }
 
@@ -1468,7 +1465,7 @@ private CuminRunStatus visit(SuperMethodInvocation v,ASTNode after) throws Cumin
     }
 
    //TODO: need to handle varargs
-   
+
    // List<CashewValue> argv = new ArrayList<CashewValue>();
    // JcompSymbol js = JcompAst.getReference(v.getName());
    // CallType cty = CallType.VIRTUAL;
@@ -1490,40 +1487,40 @@ private CuminRunStatus visit(SuperMethodInvocation v,ASTNode after) throws Cumin
     // }
    // CuminRunner crun = handleCall(execution_clock,js,argv,cty);
    // return CuminRunStatus.Factory.createCall(crun);
-   
+
    AcornLog.logD("SUPER INVOKE " + args.size() + " " + v);
-   
+
    JcompSymbol js = JcompAst.getReference(v.getName());
    JcompType ctyp = js.getType();
    int narg = ctyp.getComponents().size();
-   
+
    if (ctyp.isVarArgs()) {
       int ncomp = ctyp.getComponents().size();
       JcompType vtyp = ctyp.getComponents().get(ncomp-1);
       JcompType btyp = vtyp.getBaseType();
       int sz = args.size() - ncomp + 1;
       if (sz == 1) {
-         CashewValue cv = execution_stack.peek(0);
-         JcompType cvtyp = cv.getDataType(execution_clock);
-         if (cvtyp.isArrayType() && cvtyp.isCompatibleWith(vtyp)) {
-            sz = -1;
-          }
+	 CashewValue cv = execution_stack.peek(0);
+	 JcompType cvtyp = cv.getDataType(execution_clock);
+	 if (cvtyp.isArrayType() && cvtyp.isCompatibleWith(vtyp)) {
+	    sz = -1;
+	  }
        }
-      if (sz >= 0) {      
-         Map<Integer,Object> inits = new HashMap<Integer,Object>();
-         for (int i = ncomp; i <= args.size(); ++i) {
-            CashewValue cv = execution_stack.pop().getActualValue(execution_clock);
-            
-            CashewValue ncv = CuminEvaluator.castValue(this,cv,btyp);
-            inits.put(sz-(i-ncomp)-1,ncv);
-          }
-         CashewValue varval = CashewValue.arrayValue(vtyp,sz,inits);
-         execution_stack.push(varval);
+      if (sz >= 0) {	
+	 Map<Integer,Object> inits = new HashMap<Integer,Object>();
+	 for (int i = ncomp; i <= args.size(); ++i) {
+	    CashewValue cv = execution_stack.pop().getActualValue(execution_clock);
+	
+	    CashewValue ncv = CuminEvaluator.castValue(this,cv,btyp);
+	    inits.put(sz-(i-ncomp)-1,ncv);
+	  }
+	 CashewValue varval = CashewValue.arrayValue(vtyp,sz,inits);
+	 execution_stack.push(varval);
        }
     }
-   
+
    List<JcompType> atyps = ctyp.getComponents();
-   
+
    List<CashewValue> argv = new ArrayList<CashewValue>();
    for (int i = 0; i < narg; ++i) {
       CashewValue cv = execution_stack.pop().getActualValue(execution_clock);
@@ -1531,7 +1528,7 @@ private CuminRunStatus visit(SuperMethodInvocation v,ASTNode after) throws Cumin
       CashewValue ncv = CuminEvaluator.castValue(this,cv,argtyp);
       if (ncv == null) {
 	 AcornLog.logD("Conversion problem " + cv + " " + argtyp + " " +
-               cv.getDataType(execution_clock) );
+	       cv.getDataType(execution_clock) );
        }
       argv.add(ncv);
     }
@@ -1539,7 +1536,7 @@ private CuminRunStatus visit(SuperMethodInvocation v,ASTNode after) throws Cumin
    if (!js.isStatic()) {
       JcompType base = null;
       if (v.getQualifier() != null) {
-         base = JcompAst.getExprType(v.getQualifier());
+	 base = JcompAst.getExprType(v.getQualifier());
        }
       CashewValue thisv = handleThisAccess(base);
       thisv = thisv.getActualValue(execution_clock);
@@ -1548,9 +1545,9 @@ private CuminRunStatus visit(SuperMethodInvocation v,ASTNode after) throws Cumin
    else cty = CallType.STATIC;
    Collections.reverse(argv);
    CuminRunner crun = handleCall(execution_clock,js,argv,cty);
-   return CuminRunStatus.Factory.createCall(crun);  
-   
-   
+   return CuminRunStatus.Factory.createCall(crun);
+
+
 }
 
 
