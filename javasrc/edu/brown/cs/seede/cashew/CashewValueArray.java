@@ -94,7 +94,8 @@ CashewValueArray(JcompType jt,int dim,Map<Integer,Object> inits,boolean caninit)
 }
 
 @Override public CashewValue getIndexValue(CashewClock cc,int idx) {
-   if (idx < 0 || idx >= dim_size) throw new Error("IndexOutOfBounds");
+   if (idx < 0 || idx >= dim_size) 
+      throw new Error("IndexOutOfBounds");
    return array_values[idx];
 }
 
@@ -191,7 +192,7 @@ CashewValueArray(JcompType jt,int dim,Map<Integer,Object> inits,boolean caninit)
 
 
 
-@Override public void outputLocalXml(IvyXmlWriter xw,CashewOutputContext outctx) {
+@Override public void outputLocalXml(IvyXmlWriter xw,CashewOutputContext outctx,String name) {
    xw.field("ARRAY",true);
    int rvl = outctx.noteValue(this);
    int oref = old_ref;
@@ -215,13 +216,15 @@ CashewValueArray(JcompType jt,int dim,Map<Integer,Object> inits,boolean caninit)
 	  }
 	 xw.begin("ELEMENT");
 	 xw.field("INDEX",i);
-	 array_values[i].outputXml(outctx);
+         String nnm = name;
+         if (nnm != null) nnm += "?" + i;
+	 array_values[i].outputXml(outctx,nnm);
 	 xw.end("ELEMENT");
        }
       if (numdflt != 0) {
 	 xw.begin("ELEMENT");
 	 xw.field("DEFAULT",true);
-	 dfltval.outputXml(outctx);
+	 dfltval.outputXml(outctx,null);
 	 xw.end("ELEMENT");
        }
     }

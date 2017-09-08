@@ -542,7 +542,9 @@ public boolean isNull(CashewClock cc)		{ return false; }
 public boolean isEmpty()			{ return false; }
 
 
-public Boolean isCategory2(CashewClock cc)	{ return false; }
+public boolean isCategory2(CashewClock cc)	{ return false; }
+
+public boolean isFunctionRef(CashewClock cc)    { return false; }
 
 
 
@@ -566,7 +568,9 @@ public int getHashCode(CashewClock cc,CashewContext ctx)
 }
 
 
-CashewValue lookupVariableName(String name)
+public Map<Object,CashewValue> getBindings()    { return null; }
+
+CashewValue lookupVariableName(String name,long when)
 {
    if (name == null || name.length() == 0) return this;
 
@@ -584,7 +588,7 @@ CashewValue lookupVariableName(String name)
    else {
       val = val.getFieldValue(null,name);
     }
-   if (rest != null) val = val.lookupVariableName(rest);
+   if (rest != null) val = val.lookupVariableName(rest,when);
 
    return val;
 }
@@ -648,17 +652,17 @@ public boolean checkChanged(CashewOutputContext outctx)
 
 
 
-public void outputXml(CashewOutputContext ctx)
+public void outputXml(CashewOutputContext ctx,String name)
 {
    IvyXmlWriter xw = ctx.getXmlWriter();
    xw.begin("VALUE");
    xw.field("TYPE",getDataType());
-   outputLocalXml(xw,ctx);
+   outputLocalXml(xw,ctx,name);
    xw.end("VALUE");
 }
 
 
-protected void outputLocalXml(IvyXmlWriter xw,CashewOutputContext outctx)  { }
+protected void outputLocalXml(IvyXmlWriter xw,CashewOutputContext outctx,String name)  { }
 
 
 
@@ -697,7 +701,7 @@ private static class ValueNumeric extends CashewValue {
       return num_value.toString();
     }
 
-   @Override public Boolean isCategory2(CashewClock cc) {
+   @Override public boolean isCategory2(CashewClock cc) {
       if (num_value instanceof Double || num_value instanceof Long) return true;
       return false;
     }
@@ -745,7 +749,7 @@ private static class ValueNumeric extends CashewValue {
        return v;
     }
 
-   @Override protected void outputLocalXml(IvyXmlWriter xw,CashewOutputContext outctx) {
+   @Override protected void outputLocalXml(IvyXmlWriter xw,CashewOutputContext outctx,String name) {
       xw.text(num_value.toString());
     }
 
@@ -782,7 +786,7 @@ private static class ValueNull extends CashewValue
       return "null";
     }
 
-   @Override protected void outputLocalXml(IvyXmlWriter xw,CashewOutputContext outctx) {
+   @Override protected void outputLocalXml(IvyXmlWriter xw,CashewOutputContext outctx,String name) {
       xw.field("NULL",true);
     }
 

@@ -73,34 +73,36 @@ CashewValueObject(JcompType jt,Map<String,Object> inits,boolean caninit)
    
    for (JcompType jt0 = jt; jt0 != null; jt0 = jt0.getSuperType()) {
       JcompScope tscp = jt0.getScope();
-      for (JcompSymbol fsym : tscp.getDefinedFields()) {
-	 String key = fsym.getFullName();
-	 CashewValue cv = CashewValue.createDefaultValue(fsym.getType());
-	 CashewRef cr = null;
-	 if (inits != null) {
-	    Object ival = inits.get(key);
-	    if (ival != null) {
-	       if (ival instanceof CashewValue) cv = (CashewValue) ival;
-	       else if (ival instanceof CashewDeferredValue) {
-		  CashewDeferredValue dv = (CashewDeferredValue) ival;
-		  cr = new CashewRef(dv);
-		}
-	     }
-	    else if (!fsym.isStatic()) {
-	       // first check if user has definition for the field and use it if so
-	       if (new_fields == null) new_fields = new HashSet<String>();
-	       new_fields.add(key);
-	     }
-	  }
-	 if (cr == null) cr = new CashewRef(cv,caninit);
-        
-	 if (fsym.isStatic()) {
-	    if (!static_values.containsKey(key)) {
-               static_values.put(key,cr);
-               AcornLog.logD("Add static field " + key + " to " + getDataType().getName());
+      if (tscp != null) {
+         for (JcompSymbol fsym : tscp.getDefinedFields()) {
+            String key = fsym.getFullName();
+            CashewValue cv = CashewValue.createDefaultValue(fsym.getType());
+            CashewRef cr = null;
+            if (inits != null) {
+               Object ival = inits.get(key);
+               if (ival != null) {
+                  if (ival instanceof CashewValue) cv = (CashewValue) ival;
+                  else if (ival instanceof CashewDeferredValue) {
+                     CashewDeferredValue dv = (CashewDeferredValue) ival;
+                     cr = new CashewRef(dv);
+                   }
+                }
+               else if (!fsym.isStatic()) {
+                  // first check if user has definition for the field and use it if so
+                  if (new_fields == null) new_fields = new HashSet<String>();
+                  new_fields.add(key);
+                }
              }
-	  }
-	 else field_values.put(key,cr);
+            if (cr == null) cr = new CashewRef(cv,caninit);
+            
+            if (fsym.isStatic()) {
+               if (!static_values.containsKey(key)) {
+                  static_values.put(key,cr);
+                  AcornLog.logD("Add static field " + key + " to " + getDataType().getName());
+                }
+             }
+            else field_values.put(key,cr);
+          }
        }
     }
 }
@@ -175,6 +177,42 @@ private CashewRef findFieldForName(String nm,boolean force)
     }
 
    return ov;
+}
+
+
+
+
+@Override CashewValue lookupVariableName(String name,long when)
+{
+   String rest = null;
+   String look = name;
+   int idx = look.indexOf("?");
+   if (idx > 0) {
+      rest = look.substring(idx+1);
+      look = look.substring(0,idx);
+    }
+   
+   CashewRef ov = field_values.get(look);
+   if (ov == null) {
+      ov = static_values.get(look);
+    }
+   if (ov != null) return super.lookupVariableName(name,when);
+   
+   String match = "." + name;
+   for (String fnm : field_values.keySet()) {
+      if (fnm.endsWith(match)) {
+         if (rest != null) fnm = fnm + "?" + rest;
+         return super.lookupVariableName(fnm,when);
+       }
+    }
+   for (String fnm : static_values.keySet()) {
+      if (fnm.endsWith(match)) {
+         if (rest != null) fnm = fnm + "?" + rest;
+         return super.lookupVariableName(fnm,when);
+       }
+    }
+   
+   return null;
 }
 
 
@@ -273,7 +311,7 @@ public CashewValueObject cloneObject(CashewClock cc)
 
 
 
-@Override public void outputLocalXml(IvyXmlWriter xw,CashewOutputContext outctx)
+@Override public void outputLocalXml(IvyXmlWriter xw,CashewOutputContext outctx,String name)
 {
    xw.field("OBJECT",true);
    if (getDataType().isCompatibleWith(COMPONENT_TYPE)) {
@@ -298,7 +336,9 @@ public CashewValueObject cloneObject(CashewClock cc)
             xw.field("NAME",ent.getKey());
             if (new_fields != null && new_fields.contains(ent.getKey()))
                xw.field("NEWFIELD",true);
-            ent.getValue().outputXml(outctx);
+            String nnm = name;
+            if (nnm != null) nnm += "?" + ent.getKey();
+            ent.getValue().outputXml(outctx,nnm);
             xw.end("FIELD");
           }
        }
@@ -314,7 +354,7 @@ public static void outputStatics(IvyXmlWriter xw,CashewOutputContext outctx)
       if (!ent.getValue().isEmpty()) {
          xw.begin("STATIC");
          xw.field("NAME",ent.getKey());
-         ent.getValue().outputXml(outctx);
+         ent.getValue().outputXml(outctx,ent.getKey());
          xw.end("STATIC");
        }
     }

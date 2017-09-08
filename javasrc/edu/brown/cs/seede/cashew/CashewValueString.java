@@ -208,7 +208,7 @@ public void setInitialValue(String s)
    hash32_field = null;
 }
 
-@Override public void outputLocalXml(IvyXmlWriter xw,CashewOutputContext ctx)
+@Override public void outputLocalXml(IvyXmlWriter xw,CashewOutputContext ctx,String name)
 {
    xw.cdata(string_value);
 }

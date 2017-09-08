@@ -26,8 +26,11 @@ package edu.brown.cs.seede.cumin;
 
 import java.io.UnsupportedEncodingException;
 
+import java.lang.reflect.Modifier;
+
 import edu.brown.cs.ivy.jcomp.JcompType;
 import edu.brown.cs.ivy.jcomp.JcompTyper;
+import edu.brown.cs.seede.cashew.CashewSynchronizationModel;
 import edu.brown.cs.seede.cashew.CashewValue;
 import edu.brown.cs.seede.cashew.CashewValueClass;
 import edu.brown.cs.seede.cashew.CashewValueObject;
@@ -824,7 +827,7 @@ private CuminRunStatus handleArrayCopy(CashewValue src,int spos,CashewValue dst,
 /*										*/
 /********************************************************************************/
 
-CuminRunStatus checkObjectMethods()
+CuminRunStatus checkObjectMethods() throws CuminRunException
 {
    CashewValue rslt = null;
 
@@ -846,11 +849,31 @@ CuminRunStatus checkObjectMethods()
 	 rslt = obj.cloneObject(getClock());
 	 break;
       case "wait" :
+         CashewSynchronizationModel scm = getContext().getSynchronizationModel();
+         if (scm != null) {
+            long time = 0;
+            if (getNumArgs() > 1) time = getLong(1);
+            try {
+               scm.synchWait(getValue(0),time);
+             }
+            catch (InterruptedException ex) {
+               CuminEvaluator.throwException(INT_EXCEPTION); 
+             }
+            break;
+          }
 	 return CuminRunStatus.Factory.createWait();
 
       case "notify" :
+         scm = getContext().getSynchronizationModel();
+         if (scm != null) {
+            scm.synchNotify(getValue(0),false);
+          }
+         break;
       case "notifyAll" :
-	 // TODO: handle synchronization
+         scm = getContext().getSynchronizationModel();
+         if (scm != null) {
+            scm.synchNotify(getValue(0),false);
+          }
 	 break;
       default :
 	 AcornLog.logD("UNKNOWN CALL TO OBJECT: " + getMethod().getName());
@@ -917,6 +940,12 @@ CuminRunStatus checkClassMethods()
             expr = "edu.brown.cs.seede.poppy.PoppyValue.getNewInstance(\"" +
             thistype.getName() + "\")";
             rslt = exec_runner.getLookupContext().evaluate(expr);
+            break;
+         case "isPrimitive" :
+            rslt = CashewValue.booleanValue(thistype.isPrimitiveType());
+            break;
+         case "isArray" :
+            rslt = CashewValue.booleanValue(thistype.isArrayType());
             break;
 	 default :
 	    AcornLog.logE("Unknown call to java.lang.Class." + getMethod());
@@ -1184,6 +1213,22 @@ CuminRunStatus checkReflectArrayMethods() throws CuminRunException
 	 return null;
     }
 
+   return CuminRunValue.Factory.createReturn(rslt);
+}
+
+
+CuminRunStatus checkSunReflectionMethods() throws CuminRunException
+{
+   CashewValue rslt = null;
+   
+   switch (getMethod().getName()) {
+      case "getClassAccessFlags" :
+         rslt = CashewValue.numericValue(INT_TYPE,Modifier.PUBLIC);
+         break;
+      default :
+         return null;
+    }
+   
    return CuminRunValue.Factory.createReturn(rslt);
 }
 

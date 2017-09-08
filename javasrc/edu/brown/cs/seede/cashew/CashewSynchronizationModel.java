@@ -1,8 +1,8 @@
 /********************************************************************************/
 /*                                                                              */
-/*              CashewValueFile.java                                            */
+/*              CashewSynchronizationModel.java                                 */
 /*                                                                              */
-/*      Representation of java.io.File objects                                  */
+/*      description of class                                                    */
 /*                                                                              */
 /********************************************************************************/
 /*      Copyright 2011 Brown University -- Steven P. Reiss                    */
@@ -24,11 +24,14 @@
 
 package edu.brown.cs.seede.cashew;
 
-import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
-import edu.brown.cs.ivy.xml.IvyXmlWriter;
-
-public class CashewValueFile extends CashewValueObject implements CashewConstants
+public class CashewSynchronizationModel implements CashewConstants
 {
 
 
@@ -38,7 +41,9 @@ public class CashewValueFile extends CashewValueObject implements CashewConstant
 /*                                                                              */
 /********************************************************************************/
 
-private File            user_file;
+private Map<CashewValue,SynchData> synch_locks;
+
+
 
 
 /********************************************************************************/
@@ -47,76 +52,77 @@ private File            user_file;
 /*                                                                              */
 /********************************************************************************/
 
-CashewValueFile(String path)
+CashewSynchronizationModel()
 {
-   this(new File(path));
+   synch_locks = new HashMap<>();
 }
 
-
-public CashewValueFile(File path)
-{
-   super(FILE_TYPE,null,false);
-   user_file = path;
-}
 
 
 /********************************************************************************/
 /*                                                                              */
-/*      Access methods                                                          */
+/*      Setup methods                                                           */
 /*                                                                              */
 /********************************************************************************/
 
-public void setInitialValue(File f) 
+synchronized public void clear()
 {
-   user_file = f;
-}
-
-
-@Override public String getString(CashewClock cc,int idx,boolean dbg)
-{
-   if (user_file == null) return "File(null)";
-   return user_file.toString();
+   synch_locks.clear();
 }
 
 
 
-public File getFile()                   { return user_file; }
-
-
-
-@Override public CashewValue getFieldValue(CashewClock cc,String nm,boolean force)
+synchronized public void reset()
 {
-   switch (nm) {
-      case "path" :
-         return CashewValue.stringValue(user_file.getPath());
-      case "status" :
-         // return PathStatus.CHECKED
-         break;
-      case "prefixLength" :
-         return CashewValue.numericValue(INT_TYPE,0);
-         
-      // static fields   
-      case "fs" :
-         // return DefaultFileSystem.getFileSystem()
-         break;
-      case "separator" :
-         return CashewValue.stringValue(File.separator);
-      case "separatorChar" :
-         return CashewValue.numericValue(CHAR_TYPE,File.separatorChar);
-      case "pathSeparator" :
-         return CashewValue.stringValue(File.pathSeparator);     
-      case "pathSeparatorChar" :
-         return CashewValue.numericValue(CHAR_TYPE,File.pathSeparatorChar);
+   clear();
+}
+
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Syncrhonization methods                                                 */
+/*                                                                              */
+/********************************************************************************/
+
+public void synchEnter(CashewValue object)
+{
+    SynchData sd = getLockData(object);  
+    sd.lock();
+}
+
+
+public void synchExit(CashewValue object)
+{
+   SynchData sd = getLockData(object);  
+   sd.unlock();
+}
+
+
+public void synchWait(CashewValue object,long timeout) throws InterruptedException
+{
+   SynchData sd = getLockData(object);  
+   sd.await(timeout);
+}
+
+
+public void synchNotify(CashewValue object,boolean all) 
+{
+   SynchData sd = getLockData(object);  
+   sd.signal(all);
+}
+
+
+private synchronized SynchData getLockData(CashewValue obj)
+{
+   SynchData sd = synch_locks.get(obj);
+   if (sd == null) {
+      sd = new SynchData();
+      synch_locks.put(obj,sd);
     }
    
-   return null;
-}
-
-
-
-@Override public CashewValue setFieldValue(CashewClock cc,String nm,CashewValue cv)
-{
-   return this;
+   return sd;
 }
 
 
@@ -124,24 +130,43 @@ public File getFile()                   { return user_file; }
 
 /********************************************************************************/
 /*                                                                              */
-/*      Output methods                                                          */
+/*      Lock representation                                                     */
 /*                                                                              */
 /********************************************************************************/
 
-@Override public void outputLocalXml(IvyXmlWriter xw,CashewOutputContext outctx,String name)
-{
-   xw.field("OBJECT",true);
-   if (user_file == null) xw.field("FILE","*UNKNOWN*");
-   else xw.field("FILE",user_file.toString());
-}
+private static class SynchData {
+
+   private Lock         our_lock;
+   private Condition    lock_cond;
+   
+   SynchData() {
+      our_lock = new ReentrantLock();
+      lock_cond = our_lock.newCondition();
+    }
+   
+   void lock()                  { our_lock.lock(); }
+   
+   void unlock()                { our_lock.unlock(); }
+   
+   void await(long time) throws InterruptedException {
+      if (time == 0) lock_cond.await();
+      else lock_cond.await(time,TimeUnit.MILLISECONDS);
+    }
+   
+   void signal(boolean all) {
+      if (all) lock_cond.signalAll(); 
+      else lock_cond.signal();
+    }
+   
+}       // end of inner class LockData
 
 
 
 
-}       // end of class CashewValueFile
+}       // end of class CashewSynchronizationModel
 
 
 
 
-/* end of CashewValueFile.java */
+/* end of CashewSynchronizationModel.java */
 

@@ -627,7 +627,7 @@ CuminRunStatus checkObjectStreamMethods()
                dst.setIndexValue(getClock(),dstpos+i,rv);
              }
             break;
-         case "flaotsToBytes" :
+         case "floatsToBytes" :
             float [] fsrc = getFloatArray(0);
             srcpos = getInt(1);
             dst = getValue(2);

@@ -26,6 +26,7 @@ package edu.brown.cs.seede.cashew;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import edu.brown.cs.ivy.xml.IvyXmlWriter;
@@ -44,6 +45,7 @@ public class CashewOutputContext implements CashewConstants
 
 private IvyXmlWriter xml_writer;
 private Map<CashewValue,Integer> values_output;
+private Set<String> expand_names;
 
 private static AtomicInteger id_counter = new AtomicInteger();
 
@@ -55,18 +57,11 @@ private static AtomicInteger id_counter = new AtomicInteger();
 /*                                                                              */
 /********************************************************************************/
 
-public CashewOutputContext() 
-{
-   values_output = new HashMap<CashewValue,Integer>();
-   xml_writer = new IvyXmlWriter();
-}
-
-
-
-public CashewOutputContext(IvyXmlWriter xw)
+public CashewOutputContext(IvyXmlWriter xw,Set<String> exp)
 {
    values_output = new HashMap<CashewValue,Integer>();
    xml_writer = xw;
+   expand_names = exp;
 }
 
 
@@ -116,6 +111,15 @@ public boolean noteChecked(CashewValue cv)
    return false;
 }
 
+
+
+public boolean expand(String name)
+{
+   if (name == null) return false;
+   if (expand_names == null) return false;
+   
+   return expand_names.contains(name);
+}
 
 
 

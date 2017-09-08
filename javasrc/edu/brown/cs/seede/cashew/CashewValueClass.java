@@ -79,7 +79,7 @@ public JcompType getJcompType()                         { return class_value; }
 /*                                                                              */
 /********************************************************************************/
 
-@Override public void outputLocalXml(IvyXmlWriter xw,CashewOutputContext outctx)
+@Override public void outputLocalXml(IvyXmlWriter xw,CashewOutputContext outctx,String name)
 {
    xw.field("OBJECT",true);
    if (class_value == null) xw.field("CLASS","*UNKNOWN*");

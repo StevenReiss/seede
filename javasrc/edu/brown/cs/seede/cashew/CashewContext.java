@@ -86,6 +86,7 @@ private static String getNameWithSignature(JcompSymbol js)
    
    buf.append("(");
    JcompType jt = js.getType();
+   if (!jt.isMethodType()) jt = jt.getFunctionalType();
    int i = 0;
    for (JcompType aty : jt.getComponents()) {
       if (i++ > 0) buf.append(",");
@@ -152,8 +153,16 @@ public void reset()
 
 public String getName()                         { return context_owner; }
 
+
+public int getId()                              { return context_id; }
+
 public CashewContext getParentContext()         { return parent_context; }
 
+public List<CashewContext> getChildContexts()   { return nested_contexts; }
+
+public long getStartTime()                      { return start_time; }
+
+public long getEndTime()                        { return end_time; }
 
 public CashewValue findReference(JcompSymbol js)
 {
@@ -249,7 +258,7 @@ public String findReferencedVariableName(String name)
 
 
 
-public CashewValue findReferencedVariableValue(String name)
+public CashewValue findReferencedVariableValue(String name,long when)
 {
    int idx = name.indexOf("?");
    if (idx > 0) {
@@ -258,24 +267,27 @@ public CashewValue findReferencedVariableValue(String name)
       int idx1 = outname.indexOf("#");
       if (idx1 > 0) {
          String ctxname = outname.substring(0,idx1);
+         if (getName().equals(ctxname)) {
+            return lookupVariableValue(name,when);
+          }
          for (CashewContext ictx : nested_contexts) {
             if (ictx.getName().equals(ctxname)) {
-               return ictx.findReferencedVariableValue(name);
+               return ictx.findReferencedVariableValue(name,when);
              }
           }
          return null;
        }
       else {
-         return lookupVariableValue(outname);
+         return lookupVariableValue(outname,when);
        }
     }
    else {
-      return lookupVariableValue(name);
+      return lookupVariableValue(name,when);
     }
 }
 
 
-private CashewValue lookupVariableValue(String name)
+private CashewValue lookupVariableValue(String name,long when)
 {
    int idx = name.indexOf("?");
    String lookup = name;
@@ -290,7 +302,7 @@ private CashewValue lookupVariableValue(String name)
    int idx1 = lookup.indexOf("@");
    if (idx1 > 0) {
       line = Integer.parseInt(lookup.substring(idx1+1));
-      lookup = lookup.substring(0,idx);   
+      lookup = lookup.substring(0,idx1);   
     }
    
    for (Map.Entry<Object,CashewValue> ent : context_map.entrySet()) {
@@ -314,8 +326,7 @@ private CashewValue lookupVariableValue(String name)
     }  
    
    if (bestvalue != null && next != null) {
-      //TODO: lookup field next in best value
-      return null;
+      bestvalue = bestvalue.lookupVariableName(next,when);
     }
    
    return bestvalue;
@@ -416,6 +427,13 @@ public CashewInputOutputModel getIOModel()
 }
 
 
+public CashewSynchronizationModel getSynchronizationModel()
+{
+   if (parent_context != null) return parent_context.getSynchronizationModel();
+   return null;
+}
+
+
 public String findNameForValue(CashewValue cv)
 {
    if (parent_context != null) return parent_context.findNameForValue(cv);
@@ -506,8 +524,9 @@ public void outputXml(CashewOutputContext outctx)
       
       for (Map.Entry<Object,CashewValue> ent : context_map.entrySet()) {
          Object var = ent.getKey();
+         String name = var.toString();
          xw.begin("VARIABLE");
-         xw.field("NAME",var.toString());
+         xw.field("NAME",name);
          if (var instanceof JcompSymbol) {
             JcompSymbol js = (JcompSymbol) var;
             ASTNode defn = js.getDefinitionNode();
@@ -516,7 +535,7 @@ public void outputXml(CashewOutputContext outctx)
             xw.field("LINE",lno);
           }
          CashewValue cv = ent.getValue();
-         cv.outputXml(outctx);
+         cv.outputXml(outctx,name);
          xw.end("VARIABLE");
        }
       for (CashewContext ctx : nested_contexts) {

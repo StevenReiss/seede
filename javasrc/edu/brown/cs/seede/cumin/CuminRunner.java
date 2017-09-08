@@ -30,12 +30,15 @@ import java.util.List;
 import java.util.Set;
 
 import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jdt.core.dom.LambdaExpression;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
+import org.eclipse.jdt.core.dom.MethodReference;
 
 import edu.brown.cs.ivy.jcode.JcodeClass;
 import edu.brown.cs.ivy.jcode.JcodeDataType;
 import edu.brown.cs.ivy.jcode.JcodeFactory;
 import edu.brown.cs.ivy.jcode.JcodeMethod;
+import edu.brown.cs.ivy.jcomp.JcompAst;
 import edu.brown.cs.ivy.jcomp.JcompProject;
 import edu.brown.cs.ivy.jcomp.JcompSearcher;
 import edu.brown.cs.ivy.jcomp.JcompSymbol;
@@ -45,7 +48,9 @@ import edu.brown.cs.seede.acorn.AcornLog;
 import edu.brown.cs.seede.cashew.CashewClock;
 import edu.brown.cs.seede.cashew.CashewConstants;
 import edu.brown.cs.seede.cashew.CashewContext;
+import edu.brown.cs.seede.cashew.CashewSynchronizationModel;
 import edu.brown.cs.seede.cashew.CashewValue;
+import edu.brown.cs.seede.cashew.CashewValueFunctionRef;
 
 
 public abstract class CuminRunner implements CuminConstants, CashewConstants
@@ -74,11 +79,11 @@ public CashewValue executeCall(String method,CashewValue ... args)
 
    JcodeMethod cmethod = getCodeFactory().findMethod(method,null,null,null);
    if (cmethod == null) return null;
-   CuminRunner cr = handleCall(execution_clock,cmethod,arglist,CallType.VIRTUAL);
-   if (cr == null) return null;
-
    CuminRunStatus sts = null;
+
    try {
+      CuminRunner cr = handleCall(execution_clock,cmethod,arglist,CallType.VIRTUAL);
+      if (cr == null) return null;
       sts = cr.interpret(EvalType.RUN);
     }
    catch (CuminRunException e) {
@@ -181,7 +186,7 @@ JcompTyper getTyper()			{ return base_project.getTyper(); }
 
 JcodeFactory getCodeFactory()		{ return base_project.getJcodeFactory(); }
 
-JcompProject getCompProjoect()		{ return base_project.getJcompProject(); }
+JcompProject getCompProject()		{ return base_project.getJcompProject(); }
 
 public CashewClock getClock()		{ return execution_clock; }
 
@@ -232,7 +237,7 @@ public String findReferencedVariableName(String name)
 
 
 
-public CashewValue findReferencedVariableValue(String name)
+public CashewValue findReferencedVariableValue(String name,long when)
 {
    int idx = name.indexOf("?");
    if (idx < 0) return null;
@@ -241,7 +246,7 @@ public CashewValue findReferencedVariableValue(String name)
    int idx1 = ctxname.indexOf("#");
    if (idx1 > 0) ctxname = ctxname.substring(0,idx1);
    if (!ctxname.equals(lookup_context.getName())) return null;
-   return lookup_context.findReferencedVariableValue(varname);
+   return lookup_context.findReferencedVariableValue(varname,when);
 }
 
 
@@ -271,48 +276,55 @@ public CuminRunStatus interpret(EvalType et) throws CuminRunException
 {
    CuminRunStatus ret = null;
 
-   for ( ; ; ) {
-      if (nested_call != null) {
-	 CuminRunStatus rsts = null;
+   beginSynch();
+
+   try {
+      for ( ; ; ) {
+	 if (nested_call != null) {
+	    CuminRunStatus rsts = null;
+	    try {
+	       rsts = nested_call.interpret(et);
+	     }
+	    catch (CuminRunException r) {
+	       rsts = r;
+	     }
+	    if (rsts.getReason() == Reason.RETURN) {
+	       if (rsts.getValue() != null)
+		  nested_call.getLookupContext().define("*RETURNS*",rsts.getValue());
+	       execution_clock.tick();
+	       ret = rsts;
+	     }
+	    else if (rsts.getReason() == Reason.EXCEPTION) {
+	       if (rsts.getValue() != null)
+		  nested_call.getLookupContext().define("*THROWS*",rsts.getValue());
+	       execution_clock.tick();
+	       ret = rsts;
+	     }
+	    else {
+	       lookup_context.setEndTime(execution_clock);
+	       return rsts;
+	     }
+	  }
+
+	 CuminRunStatus nsts = null;
 	 try {
-	    rsts = nested_call.interpret(et);
+	    nsts = interpretRun(ret);
+	    if (nsts == null)
+	       return CuminRunStatus.Factory.createReturn();
 	  }
 	 catch (CuminRunException r) {
-	    rsts = r;
+	    nsts = r;
 	  }
-	 if (rsts.getReason() == Reason.RETURN) {
-	    if (rsts.getValue() != null)
-	       nested_call.getLookupContext().define("*RETURNS*",rsts.getValue());
-	    execution_clock.tick();
-	    ret = rsts;
+	 if (nsts.getReason() == Reason.CALL) {
+	    nested_call = nsts.getCallRunner();
+	    continue;
 	  }
-	 else if (rsts.getReason() == Reason.EXCEPTION) {
-	    if (rsts.getValue() != null)
-	       nested_call.getLookupContext().define("*THROWS*",rsts.getValue());
-	    execution_clock.tick();
-	    ret = rsts;
-	  }
-	 else {
-	    lookup_context.setEndTime(execution_clock);
-	    return rsts;
-	  }
+	 lookup_context.setEndTime(execution_clock);
+	 return nsts;
        }
-
-      CuminRunStatus nsts = null;
-      try {
-	 nsts = interpretRun(ret);
-	 if (nsts == null)
-	    return CuminRunStatus.Factory.createReturn();
-       }
-      catch (CuminRunException r) {
-	 nsts = r;
-       }
-      if (nsts.getReason() == Reason.CALL) {
-	 nested_call = nsts.getCallRunner();
-	 continue;
-       }
-      lookup_context.setEndTime(execution_clock);
-      return nsts;
+    }
+   finally {
+      endSynch();
     }
 }
 
@@ -361,12 +373,25 @@ protected CuminRunner handleCall(CashewClock cc,JcompSymbol method,List<CashewVa
        }
       throw CuminRunStatus.Factory.createError("Missing method " + method);
     }
-   
+
    JcompType type = cmethod.getClassType();
    if (!type.isKnownType()) {
-      MethodDeclaration md = (MethodDeclaration) cmethod.getDefinitionNode();
-      if (md != null) return doCall(cc,md,args);
-      AcornLog.logE("Missing AST for method declaration " + md);
+      ASTNode an = cmethod.getDefinitionNode();
+      if (an == null) {
+	 AcornLog.logE("Missing AST for method declaration " + cmethod);
+       }
+      else if (an instanceof MethodDeclaration) {
+	 MethodDeclaration md = (MethodDeclaration) an;
+	 return doCall(cc,md,args);
+       }
+      else if (an instanceof LambdaExpression) {
+	 LambdaExpression le = (LambdaExpression) an;
+	 return doCall(cc,le,args);
+       }
+      else if (an instanceof MethodReference) {
+	 MethodReference mr = (MethodReference) an;
+	 return doCall(cc,mr,args);
+       }
     }
 
    JcodeClass mcls = getCodeFactory().findClass(type.getName());
@@ -378,7 +403,7 @@ protected CuminRunner handleCall(CashewClock cc,JcompSymbol method,List<CashewVa
 
 
 CuminRunner handleCall(CashewClock cc,JcodeMethod method,List<CashewValue> args,
-      CallType ctyp)
+      CallType ctyp) throws CuminRunException
 {
    CashewValue thisarg = null;
    if (args != null && args.size() > 0 && !method.isStatic()) {
@@ -387,12 +412,31 @@ CuminRunner handleCall(CashewClock cc,JcodeMethod method,List<CashewValue> args,
     }
 
    JcodeMethod cmethod = findTargetMethod(cc,method,thisarg,ctyp);
-   
-   if (cmethod == null) {
-      AcornLog.logE("Couldn't find bc method to call " + method);
-      for (CashewValue cv : args) {
-	 AcornLog.logE("ARG: " + cv.getDebugString(cc));
+   if (thisarg != null && thisarg.isFunctionRef(cc)) {
+      List<CashewValue> nargs = new ArrayList<>(args);
+      nargs.remove(0);
+      if (cmethod == null) {
+	 CashewValueFunctionRef fref = (CashewValueFunctionRef) thisarg;
+	 ASTNode an = fref.getEvalNode();
+	 return doCall(cc,an,args);
        }
+      args = nargs;
+    }
+
+   if (cmethod == null) {
+      StringBuffer buf = new StringBuffer();
+      buf.append(method);
+      buf.append("(");
+      int ctr = 0;
+      if (args != null) {
+         for (CashewValue cv : args) {
+            if (ctr++ > 0) buf.append(",");
+            buf.append(cv.getDebugString(cc));
+          }
+       }
+      buf.append(")");
+      AcornLog.logE("Couldn't find bc method to call " + buf.toString());
+      throw new CuminRunException(Reason.ERROR,"Missing method " + buf.toString());
     }
 
    String cmcname = cmethod.getDeclaringClass().getName();
@@ -417,7 +461,7 @@ CuminRunner handleCall(CashewClock cc,JcodeMethod method,List<CashewValue> args,
       JcompType rtyp = convertType(cmethod.getReturnType());
       JcompType mtyp = null;
       if (argtyps != null) {
-	 mtyp = JcompType.createMethodType(rtyp,argtyps,false);
+	 mtyp = JcompType.createMethodType(rtyp,argtyps,false,null);
        }
       MethodDeclaration md = findAstForMethod(fullname,mtyp);
       if (md != null) return doCall(cc,md,args);
@@ -427,12 +471,13 @@ CuminRunner handleCall(CashewClock cc,JcodeMethod method,List<CashewValue> args,
 }
 
 
-private CuminRunner doCall(CashewClock cc,MethodDeclaration ast,List<CashewValue> args)
+private CuminRunner doCall(CashewClock cc,ASTNode ast,List<CashewValue> args)
 {
    CuminRunnerAst rast = new CuminRunnerAst(base_project,global_context,cc,ast,args);
    lookup_context.addNestedContext(rast.getLookupContext());
 
-   AcornLog.logD("Start ast call to " + ast.getName());
+   JcompSymbol js = JcompAst.getDefinition(ast);
+   AcornLog.logD("Start ast call to " + js.getName());
 
    return rast;
 }
@@ -482,9 +527,25 @@ private JcodeMethod findTargetMethod(CashewClock cc,JcodeMethod method,
       return method;
     }
 
-   String bnm = base.getName();
+   if (base.isFunctionRef()) {
+      CashewValueFunctionRef vfr = (CashewValueFunctionRef) arg0;
+      String mth = vfr.getMethodName();
+      if (mth != null) {
+	 int idx = mth.indexOf(".");
+	 String cls = mth.substring(0,idx);
+	 String mthd = mth.substring(idx+1);
+	 JcodeClass ccls = getCodeFactory().findClass(cls);
+	 int idx1 = mthd.indexOf("(");
+	 JcodeMethod fnd = ccls.findInheritedMethod(mthd.substring(0,idx1),mthd.substring(idx1));
+	 return fnd;
+       }
+      // here we need to find the related method for the ref
+      return null;
+    }
+
    JcodeClass cls = null;
 
+   String bnm = base.getName();
    for ( ; ; ) {
       cls = getCodeFactory().findClass(bnm);
       if (cls != null) break;
@@ -520,6 +581,39 @@ private MethodDeclaration findAstForMethod(String nm,JcompType mtyp)
 
    return null;
 }
+
+
+
+/********************************************************************************/
+/*										*/
+/*	Synchronized method handling						*/
+/*										*/
+/********************************************************************************/
+
+private void beginSynch()
+{
+   CashewValue cv = synchronizeOn();
+   if (cv != null){
+      cv = cv.getActualValue(execution_clock);
+      CashewSynchronizationModel csm = lookup_context.getSynchronizationModel();
+      if (csm != null) csm.synchEnter(cv);
+    }
+}
+
+
+private void endSynch() 	
+{
+   CashewValue cv = synchronizeOn();
+   if (cv != null) {
+      cv = cv.getActualValue(execution_clock);
+      CashewSynchronizationModel csm = lookup_context.getSynchronizationModel();
+      if (csm != null) csm.synchExit(cv);
+    }
+}
+
+
+abstract protected CashewValue synchronizeOn();
+
 
 
 

@@ -29,6 +29,11 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.lang.invoke.CallSite;
+import java.lang.invoke.LambdaMetafactory;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.Field;
 import java.nio.channels.FileChannel;
 
@@ -299,6 +304,49 @@ public static Object getNewInstance(String name)
       return null;
     }
 }
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Handle invoke dynamic                                                   */
+/*                                                                              */
+/********************************************************************************/
+
+public static Object invokeLambdaMetaFactory(String clsnam,
+      String name,String desc,String sam,String mts1,String mts2)
+{
+   ClassLoader loader = PoppyValue.class.getClassLoader();
+   try {
+      Class<?> cl = Class.forName(clsnam);
+      loader = cl.getClassLoader();
+    }
+   catch (ClassNotFoundException e) { }
+   
+   try {
+      MethodHandles.Lookup lookup = MethodHandles.lookup();
+      MethodType mtype = MethodType.fromMethodDescriptorString(desc,loader);
+      MethodType samtype = MethodType.fromMethodDescriptorString(sam,loader);
+      int idx = mts1.indexOf("(");
+      MethodType mt1 = MethodType.fromMethodDescriptorString(mts1.substring(idx),loader);
+      String mn1 = mts1.substring(0,idx);
+      idx = mn1.indexOf(".");
+      String clsnm1 = mn1.substring(0,idx);
+      String mth1 = mn1.substring(idx+1);
+      Class<?> cls1 = Class.forName(clsnm1);
+      MethodHandle mh = lookup.findStatic(cls1,mth1,mt1);
+      MethodType mt2 = MethodType.fromMethodDescriptorString(mts2,loader);
+      CallSite cs = LambdaMetafactory.metafactory(lookup,name,mtype,samtype,mh,mt2);
+      Object rslt = cs.getTarget().invoke();
+      return rslt;
+    }
+   catch (Throwable t) {
+      System.err.println("PROBLEM WITH INVOKE META: " + t);
+      return t.toString();
+    }
+}
+
+
+
 
 }	// end of class PoppyValue
 

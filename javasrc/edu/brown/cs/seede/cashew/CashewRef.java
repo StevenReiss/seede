@@ -248,11 +248,19 @@ CashewRef(CashewDeferredValue deferred)
 
 
 
-@Override public Boolean isCategory2(CashewClock cc)
+@Override public boolean isCategory2(CashewClock cc)
 {
    CashewValue cv = getValueAt(cc);
-   if (cv == null) return null;
+   if (cv == null) return false;
    return cv.isCategory2(cc);
+}
+
+
+@Override public boolean isFunctionRef(CashewClock cc)
+{
+   CashewValue cv = getValueAt(cc);
+   if (cv == null) return false;
+   return cv.isFunctionRef(cc);
 }
 
 
@@ -349,15 +357,20 @@ private CashewValue getValueAt(CashewClock cc)
 
 
 
-@Override public void outputXml(CashewOutputContext outctx)
+@Override public void outputXml(CashewOutputContext outctx,String name)
 {
    IvyXmlWriter xw = outctx.getXmlWriter();
+   if (outctx.expand(name)) {
+      if (deferred_value != null && value_map == null) {
+         getValueAt(null);
+       }
+    }
    if (value_map == null) {
       if (last_value != null) {
 	 xw.begin("VALUE");
 	 if (can_initialize) xw.field("CANINIT",true);
 	 xw.field("TYPE",last_value.getDataType());
-	 last_value.outputLocalXml(xw,outctx);
+	 last_value.outputLocalXml(xw,outctx,name);
 	 xw.end("VALUE");
        }
     }
@@ -369,7 +382,7 @@ private CashewValue getValueAt(CashewClock cc)
 	 if (can_initialize) xw.field("CANINIT",true);
 	 xw.field("TYPE",ent.getValue().getDataType());
 	 if (ent.getValue() != null) {
-	    ent.getValue().outputLocalXml(xw,outctx);
+	    ent.getValue().outputLocalXml(xw,outctx,name);
 	  }
 	 xw.end("VALUE");
        }

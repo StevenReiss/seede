@@ -111,6 +111,7 @@ JcompType ARRAY_STORE_EXC = JCOMP_BASE.getSystemType("java.lang.ArrayStoreExcept
 JcompType NUM_FMT_EXC = JCOMP_BASE.getSystemType("java.lang.NumberFormatException");
 JcompType ILL_ARG_EXC = JCOMP_BASE.getSystemType("java.lang.IllegalArgumentException");
 JcompType UNSUP_ENC_EXC = JCOMP_BASE.getSystemType("java.io.UnsupportedEncodingException");
+JcompType INT_EXCEPTION = JCOMP_BASE.getSystemType("java.lang.InterruptedException");
 
 JcompType INT_BOX_TYPE = JCOMP_BASE.getSystemType("java.lang.Integer");
 JcompType SHORT_BOX_TYPE = JCOMP_BASE.getSystemType("java.lang.Short");

@@ -40,6 +40,7 @@ import org.w3c.dom.Element;
 import edu.brown.cs.ivy.jcomp.JcompAst;
 import edu.brown.cs.ivy.mint.MintDefaultReply;
 import edu.brown.cs.ivy.xml.IvyXml;
+import edu.brown.cs.seede.cashew.CashewContext;
 import edu.brown.cs.seede.cashew.CashewInputOutputModel;
 import edu.brown.cs.seede.cashew.CashewValue;
 import edu.brown.cs.seede.cumin.CuminRunner;
@@ -88,6 +89,7 @@ private Map<String,SesameLocation> location_map;
 private Map<CuminRunner,SesameLocation> runner_location;
 private Set<SesameExecRunner> exec_runners;
 private CashewInputOutputModel	cashew_iomodel;
+private Set<String>     expand_names;
 
 
 
@@ -119,6 +121,7 @@ protected SesameSession(SesameMain sm,String sid,Element xml)
    exec_runners = new HashSet<SesameExecRunner>();
    runner_location = new WeakHashMap<CuminRunner,SesameLocation>();
    cashew_iomodel = new CashewInputOutputModel();
+   expand_names = null;
 }
 
 
@@ -235,8 +238,53 @@ String requestInput(String file)
    return rslt;
 }
 
+synchronized void addExpandName(String name)
+{
+   if (expand_names == null) expand_names = new HashSet<>();
+   expand_names.add(name);
+}
+
+Set<String> getExpandNames()            { return expand_names; }
 
 
+
+/********************************************************************************/
+/*                                                                              */
+/*      Methods to help in variable history                                     */
+/*                                                                              */
+/********************************************************************************/
+
+CashewContext findContext(int idn) 
+{
+   if (idn <= 0) return null;
+   
+   for (CuminRunner cr : runner_location.keySet()) {
+      CashewContext ctx = cr.getLookupContext();
+      CashewContext nctx = findContext(idn,ctx);
+      if (nctx != null) return nctx;
+    }
+   
+   return null;
+}
+
+
+
+
+
+
+private CashewContext findContext(int id,CashewContext ctx)
+{
+   if (ctx.getId() == id) return ctx;
+   
+   CashewContext pctx = null;
+   for (CashewContext cctx : ctx.getChildContexts()) {
+      if (cctx.getId() > id) break;
+      pctx = cctx;
+    }
+   if (pctx == null) return null;
+   
+   return findContext(id,pctx);
+}
 
 /********************************************************************************/
 /*										*/

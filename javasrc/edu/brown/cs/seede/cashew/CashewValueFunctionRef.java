@@ -1,8 +1,8 @@
 /********************************************************************************/
 /*                                                                              */
-/*              CashewValueFile.java                                            */
+/*              CashewValueFunctionRef.java                                     */
 /*                                                                              */
-/*      Representation of java.io.File objects                                  */
+/*      description of class                                                    */
 /*                                                                              */
 /********************************************************************************/
 /*      Copyright 2011 Brown University -- Steven P. Reiss                    */
@@ -24,11 +24,15 @@
 
 package edu.brown.cs.seede.cashew;
 
-import java.io.File;
+import java.util.List;
+import java.util.Map;
 
-import edu.brown.cs.ivy.xml.IvyXmlWriter;
+import org.eclipse.jdt.core.dom.ASTNode;
 
-public class CashewValueFile extends CashewValueObject implements CashewConstants
+import edu.brown.cs.ivy.jcomp.JcompSymbol;
+import edu.brown.cs.ivy.jcomp.JcompType;
+
+public class CashewValueFunctionRef extends CashewValueObject implements CashewConstants
 {
 
 
@@ -37,8 +41,12 @@ public class CashewValueFile extends CashewValueObject implements CashewConstant
 /*      Private Storage                                                         */
 /*                                                                              */
 /********************************************************************************/
+ 
+private Map<Object,CashewValue> initial_bindings;
+private String                  method_name;
+private ASTNode                 eval_node;
 
-private File            user_file;
+
 
 
 /********************************************************************************/
@@ -47,17 +55,23 @@ private File            user_file;
 /*                                                                              */
 /********************************************************************************/
 
-CashewValueFile(String path)
+public CashewValueFunctionRef(JcompType typ,ASTNode nx,List<JcompSymbol> px,
+      Map<Object,CashewValue> bind)
 {
-   this(new File(path));
+   super(typ,null,false);
+   initial_bindings = bind;
+   method_name = null;
+   eval_node = nx;
 }
 
 
-public CashewValueFile(File path)
+public CashewValueFunctionRef(JcompType typ,String method)
 {
-   super(FILE_TYPE,null,false);
-   user_file = path;
+   super(typ,null,false);
+   method_name = method;
+   eval_node = null;
 }
+
 
 
 /********************************************************************************/
@@ -66,82 +80,25 @@ public CashewValueFile(File path)
 /*                                                                              */
 /********************************************************************************/
 
-public void setInitialValue(File f) 
-{
-   user_file = f;
+@Override public Map<Object,CashewValue> getBindings()  { return initial_bindings; }
+
+public String getMethodName()                           
+{  
+   return method_name;
 }
 
-
-@Override public String getString(CashewClock cc,int idx,boolean dbg)
+public ASTNode getEvalNode()
 {
-   if (user_file == null) return "File(null)";
-   return user_file.toString();
+   return eval_node;
 }
 
+@Override public boolean isFunctionRef(CashewClock cc)  { return true; }
 
 
-public File getFile()                   { return user_file; }
-
-
-
-@Override public CashewValue getFieldValue(CashewClock cc,String nm,boolean force)
-{
-   switch (nm) {
-      case "path" :
-         return CashewValue.stringValue(user_file.getPath());
-      case "status" :
-         // return PathStatus.CHECKED
-         break;
-      case "prefixLength" :
-         return CashewValue.numericValue(INT_TYPE,0);
-         
-      // static fields   
-      case "fs" :
-         // return DefaultFileSystem.getFileSystem()
-         break;
-      case "separator" :
-         return CashewValue.stringValue(File.separator);
-      case "separatorChar" :
-         return CashewValue.numericValue(CHAR_TYPE,File.separatorChar);
-      case "pathSeparator" :
-         return CashewValue.stringValue(File.pathSeparator);     
-      case "pathSeparatorChar" :
-         return CashewValue.numericValue(CHAR_TYPE,File.pathSeparatorChar);
-    }
-   
-   return null;
-}
-
-
-
-@Override public CashewValue setFieldValue(CashewClock cc,String nm,CashewValue cv)
-{
-   return this;
-}
+}       // end of class CashewValueFunctionRef
 
 
 
 
-/********************************************************************************/
-/*                                                                              */
-/*      Output methods                                                          */
-/*                                                                              */
-/********************************************************************************/
-
-@Override public void outputLocalXml(IvyXmlWriter xw,CashewOutputContext outctx,String name)
-{
-   xw.field("OBJECT",true);
-   if (user_file == null) xw.field("FILE","*UNKNOWN*");
-   else xw.field("FILE",user_file.toString());
-}
-
-
-
-
-}       // end of class CashewValueFile
-
-
-
-
-/* end of CashewValueFile.java */
+/* end of CashewValueFunctionRef.java */
 

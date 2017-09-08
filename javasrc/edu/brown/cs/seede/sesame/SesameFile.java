@@ -238,10 +238,10 @@ ASTNode getAst()
 
 private ASTNode buildAst()
 {
-   ASTParser parser = ASTParser.newParser(AST.JLS4);
+   ASTParser parser = ASTParser.newParser(AST.JLS8);
    parser.setKind(ASTParser.K_COMPILATION_UNIT);
    parser.setSource(edit_document.get().toCharArray());
-   Map<?,?> options = JavaCore.getOptions();
+   Map<String,String> options = JavaCore.getOptions();
    JavaCore.setComplianceOptions(JavaCore.VERSION_1_6,options);
    parser.setCompilerOptions(options);
    parser.setResolveBindings(false);

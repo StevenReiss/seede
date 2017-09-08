@@ -160,6 +160,9 @@ void addSwingComponent(String name)
 
 
 
+
+
+
 /********************************************************************************/
 /*										*/
 /*	Execution methods							*/
@@ -324,7 +327,7 @@ private void report(long time)
 
 private void outputResult(IvyXmlWriter xw,CuminRunner cr,CuminRunStatus sts,boolean stats)
 {
-   CashewOutputContext outctx = new CashewOutputContext(xw);
+   CashewOutputContext outctx = new CashewOutputContext(xw,for_session.getExpandNames());
    CashewContext ctx = cr.getLookupContext();
    CashewValue rval = sts.getValue();
 
@@ -351,7 +354,7 @@ private void outputResult(IvyXmlWriter xw,CuminRunner cr,CuminRunStatus sts,bool
       pw.close();
     }
    if (rval != null) {
-      rval.outputXml(outctx);
+      rval.outputXml(outctx,"*RETURN*");
     }
    xw.end("RETURN");
 
@@ -362,6 +365,10 @@ private void outputResult(IvyXmlWriter xw,CuminRunner cr,CuminRunStatus sts,bool
       CashewValueObject.outputStatics(xw,outctx);
     }
 }
+
+
+
+
 
 
 
@@ -443,26 +450,26 @@ private class MasterThread extends Thread {
 
    synchronized void stopCurrentRun() {
       stop_state = StopState.STOP_DESIRED;
-
+   
       AcornLog.logI("MASTER: Stop current run " + runner_threads.size());
-
+   
       for (RunnerThread rt : runner_threads.values()) {
-	 rt.interrupt();
+         rt.interrupt();
        }
-
+   
       interrupt();
-
+   
       notifyAll();
-
+   
       for ( ; ; ) {
-	 if (run_state == RunState.INIT || run_state == RunState.RUNNING ||
-	       run_state == RunState.SWING) {
-	    try {
-	       wait(1000);
-	     }
-	    catch (InterruptedException e) { }
-	  }
-	 else break;
+         if (run_state == RunState.INIT || run_state == RunState.RUNNING ||
+               run_state == RunState.SWING) {
+            try {
+               wait(1000);
+             }
+            catch (InterruptedException e) { }
+          }
+         else break;
        }
     }
 
@@ -473,10 +480,10 @@ private class MasterThread extends Thread {
       stop_state = StopState.EXIT_DESIRED;
       stopCurrentRun();
       while (run_state != RunState.EXIT && master_thread != null) {
-	 try {
-	    wait(5000);
-	  }
-	 catch (InterruptedException e) { }
+         try {
+            wait(5000);
+          }
+         catch (InterruptedException e) { }
        }
       AcornLog.logD("MASTER: threads stopped");
     }
@@ -563,38 +570,38 @@ private class MasterThread extends Thread {
       AcornLog.logD("MASTER: Start swing thread run");
       run_state = RunState.SWING;
       for (String cvname : swing_components) {
-	 if (stop_state != StopState.RUN) return;
-	 for (CuminRunner cr : cumin_runners) {
-	    String cvn = cr.findReferencedVariableName(cvname);
-	    CashewValue cv = cr.findReferencedVariableValue(cvname);
-	    if (cvn != null) {
-	       CashewValue rv = null;
-	       cr.ensureLoaded("edu.brown.cs.seede.poppy.PoppyGraphics");
-	       String expr =  "edu.brown.cs.seede.poppy.PoppyGraphics.computeGraphics(";
-	       expr += cvn + "," + "\"" + cvname + "\"" + ")";
-	       CashewValue cv1 = cr.getLookupContext().evaluate(expr);
-	       rv = cr.executeCall("edu.brown.cs.seede.poppy.PoppyGraphics.computeDrawingG",cv,cv1);
-	       if (rv != null) {
-		  String rpt = rv.getString(cr.getClock());
-		  AcornLog.logI("SWING REPORT: " + rpt);
-		  if (rpt != null) graphics_outputs.add(rpt);
-		}
-	       break;
-	     }
-	  }
+         if (stop_state != StopState.RUN) return;
+         for (CuminRunner cr : cumin_runners) {
+            String cvn = cr.findReferencedVariableName(cvname);
+            CashewValue cv = cr.findReferencedVariableValue(cvname,cr.getClock().getTimeValue());
+            if (cvn != null) {
+               CashewValue rv = null;
+               cr.ensureLoaded("edu.brown.cs.seede.poppy.PoppyGraphics");
+               String expr =  "edu.brown.cs.seede.poppy.PoppyGraphics.computeGraphics(";
+               expr += cvn + "," + "\"" + cvname + "\"" + ")";
+               CashewValue cv1 = cr.getLookupContext().evaluate(expr);
+               rv = cr.executeCall("edu.brown.cs.seede.poppy.PoppyGraphics.computeDrawingG",cv,cv1);
+               if (rv != null) {
+                  String rpt = rv.getString(cr.getClock());
+                  AcornLog.logI("SWING REPORT: " + rpt);
+                  if (rpt != null) graphics_outputs.add(rpt);
+                }
+               break;
+             }
+          }
        }
-    }
+   }
 
 
    private void addSwingGraphics(CuminRunner cr) {
       for (CashewValue cv : cr.getCallArgs()) {
-	 if (cv.getDataType(cr.getClock()).getName().equals("edu.brown.cs.seede.poppy.PoppyGraphics")) {
-	    CashewValue rv = cr.executeCall("edu.brown.cs.seede.poppy.PoppyGraphics.finalReport",cv);
-	    if (rv != null) {
-	       String rslt = rv.getString(cr.getClock());
-	       if (rslt != null) graphics_outputs.add(rslt);
-	     }
-	  }
+         if (cv.getDataType(cr.getClock()).getName().equals("edu.brown.cs.seede.poppy.PoppyGraphics")) {
+            CashewValue rv = cr.executeCall("edu.brown.cs.seede.poppy.PoppyGraphics.finalReport",cv);
+            if (rv != null) {
+               String rslt = rv.getString(cr.getClock());
+               if (rslt != null) graphics_outputs.add(rslt);
+             }
+          }
        }
    }
 
@@ -660,8 +667,8 @@ private class StopperThread extends Thread {
 
    synchronized void initiateStop() {
       AcornLog.logD("MASTER: stopper stop request " + do_stop);
-
-      if (do_stop != 0) return;
+   
+      if (do_stop < 0) return;
       do_stop = 1;
       notifyAll();
     }
@@ -676,20 +683,20 @@ private class StopperThread extends Thread {
 
    @Override public void run() {
       while (do_stop >= 0) {
-	 synchronized (this) {
-	    while (do_stop == 0) {
-	       try {
-		  wait();
-		}
-	       catch (InterruptedException e) {
-		  return;
-		}
-	     }
-	    if (do_stop > 0) do_stop = 0;
-	  }
-	 stopCurrentRunAndWait();
+         synchronized (this) {
+            while (do_stop == 0) {
+               try {
+                  wait();
+                }
+               catch (InterruptedException e) { }
+             }
+            if (do_stop > 0) do_stop = 0;
+          }
+         stopCurrentRunAndWait();
        }
       stopper_thread = null;
+      
+      AcornLog.logD("MASTER: Stopper thread exited");
     }
 
 }	// end of inner class StopperThread
