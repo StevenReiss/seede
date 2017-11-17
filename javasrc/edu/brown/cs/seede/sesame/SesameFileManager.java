@@ -125,18 +125,18 @@ SesameFile handleEdit(File f,int len,int offset,boolean complete,String txt)
       closeFile(f);
       return null;
     }
-   
+
    sf.editFile(len,offset,txt,complete);
-   
+
    return sf;
 }
 
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Error handling methods                                                  */
-/*                                                                              */
+/*										*/
+/*	Error handling methods							*/
+/*										*/
 /********************************************************************************/
 
 boolean handleErrors(File f,Element msgs)
@@ -145,11 +145,6 @@ boolean handleErrors(File f,Element msgs)
    if (sf == null) return false;
    return sf.handleErrors(msgs);
 }
-
-
-
-
-
 
 
 

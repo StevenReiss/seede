@@ -249,17 +249,17 @@ private void handleEdit(MintMessage msg,String bid,File file,int len,int offset,
       msg.replyTo();
       return;
     }
-   
+
    AcornLog.logD("MASTER: Begin edit");
-   
+
    SesameFile sf = sesame_control.getFileManager().handleEdit(file,len,offset,complete,txt);
-   
+
    msg.replyTo("<OK/>");
-   
+
    AcornLog.logD("MASTER: EDIT ACCEPTED");
-   
+
    if (sf != null) sesame_control.noteFileChanged(sf);
-   
+
    AcornLog.logD("MASTER: End edit");
 }
 
@@ -361,7 +361,7 @@ private void handleExec(String sid,Element xml,IvyXmlWriter xw)
    if (execer != null) {
       execer.startExecution();
     }
-   else throw new SesameException("Session " + sid + " has not starting points");
+   else throw new SesameException("Session " + sid + " has no starting points");
 }
 
 
@@ -448,7 +448,7 @@ private void handleVarHistory(String sid,Element xml,IvyXmlWriter xw) throws Ses
 {
    SesameSession ss = session_map.get(sid);
    if (ss == null) return;
-   
+
    SesameVarHistory vh = new SesameVarHistory(ss,xml);
    vh.process(xw);
 }
@@ -478,75 +478,75 @@ private class EclipseHandler implements MintHandler {
    @Override public void receive(MintMessage msg,MintArguments args) {
       String cmd = args.getArgument(0);
       Element e = msg.getXml();
-   
+
       switch (cmd) {
-         case "ELISION" :
-            return;
+	 case "ELISION" :
+	    return;
        }
-   
+
       AcornLog.logD("Message from eclipse: " + cmd + " " + msg.getText());
-   
+
       switch (cmd) {
-         case "PING" :
-            msg.replyTo("<PONG/>");
-            break;
-         case "EDITERROR" :
-         case "FILEERROR" :
-            handleErrors(IvyXml.getAttrString(e,"PROJECT"),
-                  new File(IvyXml.getAttrString(e,"FILE")),
-                  IvyXml.getChild(e,"MESSAGES"));
-            break;
-         case "EDIT" :
-            String bid = IvyXml.getAttrString(e,"BID");
-            if (!bid.equals(SOURCE_ID)) {
-               msg.replyTo();
-               break;
-             }        
-            String txt = IvyXml.getText(e);
-            boolean complete = IvyXml.getAttrBool(e,"COMPLETE");
-            boolean remove = IvyXml.getAttrBool(e,"REMOVE");
-            if (complete) {
-               byte [] data = IvyXml.getBytesElement(e,"CONTENTS");
-               if (data != null) txt = new String(data);
-               else remove = true;
-             }
-            handleEdit(msg,bid,
-                  new File(IvyXml.getAttrString(e,"FILE")),
-                  IvyXml.getAttrInt(e,"LENGTH"),
-                  IvyXml.getAttrInt(e,"OFFSET"),
-                  complete,remove,txt);
-            break;
-         case "RUNEVENT" :
-            long when = IvyXml.getAttrLong(e,"TIME");
-            for (Element re : IvyXml.children(e,"RUNEVENT")) {
-               handleRunEvent(re,when);
-             }
-            break;
-         case "RESOURCE" :
-            for (Element re : IvyXml.children(e,"DELTA")) {
-               handleResourceChange(re);
-             }
-            break;
-         case "CONSOLE" :
-            handleConsoleEvent(e);
-            break;
-         case "EVALUATION" :
-            AcornLog.logD("Eclipse Message: " + msg.getText());
-            bid = IvyXml.getAttrString(e,"BID");
-            String id = IvyXml.getAttrString(e,"ID");
-            if ((bid == null || bid.equals(SOURCE_ID)) && id != null) {
-               EvalData ed = new EvalData(e);
-               synchronized (eval_handlers) {
-                  eval_handlers.put(id,ed);
-                  eval_handlers.notifyAll();
-                }
-             }
-            msg.replyTo("<OK/>");
-            break;
-         case "STOP" :
-            AcornLog.logD("Eclipse Message: " + msg.getText());
-            serverDone();
-            break;
+	 case "PING" :
+	    msg.replyTo("<PONG/>");
+	    break;
+	 case "EDITERROR" :
+	 case "FILEERROR" :
+	    handleErrors(IvyXml.getAttrString(e,"PROJECT"),
+		  new File(IvyXml.getAttrString(e,"FILE")),
+		  IvyXml.getChild(e,"MESSAGES"));
+	    break;
+	 case "EDIT" :
+	    String bid = IvyXml.getAttrString(e,"BID");
+	    if (!bid.equals(SOURCE_ID)) {
+	       msg.replyTo();
+	       break;
+	     }
+	    String txt = IvyXml.getText(e);
+	    boolean complete = IvyXml.getAttrBool(e,"COMPLETE");
+	    boolean remove = IvyXml.getAttrBool(e,"REMOVE");
+	    if (complete) {
+	       byte [] data = IvyXml.getBytesElement(e,"CONTENTS");
+	       if (data != null) txt = new String(data);
+	       else remove = true;
+	     }
+	    handleEdit(msg,bid,
+		  new File(IvyXml.getAttrString(e,"FILE")),
+		  IvyXml.getAttrInt(e,"LENGTH"),
+		  IvyXml.getAttrInt(e,"OFFSET"),
+		  complete,remove,txt);
+	    break;
+	 case "RUNEVENT" :
+	    long when = IvyXml.getAttrLong(e,"TIME");
+	    for (Element re : IvyXml.children(e,"RUNEVENT")) {
+	       handleRunEvent(re,when);
+	     }
+	    break;
+	 case "RESOURCE" :
+	    for (Element re : IvyXml.children(e,"DELTA")) {
+	       handleResourceChange(re);
+	     }
+	    break;
+	 case "CONSOLE" :
+	    handleConsoleEvent(e);
+	    break;
+	 case "EVALUATION" :
+	    AcornLog.logD("Eclipse Message: " + msg.getText());
+	    bid = IvyXml.getAttrString(e,"BID");
+	    String id = IvyXml.getAttrString(e,"ID");
+	    if ((bid == null || bid.equals(SOURCE_ID)) && id != null) {
+	       EvalData ed = new EvalData(e);
+	       synchronized (eval_handlers) {
+		  eval_handlers.put(id,ed);
+		  eval_handlers.notifyAll();
+		}
+	     }
+	    msg.replyTo("<OK/>");
+	    break;
+	 case "STOP" :
+	    AcornLog.logD("Eclipse Message: " + msg.getText());
+	    serverDone();
+	    break;
        }
     }
 
@@ -570,6 +570,7 @@ private class BubblesHandler implements MintHandler {
 	    serverDone();
 	    break;
        }
+      msg.replyTo();
     }
 
 }	// end of inner class BubblesHandler
@@ -615,11 +616,11 @@ private String processCommand(String cmd,String sid,Element e) throws SesameExce
 	 handleSwingComponent(sid,e);
 	 break;
       case "VARHISTORY" :
-         handleVarHistory(sid,e,xw);
-         break;
+	 handleVarHistory(sid,e,xw);
+	 break;
       case "EXPAND" :
-         handleExpand(sid,e,xw);
-         break;
+	 handleExpand(sid,e,xw);
+	 break;
       default :
 	 AcornLog.logE("Unknown command " + cmd);
 	 break;
@@ -641,39 +642,39 @@ private class CommandHandler implements MintHandler {
       Element e = msg.getXml();
       String rslt = null;
       try {
-         rslt = processCommand(cmd,sid,e);
-         AcornLog.logD("COMMAND RESULT: " + rslt);
+	 rslt = processCommand(cmd,sid,e);
+	 AcornLog.logD("COMMAND RESULT: " + rslt);
        }
       catch (SesameException t) {
-         String xmsg = "BEDROCK: error in command " + cmd + ": " + t;
-         AcornLog.logE(xmsg,t);
-         IvyXmlWriter xw = new IvyXmlWriter();
-         xw.cdataElement("ERROR",xmsg);
-         rslt = xw.toString();
-         xw.close();
+	 String xmsg = "BEDROCK: error in command " + cmd + ": " + t;
+	 AcornLog.logE(xmsg,t);
+	 IvyXmlWriter xw = new IvyXmlWriter();
+	 xw.cdataElement("ERROR",xmsg);
+	 rslt = xw.toString();
+	 xw.close();
        }
       catch (Throwable t) {
-         String xmsg = "Problem processing command " + cmd + ": " + t;
-         AcornLog.logE(xmsg,t);
-         StringWriter sw = new StringWriter();
-         PrintWriter pw = new PrintWriter(sw);
-         t.printStackTrace(pw);
-         Throwable xt = t;
-         for ( ; xt.getCause() != null; xt = xt.getCause());
-         if (xt != null && xt != t) {
-            pw.println();
-            xt.printStackTrace(pw);
-          }
-         AcornLog.logE("TRACE: " + sw.toString());
-         IvyXmlWriter xw = new IvyXmlWriter();
-         xw.begin("ERROR");
-         xw.textElement("MESSAGE",xmsg);
-         xw.cdataElement("EXCEPTION",t.toString());
-         xw.cdataElement("STACK",sw.toString());
-         xw.end("ERROR");
-         rslt = xw.toString();
-         xw.close();
-         pw.close();
+	 String xmsg = "Problem processing command " + cmd + ": " + t;
+	 AcornLog.logE(xmsg,t);
+	 StringWriter sw = new StringWriter();
+	 PrintWriter pw = new PrintWriter(sw);
+	 t.printStackTrace(pw);
+	 Throwable xt = t;
+	 for ( ; xt.getCause() != null; xt = xt.getCause());
+	 if (xt != null && xt != t) {
+	    pw.println();
+	    xt.printStackTrace(pw);
+	  }
+	 AcornLog.logE("TRACE: " + sw.toString());
+	 IvyXmlWriter xw = new IvyXmlWriter();
+	 xw.begin("ERROR");
+	 xw.textElement("MESSAGE",xmsg);
+	 xw.cdataElement("EXCEPTION",t.toString());
+	 xw.cdataElement("STACK",sw.toString());
+	 xw.end("ERROR");
+	 rslt = xw.toString();
+	 xw.close();
+	 pw.close();
        }
       msg.replyTo(rslt);
     }

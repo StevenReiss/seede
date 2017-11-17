@@ -108,16 +108,16 @@ private void scanArgs(String [] args)
 	 if (args[i].startsWith("-m") && i+1 < args.length) {           // -m <MINTID>
 	    message_id = args[++i];
 	  }
-         else if (args[i].startsWith("-T")) {                           // -Trace
-            AcornLog.setTracing(true);
-          }
-         else if (args[i].startsWith("-D")) {                           // -Debug
-            AcornLog.setLogLevel(AcornLog.LogLevel.DEBUG);
-            AcornLog.useStdErr(true);
-          }
-         else if (args[i].startsWith("-L") && i+1 < args.length) {      // -L logfile
-            AcornLog.setLogFile(new File(args[++i]));
-          }
+	 else if (args[i].startsWith("-T")) {                           // -Trace
+	    AcornLog.setTracing(true);
+	  }
+	 else if (args[i].startsWith("-D")) {                           // -Debug
+	    AcornLog.setLogLevel(AcornLog.LogLevel.DEBUG);
+	    AcornLog.useStdErr(true);
+	  }
+	 else if (args[i].startsWith("-L") && i+1 < args.length) {      // -L logfile
+	    AcornLog.setLogFile(new File(args[++i]));
+	  }
 	 else badArgs();
        }
       else badArgs();
@@ -213,7 +213,7 @@ Element getXmlReply(String cmd,SesameProject sproj,Map<String,Object> flds,Strin
    if (sproj != null) proj = sproj.getName();
 
    MintDefaultReply rply = new MintDefaultReply();
-   sendMessage(cmd,proj,flds,cnts,rply,MINT_MSG_FIRST_REPLY);
+   sendMessage(cmd,proj,flds,cnts,rply,MINT_MSG_FIRST_NON_NULL);
    Element rslt = rply.waitForXml(delay);
 
    AcornLog.logD("Reply: " + IvyXml.convertXmlToString(rslt));

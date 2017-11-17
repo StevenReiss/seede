@@ -66,12 +66,14 @@ private static final String		TEST2_SID = "SEED_12347";
 private static final String		TEST3_SID = "SEED_12348";
 private static final String		TEST4_SID = "SEED_12349";
 private static final String             TEST5_SID = "SEED_12950";
+private static final String             TEST6_SID = "SEED_12951";
 
 private static final String		TEST_PROJECT = "sample1";
 private static final String		LAUNCH1_NAME = "test1";
 private static final String		LAUNCH2_NAME = "test2";
 private static final String		LAUNCH4_NAME = "test3";
 private static final String             LAUNCH5_NAME = "testLambda";
+private static final String             LAUNCH6_NAME = "testList";
 private static final String		REL_PATH1 = "src/edu/brown/cs/seede/sample/Tester.java";
 
 
@@ -483,6 +485,38 @@ private static class SeedeThread extends Thread {
    seede_result = null;
    CommandArgs args = new CommandArgs("EXECID","test5");
    sendSeedeMessage("EXEC",TEST5_SID,args,cnts,rply);
+   String sstatus = rply.waitForString();
+   System.err.println("RESULT IS " + sstatus);
+   Element xml = waitForSeedeResult();
+   System.err.println("SEED RESULT IS " + IvyXml.convertXmlToString(xml));
+}
+
+
+
+
+@Test public void test6()
+{
+   System.err.println("Start TEST6");
+   LaunchData ld = startLaunch(LAUNCH6_NAME);
+   
+   IvyXmlWriter xw = new IvyXmlWriter();
+   xw.begin("SESSION");
+   xw.field("TYPE","LAUNCH");
+   xw.field("PROJECT",TEST_PROJECT);
+   xw.field("LAUNCHID",ld.getLaunchId());
+   xw.field("THREADID",ld.getThreadId());
+   xw.end("SESSION");
+   String cnts = xw.toString();
+   xw.close();
+   MintDefaultReply rply = new MintDefaultReply();
+   sendSeedeMessage("BEGIN",TEST6_SID,null,cnts,rply);
+   Element status = rply.waitForXml();
+   Assert.assertTrue(IvyXml.isElement(status,"RESULT"));
+   
+   rply = new MintDefaultReply();
+   seede_result = null;
+   CommandArgs args = new CommandArgs("EXECID","test6");
+   sendSeedeMessage("EXEC",TEST6_SID,args,cnts,rply);
    String sstatus = rply.waitForString();
    System.err.println("RESULT IS " + sstatus);
    Element xml = waitForSeedeResult();

@@ -35,6 +35,7 @@ import edu.brown.cs.ivy.jcomp.JcompType;
 import edu.brown.cs.ivy.jcomp.JcompTyper;
 import edu.brown.cs.ivy.xml.IvyXml;
 import edu.brown.cs.ivy.xml.IvyXmlWriter;
+import edu.brown.cs.seede.acorn.AcornLog;
 
 public abstract class CashewValue implements CashewConstants
 {
@@ -430,6 +431,8 @@ private JcompType	decl_type;
 
 protected CashewValue(JcompType jt)
 {
+   if (jt == null) AcornLog.logX("Creating a value without a type");
+   
    decl_type = jt;
 }
 
@@ -449,11 +452,10 @@ public JcompType getDataType(CashewClock cc)	{ return decl_type; }
 
 protected JcompType getDataType()
 {
-   if (decl_type == null) throw new Error("Illegal use of getDataType without clock");
+   if (decl_type == null) AcornLog.logX("Illegal use of getDataType without clock");
+   
    return decl_type;
 }
-
-
 
 
 
@@ -494,6 +496,8 @@ public String getString(CashewClock cc,int lvl,boolean debug)
 
 public CashewValue getActualValue(CashewClock cc)
 {
+   if (decl_type == null) return null;
+   
    return this;
 }
 
@@ -544,7 +548,7 @@ public boolean isEmpty()			{ return false; }
 
 public boolean isCategory2(CashewClock cc)	{ return false; }
 
-public boolean isFunctionRef(CashewClock cc)    { return false; }
+public boolean isFunctionRef(CashewClock cc)	{ return false; }
 
 
 
@@ -568,7 +572,7 @@ public int getHashCode(CashewClock cc,CashewContext ctx)
 }
 
 
-public Map<Object,CashewValue> getBindings()    { return null; }
+public Map<Object,CashewValue> getBindings()	{ return null; }
 
 CashewValue lookupVariableName(String name,long when)
 {

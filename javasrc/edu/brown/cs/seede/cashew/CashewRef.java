@@ -127,6 +127,7 @@ CashewRef(CashewDeferredValue deferred)
 {
    if (cv == null) return this;
    cv = cv.getActualValue(cc);
+   if (cv == null) return this;
 
    long tv = 0;
    if (cc != null) tv = cc.getTimeValue();

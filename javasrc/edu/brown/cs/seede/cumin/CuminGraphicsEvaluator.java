@@ -625,26 +625,26 @@ private class GraphicsOutput {
    private void addInitializations() {
       IvyXmlWriter xw = getCommandList();
       if (current_transform != null) {
-	 xw.begin("DRAW");
-	 xw.field("TYPE",CommandType.TRANSFORM);
-	 xw.field("NUMARGS",1);
-	 xw.field("TIME",getClock().getTimeValue());
-	 xw.begin("ARG");
-	 xw.field("TYPE","java.awt.geom.AffineTransform");
-	 xw.xmlText(current_transform);
-	 xw.end("ARG");
-	 xw.end("DRAW");
+         xw.begin("DRAW");
+         xw.field("TYPE",CommandType.TRANSFORM);
+         xw.field("NUMARGS",1);
+         xw.field("TIME",getClock().getTimeValue());
+         xw.begin("ARG");
+         xw.field("TYPE","java.awt.geom.AffineTransform");
+         xw.xmlText(current_transform);
+         xw.end("ARG");
+         xw.end("DRAW");
        }
       if (current_clip != null) {
-	 xw.begin("DRAW");
-	 xw.field("TYPE",CommandType.CLIP);
-	 xw.field("NUMARGS",1);
-	 xw.field("TIME",getClock().getTimeValue());
-	 xw.begin("ARG");
-	 xw.field("TYPE","java.awt.Rectangle");
-	 xw.xmlText(current_clip);
-	 xw.end("ARG");
-	 xw.end("DRAW");
+         xw.begin("DRAW");
+         xw.field("TYPE",CommandType.CLIP);
+         xw.field("NUMARGS",1);
+         xw.field("TIME",getClock().getTimeValue());
+         xw.begin("ARG");
+         xw.field("TYPE","java.awt.Rectangle");
+         xw.xmlText(current_clip);
+         xw.end("ARG");
+         xw.end("DRAW");
        }
    }
 

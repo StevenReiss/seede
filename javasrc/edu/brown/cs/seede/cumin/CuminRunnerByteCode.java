@@ -912,7 +912,8 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException
 	 fldtyp.defineAll(type_converter);
 	 lookup_context.enableAccess(fldtyp.getName());
 	 vstack = lookup_context.findReference(fld);
-	 vstack = vstack.getActualValue(execution_clock);
+	 if (vstack == null) vstack = CashewValue.nullValue();
+	 else vstack = vstack.getActualValue(execution_clock);
 	 break;
       case PUTFIELD :
 	 v0 = execution_stack.pop();

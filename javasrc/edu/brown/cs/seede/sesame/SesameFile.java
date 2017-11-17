@@ -2,7 +2,7 @@
 /*										*/
 /*		SesameFile.java 						*/
 /*										*/
-/*	description of class							*/
+/*	Description of a single editable file					*/
 /*										*/
 /********************************************************************************/
 /*	Copyright 2011 Brown University -- Steven P. Reiss		      */
@@ -118,9 +118,8 @@ void editFile(int len,int off,String txt,boolean complete)
 void resetSemantics(SesameProject sp)
 {
    // might need to be project specific if we have multiple sesssions active
-
    synchronized (ast_roots) {
-      ast_roots.remove(sp);
+      ast_roots.remove(sp.getName());
     }
 }
 
@@ -180,7 +179,7 @@ static void setCurrentProject(SesameProject sp)
 
 
 
-public ASTNode getAstRootNode()                 // if we use extended source
+public ASTNode getAstRootNode() 		// if we use extended source
 {
    SesameProject sp = current_project;
    if (sp != null) {
@@ -204,7 +203,7 @@ public ASTNode getAstRootNode()                 // if we use extended source
 public ASTNode cleanupAst(ASTNode n)
 {
    cleanupAstRoot((CompilationUnit) n);
-   
+
    return n;
 }
 
@@ -276,8 +275,6 @@ private void cleanupAstRoot(CompilationUnit an)
 	    stmts.add(0,sci);
 	  }
        }
-
-
     }
 }
 
@@ -363,184 +360,3 @@ public File getFile()
 
 
 /* end of SesameFile.java */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
