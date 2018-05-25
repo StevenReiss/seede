@@ -71,6 +71,7 @@ private static MintControl mint_control;
 
 private String		stopped_thread;
 private Element 	seede_result;
+private String          bedrock_id;
 
 
 static {
@@ -89,6 +90,7 @@ public TestSolar()
 {
    stopped_thread = null;
    seede_result = null;
+   bedrock_id = null;
 
    mint_control.register("<BEDROCK SOURCE='ECLIPSE' TYPE='_VAR_0' />",new IDEHandler());
    mint_control.register("<SEEDE TYPE='_VAR_0' />",new SeedeHandler());
@@ -100,6 +102,8 @@ public TestSolar()
 
 @BeforeClass public static void setupBedrock()
 {
+   mint_control.register("<BEDROCK SOURCE='ECLIPSE' TYPE='_VAR_0' />",new PingHandler());
+   
    System.err.println("SETTING UP BEDROCK");
    File ec1 = new File("/u/spr/eclipse-neonx/eclipse/eclipse");
    File ec2 = new File("/u/spr/Eclipse/solar");
@@ -109,7 +113,7 @@ public TestSolar()
     }
    if (!ec1.exists()) {
       System.err.println("Can't find bubbles version of eclipse to run");
-      System.exit(1);
+      throw new Error("No eclipse");
     }
 
    String cmd = ec1.getAbsolutePath();
@@ -141,6 +145,33 @@ public TestSolar()
 
    throw new Error("Problem running Eclipse: " + cmd);
 }
+
+
+
+
+private static class PingHandler implements MintHandler {
+
+   @Override public void receive(MintMessage msg,MintArguments args) {
+      String cmd = args.getArgument(0);
+      if (cmd == null) return;
+      
+      switch (cmd) {
+         case "RUNEVENT" :
+         case "PROGRESS" :
+         case "CONSOLE" :
+         case "EVALUATION" :
+            msg.replyTo("<OK/>");
+            break;
+         case "PING" :
+            msg.replyTo("<PONG/>");
+            break;
+         default :
+            break;
+       }
+    }
+
+}	// end of innerclass PingHandler
+
 
 
 @BeforeClass public static void startSeede()
@@ -227,6 +258,7 @@ private static boolean pingSeede()
    String sstatus = rply.waitForString();
    System.err.println("RESULT IS " + sstatus);
    Element xml = waitForSeedeResult();
+   Assert.assertNotNull(xml);
    System.err.println("SEED RESULT IS " + IvyXml.convertXmlToString(xml));
    
    rply = new MintDefaultReply();
@@ -247,7 +279,7 @@ private static boolean pingSeede()
    xml = waitForSeedeResult();
    System.err.println("SEED RESULT1 IS " + IvyXml.convertXmlToString(xml));
 
-   String msg = "<BEDROCK BID='SEEDE_445514' "+
+   String msg = "<BEDROCK BID='" + bedrock_id + "' "+
       "FILE='/gpfs/main/home/spr/solar/javasrc/edu/brown/cs/cs032/solar/SolarGravity.java' " +
       "LENGTH='0' OFFSET='4298' SOURCE='ECLIPSE' TYPE='EDIT'><![CDATA[x]]></BEDROCK>";
    mint_control.send(msg);
@@ -353,7 +385,7 @@ private static class SeedeThread extends Thread {
     }
 
    @Override public void run() {
-      SesameMain.main(new String [] { "-m", MINT_NAME });
+      SesameMain.main(new String [] { "-m", MINT_NAME, "-T", "-D", "-L", "/u/spr/seede.log" });
     }
 
 }	// end of inner class SeedeThread
@@ -493,6 +525,9 @@ private class IDEHandler implements MintHandler {
       case "OPENEDITOR" :
 	 break;
       case "EVALUATION" :
+         if (bedrock_id == null) {
+            bedrock_id = IvyXml.getAttrString(e,"BID");
+          }
 	 msg.replyTo("<OK/>");
 	 break;
       case "BUILDDONE" :
@@ -541,7 +576,8 @@ private class SeedeHandler implements MintHandler {
 private Element waitForSeedeResult()
 {
    synchronized (this) {
-      while (seede_result == null) {
+      for (int i = 0; i < 250; ++i) {
+         if (seede_result != null) break;
 	 try {
 	    wait(1000);
 	  }
@@ -595,7 +631,8 @@ private void handleThreadEvent(Element xml,long when)
 private String waitForStop()
 {
    synchronized (this) {
-      while (stopped_thread == null) {
+      for (int i = 0; i < 100; ++i) {
+         if (stopped_thread != null) break;
 	 try {
 	    wait(3000);
 	  }

@@ -37,7 +37,6 @@ import edu.brown.cs.ivy.mint.MintReply;
 import edu.brown.cs.ivy.xml.IvyXml;
 import edu.brown.cs.ivy.xml.IvyXmlWriter;
 import edu.brown.cs.seede.acorn.AcornLog;
-import edu.brown.cs.seede.cashew.CashewConstants;
 
 public class SesameMain implements SesameConstants, MintConstants
 {
@@ -50,7 +49,6 @@ public class SesameMain implements SesameConstants, MintConstants
 /*	Main Program								*/
 /*										*/
 /********************************************************************************/
-
 
 public static void main(String [] args)
 {
@@ -70,6 +68,7 @@ private String			message_id;
 private SesameFileManager	file_manager;
 private SesameMonitor		message_monitor;
 private Map<String,SesameProject> project_map;
+private boolean                 compute_tostring;
 
 private static JcompControl	jcomp_base;
 
@@ -85,7 +84,8 @@ private SesameMain(String [] args)
 {
    message_id = null;
    project_map = new HashMap<String,SesameProject>();
-   jcomp_base = CashewConstants.JCOMP_BASE;
+   jcomp_base = new JcompControl();
+   compute_tostring = false;
 
    scanArgs(args);
 
@@ -113,11 +113,16 @@ private void scanArgs(String [] args)
 	  }
 	 else if (args[i].startsWith("-D")) {                           // -Debug
 	    AcornLog.setLogLevel(AcornLog.LogLevel.DEBUG);
+	  }
+	 else if (args[i].startsWith("-E")) {                           // -Error
 	    AcornLog.useStdErr(true);
 	  }
 	 else if (args[i].startsWith("-L") && i+1 < args.length) {      // -L logfile
 	    AcornLog.setLogFile(new File(args[++i]));
 	  }
+         else if (args[i].startsWith("-s")) {
+            compute_tostring = !compute_tostring;
+          }
 	 else badArgs();
        }
       else badArgs();
@@ -151,11 +156,15 @@ static JcompControl getJcompBase()		{ return jcomp_base; }
 
 SesameFileManager getFileManager()		{ return file_manager; }
 
+boolean getComputeToString()                    { return compute_tostring; }
+
+
 
 void noteFileChanged(SesameFile sf)
 {
    message_monitor.noteFileChanged(sf);
 }
+
 SesameMonitor getMonitor()			{ return message_monitor; }
 
 String getMintId()				{ return message_id; }
@@ -169,7 +178,8 @@ String getMintId()				{ return message_id; }
 /*										*/
 /********************************************************************************/
 
-SesameProject getProject(String name) {
+SesameProject getProject(String name)
+{
    if (name == null) return null;
 
    synchronized (project_map) {
@@ -180,6 +190,20 @@ SesameProject getProject(String name) {
        }
       return sp;
     }
+}
+
+
+
+void removeProject(SesameProject sp)
+{
+   if (sp == null) return;
+   SesameProject np = project_map.remove(sp.getName());
+   if (np == null) return;
+   else if (np != sp) {
+      project_map.put(np.getName(),np);
+      return;
+    }
+   // remove files for project
 }
 
 

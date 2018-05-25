@@ -30,9 +30,11 @@ import java.util.List;
 import edu.brown.cs.ivy.jcode.JcodeClass;
 import edu.brown.cs.ivy.jcode.JcodeMethod;
 import edu.brown.cs.ivy.jcomp.JcompType;
+import edu.brown.cs.ivy.jcomp.JcompTyper;
 import edu.brown.cs.seede.acorn.AcornLog;
 import edu.brown.cs.seede.cashew.CashewClock;
 import edu.brown.cs.seede.cashew.CashewConstants;
+import edu.brown.cs.seede.cashew.CashewException;
 import edu.brown.cs.seede.cashew.CashewValue;
 
 class CuminEvaluator implements CuminConstants, CashewConstants
@@ -45,8 +47,28 @@ class CuminEvaluator implements CuminConstants, CashewConstants
 /*										*/
 /********************************************************************************/
 
-static CashewValue evaluate(CashewClock cc,CuminOperator op,CashewValue v1,CashewValue v2)
-	throws CuminRunException
+static CashewValue evaluate(JcompTyper typer,CashewClock cc,CuminOperator op,CashewValue v1,CashewValue v2)
+        throws CuminRunException
+{
+   try {
+      return evaluateUnchecked(typer,cc,op,v1,v2);
+    }
+   catch (CuminRunException e) {
+      throw e;
+    }
+   catch (Throwable t) {
+      AcornLog.logE("Problem in evaluation",t);
+      throw CuminRunStatus.Factory.createCompilerError();
+    }
+}
+
+
+
+
+
+static CashewValue evaluateUnchecked(JcompTyper typer,CashewClock cc,CuminOperator op,
+      CashewValue v1,CashewValue v2)
+	throws CuminRunException, CashewException
 {
    CashewValue rslt = null;
 
@@ -55,33 +77,33 @@ static CashewValue evaluate(CashewClock cc,CuminOperator op,CashewValue v1,Cashe
 
    JcompType t1 = v1.getDataType(cc);
    JcompType t2 = v2.getDataType(cc);
-   boolean isstr = t1 == STRING_TYPE || t2 == STRING_TYPE;
-   
+   boolean isstr = t1.isStringType() || t2.isStringType();
+
    boolean dounbox = false;
    switch (op) {
       case EQL :
       case NEQ :
-         break;
+	 break;
       case ADD :
-         if (!isstr) dounbox = true;
-         break;
+	 if (!isstr) dounbox = true;
+	 break;
       default :
-         dounbox = true;
-         break;
+	 dounbox = true;
+	 break;
     }
-   
+
    if (dounbox) {
       if (t1.isClassType() || t2.isClassType()) {
-         v1 = unboxValue(cc,v1);
-         v2 = unboxValue(cc,v2);
-         t1 = v1.getDataType(cc);
-         t2 = v2.getDataType(cc);
+	 v1 = unboxValue(typer,cc,v1);
+	 v2 = unboxValue(typer,cc,v2);
+	 t1 = v1.getDataType(cc);
+	 t2 = v2.getDataType(cc);
        }
     }
-   
-   boolean isflt = t1 == FLOAT_TYPE || t2 == FLOAT_TYPE;
-   boolean isdbl = t1 == DOUBLE_TYPE || t2 == DOUBLE_TYPE;
-   boolean islng = t1 == LONG_TYPE || t2 == LONG_TYPE;
+
+   boolean isflt = t1.isFloatType() || t2.isFloatType();
+   boolean isdbl = t1.isDoubleType() || t2.isDoubleType();
+   boolean islng = t1.isLongType() || t2.isLongType();
    Boolean crslt = null;
    int irslt = 0;
 
@@ -90,58 +112,58 @@ static CashewValue evaluate(CashewClock cc,CuminOperator op,CashewValue v1,Cashe
    switch (op) {
       case ADD :
 	 if (isstr) {
-	    String s0 = v1.getString(cc) + v2.getString(cc);
-	    rslt = CashewValue.stringValue(s0);
+	    String s0 = v1.getString(typer,cc) + v2.getString(typer,cc);
+	    rslt = CashewValue.stringValue(typer.STRING_TYPE,s0);
 	  }
 	 else if (isdbl) {
 	    double v0 = v1.getNumber(cc).doubleValue() + v2.getNumber(cc).doubleValue();
-	    rslt = CashewValue.numericValue(DOUBLE_TYPE,v0);
+	    rslt = CashewValue.numericValue(typer.DOUBLE_TYPE,v0);
 	  }
 	 else if (isflt) {
 	    double v0 = v1.getNumber(cc).doubleValue() + v2.getNumber(cc).doubleValue();
-	    rslt = CashewValue.numericValue(FLOAT_TYPE,v0);
+	    rslt = CashewValue.numericValue(typer.FLOAT_TYPE,v0);
 	  }
 	 else if (islng) {
 	    long v0 = v1.getNumber(cc).longValue() + v2.getNumber(cc).longValue();
-	    rslt = CashewValue.numericValue(LONG_TYPE,v0);
+	    rslt = CashewValue.numericValue(typer.LONG_TYPE,v0);
 	  }
 	 else {
 	    int v0 = v1.getNumber(cc).intValue() + v2.getNumber(cc).intValue();
-	    rslt = CashewValue.numericValue(INT_TYPE,v0);
+	    rslt = CashewValue.numericValue(typer.INT_TYPE,v0);
 	  }
 	 break;
       case AND :
 	 if (islng) {
 	    long v0 = v1.getNumber(cc).longValue() & v2.getNumber(cc).longValue();
-	    rslt = CashewValue.numericValue(LONG_TYPE,v0);
+	    rslt = CashewValue.numericValue(typer.LONG_TYPE,v0);
 	  }
 	 else {
 	    int v0 = v1.getNumber(cc).intValue() & v2.getNumber(cc).intValue();
-	    rslt = CashewValue.numericValue(INT_TYPE,v0);
+	    rslt = CashewValue.numericValue(typer.INT_TYPE,v0);
 	  }
 	 break;
       case DIV :
 	 if (isdbl) {
 	    double vx = v2.getNumber(cc).doubleValue();
 	    double v0 = v1.getNumber(cc).doubleValue() / vx;
-	    rslt = CashewValue.numericValue(DOUBLE_TYPE,v0);
+	    rslt = CashewValue.numericValue(typer.DOUBLE_TYPE,v0);
 	  }
 	 else if (isflt) {
 	    float vx = v2.getNumber(cc).floatValue();
 	    float v0 = v1.getNumber(cc).floatValue() / vx;
-	    rslt = CashewValue.numericValue(FLOAT_TYPE,v0);
+	    rslt = CashewValue.numericValue(typer.FLOAT_TYPE,v0);
 	  }
 	 else if (islng) {
 	    long vx = v2.getNumber(cc).longValue();
-	    if (vx == 0) throwException(ARITH_EXC);
+	    if (vx == 0) throwException(typer,"java.lang.ArithmeticException");
 	    long v0 = v1.getNumber(cc).longValue() / vx;
-	    rslt = CashewValue.numericValue(LONG_TYPE,v0);
+	    rslt = CashewValue.numericValue(typer.LONG_TYPE,v0);
 	  }
 	 else {
 	    int vx = v2.getNumber(cc).intValue();
-	    if (vx == 0) throwException(ARITH_EXC);
+	    if (vx == 0) throwException(typer,"java.lang.ArithmeticException");
 	    int v0 = v1.getNumber(cc).intValue() / vx;
-	    rslt = CashewValue.numericValue(INT_TYPE,v0);
+	    rslt = CashewValue.numericValue(typer.INT_TYPE,v0);
 	  }
 	 break;
       case EQL :
@@ -176,7 +198,7 @@ static CashewValue evaluate(CashewClock cc,CuminOperator op,CashewValue v1,Cashe
 	    crslt = v1.getNumber(cc).intValue() >= v2.getNumber(cc).intValue();
 	  }
 	 else {
-	    // error
+            throw CuminRunStatus.Factory.createCompilerError();
 	  }
 	 break;
       case GTR :
@@ -193,7 +215,7 @@ static CashewValue evaluate(CashewClock cc,CuminOperator op,CashewValue v1,Cashe
 	    crslt = v1.getNumber(cc).intValue() > v2.getNumber(cc).intValue();
 	  }
 	 else {
-	    // error
+            throw CuminRunStatus.Factory.createCompilerError();
 	  }
 	 break;
       case LEQ :
@@ -210,17 +232,17 @@ static CashewValue evaluate(CashewClock cc,CuminOperator op,CashewValue v1,Cashe
 	    crslt = v1.getNumber(cc).intValue() <= v2.getNumber(cc).intValue();
 	  }
 	 else {
-	    // error
+            throw CuminRunStatus.Factory.createCompilerError();
 	  }
 	 break;
       case LSH :
 	 if (islng) {
 	    long v0 = v1.getNumber(cc).longValue() << v2.getNumber(cc).intValue();
-	    rslt = CashewValue.numericValue(LONG_TYPE,v0);
+	    rslt = CashewValue.numericValue(typer.LONG_TYPE,v0);
 	  }
 	 else {
 	    int v0 = v1.getNumber(cc).intValue() << v2.getNumber(cc).intValue();
-	    rslt = CashewValue.numericValue(INT_TYPE,v0);
+	    rslt = CashewValue.numericValue(typer.INT_TYPE,v0);
 	  }
 	 break;
       case LSS :
@@ -237,49 +259,49 @@ static CashewValue evaluate(CashewClock cc,CuminOperator op,CashewValue v1,Cashe
 	    crslt = v1.getNumber(cc).intValue() < v2.getNumber(cc).intValue();
 	  }
 	 else {
-	    // error
+            throw CuminRunStatus.Factory.createCompilerError();
 	  }
 	 break;
       case MOD :
 	 if (isdbl) {
 	    double vx = v2.getNumber(cc).doubleValue();
 	    double v0 = v1.getNumber(cc).doubleValue() % vx;
-	    rslt = CashewValue.numericValue(DOUBLE_TYPE,v0);
+	    rslt = CashewValue.numericValue(typer.DOUBLE_TYPE,v0);
 	  }
 	 else if (isflt) {
 	    float vx = v2.getNumber(cc).floatValue();
 	    float v0 = v1.getNumber(cc).floatValue() % vx;
-	    rslt = CashewValue.numericValue(FLOAT_TYPE,v0);
+	    rslt = CashewValue.numericValue(typer.FLOAT_TYPE,v0);
 	  }
 	 else if (islng) {
 	    long vx = v2.getNumber(cc).longValue();
-	    if (vx == 0) throwException(ARITH_EXC);
+	    if (vx == 0) throwException(typer,"java.lang.ArithmeticException");
 	    long v0 = v1.getNumber(cc).longValue() % vx;
-	    rslt = CashewValue.numericValue(LONG_TYPE,v0);
+	    rslt = CashewValue.numericValue(typer.LONG_TYPE,v0);
 	  }
 	 else {
 	    int vx = v2.getNumber(cc).intValue();
-	    if (vx == 0) throwException(ARITH_EXC);
+	    if (vx == 0) throwException(typer,"java.lang.ArithmeticException");
 	    int v0 = v1.getNumber(cc).intValue() % vx;
-	    rslt = CashewValue.numericValue(INT_TYPE,v0);
+	    rslt = CashewValue.numericValue(typer.INT_TYPE,v0);
 	  }
 	 break;
       case MUL :
 	 if (isdbl) {
 	    double v0 = v1.getNumber(cc).doubleValue() * v2.getNumber(cc).doubleValue();
-	    rslt = CashewValue.numericValue(DOUBLE_TYPE,v0);
+	    rslt = CashewValue.numericValue(typer.DOUBLE_TYPE,v0);
 	  }
 	 else if (isflt) {
 	    double v0 = v1.getNumber(cc).doubleValue() * v2.getNumber(cc).doubleValue();
-	    rslt = CashewValue.numericValue(FLOAT_TYPE,v0);
+	    rslt = CashewValue.numericValue(typer.FLOAT_TYPE,v0);
 	  }
 	 else if (islng) {
 	    long v0 = v1.getNumber(cc).longValue() * v2.getNumber(cc).longValue();
-	    rslt = CashewValue.numericValue(LONG_TYPE,v0);
+	    rslt = CashewValue.numericValue(typer.LONG_TYPE,v0);
 	  }
 	 else {
 	    int v0 = v1.getNumber(cc).intValue() * v2.getNumber(cc).intValue();
-	    rslt = CashewValue.numericValue(INT_TYPE,v0);
+	    rslt = CashewValue.numericValue(typer.INT_TYPE,v0);
 	  }
 	 break;
       case NEQ :
@@ -302,59 +324,59 @@ static CashewValue evaluate(CashewClock cc,CuminOperator op,CashewValue v1,Cashe
       case OR :
 	 if (islng) {
 	    long v0 = v1.getNumber(cc).longValue() | v2.getNumber(cc).longValue();
-	    rslt = CashewValue.numericValue(LONG_TYPE,v0);
+	    rslt = CashewValue.numericValue(typer.LONG_TYPE,v0);
 	  }
 	 else {
 	    int v0 = v1.getNumber(cc).intValue() | v2.getNumber(cc).intValue();
-	    rslt = CashewValue.numericValue(INT_TYPE,v0);
+	    rslt = CashewValue.numericValue(typer.INT_TYPE,v0);
 	  }
 	 break;
       case RSH :
 	 if (islng) {
 	    long v0 = v1.getNumber(cc).longValue() >> v2.getNumber(cc).intValue();
-	    rslt = CashewValue.numericValue(LONG_TYPE,v0);
+	    rslt = CashewValue.numericValue(typer.LONG_TYPE,v0);
 	  }
 	 else {
 	    int v0 = v1.getNumber(cc).intValue() >> v2.getNumber(cc).intValue();
-	    rslt = CashewValue.numericValue(INT_TYPE,v0);
+	    rslt = CashewValue.numericValue(typer.INT_TYPE,v0);
 	  }
 	 break;
       case RSHU :
 	 if (islng) {
 	    long v0 = v1.getNumber(cc).longValue() >>> v2.getNumber(cc).intValue();
-	    rslt = CashewValue.numericValue(LONG_TYPE,v0);
+	    rslt = CashewValue.numericValue(typer.LONG_TYPE,v0);
 	  }
 	 else {
 	    int v0 = v1.getNumber(cc).intValue() >>> v2.getNumber(cc).intValue();
-	    rslt = CashewValue.numericValue(INT_TYPE,v0);
+	    rslt = CashewValue.numericValue(typer.INT_TYPE,v0);
 	  }
 	 break;
       case SUB :
 	 if (isdbl) {
 	    double v0 = v1.getNumber(cc).doubleValue() - v2.getNumber(cc).doubleValue();
-	    rslt = CashewValue.numericValue(DOUBLE_TYPE,v0);
+	    rslt = CashewValue.numericValue(typer.DOUBLE_TYPE,v0);
 	  }
 	 else if (isflt) {
 	    double v0 = v1.getNumber(cc).doubleValue() - v2.getNumber(cc).doubleValue();
-	    rslt = CashewValue.numericValue(FLOAT_TYPE,v0);
+	    rslt = CashewValue.numericValue(typer.FLOAT_TYPE,v0);
 	  }
 	 else if (islng) {
 	    long v0 = v1.getNumber(cc).longValue() - v2.getNumber(cc).longValue();
-	    rslt = CashewValue.numericValue(LONG_TYPE,v0);
+	    rslt = CashewValue.numericValue(typer.LONG_TYPE,v0);
 	  }
 	 else {
 	    int v0 = v1.getNumber(cc).intValue() - v2.getNumber(cc).intValue();
-	    rslt = CashewValue.numericValue(INT_TYPE,v0);
+	    rslt = CashewValue.numericValue(typer.INT_TYPE,v0);
 	  }
 	 break;
       case XOR :
 	 if (islng) {
 	    long v0 = v1.getNumber(cc).longValue() ^ v2.getNumber(cc).longValue();
-	    rslt = CashewValue.numericValue(LONG_TYPE,v0);
+	    rslt = CashewValue.numericValue(typer.LONG_TYPE,v0);
 	  }
 	 else {
 	    int v0 = v1.getNumber(cc).intValue() ^ v2.getNumber(cc).intValue();
-	    rslt = CashewValue.numericValue(INT_TYPE,v0);
+	    rslt = CashewValue.numericValue(typer.INT_TYPE,v0);
 	  }
 	 break;
       case SIG :
@@ -378,19 +400,23 @@ static CashewValue evaluate(CashewClock cc,CuminOperator op,CashewValue v1,Cashe
 	    else if (v1.getNumber(cc).intValue() > v2.getNumber(cc).intValue()) irslt = 1;
 	    else irslt = 0;
 	  }
-	 return CashewValue.numericValue(INT_TYPE,irslt);
+	 return CashewValue.numericValue(typer.INT_TYPE,irslt);
       default :
 	 AcornLog.logE("Unknown operator " + op);
 	 // illegal binary operator
 	 break;
     }
 
-   // AcornLog.logD("EVAL " + op + " " + v1 + " " + v2 + " " + rslt + " " + crslt);
 
    if (rslt == null) {
       if (crslt != null) {
-	 rslt = CashewValue.booleanValue(crslt.booleanValue());
+	 rslt = CashewValue.booleanValue(typer,crslt.booleanValue());
        }
+    }
+
+   if (rslt == null) {
+      AcornLog.logD("EVAL " + op + " " + v1 + " " + v2 + " " + rslt + " " + crslt);
+      throw CuminRunStatus.Factory.createCompilerError();
     }
 
    return rslt;
@@ -399,47 +425,48 @@ static CashewValue evaluate(CashewClock cc,CuminOperator op,CashewValue v1,Cashe
 
 
 static CashewValue evaluateAssign(CuminRunner cr,CuminOperator op,CashewValue v1,CashewValue v2,JcompType tgt)
-	throws CuminRunException
+	throws CuminRunException, CashewException
 {
    CashewClock cc = cr.getClock();
    CashewValue rslt = null;
+   JcompTyper typer = cr.getTyper();
 
    switch (op) {
       case ASG :
 	 rslt = v2;
 	 break;
       case ASG_ADD :
-	 rslt = evaluate(cc,CuminOperator.ADD,v1,v2);
+	 rslt = evaluate(typer,cc,CuminOperator.ADD,v1,v2);
 	 break;
       case ASG_AND :
-	 rslt = evaluate(cc,CuminOperator.AND,v1,v2);
+	 rslt = evaluate(typer,cc,CuminOperator.AND,v1,v2);
 	 break;
       case ASG_DIV :
-	 rslt = evaluate(cc,CuminOperator.DIV,v1,v2);
+	 rslt = evaluate(typer,cc,CuminOperator.DIV,v1,v2);
 	 break;
       case ASG_LSH :
-	 rslt = evaluate(cc,CuminOperator.LSH,v1,v2);
+	 rslt = evaluate(typer,cc,CuminOperator.LSH,v1,v2);
 	 break;
       case ASG_MOD :
-	 rslt = evaluate(cc,CuminOperator.MOD,v1,v2);
+	 rslt = evaluate(typer,cc,CuminOperator.MOD,v1,v2);
 	 break;
       case ASG_MUL :
-	 rslt = evaluate(cc,CuminOperator.MUL,v1,v2);
+	 rslt = evaluate(typer,cc,CuminOperator.MUL,v1,v2);
 	 break;
       case ASG_OR :
-	 rslt = evaluate(cc,CuminOperator.OR,v1,v2);
+	 rslt = evaluate(typer,cc,CuminOperator.OR,v1,v2);
 	 break;
       case ASG_RSH :
-	 rslt = evaluate(cc,CuminOperator.RSH,v1,v2);
+	 rslt = evaluate(typer,cc,CuminOperator.RSH,v1,v2);
 	 break;
       case ASG_RSHU :
-	 rslt = evaluate(cc,CuminOperator.RSHU,v1,v2);
+	 rslt = evaluate(typer,cc,CuminOperator.RSHU,v1,v2);
 	 break;
       case ASG_SUB :
-	 rslt = evaluate(cc,CuminOperator.SUB,v1,v2);
+	 rslt = evaluate(typer,cc,CuminOperator.SUB,v1,v2);
 	 break;
       case ASG_XOR :
-	 rslt = evaluate(cc,CuminOperator.XOR,v1,v2);
+	 rslt = evaluate(typer,cc,CuminOperator.XOR,v1,v2);
 	 break;
       default :
 	 // error
@@ -457,7 +484,7 @@ static CashewValue evaluateAssign(CuminRunner cr,CuminOperator op,CashewValue v1
 
 
 static void assignValue(CuminRunner cr,CashewValue vr,CashewValue cv,JcompType tgt)
-	throws CuminRunException
+	throws CuminRunException, CashewException
 {
    CashewClock cc = cr.getClock();
    cv = castValue(cr,cv,tgt);
@@ -468,29 +495,29 @@ static void assignValue(CuminRunner cr,CashewValue vr,CashewValue cv,JcompType t
 
 
 static CashewValue castValue(CuminRunner cr,CashewValue cv,JcompType target)
-	throws CuminRunException
+	throws CuminRunException, CashewException 
 {
    CashewClock cc = cr.getClock();
+   JcompTyper typer = cr.getTyper();
 
    JcompType styp = cv.getDataType(cc);
-   if (styp == NULL_TYPE) return cv;
+   if (styp == typer.ANY_TYPE) return cv;
 
    if (styp == target) return cv;
 
    if (target.isNumericType()) {
-      cv = unboxValue(cc,cv);
+      cv = unboxValue(typer,cc,cv);
       styp = cv.getDataType(cc);
-      if (styp == LONG_TYPE || styp == SHORT_TYPE || styp == BYTE_TYPE ||
-	    styp == INT_TYPE || styp == CHAR_TYPE) {
-	 cv = CashewValue.numericValue(target,cv.getNumber(cc).longValue());
-       }
-      else if (styp == DOUBLE_TYPE || styp == FLOAT_TYPE) {
+      if (styp.isFloatingType()) {
 	 cv = CashewValue.numericValue(target,cv.getNumber(cc).doubleValue());
+       }
+      else {
+	 cv = CashewValue.numericValue(target,cv.getNumber(cc).longValue());
        }
     }
    else if (target.isBooleanType()) {
       if (styp.getName().equals("java.lang.Boolean")) {
-         cv = unboxValue(cc,cv);
+	 cv = unboxValue(typer,cc,cv);
        }
     }
    else if (styp.isNumericType()) {
@@ -498,22 +525,22 @@ static CashewValue castValue(CuminRunner cr,CashewValue cv,JcompType target)
 	 case "java.lang.Long" :
 	    break;
 	 case "java.lang.Integer" :
-	    cv = castValue(cr,cv,INT_TYPE);
+	    cv = castValue(cr,cv,typer.INT_TYPE);
 	    break;
 	 case "java.lang.Short" :
-	    cv = castValue(cr,cv,SHORT_TYPE);
+	    cv = castValue(cr,cv,typer.SHORT_TYPE);
 	    break;
 	 case "java.lang.Byte" :
-	    cv = castValue(cr,cv,BYTE_TYPE);
+	    cv = castValue(cr,cv,typer.BYTE_TYPE);
 	    break;
 	 case "java.lang.Character" :
-	    cv = castValue(cr,cv,CHAR_TYPE);
+	    cv = castValue(cr,cv,typer.CHAR_TYPE);
 	    break;
 	 case "java.lang.Float" :
-	    cv = castValue(cr,cv,FLOAT_TYPE);
+	    cv = castValue(cr,cv,typer.FLOAT_TYPE);
 	    break;
 	 case "java.lang.Double" :
-	    cv = castValue(cr,cv,DOUBLE_TYPE);
+	    cv = castValue(cr,cv,typer.DOUBLE_TYPE);
 	    break;
 	 case "java.lang.Number" :
 	 case "java.lang.Object" :
@@ -535,13 +562,13 @@ static CashewValue castValue(CuminRunner cr,CashewValue cv,JcompType target)
 }
 
 
-static CashewValue unboxValue(CashewClock cc,CashewValue cv)
-        throws CuminRunException
+static CashewValue unboxValue(JcompTyper typer,CashewClock cc,CashewValue cv)
+	throws CuminRunException, CashewException
 {
    JcompType styp = cv.getDataType(cc);
-   if (styp == NULL_TYPE) throwException(CashewConstants.NULL_PTR_EXC);
+   if (styp.isAnyType()) throwException(typer,"java.lang.NullPointerException");
    if (styp.isNumericType() || styp.isBooleanType()) return cv;
-   
+
    switch (styp.getName()) {
       case "java.lang.Long" :
       case "java.lang.Integer" :
@@ -551,39 +578,41 @@ static CashewValue unboxValue(CashewClock cc,CashewValue cv)
       case "java.lang.Float" :
       case "java.lang.Double" :
       case "java.lang.Boolean" :
-         cv = cv.getFieldValue(cc,styp.getName() + ".value");
-         break;
+	 cv = cv.getFieldValue(typer,cc,styp.getName() + ".value");
+	 break;
     }
-   
+
    return cv;
 }
 
 
 
-static private CashewValue boxValue(CuminRunner cr,CashewValue cv) throws CuminRunException
+static private CashewValue boxValue(CuminRunner cr,CashewValue cv) 
+        throws CuminRunException, CashewException
 {
    CashewClock cc = cr.getClock();
    JcompType typ = cv.getDataType(cc);
+   JcompTyper typer = cr.getTyper();
 
-   if (typ == INT_TYPE) {
+   if (typ == typer.INT_TYPE) {
       cv = invokeEvalConverter(cr,"java.lang.Integer","valueOf","(I)Ljava/lang/Integer;",cv);
     }
-   else if (typ == SHORT_TYPE) {
+   else if (typ == typer.SHORT_TYPE) {
       cv = invokeEvalConverter(cr,"java.lang.Short","valueOf","(IS)Ljava/lang/Short;",cv);
     }
-   else if (typ == BYTE_TYPE) {
+   else if (typ == typer.BYTE_TYPE) {
       cv = invokeEvalConverter(cr,"java.lang.Byte","valueOf","(B)Ljava/lang/Byte;",cv);
     }
-   else if (typ == CHAR_TYPE) {
+   else if (typ == typer.CHAR_TYPE) {
       cv = invokeEvalConverter(cr,"java.lang.Character","valueOf","(C)Ljava/lang/Character;",cv);
     }
-   else if (typ == FLOAT_TYPE) {
+   else if (typ == typer.FLOAT_TYPE) {
       cv = invokeEvalConverter(cr,"java.lang.Float","valueOf","(F)Ljava/lang/Float;",cv);
     }
-   else if (typ == DOUBLE_TYPE) {
+   else if (typ == typer.DOUBLE_TYPE) {
       cv = invokeEvalConverter(cr,"java.lang.Double","valueOf","(D)Ljava/lang/Double;",cv);
     }
-   else if (typ == BOOLEAN_TYPE) {
+   else if (typ == typer.BOOLEAN_TYPE) {
       cv = invokeEvalConverter(cr,"java.lang.Boolean","valueOf","(Z)Ljava/lang/Boolean;",cv);
     }
 
@@ -623,10 +652,11 @@ private static CashewValue invokeConverter(CuminRunner runner,String cls,
 
 
 private static CashewValue invokeEvalConverter(CuminRunner runner,String cls,String mthd,String sgn,
-      CashewValue arg) throws CuminRunException
+      CashewValue arg) 
+        throws CuminRunException, CashewException
 {
    String cast = arg.getDataType(runner.getClock()).getName();
-   String argv = arg.getString(runner.getClock());
+   String argv = arg.getString(runner.getTyper(),runner.getClock());
    String expr = cls + "." + mthd + "( (" + cast + ") " + argv + ")";
    CashewValue cv = runner.getLookupContext().evaluate(expr);
    if (cv != null) return cv;
@@ -636,17 +666,17 @@ private static CashewValue invokeEvalConverter(CuminRunner runner,String cls,Str
 
 
 
-static CashewValue evaluate(CashewClock cc,CuminOperator op,CashewValue v1)
-        throws CuminRunException
+static CashewValue evaluate(JcompTyper typer,CashewClock cc,CuminOperator op,CashewValue v1)
+	throws CuminRunException, CashewException
 {
    JcompType t1 = v1.getDataType(cc);
    if (t1.isClassType()) {
-      v1 = unboxValue(cc,v1);
+      v1 = unboxValue(typer,cc,v1);
       t1 = v1.getDataType(cc);
     }
-   boolean isflt = t1 == FLOAT_TYPE;
-   boolean isdbl = t1 == DOUBLE_TYPE;
-   boolean islng = t1 == LONG_TYPE;
+   boolean isflt = t1.isFloatType();
+   boolean isdbl = t1.isDoubleType();
+   boolean islng = t1.isLongType();
 
    CashewValue rslt = null;
    switch (op) {
@@ -654,25 +684,25 @@ static CashewValue evaluate(CashewClock cc,CuminOperator op,CashewValue v1)
 	 if (isflt) {
 	    rslt = v1.getActualValue(cc);
 	    float fnv = v1.getNumber(cc).floatValue() + 1;
-	    CashewValue nv = CashewValue.numericValue(FLOAT_TYPE,fnv);
+	    CashewValue nv = CashewValue.numericValue(typer.FLOAT_TYPE,fnv);
 	    v1.setValueAt(cc,nv);
 	  }
 	 else if (isdbl) {
 	    rslt = v1.getActualValue(cc);
 	    double fnv = v1.getNumber(cc).doubleValue() + 1;
-	    CashewValue nv = CashewValue.numericValue(DOUBLE_TYPE,fnv);
+	    CashewValue nv = CashewValue.numericValue(typer.DOUBLE_TYPE,fnv);
 	    v1.setValueAt(cc,nv);
 	  }
 	 else if (islng) {
 	    rslt = v1.getActualValue(cc);
 	    long fnv = v1.getNumber(cc).longValue() + 1;
-	    CashewValue nv = CashewValue.numericValue(LONG_TYPE,fnv);
+	    CashewValue nv = CashewValue.numericValue(typer.LONG_TYPE,fnv);
 	    v1.setValueAt(cc,nv);
 	  }
 	 else {
 	    rslt = v1.getActualValue(cc);
 	    int fnv = v1.getNumber(cc).intValue() + 1;
-	    CashewValue nv = CashewValue.numericValue(INT_TYPE,fnv);
+	    CashewValue nv = CashewValue.numericValue(typer.INT_TYPE,fnv);
 	    v1.setValueAt(cc,nv);
 	  }
 	 break;
@@ -680,100 +710,99 @@ static CashewValue evaluate(CashewClock cc,CuminOperator op,CashewValue v1)
 	 if (isflt) {
 	    rslt = v1.getActualValue(cc);
 	    float fnv = v1.getNumber(cc).floatValue() - 1;
-	    CashewValue nv = CashewValue.numericValue(FLOAT_TYPE,fnv);
+	    CashewValue nv = CashewValue.numericValue(typer.FLOAT_TYPE,fnv);
 	    v1.setValueAt(cc,nv);
 	  }
 	 else if (isdbl) {
 	    rslt = v1.getActualValue(cc);
 	    double fnv = v1.getNumber(cc).doubleValue() - 1;
-	    CashewValue nv = CashewValue.numericValue(DOUBLE_TYPE,fnv);
+	    CashewValue nv = CashewValue.numericValue(typer.DOUBLE_TYPE,fnv);
 	    v1.setValueAt(cc,nv);
 	  }
 	 else if (islng) {
 	    rslt = v1.getActualValue(cc);
 	    long fnv = v1.getNumber(cc).longValue() - 1;
-	    CashewValue nv = CashewValue.numericValue(LONG_TYPE,fnv);
+	    CashewValue nv = CashewValue.numericValue(typer.LONG_TYPE,fnv);
 	    v1.setValueAt(cc,nv);
 	  }
 	 else {
 	    rslt = v1.getActualValue(cc);
 	    int fnv = v1.getNumber(cc).intValue() - 1;
-	    CashewValue nv = CashewValue.numericValue(INT_TYPE,fnv);
+	    CashewValue nv = CashewValue.numericValue(typer.INT_TYPE,fnv);
 	    v1.setValueAt(cc,nv);
 	  }
 	 break;
       case INCR :
 	 if (isflt) {
 	    float fnv = v1.getNumber(cc).floatValue() + 1;
-	    rslt = CashewValue.numericValue(FLOAT_TYPE,fnv);
+	    rslt = CashewValue.numericValue(typer.FLOAT_TYPE,fnv);
 	    v1.setValueAt(cc,rslt);
 	  }
 	 else if (isdbl) {
 	    double fnv = v1.getNumber(cc).doubleValue() + 1;
-	    rslt = CashewValue.numericValue(DOUBLE_TYPE,fnv);
+	    rslt = CashewValue.numericValue(typer.DOUBLE_TYPE,fnv);
 	    v1.setValueAt(cc,rslt);
 	  }
 	 else if (islng) {
 	    long fnv = v1.getNumber(cc).longValue() + 1;
-	    rslt = CashewValue.numericValue(LONG_TYPE,fnv);
+	    rslt = CashewValue.numericValue(typer.LONG_TYPE,fnv);
 	    v1.setValueAt(cc,rslt);
 	  }
 	 else {
 	    int fnv = v1.getNumber(cc).intValue() + 1;
-	    rslt = CashewValue.numericValue(INT_TYPE,fnv);
+	    rslt = CashewValue.numericValue(typer.INT_TYPE,fnv);
 	    v1.setValueAt(cc,rslt);
 	  }
 	 break;
       case DECR :
 	 if (isflt) {
 	    float fnv = v1.getNumber(cc).floatValue() - 1;
-	    rslt = CashewValue.numericValue(FLOAT_TYPE,fnv);
+	    rslt = CashewValue.numericValue(typer.FLOAT_TYPE,fnv);
 	    v1.setValueAt(cc,rslt);
 	  }
 	 else if (isdbl) {
 	    double fnv = v1.getNumber(cc).doubleValue() - 1;
-	    rslt = CashewValue.numericValue(DOUBLE_TYPE,fnv);
+	    rslt = CashewValue.numericValue(typer.DOUBLE_TYPE,fnv);
 	    v1.setValueAt(cc,rslt);
 	  }
 	 else if (islng) {
 	    long fnv = v1.getNumber(cc).longValue() - 1;
-	    rslt = CashewValue.numericValue(LONG_TYPE,fnv);
+	    rslt = CashewValue.numericValue(typer.LONG_TYPE,fnv);
 	    v1.setValueAt(cc,rslt);
 	  }
 	 else {
 	    int fnv = v1.getNumber(cc).intValue() - 1;
-	    rslt = CashewValue.numericValue(INT_TYPE,fnv);
+	    rslt = CashewValue.numericValue(typer.INT_TYPE,fnv);
 	    v1.setValueAt(cc,rslt);
 	  }
 	 break;
       case NEG :
 	 if (isflt) {
 	    float fnv = - v1.getNumber(cc).floatValue();
-	    rslt = CashewValue.numericValue(FLOAT_TYPE,fnv);
+	    rslt = CashewValue.numericValue(typer.FLOAT_TYPE,fnv);
 	  }
 	 else if (isdbl) {
 	    double fnv = -v1.getNumber(cc).doubleValue();
-	    rslt = CashewValue.numericValue(DOUBLE_TYPE,fnv);
+	    rslt = CashewValue.numericValue(typer.DOUBLE_TYPE,fnv);
 	  }
 	 else if (islng) {
 	    long fnv = -v1.getNumber(cc).longValue();
-	    rslt = CashewValue.numericValue(LONG_TYPE,fnv);
+	    rslt = CashewValue.numericValue(typer.LONG_TYPE,fnv);
 	  }
 	 else {
 	    int fnv = -v1.getNumber(cc).intValue();
-	    rslt = CashewValue.numericValue(INT_TYPE,fnv);
+	    rslt = CashewValue.numericValue(typer.INT_TYPE,fnv);
 	  }
 	 break;
       case NOT :
 	 boolean notv = !v1.getBoolean(cc);
-	 rslt = CashewValue.booleanValue(notv);
+	 rslt = CashewValue.booleanValue(typer,notv);
 	 break;
       case NOP :
 	 rslt = v1.getActualValue(cc);
 	 break;
       default :
-	 // error -- illegal unary operator
-	 break;
+         throw CuminRunStatus.Factory.createCompilerError();
     }
 
    return rslt;
@@ -787,17 +816,32 @@ static CashewValue evaluate(CashewClock cc,CuminOperator op,CashewValue v1)
 /*										*/
 /********************************************************************************/
 
-static void throwException(JcompType typ) throws CuminRunException
+static void throwException(JcompTyper typer,String exc) throws CuminRunException
 {
-   CashewValue cv = CashewValue.objectValue(typ);
+   JcompType typ = typer.findSystemType(exc);
+   throwException(typer,typ);
+}
+
+
+static void throwException(JcompTyper typer,JcompType typ) throws CuminRunException
+{
+   CashewValue cv = CashewValue.objectValue(typer,typ);
    throw new CuminRunException(Reason.EXCEPTION,typ.toString(),null,cv);
 }
 
 
 
-static CuminRunStatus returnException(JcompType typ)
+static CuminRunStatus returnException(JcompTyper typer,String exc)
 {
-   CashewValue cv = CashewValue.objectValue(typ);
+   JcompType typ = typer.findSystemType(exc);
+   return returnException(typer,typ);
+}
+
+
+
+static CuminRunStatus returnException(JcompTyper typer,JcompType typ)
+{
+   CashewValue cv = CashewValue.objectValue(typer,typ);
    return CuminRunStatus.Factory.createException(cv);
 }
 
@@ -810,12 +854,13 @@ static CuminRunStatus returnException(JcompType typ)
 /********************************************************************************/
 
 static CashewValue buildArray(CuminRunner runner,int idx,int [] bnds,JcompType base)
+        throws CashewException
 {
    JcompType atyp = base;
    for (int i = idx; i < bnds.length; ++i) {
       atyp = runner.getTyper().findArrayType(atyp);
     }
-   CashewValue cv = CashewValue.arrayValue(atyp,bnds[idx]);
+   CashewValue cv = CashewValue.arrayValue(runner.getTyper(),atyp,bnds[idx]);
    if (idx+1 < bnds.length) {
       for (int i = 0; i < bnds[idx]; ++i) {
 	 cv.setIndexValue(runner.getClock(),i,buildArray(runner,idx+1,bnds,base));
@@ -824,6 +869,11 @@ static CashewValue buildArray(CuminRunner runner,int idx,int [] bnds,JcompType b
 
    return cv;
 }
+
+
+
+
+
 
 
 

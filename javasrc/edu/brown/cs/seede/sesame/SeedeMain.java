@@ -1,8 +1,8 @@
 /********************************************************************************/
 /*                                                                              */
-/*              CashewConstants.java                                            */
+/*              SeedeMain.java                                                  */
 /*                                                                              */
-/*      Constants for Seede Cache and Value manager                             */
+/*      Alternative main entry point for seede                                  */
 /*                                                                              */
 /********************************************************************************/
 /*      Copyright 2011 Brown University -- Steven P. Reiss                    */
@@ -18,75 +18,34 @@
  *                                                                               *
  ********************************************************************************/
 
-/* SVN: $Id$ */
+
+
+package edu.brown.cs.seede.sesame;
 
 
 
-package edu.brown.cs.seede.cashew;
-
-
-
-
-public interface CashewConstants
+public class SeedeMain
 {
 
 
 /********************************************************************************/
 /*                                                                              */
-/*      Kinds of values                                                         */
+/*      Main program                                                            */
 /*                                                                              */
 /********************************************************************************/
 
-enum CashewValueKind {
-   UNKNOWN,
-   PRIMITIVE,
-   STRING,
-   CLASS,
-   OBJECT,
-   ARRAY
-};
-
-
-
-/********************************************************************************/
-/*                                                                              */
-/*      Special fields                                                          */
-/*                                                                              */
-/********************************************************************************/
-
-String HASH_CODE_FIELD = "@hashCode";
-String TO_STRING_FIELD = "@toString";
-String CURRENT_THREAD_FIELD = "@currentThread";
-String CURRENT_THREAD_NAME_FIELD = "@currentThreadName";
-
-
-
-
-
-/********************************************************************************/
-/*                                                                              */
-/*      Deferred value interface                                                */
-/*                                                                              */
-/********************************************************************************/
-
-interface CashewDeferredValue {
-   
-   CashewValue getValue();
-   
+public static void main(String [] args)
+{
+   SesameMain.main(args);
 }
 
 
 
 
+}       // end of class SeedeMain
 
 
 
 
-
-}       // end of interface CashewConstants
-
-
-
-
-/* end of CashewConstants.java */
+/* end of SeedeMain.java */
 

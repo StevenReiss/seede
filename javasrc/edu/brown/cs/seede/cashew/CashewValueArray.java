@@ -25,6 +25,7 @@
 package edu.brown.cs.seede.cashew;
 
 import java.util.Map;
+import java.util.HashMap;
 import java.util.Set;
 
 import edu.brown.cs.ivy.jcomp.JcompType;
@@ -54,13 +55,14 @@ private int old_ref;
 /*										*/
 /********************************************************************************/
 
-CashewValueArray(JcompType jt,int dim,Map<Integer,Object> inits,boolean caninit) {
+CashewValueArray(JcompTyper typer,JcompType jt,int dim,Map<Integer,Object> inits,boolean caninit) 
+{
    super(jt);
    dim_size = dim;
    array_values = new CashewRef[dim];
    old_ref = 0;
    for (int i = 0; i < dim; ++i) {
-      CashewValue cv = CashewValue.createDefaultValue(jt.getBaseType());
+      CashewValue cv = CashewValue.createDefaultValue(typer,jt.getBaseType());
       if (inits != null) {
 	 Object ival = inits.get(i);
 	 if (ival instanceof CashewValue) cv = (CashewValue) ival;
@@ -81,11 +83,13 @@ CashewValueArray(JcompType jt,int dim,Map<Integer,Object> inits,boolean caninit)
 /*										*/
 /********************************************************************************/
 
-@Override public CashewValue getFieldValue(CashewClock cc,String nm,boolean force) {
+@Override public CashewValue getFieldValue(JcompTyper typer,CashewClock cc,String nm,boolean force) 
+        throws CashewException
+{
    if (nm != null && nm.equals("length")) {
-      return CashewValue.numericValue(INT_TYPE,dim_size);
+      return CashewValue.numericValue(typer.INT_TYPE,dim_size);
     }
-   return super.getFieldValue(cc,nm,force);
+   return super.getFieldValue(typer,cc,nm,force);
 }
 
 @Override public int getDimension(CashewClock cc)
@@ -93,19 +97,23 @@ CashewValueArray(JcompType jt,int dim,Map<Integer,Object> inits,boolean caninit)
    return dim_size;
 }
 
-@Override public CashewValue getIndexValue(CashewClock cc,int idx) {
-   if (idx < 0 || idx >= dim_size) 
+@Override public CashewValue getIndexValue(CashewClock cc,int idx) 
+{
+   if (idx < 0 || idx >= dim_size)
       throw new Error("IndexOutOfBounds");
    return array_values[idx];
 }
 
-@Override public CashewValue setIndexValue(CashewClock cc,int idx,CashewValue v) {
+@Override public CashewValue setIndexValue(CashewClock cc,int idx,CashewValue v) 
+{
    if (idx < 0 || idx >= dim_size) throw new Error("IndexOutOfBounds");
    array_values[idx].setValueAt(cc,v);
    return this;
 }
 
-@Override public String getString(CashewClock cc,int lvl,boolean dbg) {
+@Override public String getString(JcompTyper typer,CashewClock cc,int lvl,boolean dbg)
+        throws CashewException
+{
    StringBuffer buf = new StringBuffer();
    buf.append("[");
    if (lvl > 0) {
@@ -113,7 +121,7 @@ CashewValueArray(JcompType jt,int dim,Map<Integer,Object> inits,boolean caninit)
       if (dbg) sz = Math.min(sz,10);
       for (int i = 0; i < sz; ++i) {
 	 if (i != 0) buf.append(",");
-	 buf.append(getIndexValue(cc,i).getString(cc,lvl,dbg));
+	 buf.append(getIndexValue(cc,i).getString(typer,cc,lvl,dbg));
        }
       if (sz < dim_size) buf.append("...");
     }
@@ -166,6 +174,44 @@ CashewValueArray(JcompType jt,int dim,Map<Integer,Object> inits,boolean caninit)
 }
 
 
+/********************************************************************************/
+/*										*/
+/*	Cloning methods 							*/
+/*										*/
+/********************************************************************************/
+
+public CashewValueArray cloneObject(JcompTyper typer,CashewClock cc,long when)
+{
+   CashewClock ncc = cc;
+   if (when > 0) ncc = new CashewClock(when);
+   
+   Map<Integer,Object> inits = new HashMap<>();
+   for (int i = 0; i < array_values.length; ++i) {
+      if (array_values[i] != null) {
+	 inits.put(i,array_values[i].getActualValue(ncc));
+       }
+    }
+   return new CashewValueArray(typer,getDataType(),dim_size,inits,false);
+}
+
+
+
+void getChangeTimes(Set<Long> times,Set<CashewValue> done) 
+{
+   if (!done.add(this) || dim_size == 0) return;
+   
+   for (int i = 0; i < array_values.length; ++i) {
+      if (array_values[i] != null) {
+         array_values[i].getChangeTimes(times,done);
+       }
+    }
+}
+
+
+
+
+
+
 
 /********************************************************************************/
 /*										*/
@@ -192,9 +238,19 @@ CashewValueArray(JcompType jt,int dim,Map<Integer,Object> inits,boolean caninit)
 
 
 
-@Override public void outputLocalXml(IvyXmlWriter xw,CashewOutputContext outctx,String name) {
+@Override public void outputLocalXml(IvyXmlWriter xw,CashewOutputContext outctx,String name) 
+{
    xw.field("ARRAY",true);
    int rvl = outctx.noteValue(this);
+   if (outctx.expand(name)) {
+      for (int i = 0; i < array_values.length; ++i) {
+         CashewRef cr = array_values[i];
+         cr.getDataType(null);
+       }
+      if (rvl > 0) rvl = -rvl;
+      old_ref = 0;
+    }
+      
    int oref = old_ref;
    old_ref = Math.abs(rvl);
    xw.field("ID",old_ref);
@@ -207,7 +263,7 @@ CashewValueArray(JcompType jt,int dim,Map<Integer,Object> inits,boolean caninit)
    else {
       if (oref != 0) xw.field("OREF",oref);
       xw.field("SIZE",dim_size);
-      CashewValue dfltval = createDefaultValue(getDataType().getBaseType());
+      CashewValue dfltval = createDefaultValue(outctx.getTyper(),getDataType().getBaseType());
       int numdflt = 0;
       for (int i = 0; i < array_values.length; ++i) {
 	 if (array_values[i].sameValue(dfltval)) {
@@ -216,8 +272,8 @@ CashewValueArray(JcompType jt,int dim,Map<Integer,Object> inits,boolean caninit)
 	  }
 	 xw.begin("ELEMENT");
 	 xw.field("INDEX",i);
-         String nnm = name;
-         if (nnm != null) nnm += "?" + i;
+	 String nnm = name;
+	 if (nnm != null) nnm += "?" + i;
 	 array_values[i].outputXml(outctx,nnm);
 	 xw.end("ELEMENT");
        }

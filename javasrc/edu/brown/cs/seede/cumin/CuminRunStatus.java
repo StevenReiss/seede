@@ -97,6 +97,11 @@ public class Factory {
    public static CuminRunStatus createTimeout() {
       return new CuminRunValue(Reason.TIMEOUT);
     }
+   
+   
+   public static CuminRunException createStackOverflow() {
+      return new CuminRunException(Reason.STACK_OVERFLOW);
+   }
 
    public static CuminRunException createCompilerError() {
       return new CuminRunException(Reason.COMPILER_ERROR,"Compiler error");

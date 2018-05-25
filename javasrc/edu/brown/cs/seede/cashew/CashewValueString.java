@@ -27,6 +27,8 @@ package edu.brown.cs.seede.cashew;
 import java.util.HashMap;
 import java.util.Map;
 
+import edu.brown.cs.ivy.jcomp.JcompType;
+import edu.brown.cs.ivy.jcomp.JcompTyper;
 import edu.brown.cs.ivy.xml.IvyXmlWriter;
 
 
@@ -54,9 +56,9 @@ private CashewValue hash32_field;
 /*										*/
 /********************************************************************************/
 
-CashewValueString(String s)
+CashewValueString(JcompType styp,String s)
 {
-   super(STRING_TYPE);
+   super(styp);
    string_value = s;
    value_field = null;
    hash_field = null;
@@ -71,7 +73,7 @@ CashewValueString(String s)
 /*										*/
 /********************************************************************************/
 
-@Override public String getString(CashewClock cc,int lvl,boolean dbg)
+@Override public String getString(JcompTyper typer,CashewClock cc,int lvl,boolean dbg)
 {
    return string_value;
 }
@@ -129,7 +131,7 @@ CashewValueString(String s)
 
 
 
-@Override synchronized public CashewValue getFieldValue(CashewClock cc,String name,boolean force)
+@Override synchronized public CashewValue getFieldValue(JcompTyper typer,CashewClock cc,String name,boolean force)
 {
    switch (name) {
       case "value" :
@@ -138,21 +140,21 @@ CashewValueString(String s)
 	    Map<Integer,Object> inits = new HashMap<Integer,Object>();
 	    for (int i = 0; i < string_value.length(); ++i) {
 	       char c = string_value.charAt(i);
-	       inits.put(i,CashewValue.characterValue(CHAR_TYPE,c));
+	       inits.put(i,CashewValue.characterValue(typer.CHAR_TYPE,c));
 	     }
-	    value_field = CashewValue.arrayValue(CHAR_TYPE,string_value.length(),inits);
+	    value_field = CashewValue.arrayValue(typer,typer.CHAR_TYPE,string_value.length(),inits);
 	  }
 	 return value_field;
       case "hash" :
       case "java.lang.String.hash" :
 	 if (hash_field == null) {
-	    hash_field = CashewValue.numericValue(INT_TYPE,string_value.hashCode());
+	    hash_field = CashewValue.numericValue(typer.INT_TYPE,string_value.hashCode());
 	  }
 	 return hash_field;
       case "hash32" :
       case "java.lang.String.hash32" :
 	 if (hash32_field == null) {
-	    hash32_field = CashewValue.numericValue(INT_TYPE,0);
+	    hash32_field = CashewValue.numericValue(typer.INT_TYPE,0);
 	  }
 	 return hash32_field;
       default :
@@ -171,7 +173,9 @@ CashewValueString(String s)
 /*										*/
 /********************************************************************************/
 
-@Override public CashewValue setFieldValue(CashewClock cc,String name,CashewValue v) {
+@Override public CashewValue setFieldValue(JcompTyper typer,CashewClock cc,String name,CashewValue v)
+        throws CashewException
+{
    switch (name) {
       case "value" :
       case "java.lang.String.value" :

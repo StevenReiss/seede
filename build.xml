@@ -27,6 +27,15 @@
       <copy file='seede.jar' tofile='${BUBBLESLIB}/seede.jar' />
    </target>
 
+   <target name='jarall' depends='all'>
+      <jar destfile='seedefull.jar'>
+	 <manifest>
+	 </manifest>
+	 <fileset dir='./java' includes='**/*.class' />
+	 <fileset dir='/pro/ivy/java' includes='**/*.class' />
+      </jar>
+   </target>
+
 </project>
 
 

@@ -37,7 +37,7 @@
    </target>
 
    <target name='clean'>
-      <delete dir='${FAIT}/java/edu/brown/cs/seede/poppy' />
+      <delete dir='${SEEDE}/java/edu/brown/cs/seede/poppy' />
    </target>
 
    <target name='test' depends='compile'>
@@ -67,5 +67,4 @@
    </target>
 
 </project>
-
 

@@ -24,6 +24,7 @@
 
 package edu.brown.cs.seede.sesame;
 
+import edu.brown.cs.ivy.jcomp.JcompTyper;
 import edu.brown.cs.seede.cashew.CashewContext;
 import edu.brown.cs.seede.cashew.CashewInputOutputModel;
 import edu.brown.cs.seede.cashew.CashewValue;
@@ -63,17 +64,17 @@ SesameContext(SesameSession ss)
 /*										*/
 /********************************************************************************/
 
-@Override public CashewValue findStaticFieldReference(String name,String type)
+@Override public CashewValue findStaticFieldReference(JcompTyper typer,String name,String type)
 {
-   CashewValue cv = super.findStaticFieldReference(name,type);
+   CashewValue cv = super.findStaticFieldReference(typer,name,type);
    if (cv != null) return cv;
 
    if (name.endsWith(".$assertionsDisabled")) {
-      cv = CashewValue.booleanValue(false);
+      cv = CashewValue.booleanValue(typer,false);
       return cv;
     }
    if (name.endsWith(".$assertionsEnabled")) {
-      cv = CashewValue.booleanValue(true);
+      cv = CashewValue.booleanValue(typer,true);
       return cv;
     }
 

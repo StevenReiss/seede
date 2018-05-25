@@ -1,21 +1,21 @@
 /********************************************************************************/
-/*                                                                              */
-/*              CashewValueFunctionRef.java                                     */
-/*                                                                              */
-/*      description of class                                                    */
-/*                                                                              */
+/*										*/
+/*		CashewValueFunctionRef.java					*/
+/*										*/
+/*	Value for dynamic function references					*/
+/*										*/
 /********************************************************************************/
-/*      Copyright 2011 Brown University -- Steven P. Reiss                    */
+/*	Copyright 2011 Brown University -- Steven P. Reiss		      */
 /*********************************************************************************
- *  Copyright 2011, Brown University, Providence, RI.                            *
- *                                                                               *
- *                        All Rights Reserved                                    *
- *                                                                               *
- * This program and the accompanying materials are made available under the      *
+ *  Copyright 2011, Brown University, Providence, RI.				 *
+ *										 *
+ *			  All Rights Reserved					 *
+ *										 *
+ * This program and the accompanying materials are made available under the	 *
  * terms of the Eclipse Public License v1.0 which accompanies this distribution, *
- * and is available at                                                           *
- *      http://www.eclipse.org/legal/epl-v10.html                                *
- *                                                                               *
+ * and is available at								 *
+ *	http://www.eclipse.org/legal/epl-v10.html				 *
+ *										 *
  ********************************************************************************/
 
 /* SVN: $Id$ */
@@ -31,43 +31,45 @@ import org.eclipse.jdt.core.dom.ASTNode;
 
 import edu.brown.cs.ivy.jcomp.JcompSymbol;
 import edu.brown.cs.ivy.jcomp.JcompType;
+import edu.brown.cs.ivy.jcomp.JcompTyper;
 
 public class CashewValueFunctionRef extends CashewValueObject implements CashewConstants
 {
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Private Storage                                                         */
-/*                                                                              */
+/*										*/
+/*	Private Storage 							*/
+/*										*/
 /********************************************************************************/
- 
+
 private Map<Object,CashewValue> initial_bindings;
-private String                  method_name;
-private ASTNode                 eval_node;
+private String			method_name;
+private ASTNode 		eval_node;
 
 
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Constructors                                                            */
-/*                                                                              */
+/*										*/
+/*	Constructors								*/
+/*										*/
 /********************************************************************************/
 
-public CashewValueFunctionRef(JcompType typ,ASTNode nx,List<JcompSymbol> px,
+public CashewValueFunctionRef(JcompTyper typer,JcompType typ,ASTNode nx,List<JcompSymbol> px,
       Map<Object,CashewValue> bind)
 {
-   super(typ,null,false);
+   super(typer,typ,null,false);
    initial_bindings = bind;
    method_name = null;
    eval_node = nx;
 }
 
 
-public CashewValueFunctionRef(JcompType typ,String method)
+public CashewValueFunctionRef(JcompTyper typer,JcompType typ,String method)
 {
-   super(typ,null,false);
+   super(typer,typ,null,false);
+   initial_bindings = null;
    method_name = method;
    eval_node = null;
 }
@@ -75,15 +77,15 @@ public CashewValueFunctionRef(JcompType typ,String method)
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Access methods                                                          */
-/*                                                                              */
+/*										*/
+/*	Access methods								*/
+/*										*/
 /********************************************************************************/
 
-@Override public Map<Object,CashewValue> getBindings()  { return initial_bindings; }
+@Override public Map<Object,CashewValue> getBindings()	{ return initial_bindings; }
 
-public String getMethodName()                           
-{  
+public String getMethodName()			
+{
    return method_name;
 }
 
@@ -92,10 +94,10 @@ public ASTNode getEvalNode()
    return eval_node;
 }
 
-@Override public boolean isFunctionRef(CashewClock cc)  { return true; }
+@Override public boolean isFunctionRef(CashewClock cc)	{ return true; }
 
 
-}       // end of class CashewValueFunctionRef
+}	// end of class CashewValueFunctionRef
 
 
 

@@ -25,6 +25,8 @@
 package edu.brown.cs.seede.sesame;
 
 import java.io.File;
+import java.lang.reflect.Modifier;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -35,12 +37,19 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTParser;
+import org.eclipse.jdt.core.dom.Assignment;
 import org.eclipse.jdt.core.dom.Block;
+import org.eclipse.jdt.core.dom.BodyDeclaration;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.ConstructorInvocation;
+import org.eclipse.jdt.core.dom.Expression;
+import org.eclipse.jdt.core.dom.ExpressionStatement;
+import org.eclipse.jdt.core.dom.FieldDeclaration;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
+import org.eclipse.jdt.core.dom.Statement;
 import org.eclipse.jdt.core.dom.SuperConstructorInvocation;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
+import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.IDocument;
@@ -69,6 +78,7 @@ private IDocument		edit_document;
 private File			for_file;
 private Map<String,ASTNode>	ast_roots;
 private Set<Integer>		error_lines;
+private int			use_count;
 
 private static SesameProject	current_project;
 private static Object		project_lock = new Object();
@@ -89,6 +99,7 @@ SesameFile(File f,String cnts,String linesep)
    edit_document = new Document(cnts);
    ast_roots = new HashMap<String,ASTNode>();
    error_lines = new HashSet<>();
+   use_count = 0;
 }
 
 
@@ -241,7 +252,7 @@ private ASTNode buildAst()
    parser.setKind(ASTParser.K_COMPILATION_UNIT);
    parser.setSource(edit_document.get().toCharArray());
    Map<String,String> options = JavaCore.getOptions();
-   JavaCore.setComplianceOptions(JavaCore.VERSION_1_6,options);
+   JavaCore.setComplianceOptions(JavaCore.VERSION_1_8,options);
    parser.setCompilerOptions(options);
    parser.setResolveBindings(false);
    parser.setStatementsRecovery(true);
@@ -259,22 +270,77 @@ private void cleanupAstRoot(CompilationUnit an)
    for (Object typn : an.types()) {
       if (typn instanceof TypeDeclaration) {
 	 TypeDeclaration td = (TypeDeclaration) typn;
-	 if (td.getSuperclassType()  == null) continue;
-	 for (MethodDeclaration md : td.getMethods()) {
-	    if (!md.isConstructor()) continue;
-	    Block blk = md.getBody();
-	    @SuppressWarnings("unchecked") List<Object> stmts = blk.statements();
-	    boolean fnd = false;
-	    for (Object stmtn : stmts) {
-	       if (stmtn instanceof SuperConstructorInvocation ||
-		     stmtn instanceof ConstructorInvocation) fnd = true;
-	     }
-	    if (fnd) continue;
-	    AST ast = an.getAST();
-	    SuperConstructorInvocation sci = ast.newSuperConstructorInvocation();
-	    stmts.add(0,sci);
-	  }
+         fixType(td);
        }
+    }
+}
+
+
+
+@SuppressWarnings("unchecked")
+private void fixType(TypeDeclaration td)
+{
+   AST ast = td.getAST();
+   boolean havecnst = td.isInterface();
+   List<VariableDeclarationFragment> cnstinits = null;
+   for (Object o : td.bodyDeclarations()) {
+      BodyDeclaration bd = (BodyDeclaration) o;
+      if (bd instanceof MethodDeclaration) {
+         MethodDeclaration md = (MethodDeclaration) bd;
+         if (md.isConstructor()) havecnst = true;
+       }
+      else if (bd instanceof FieldDeclaration) {
+         FieldDeclaration fd = (FieldDeclaration) bd;
+         if (Modifier.isStatic(fd.getModifiers())) continue;
+         for (Object o1 : fd.fragments()) {
+            VariableDeclarationFragment vdf = (VariableDeclarationFragment) o1;
+            if (vdf.getInitializer() != null) {
+               if (cnstinits == null) cnstinits = new ArrayList<>();
+               cnstinits.add(vdf);
+             }
+          }
+       }
+    }
+   
+   if (!havecnst) {
+      MethodDeclaration md = ast.newMethodDeclaration();
+      md.setConstructor(true);
+      md.setBody(ast.newBlock());
+      md.modifiers().addAll(ast.newModifiers(Modifier.PUBLIC));
+      md.setName(ast.newSimpleName(td.getName().getIdentifier()));
+      td.bodyDeclarations().add(md);
+    }
+   
+   if (td.getSuperclassType() != null || cnstinits != null) {
+      for (MethodDeclaration md : td.getMethods()) {
+         if (!md.isConstructor()) continue;
+         int idx = 0;
+         Block blk = md.getBody();
+         List<Object> stmts = blk.statements();
+         if (stmts.size() > 0) {
+            Statement st0 = (Statement) stmts.get(0);
+            if (st0 instanceof SuperConstructorInvocation ||
+                  st0 instanceof ConstructorInvocation) idx = 1;
+          }
+         if (idx == 0 && td.getSuperclassType() != null) {
+            SuperConstructorInvocation sci = ast.newSuperConstructorInvocation();
+            stmts.add(0,sci);
+            idx = 1;
+          }
+         if (cnstinits != null) {
+            for (VariableDeclarationFragment vdf : cnstinits) {
+               Assignment asgn = ast.newAssignment();
+               asgn.setLeftHandSide(ast.newSimpleName(vdf.getName().getIdentifier()));
+               asgn.setRightHandSide((Expression) ASTNode.copySubtree(ast,vdf.getInitializer()));
+               ExpressionStatement es = ast.newExpressionStatement(asgn);
+               stmts.add(idx++,es);
+             }
+          }
+       }
+    }
+   
+   for (TypeDeclaration itd : td.getTypes()) {
+      fixType(itd);
     }
 }
 
@@ -287,7 +353,7 @@ ASTNode getResolvedAst(SesameProject sp)
       an = ast_roots.get(sp.getName());
       if (an != null && JcompAst.isResolved(an)) return an;
     }
-
+											   
    JcompProject proj = sp.getJcompProject();
    proj.resolve();
    JcompSemantics semdata = SesameMain.getJcompBase().getSemanticData(this);
@@ -350,6 +416,32 @@ Position createPosition(int pos)
 public File getFile()
 {
    return for_file;
+}
+
+
+void addUse()
+{
+   ++use_count;
+}
+
+
+boolean removeUse()
+{
+   --use_count;
+   return use_count <= 0;
+}
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Debugging methods                                                       */
+/*                                                                              */
+/********************************************************************************/
+
+@Override public String toString()
+{
+   return for_file.getAbsolutePath();
 }
 
 

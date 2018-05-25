@@ -75,14 +75,16 @@ private static PoppyController  the_control = null;
 
 private PoppyController(String args,Instrumentation inst)
 {
-   System.err.println("POPPY: Start");
-   System.err.println("POPPY: CP: " + System.getProperty("java.class.path"));
    RuntimeMXBean rmx = ManagementFactory.getRuntimeMXBean();
-   System.err.println("POPPY: BCP: " + rmx.getBootClassPath());
-   System.err.println("POPPY: CP: " + rmx.getClassPath());
-   System.err.println("POPPY: BBPS: " + rmx.isBootClassPathSupported());
-   File f1 = new File("/u/spr/poppy.out");
+   
+   // System.err.println("POPPY: Start");
+   // System.err.println("POPPY: CP: " + System.getProperty("java.class.path"));
+   // System.err.println("POPPY: BCP: " + rmx.getBootClassPath());
+   // System.err.println("POPPY: CP: " + rmx.getClassPath());
+   // System.err.println("POPPY: BBPS: " + rmx.isBootClassPathSupported());
+   
    try {
+      File f1 = new File("/u/spr/poppy.out");
       PrintWriter p1 = new PrintWriter(new FileWriter(f1));
       p1.println("POPPY: Start");
       p1.println("POPPY: CP: " + System.getProperty("java.class.path"));

@@ -77,8 +77,10 @@ SesameSessionTest(SesameMain sm,String sid,Element xml) throws SesameException
    catch (CashewException e) {
       throw new SesameException("Illebal value",e);
     }
-   
 }
+
+
+
 
 
 
@@ -104,7 +106,7 @@ SesameSessionTest(SesameMain sm,String sid,Element xml) throws SesameException
    
    JcompTyper typer = getProject().getTyper();
    JcompType jty = typer.findType(type);
-   cv = CashewValue.createDefaultValue(jty);
+   cv = CashewValue.createDefaultValue(typer,jty);
    
    return cv;
 }

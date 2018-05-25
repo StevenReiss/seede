@@ -253,6 +253,23 @@ public static String getFileData(FileInputStream fis)
 
 
 
+/********************************************************************************/
+/*                                                                              */
+/*      toString handling                                                       */
+/*                                                                              */
+/********************************************************************************/
+
+public static String getToString(Object o)
+{
+   if (o == null) return "null";
+   
+   String rslt = o.toString();
+   
+   return rslt;
+}
+
+
+
 
 /********************************************************************************/
 /*										*/

@@ -27,6 +27,7 @@ package edu.brown.cs.seede.cashew;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -40,7 +41,9 @@ import edu.brown.cs.ivy.jcode.JcodeField;
 import edu.brown.cs.ivy.jcode.JcodeMethod;
 import edu.brown.cs.ivy.jcomp.JcompSymbol;
 import edu.brown.cs.ivy.jcomp.JcompType;
+import edu.brown.cs.ivy.jcomp.JcompTyper;
 import edu.brown.cs.ivy.xml.IvyXmlWriter;
+import edu.brown.cs.seede.acorn.AcornLog;
 
 public class CashewContext implements CashewConstants
 {
@@ -58,6 +61,7 @@ private File   context_file;
 private String context_owner;
 private List<CashewContext> nested_contexts;
 private int context_id;
+private int context_depth;
 private long start_time;
 private long end_time;
 private boolean is_output;
@@ -132,6 +136,8 @@ public CashewContext(String js,File f,CashewContext par)
    start_time = end_time = 0;
    context_id = id_counter.incrementAndGet();
    is_output = f != null;
+   if (par == null) context_depth = 0;
+   else context_depth = par.getDepth() + 1;
 }
 
 
@@ -158,51 +164,58 @@ public int getId()                              { return context_id; }
 
 public CashewContext getParentContext()         { return parent_context; }
 
+public int getDepth()                           { return context_depth; }
+
 public List<CashewContext> getChildContexts()   { return nested_contexts; }
 
 public long getStartTime()                      { return start_time; }
 
 public long getEndTime()                        { return end_time; }
 
-public CashewValue findReference(JcompSymbol js)
+public CashewValue findReference(JcompTyper typer,JcompSymbol js)
 {
    CashewValue cv = null;
 
    if (js.isFieldSymbol() && js.isStatic()) {
       String nm = js.getFullName();
-      return findStaticFieldReference(nm,js.getType().getName());
+      return findStaticFieldReference(typer,nm,js.getType().getName());
+    }
+   else if (js.isEnumSymbol()) {
+      String tnm = js.getType().getName();
+      String nm = tnm + "." + js.getName();
+      return findStaticFieldReference(typer,nm,tnm);
     }
 
-   cv = findReference((Object) js);
+   cv = findActualReference((Object) js);
    if (cv != null) return cv;
 
    return cv;
 }
 
 
-public CashewValue findReference(JcodeField jf)
+public CashewValue findReference(JcompTyper typer,JcodeField jf)
 {
    CashewValue cv = null;
    String cnm = jf.getDeclaringClass().getName();
    cnm = cnm.replace("$",".");
    String nm = cnm + "." + jf.getName();
    if (jf.isStatic()) {
-      return findStaticFieldReference(nm,jf.getType().getName());
+      return findStaticFieldReference(typer,nm,jf.getType().getName());
     }
 
-   cv = findReference((Object) jf);
+   cv = findActualReference((Object) jf);
 
    return cv;
 }
 
 
 
-public CashewValue findStaticFieldReference(String name,String type)
+public CashewValue findStaticFieldReference(JcompTyper typer,String name,String type)
 {
-   CashewValue cv = findReference(name);
+   CashewValue cv = findActualReference(name);
 
    if (cv == null && parent_context != null) {
-      cv = parent_context.findStaticFieldReference(name,type);
+      cv = parent_context.findStaticFieldReference(typer,name,type);
     }
 
    return cv;
@@ -212,12 +225,17 @@ public CashewValue findStaticFieldReference(String name,String type)
 
 public CashewValue findReference(Integer lv)
 {
-   CashewValue cv = findReference(((Object) lv));
+   CashewValue cv = findActualReference(((Object) lv));
    if (cv != null) return cv;
 
    return null;
 }
 
+
+public CashewValue findReference(String s)
+{
+   return findActualReference(s);
+}
 
 
 
@@ -258,7 +276,8 @@ public String findReferencedVariableName(String name)
 
 
 
-public CashewValue findReferencedVariableValue(String name,long when)
+public CashewValue findReferencedVariableValue(JcompTyper typer,String name,long when)
+        throws CashewException
 {
    int idx = name.indexOf("?");
    if (idx > 0) {
@@ -268,26 +287,26 @@ public CashewValue findReferencedVariableValue(String name,long when)
       if (idx1 > 0) {
          String ctxname = outname.substring(0,idx1);
          if (getName().equals(ctxname)) {
-            return lookupVariableValue(name,when);
+            return lookupVariableValue(typer,name,when);
           }
          for (CashewContext ictx : nested_contexts) {
             if (ictx.getName().equals(ctxname)) {
-               return ictx.findReferencedVariableValue(name,when);
+               return ictx.findReferencedVariableValue(typer,name,when);
              }
           }
          return null;
        }
       else {
-         return lookupVariableValue(outname,when);
+         return lookupVariableValue(typer,outname,when);
        }
     }
    else {
-      return lookupVariableValue(name,when);
+      return lookupVariableValue(typer,name,when);
     }
 }
 
 
-private CashewValue lookupVariableValue(String name,long when)
+private CashewValue lookupVariableValue(JcompTyper typer,String name,long when) throws CashewException
 {
    int idx = name.indexOf("?");
    String lookup = name;
@@ -326,7 +345,7 @@ private CashewValue lookupVariableValue(String name,long when)
     }  
    
    if (bestvalue != null && next != null) {
-      bestvalue = bestvalue.lookupVariableName(next,when);
+      bestvalue = bestvalue.lookupVariableName(typer,next,when);
     }
    
    return bestvalue;
@@ -342,13 +361,13 @@ private CashewValue lookupVariableValue(String name,long when)
 /*										*/
 /********************************************************************************/
 
-public CashewValue findReference(Object var)
+public CashewValue findActualReference(Object var)
 {
    // for byte-code based lookup
    CashewValue cv = context_map.get(var);
    if (cv != null) return cv;
    if (parent_context != null) {
-      cv = parent_context.findReference(var);
+      cv = parent_context.findActualReference(var);
     }
 
    return cv;
@@ -366,6 +385,10 @@ public void define(JcompSymbol sym,CashewValue addr)
 
 public void define(Object var,CashewValue addr)
 {
+   if (addr == null) {
+      AcornLog.logE("Attempt to put null address in context for " + var);
+      return;
+    }
    context_map.put(var,addr);
 }
 
@@ -466,7 +489,7 @@ public String getNextInputLine(String file)
 public void resetValues(Set<CashewValue> done) 
 {
    for (CashewValue cv : context_map.values()) {
-      cv.resetValues(done);
+      if (cv != null) cv.resetValues(done);
     }
    if (nested_contexts != null) {
       for (CashewContext nctx : nested_contexts) {
@@ -497,8 +520,9 @@ public boolean isOutput()                       { return is_output; }
 public void checkChanged(CashewOutputContext outctx)
 {
    for (CashewValue cv : context_map.values()) {
-      cv.checkChanged(outctx);
+      if (cv != null) cv.checkChanged(outctx);
     }
+   
    for (CashewContext ctx : nested_contexts) {
       ctx.checkChanged(outctx);
     }
@@ -506,8 +530,31 @@ public void checkChanged(CashewOutputContext outctx)
 
 
 
+public void checkToString(CashewOutputContext outctx)
+{
+   if (!isOutput()) return;
+   
+   for (CashewValue cv : context_map.values()) {
+      if (cv != null) cv.checkToString(outctx);
+    }
+
+   Set<CashewContext> ctxs = new HashSet<>(nested_contexts);
+   // internal executions can add new contexts
+   for (CashewContext ctx : ctxs) {
+      ctx.checkToString(outctx);
+    }
+   
+   for (CashewContext ctx : nested_contexts) {
+      if (ctxs.contains(ctx)) continue;
+      ctx.is_output = false;
+    }
+}
+
+
+
 public void outputXml(CashewOutputContext outctx)
 {
+   outctx.setContext(this);
    if (isOutput()) {
       IvyXmlWriter xw = outctx.getXmlWriter();
       xw.begin("CONTEXT");
@@ -535,7 +582,7 @@ public void outputXml(CashewOutputContext outctx)
             xw.field("LINE",lno);
           }
          CashewValue cv = ent.getValue();
-         cv.outputXml(outctx,name);
+         if (cv != null) cv.outputXml(outctx,name);
          xw.end("VARIABLE");
        }
       for (CashewContext ctx : nested_contexts) {
@@ -548,6 +595,7 @@ public void outputXml(CashewOutputContext outctx)
          ctx.outputXml(outctx);
        } 
     }
+   outctx.setContext(null);
 }
 
 

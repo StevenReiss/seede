@@ -99,16 +99,18 @@ public TestPole()
 
 @BeforeClass public static void setupBedrock()
 {
+   mint_control.register("<BEDROCK SOURCE='ECLIPSE' TYPE='_VAR_0' />",new PingHandler());
+   
    System.err.println("SETTING UP BEDROCK");
    File ec1 = new File("/u/spr/eclipse-neonx/eclipse/eclipse");
    File ec2 = new File("/u/spr/Eclipse/hump");
    if (!ec1.exists()) {
       ec1 = new File("/Developer/eclipse42/eclipse");
-      ec2 = new File("/Users/spr/Documents/seede-test");
+      ec2 = new File("/Users/spr/Documents/hump");
     }
    if (!ec1.exists()) {
       System.err.println("Can't find bubbles version of eclipse to run");
-      System.exit(1);
+      throw new Error("No eclipse");
     }
 
    String cmd = ec1.getAbsolutePath();
@@ -138,6 +140,32 @@ public TestPole()
 
    throw new Error("Problem running Eclipse: " + cmd);
 }
+
+
+
+private static class PingHandler implements MintHandler {
+
+   @Override public void receive(MintMessage msg,MintArguments args) {
+      String cmd = args.getArgument(0);
+      if (cmd == null) return;
+      
+      switch (cmd) {
+         case "RUNEVENT" :
+         case "PROGRESS" :
+         case "CONSOLE" :
+         case "EVALUATION" :
+            msg.replyTo("<OK/>");
+            break;
+         case "PING" :
+            msg.replyTo("<PONG/>");
+            break;
+         default :
+            break;
+       }
+    }
+   
+}	// end of innerclass PingHandler
+
 
 
 @BeforeClass public static void startSeede()
@@ -196,7 +224,7 @@ private static boolean pingSeede()
 
 @Test public void testPole()
 {
-   System.err.println("Start TEST3");
+   System.err.println("Start TEST POLE");
    LaunchData ld = startLaunch(LAUNCHPOLE_NAME);
    continueLaunch(ld);
 
@@ -221,6 +249,7 @@ private static boolean pingSeede()
    String sstatus = rply.waitForString();
    System.err.println("RESULT IS " + sstatus);
    Element xml = waitForSeedeResult();
+   Assert.assertNotNull(xml);
    System.err.println("SEED RESULT IS " + IvyXml.convertXmlToString(xml));
 }
 
@@ -511,7 +540,8 @@ private class SeedeHandler implements MintHandler {
 private Element waitForSeedeResult()
 {
    synchronized (this) {
-      while (seede_result == null) {
+      for (int i = 0; i < 250; ++i) {
+         if (seede_result != null) break;
 	 try {
 	    wait(1000);
 	  }
@@ -565,9 +595,10 @@ private void handleThreadEvent(Element xml,long when)
 private String waitForStop()
 {
    synchronized (this) {
-      while (stopped_thread == null) {
+      for (int i = 0; i < 500; ++i) {
+         if (stopped_thread != null) break;
 	 try {
-	    wait(3000);
+	    wait(1000);
 	  }
 	 catch (InterruptedException e) { }
        }

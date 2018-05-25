@@ -56,7 +56,7 @@ public enum LogLevel {
 private static LogLevel log_level;
 private static boolean	use_stderr;
 private static PrintWriter log_writer;
-private static boolean  trace_execution;
+private static boolean	trace_execution;
 
 static {
    use_stderr = false;
@@ -84,7 +84,7 @@ public static void logE(String msg)
 }
 
 
-public static void logX(String msg) 
+public static void logX(String msg)
 {
    Throwable t = new Throwable(msg);
    log(LogLevel.ERROR,msg,t);
@@ -131,7 +131,7 @@ public static void setLogLevel(LogLevel lvl)
 public static void setLogFile(File f)
 {
    if (log_writer != null) return;
-   
+
    f = f.getAbsoluteFile();
    try {
       log_writer = new PrintWriter(new FileWriter(f));
@@ -149,16 +149,18 @@ public static void useStdErr(boolean fg)
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Execution trace entries                                                 */
-/*                                                                              */
+/*										*/
+/*	Execution trace entries 						*/
+/*										*/
 /********************************************************************************/
 
-public static boolean isTracing()               { return trace_execution; }
+public static boolean isTracing()		{ return trace_execution; }
 
-public static void setTracing(boolean fg)       { trace_execution = fg; }
+public static void setTracing(boolean fg)	{ trace_execution = fg; }
 
-public static void logT(Object msg)       
+public static LogLevel getLogLevel()		{ return log_level; }
+
+public static void logT(Object msg)
 {
    if (trace_execution) {
       logD("EXEC: " + msg);

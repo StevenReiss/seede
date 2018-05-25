@@ -43,7 +43,7 @@ import edu.brown.cs.ivy.jcomp.JcompSymbol;
 import edu.brown.cs.ivy.jcomp.JcompType;
 import edu.brown.cs.ivy.jcomp.JcompTyper;
 import edu.brown.cs.ivy.xml.IvyXml;
-import edu.brown.cs.seede.cashew.CashewConstants;
+import edu.brown.cs.ivy.mint.MintConstants.CommandArgs;
 import edu.brown.cs.seede.cashew.CashewException;
 import edu.brown.cs.seede.cashew.CashewValue;
 
@@ -67,6 +67,7 @@ private Map<String,SesameValueData> unique_values;
 private Map<String,String> thread_frame;
 private Set<String>	accessible_types;
 private SesameSessionCache value_cache;
+private boolean         session_ready;
 
 private static AtomicInteger eval_counter = new AtomicInteger();
 
@@ -93,9 +94,32 @@ SesameSessionLaunch(SesameMain sm,String sid,Element xml)
    unique_values = new HashMap<String,SesameValueData>();
    accessible_types = new HashSet<String>();
    value_cache = new SesameSessionCache();
-
-   loadInitialValues();
+   
+   session_ready = false;
 }
+
+
+@Override void setupSession()
+{
+   loadInitialValues();
+   synchronized (this) {
+      session_ready = true;
+      notifyAll();
+    }
+}
+
+
+
+@Override protected synchronized void waitForReady()
+{
+   while (!session_ready) {
+      try {
+         wait(10000);
+       }
+      catch (InterruptedException e) { }
+    }
+}
+
 
 
 /********************************************************************************/
@@ -108,6 +132,8 @@ String getFrameId(String thread)	{ return thread_frame.get(thread); }
 
 String getAnyThread()
 {
+   waitForReady();
+   
    for (String s : thread_ids) {
       return s;
     }
@@ -117,6 +143,8 @@ String getAnyThread()
 
 @Override public List<CashewValue> getCallArgs(SesameLocation loc)
 {
+   waitForReady();
+   
    MethodDeclaration md = getCallMethod(loc);
    List<CashewValue> args = new ArrayList<CashewValue>();
    JcompSymbol msym = JcompAst.getDefinition(md.getName());
@@ -142,8 +170,8 @@ String getAnyThread()
 	 CashewValue argval = val.getCashewValue();
 	 JcompType jtyp = argval.getDataType(null);
 	 // need to check that 'this' is  compatible with COMPONENT
-
-	 if (jtyp.isCompatibleWith(CashewConstants.GRAPHICS2D_TYPE)) {
+         JcompType g2dtype = getProject().getTyper().findSystemType("java.awt.Graphics2D");
+	 if (jtyp.isCompatibleWith(g2dtype)) {
 	    if (!jtyp.getName().contains("PoppyGraphics")) {
 	       String gname = "MAIN_" + loc.getThreadName();
 	       getProject().getJcodeFactory().findClass("edu.brown.cs.seede.poppy.PoppyGraphics");
@@ -246,6 +274,7 @@ String getAnyThread()
 	 assoc = "*" + args.get("SAVEID").toString();
        }
       SesameValueData svd = new SesameValueData(this,thread,v1,assoc);
+      svd = getUniqueValue(svd);
       value_cache.cacheValue(thread0,expr,svd);
       return svd;
     }
@@ -368,11 +397,18 @@ private void loadInitialValues()
 SesameValueData getUniqueValue(SesameValueData svd)
 {
    if (svd == null) return null;
-   if (svd.getKind() == ValueKind.OBJECT) {
-      String dnm = svd.getValue();
-      SesameValueData nsvd = unique_values.get(dnm);
-      if (nsvd != null) svd = nsvd;
-      else unique_values.put(dnm,svd);
+   switch (svd.getKind()) {
+      case OBJECT :
+      case ARRAY :
+         String dnm = svd.getValue();
+         if (dnm != null && dnm.length() > 0) {
+            SesameValueData nsvd = unique_values.get(dnm);
+            if (nsvd != null) svd = nsvd;
+            else unique_values.put(dnm,svd);
+          }
+         break;
+      default :
+         break;
     }
    return svd;
 }

@@ -54,45 +54,46 @@ public static CashewValue createValue(JcompTyper typer,Element xml) throws Cashe
    String tnm = IvyXml.getAttrString(xml,"TYPE");
    JcompType jtype = typer.findType(tnm);
    if (jtype == null) throw new CashewException("Unknown type");
-   if (jtype == INT_TYPE || jtype == SHORT_TYPE || jtype == BYTE_TYPE || jtype == LONG_TYPE) {
+   if (jtype.isIntType() || jtype.isShortType() ||
+	 jtype.isByteType() || jtype.isLongType()) {
       long v = IvyXml.getAttrLong(xml,"VALUE");
       return numericValue(jtype,v);
     }
-   else if (jtype == BOOLEAN_TYPE) {
+   else if (jtype.isBooleanType()) {
       boolean v = IvyXml.getAttrBool(xml,"VALUE");
-      return booleanValue(v);
+      return booleanValue(typer,v);
     }
-   else if (jtype == CHAR_TYPE) {
+   else if (jtype.isCharType()) {
       String s = IvyXml.getAttrString(xml,"VALUE");
       if (s.length() == 0) throw new CashewException("Empty character constants");
       char c = s.charAt(0);
       return characterValue(jtype,c);
     }
-   else if (jtype == FLOAT_TYPE || jtype == DOUBLE_TYPE) {
+   else if (jtype.isFloatingType()) {
       double dv = IvyXml.getAttrDouble(xml,"VALUE");
       return numericValue(jtype,dv);
     }
-   else if (jtype == STRING_TYPE) {
+   else if (jtype.isStringType()) {
       String s = IvyXml.getTextElement(xml,"VALUE");
-      return stringValue(s);
+      return stringValue(typer.STRING_TYPE,s);
     }
-   else if (jtype == CLASS_TYPE) {
+   else if (jtype.getName().equals("java.lang.Class")) {
       String s = IvyXml.getTextElement(xml,"VALUE");
-      if (s == null) return nullValue();
+      if (s == null) return nullValue(typer);
       JcompType vtyp = typer.findType(s);
       if (vtyp == null) throw new CashewException("Unknown type name " + s);
-      return classValue(vtyp);
+      return classValue(typer,vtyp);
     }
-   else if (jtype == FILE_TYPE) {
+   else if (jtype.getName().equals("java.io.File")) {
       String path = IvyXml.getTextElement(xml,"VALUE");
-      if (path == null) return nullValue();
-      return fileValue(path);
+      if (path == null) return nullValue(typer);
+      return fileValue(typer,path);
     }
    else if (jtype.getName().endsWith("[]")) {
       int dim = IvyXml.getAttrInt(xml,"DIM");
       Map<Integer,Object> inits = new HashMap<Integer,Object>();
       //TODO: set up contents of va
-      CashewValueArray va = new CashewValueArray(jtype,dim,inits,true);
+      CashewValueArray va = new CashewValueArray(typer,jtype,dim,inits,true);
       return va;
     }
    else if (jtype.isPrimitiveType()) {
@@ -100,31 +101,38 @@ public static CashewValue createValue(JcompTyper typer,Element xml) throws Cashe
     }
    else {
       String val = IvyXml.getTextElement(xml,"VALUE");
-      if (val != null && val.equals("null")) return nullValue();
-      return objectValue(jtype);
+      if (val != null && val.equals("null")) return nullValue(typer);
+      return objectValue(typer,jtype);
     }
 }
 
 
 
-public static CashewValue createDefaultValue(JcompType type)
+public static CashewValue createDefaultValue(JcompTyper typer,JcompType type)
 {
    if (type.isNumericType()) {
       return CashewValue.numericValue(type,0);
     }
    else if (type.isBooleanType()) {
-      return CashewValue.booleanValue(false);
+      return CashewValue.booleanValue(typer,false);
     }
    else if (type.getName().equals("char")) {
       return CashewValue.characterValue(type,(char) 0);
     }
 
-   return CashewValue.nullValue();
+   return CashewValue.nullValue(typer);
 }
 
 public static CashewValue createReference(CashewValue base,boolean caninit)
 {
    CashewRef cr = new CashewRef(base,caninit);
+   return cr;
+}
+
+
+public static CashewValue createReference(CashewDeferredValue cdv)
+{
+   CashewRef cr = new CashewRef(cdv);
    return cr;
 }
 
@@ -136,21 +144,21 @@ public static CashewValue createReference(CashewValue base,boolean caninit)
 /*										*/
 /********************************************************************************/
 
-public static CashewValue nullValue()
+public static CashewValue nullValue(JcompTyper typer)
 {
    if (null_value == null) {
-      null_value = new ValueNull(NULL_TYPE);
+      null_value = new ValueNull(typer.ANY_TYPE);
     }
 
    return null_value;
 }
 
 
-public static CashewValue numericValue(JcompType t,long v)
+public static CashewValue numericValue(JcompTyper typer,JcompType t,long v)
 {
    ValueNumeric vn = null;
 
-   if (t == INT_TYPE) {
+   if (t.isIntType()) {
       Integer iv = (int) v;
       synchronized (int_values) {
 	 vn = int_values.get(iv);
@@ -160,7 +168,7 @@ public static CashewValue numericValue(JcompType t,long v)
 	  }
        }
     }
-   else if (t == SHORT_TYPE) {
+   else if (t.isShortType()) {
       Short sv = (short) v;
       synchronized (short_values) {
 	 vn = short_values.get(sv);
@@ -170,7 +178,7 @@ public static CashewValue numericValue(JcompType t,long v)
 	  }
        }
     }
-   else if (t == BYTE_TYPE) {
+   else if (t.isByteType()) {
       Byte sv = (byte) v;
       synchronized (byte_values) {
 	 vn = byte_values.get(sv);
@@ -180,7 +188,7 @@ public static CashewValue numericValue(JcompType t,long v)
 	  }
        }
     }
-   else if (t == LONG_TYPE) {
+   else if (t.isLongType()) {
       synchronized (long_values) {
 	 vn = long_values.get(v);
 	 if (vn == null) {
@@ -189,22 +197,13 @@ public static CashewValue numericValue(JcompType t,long v)
 	  }
        }
     }
-   else if (t == FLOAT_TYPE || t == DOUBLE_TYPE) {
+   else if (t.isFloatingType()) {
       return numericValue(t,((double) v));
     }
-   else if (t == LONG_TYPE) {
-      synchronized (long_values) {
-	 vn = long_values.get(v);
-	 if (vn == null) {
-	    vn = new ValueNumeric(t,v);
-	    long_values.put(v,vn);
-	  }
-       }
+   else if (t.isBooleanType()) {
+      return booleanValue(typer,v != 0);
     }
-   else if (t == BOOLEAN_TYPE) {
-      return booleanValue(v != 0);
-    }
-   else if (t == CHAR_TYPE) {
+   else if (t.isCharType()) {
       return characterValue(t,(char) v);
     }
 
@@ -220,11 +219,11 @@ public static CashewValue numericValue(JcompType t,double v)
 
 public static CashewValue numericValue(JcompType t,String v)
 {
-   if (t == DOUBLE_TYPE || t == FLOAT_TYPE) {
+   if (t.isFloatingType()) {
       double dv = Double.parseDouble(v);
       return numericValue(t,dv);
     }
-   else if (t == CHAR_TYPE) {
+   else if (t.isCharType()) {
       char cv = 0;
       if (v.startsWith("&#x")) {
 	 String hx = v.substring(3);
@@ -242,16 +241,21 @@ public static CashewValue numericValue(JcompType t,String v)
 }
 
 
-public static CashewValue booleanValue(boolean v)
+public static CashewValue booleanValue(JcompTyper typer,boolean v)
 {
-   return (v ? true_value : false_value);
+   if (v) {
+      return new ValueNumeric(typer.BOOLEAN_TYPE,1);
+    }
+   else {
+      return new ValueNumeric(typer.BOOLEAN_TYPE,0);
+    }
 }
 
-public static CashewValue booleanValue(String v)
+public static CashewValue booleanValue(JcompTyper typer,String v)
 {
-   if (v == null || v.length() == 0) return booleanValue(false);
-   if ("Tt1Yy".indexOf(v.charAt(0)) >= 0) return booleanValue(true);
-   return booleanValue(false);
+   if (v == null || v.length() == 0) return booleanValue(typer,false);
+   if ("Tt1Yy".indexOf(v.charAt(0)) >= 0) return booleanValue(typer,true);
+   return booleanValue(typer,false);
 }
 
 public static CashewValue characterValue(JcompType t,char v)
@@ -267,17 +271,17 @@ public static CashewValue characterValue(JcompType t,char v)
 }
 
 
-public static CashewValue stringValue(String s)
+public static CashewValue stringValue(JcompType styp,String s)
 {
    if (s == null) {
-      CashewValueString vs = new CashewValueString("");
+      CashewValueString vs = new CashewValueString(styp,"");
       return vs;
     }
 
    synchronized (string_values) {
       CashewValueString vs = string_values.get(s);
       if (vs == null) {
-	 vs = new CashewValueString(s);
+	 vs = new CashewValueString(styp,s);
 	 string_values.put(s,vs);
        }
       return vs;
@@ -285,12 +289,12 @@ public static CashewValue stringValue(String s)
 }
 
 
-public static CashewValue classValue(JcompType vtyp)
+public static CashewValue classValue(JcompTyper typer,JcompType vtyp)
 {
    synchronized (class_values) {
       CashewValueObject cv = class_values.get(vtyp);
       if (cv == null) {
-	 cv = new CashewValueClass(vtyp);
+	 cv = new CashewValueClass(typer,vtyp);
 	 class_values.put(vtyp,cv);
        }
       return cv;
@@ -299,81 +303,81 @@ public static CashewValue classValue(JcompType vtyp)
 
 
 
-public static CashewValue fileValue(String path)
+public static CashewValue fileValue(JcompTyper typer,String path)
 {
-   CashewValueFile cv = new CashewValueFile(path);
+   CashewValueFile cv = new CashewValueFile(typer,path);
 
    return cv;
 }
 
-public static CashewValue fileValue()
+public static CashewValue fileValue(JcompTyper typer)
 {
-   CashewValueFile cv = new CashewValueFile((File) null);
+   CashewValueFile cv = new CashewValueFile(typer,(File) null);
    return cv;
 }
 
 
-public static CashewValue arrayValue(JcompType atyp,int dim)
+public static CashewValue arrayValue(JcompTyper typer,JcompType atyp,int dim)
 {
    // might want to create multidimensional arrays here
-   return new CashewValueArray(atyp,dim,null,false);
+   return new CashewValueArray(typer,atyp,dim,null,false);
 }
 
 
-public static CashewValue arrayValue(JcompType atyp,int dim,Map<Integer,Object> inits)
+public static CashewValue arrayValue(JcompTyper typer,JcompType atyp,int dim,Map<Integer,Object> inits)
 {
-   return new CashewValueArray(atyp,dim,inits,true);
+   return new CashewValueArray(typer,atyp,dim,inits,true);
 }
 
 
-public static CashewValue arrayValue(char [] arr)
-{
-   Map<Integer,Object> inits = new HashMap<Integer,Object>();
-   for (int i = 0; i < arr.length; ++i) {
-      inits.put(i,CashewValue.characterValue(CHAR_TYPE,arr[i]));
-    }
-
-   JcompType jty = JcompType.createArrayType(CHAR_TYPE);
-
-   return arrayValue(jty,arr.length,inits);
-}
-
-
-public static CashewValue arrayValue(byte [] arr)
+public static CashewValue arrayValue(JcompTyper typer,char [] arr)
 {
    Map<Integer,Object> inits = new HashMap<Integer,Object>();
    for (int i = 0; i < arr.length; ++i) {
-      inits.put(i,CashewValue.numericValue(BYTE_TYPE,arr[i]));
+      inits.put(i,CashewValue.characterValue(typer.CHAR_TYPE,arr[i]));
     }
 
-   JcompType jty = JcompType.createArrayType(BYTE_TYPE);
+   JcompType jty = JcompType.createArrayType(typer.CHAR_TYPE);
 
-   return arrayValue(jty,arr.length,inits);
+   return arrayValue(typer,jty,arr.length,inits);
 }
 
 
-public static CashewValue arrayValue(String [] arr)
+public static CashewValue arrayValue(JcompTyper typer,byte [] arr)
 {
    Map<Integer,Object> inits = new HashMap<Integer,Object>();
    for (int i = 0; i < arr.length; ++i) {
-      inits.put(i,CashewValue.numericValue(STRING_TYPE,arr[i]));
+      inits.put(i,CashewValue.numericValue(typer.BYTE_TYPE,arr[i]));
     }
 
-   JcompType jty = JcompType.createArrayType(STRING_TYPE);
+   JcompType jty = JcompType.createArrayType(typer.BYTE_TYPE);
 
-   return arrayValue(jty,arr.length,inits);
+   return arrayValue(typer,jty,arr.length,inits);
 }
 
-public static CashewValue objectValue(JcompType otyp)
+
+public static CashewValue arrayValue(JcompTyper typer,String [] arr)
 {
-   return objectValue(otyp,null,false);
+   Map<Integer,Object> inits = new HashMap<Integer,Object>();
+   for (int i = 0; i < arr.length; ++i) {
+      inits.put(i,CashewValue.numericValue(typer.STRING_TYPE,arr[i]));
+    }
+
+   JcompType jty = JcompType.createArrayType(typer.STRING_TYPE);
+
+   return arrayValue(typer,jty,arr.length,inits);
+}
+
+public static CashewValue objectValue(JcompTyper typer,JcompType otyp)
+{
+   return objectValue(typer,otyp,null,false);
 }
 
 
-public static CashewValue objectValue(JcompType otyp,Map<String,Object> inits,boolean caninit)
+public static CashewValue objectValue(JcompTyper typer,JcompType otyp,Map<String,Object> inits,boolean caninit)
 {
    if (otyp.isParameterizedType()) otyp = otyp.getBaseType();
-   CashewValueObject vo = new CashewValueObject(otyp,inits,caninit);
+   CashewValueObject vo = new CashewValueObject(typer,otyp,inits,caninit);
    return vo;
 }
 
@@ -392,8 +396,6 @@ private static Map<Integer,ValueNumeric> int_values;
 private static Map<Character,ValueNumeric> char_values;
 private static Map<String,CashewValueString> string_values;
 private static Map<JcompType,CashewValueObject> class_values;
-private static CashewValue	true_value;
-private static CashewValue	false_value;
 
 
 
@@ -406,8 +408,8 @@ static {
    char_values = new HashMap<Character,ValueNumeric>();
    string_values = new HashMap<String,CashewValueString>();
    class_values = new HashMap<JcompType,CashewValueObject>();
-   true_value = new ValueNumeric(BOOLEAN_TYPE,1);
-   false_value = new ValueNumeric(BOOLEAN_TYPE,0);
+   // true_value = new ValueNumeric(BOOLEAN_TYPE,1);
+   // false_value = new ValueNumeric(BOOLEAN_TYPE,0);
 }
 
 
@@ -432,7 +434,7 @@ private JcompType	decl_type;
 protected CashewValue(JcompType jt)
 {
    if (jt == null) AcornLog.logX("Creating a value without a type");
-   
+
    decl_type = jt;
 }
 
@@ -453,90 +455,97 @@ public JcompType getDataType(CashewClock cc)	{ return decl_type; }
 protected JcompType getDataType()
 {
    if (decl_type == null) AcornLog.logX("Illegal use of getDataType without clock");
-   
+
    return decl_type;
 }
 
 
 
-public Number getNumber(CashewClock cc)
+public Number getNumber(CashewClock cc) throws CashewException
 {
-   throw new Error("Illegal value conversion: " + this);
+   throw new CashewException("Illegal value conversion: " + this);
 }
 
-public Boolean getBoolean(CashewClock cc)
+
+public Boolean getBoolean(CashewClock cc) throws CashewException
 {
    Number n = getNumber(cc);
-   if (n == null) return null;
+   if (n == null) throw new CashewException("Bad boolean value");
 
    return n.intValue() != 0;
 }
 
 
-public Character getChar(CashewClock cc)
+public Character getChar(CashewClock cc) throws CashewException
 {
-   throw new Error("Illegal value conversion");
+   throw new CashewException("Illegal value conversion");
 }
 
-public final String getString(CashewClock cc)
+public final String getString(JcompTyper typer,CashewClock cc) throws CashewException
 {
-   return getString(cc,4,false);
+   return getString(typer,cc,4,false);
 }
 
 
-public String getDebugString(CashewClock cc)
+public String getDebugString(JcompTyper typer,CashewClock cc) 
 {
-   return getString(cc,2,true);
+   try {
+      return getString(typer,cc,2,true);
+    }
+   catch (CashewException e) {
+      return "<<< Illegal Value >>>";
+    }
 }
 
-public String getString(CashewClock cc,int lvl,boolean debug)
+public String getString(JcompTyper typer,CashewClock cc,int lvl,boolean debug) throws CashewException
 {
-   throw new Error("Illegal value conversion");
+   throw new CashewException("Illegal value conversion");
 }
 
 public CashewValue getActualValue(CashewClock cc)
 {
    if (decl_type == null) return null;
-   
+
    return this;
 }
 
-public CashewValue getFieldValue(CashewClock cc,String name)
+public CashewValue getFieldValue(JcompTyper typer,CashewClock cc,String name)
+        throws CashewException
 {
-   return getFieldValue(cc,name,true);
+   return getFieldValue(typer,cc,name,true);
 }
 
 
-public CashewValue getFieldValue(CashewClock cc,String name,boolean force)
+public CashewValue getFieldValue(JcompTyper typer,CashewClock cc,String name,boolean force) throws CashewException
 {
-   throw new Error("Value is not an object");
+   throw new CashewException("Value is not an object");
 }
 
-public CashewValue setFieldValue(CashewClock cc,String name,CashewValue v)
+public CashewValue setFieldValue(JcompTyper typer,CashewClock cc,String name,CashewValue v) throws CashewException
 {
-   throw new Error("Value is not an object");
-}
-
-
-public CashewValue getIndexValue(CashewClock cc,int idx)
-{
-   throw new Error("Value is not an array");
-}
-
-public int getDimension(CashewClock cc)
-{
-   throw new Error("Value is not an array");
-}
-
-public CashewValue setIndexValue(CashewClock cc,int idx,CashewValue v)
-{
-   throw new Error("Value is not an array");
+   throw new CashewException("Value is not an object");
 }
 
 
-public CashewValue setValueAt(CashewClock cc,CashewValue cv)
+public CashewValue getIndexValue(CashewClock cc,int idx) throws CashewException
 {
-   throw new Error("Not an l-value");
+   throw new CashewException("Value is not an array");
+}
+
+public int getDimension(CashewClock cc) throws CashewException
+{
+   throw new CashewException("Value is not an array");
+}
+
+public CashewValue setIndexValue(CashewClock cc,int idx,CashewValue v) throws CashewException
+{
+   throw new CashewException("Value is not an array");
+}
+
+
+public CashewValue setValueAt(CashewClock cc,CashewValue cv) throws CashewException
+{
+   throw new CashewException("Not an l-value");
 }
 
 
@@ -574,7 +583,7 @@ public int getHashCode(CashewClock cc,CashewContext ctx)
 
 public Map<Object,CashewValue> getBindings()	{ return null; }
 
-CashewValue lookupVariableName(String name,long when)
+CashewValue lookupVariableName(JcompTyper typer,String name,long when) throws CashewException
 {
    if (name == null || name.length() == 0) return this;
 
@@ -590,9 +599,9 @@ CashewValue lookupVariableName(String name,long when)
       val = val.getIndexValue(null,index);
     }
    else {
-      val = val.getFieldValue(null,name);
+      val = val.getFieldValue(typer,null,name);
     }
-   if (rest != null) val = val.lookupVariableName(rest,when);
+   if (rest != null) val = val.lookupVariableName(typer,rest,when);
 
    return val;
 }
@@ -642,6 +651,16 @@ protected void localResetType(JcompTyper typer,Set<CashewValue> done)		 { }
 
 
 
+/********************************************************************************/
+/*                                                                              */
+/*      Create a copy of the object from a given time                           */
+/*                                                                              */
+/********************************************************************************/
+
+void getChangeTimes(Set<Long> times,Set<CashewValue> done)              { }
+
+
+
 
 /********************************************************************************/
 /*										*/
@@ -653,6 +672,10 @@ public boolean checkChanged(CashewOutputContext outctx)
 {
    return false;
 }
+
+
+public void checkToString(CashewOutputContext outctx)
+{ }
 
 
 
@@ -701,7 +724,7 @@ private static class ValueNumeric extends CashewValue {
       return (char) num_value.shortValue();
     }
 
-   @Override public String getString(CashewClock cc,int idx,boolean dbg) {
+   @Override public String getString(JcompTyper typer,CashewClock cc,int idx,boolean dbg) {
       return num_value.toString();
     }
 
@@ -716,7 +739,7 @@ private static class ValueNumeric extends CashewValue {
 
    @Override public String getInternalRepresentation(CashewClock cc) {
       if (getDataType() == null) return num_value.toString();
-      else if (getDataType() == BOOLEAN_TYPE) {
+      else if (getDataType().isBooleanType()) {
 	 if (num_value.intValue() != 0) return "true";
 	 else return "false";
        }
@@ -774,15 +797,15 @@ private static class ValueNull extends CashewValue
 
    @Override public boolean isNull(CashewClock cc)	{ return true; }
 
-   @Override public CashewValue getFieldValue(CashewClock cc,String nm,boolean force) {
+   @Override public CashewValue getFieldValue(JcompTyper typer,CashewClock cc,String nm,boolean force) {
       throw new NullPointerException();
     }
 
-   @Override public CashewValue setFieldValue(CashewClock cc,String nm,CashewValue v) {
+   @Override public CashewValue setFieldValue(JcompTyper typer,CashewClock cc,String nm,CashewValue v) {
       throw new NullPointerException();
     }
 
-   @Override public String getString(CashewClock cc,int idx,boolean dbg) {
+   @Override public String getString(JcompTyper typer,CashewClock cc,int idx,boolean dbg) {
       return "null";
     }
 

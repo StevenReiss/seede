@@ -44,6 +44,7 @@ import edu.brown.cs.ivy.jcomp.JcompSemantics;
 import edu.brown.cs.ivy.jcomp.JcompSource;
 import edu.brown.cs.ivy.jcomp.JcompTyper;
 import edu.brown.cs.ivy.xml.IvyXml;
+import edu.brown.cs.ivy.mint.MintConstants.CommandArgs;
 import edu.brown.cs.seede.acorn.AcornLog;
 import edu.brown.cs.seede.cumin.CuminConstants.CuminProject;
 
@@ -57,6 +58,7 @@ public class SesameProject implements SesameConstants, CuminProject
 /*										*/
 /********************************************************************************/
 
+private SesameMain      sesame_control;
 private String		project_name;
 private List<String>	class_paths;
 private Set<SesameFile> active_files;
@@ -75,6 +77,7 @@ private ReadWriteLock	project_lock;
 
 SesameProject(SesameMain sm,String name)
 {
+   sesame_control = sm;
    project_name = name;
    base_project = null;
    class_paths = new ArrayList<String>();
@@ -132,8 +135,9 @@ String getName()			{ return project_name; }
 
 void addFile(SesameFile sf)
 {
-   if (active_files.add(sf)) {
+   if (sf != null && active_files.add(sf)) {
       noteFileChanged(sf,false);
+      sf.addUse();
     }
 }
 
@@ -190,7 +194,8 @@ boolean noteFileChanged(SesameFile sf,boolean force)
 {
    if (!force && !active_files.contains(sf)) return false;
 
-   project_lock.readLock().lock(); try {
+   project_lock.readLock().lock(); 
+   try {
       if (force || active_files.contains(sf)) {
 	 synchronized (changed_files) {
 	    if (sf != null) changed_files.add(sf);
@@ -247,6 +252,20 @@ synchronized void clearProject()
 }
 
 
+synchronized void removeProject()
+{
+   if (base_project != null) {
+      JcompControl jc = SesameMain.getJcompBase();
+      jc.freeProject(base_project);
+      base_project = null;
+    }
+   for (SesameFile sf : active_files) {
+      sesame_control.getFileManager().removeFileUse(sf);
+    }
+   active_files = null;
+}
+
+
 @Override public synchronized JcompProject getJcompProject()
 {
 
@@ -254,7 +273,8 @@ synchronized void clearProject()
 
    JcompControl jc = SesameMain.getJcompBase();
    Collection<JcompSource> srcs = new ArrayList<JcompSource>(active_files);
-   base_project = jc.getProject(class_paths,srcs,false);
+  //  base_project = jc.getProject(class_paths,srcs,false);
+   base_project = jc.getProject(getJcodeFactory(),srcs);
 
    return base_project;
 }

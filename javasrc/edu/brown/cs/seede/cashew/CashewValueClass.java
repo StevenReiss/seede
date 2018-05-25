@@ -25,6 +25,7 @@
 package edu.brown.cs.seede.cashew;
 
 import edu.brown.cs.ivy.jcomp.JcompType;
+import edu.brown.cs.ivy.jcomp.JcompTyper;
 import edu.brown.cs.ivy.xml.IvyXmlWriter;
 
 public class CashewValueClass extends CashewValueObject implements CashewConstants
@@ -47,9 +48,9 @@ private JcompType       class_value;
 /*                                                                              */
 /********************************************************************************/
 
-CashewValueClass(JcompType c) 
+CashewValueClass(JcompTyper typer,JcompType c) 
 {
-   super(CLASS_TYPE,null,false);
+   super(typer,typer.CLASS_TYPE,null,false);
    class_value = c;
 }
 
@@ -66,7 +67,7 @@ public JcompType getJcompType()                         { return class_value; }
 
 
 
-@Override public String getString(CashewClock cc,int idx,boolean dbg) 
+@Override public String getString(JcompTyper typer,CashewClock cc,int idx,boolean dbg) 
 {
    return class_value.toString();
 }

@@ -35,6 +35,7 @@ import edu.brown.cs.seede.acorn.AcornLog;
 import edu.brown.cs.seede.cashew.CashewClock;
 import edu.brown.cs.seede.cashew.CashewConstants;
 import edu.brown.cs.seede.cashew.CashewContext;
+import edu.brown.cs.seede.cashew.CashewException;
 import edu.brown.cs.seede.cashew.CashewSynchronizationModel;
 import edu.brown.cs.seede.cashew.CashewValue;
 import edu.brown.cs.seede.cashew.CashewValueFunctionRef;
@@ -60,7 +61,6 @@ class CuminRunnerByteCode extends CuminRunner implements CuminConstants,
 
 private JcodeMethod	jcode_method;
 private int		current_instruction;
-private JcompTyper	type_converter;
 private int		last_line;
 private int		num_arg;
 
@@ -77,7 +77,6 @@ CuminRunnerByteCode(CuminProject sp,CashewContext gblctx,CashewClock clock,
    super(sp,gblctx,clock,args);
 
    jcode_method = mthd;
-   type_converter = sp.getTyper();
    current_instruction = 0;
    last_line = 0;
    num_arg = args.size();
@@ -94,7 +93,6 @@ CuminRunnerByteCode(CuminProject sp,CashewContext gblctx,CashewClock clock,
 /********************************************************************************/
 
 JcodeMethod getCodeMethod()		{ return jcode_method; }
-JcompTyper getTyper()			{ return type_converter; }
 int getNumArg() 			{ return num_arg; }
 
 
@@ -107,7 +105,7 @@ int getNumArg() 			{ return num_arg; }
    else {
       JcompType typ = convertType(jcode_method.getDeclaringClass());
       if (typ == null) return null;
-      return CashewValue.classValue(typ);
+      return CashewValue.classValue(getTyper(),typ);
     }
 }
 
@@ -162,6 +160,10 @@ int getNumArg() 			{ return num_arg; }
 	 catch (CuminRunException cr) {
 	    sts = cr;
 	  }
+         catch (CashewException e) {
+            AcornLog.logD("Bad value access: " + e);
+            sts = CuminRunStatus.Factory.createCompilerError();
+          }
 	 if (sts != null) {
 	    if (sts.getReason() == Reason.EXCEPTION) {
 	       sts = handleException(sts);
@@ -223,6 +225,7 @@ private CuminRunStatus handleException(CuminRunStatus cr)
 private void setupContext(List<CashewValue> args)
 {
    CashewContext ctx = new CashewContext(jcode_method,global_context);
+   JcompTyper typer = getTyper();
 
    int nlcl = jcode_method.getLocalSize();
    int vct = 0;
@@ -232,13 +235,13 @@ private void setupContext(List<CashewValue> args)
       ctx.define(Integer.valueOf(vct),ref);
       ++vct;
       if (cv != null && cv.isCategory2(execution_clock)) {
-	 ref = CashewValue.createReference(CashewValue.nullValue(),false);
+	 ref = CashewValue.createReference(CashewValue.nullValue(typer),false);
 	 ctx.define(Integer.valueOf(vct),ref);
 	 ++vct;
        }
     }
    while (vct < nlcl) {
-      CashewValue ref = CashewValue.createReference(CashewValue.nullValue(),false);
+      CashewValue ref = CashewValue.createReference(CashewValue.nullValue(typer),false);
       ctx.define(Integer.valueOf(vct),ref);
       ++vct;
     }
@@ -247,7 +250,7 @@ private void setupContext(List<CashewValue> args)
    JcodeInstruction jins = jcode_method.getInstruction(0);
    if (jins != null) lno = jins.getLineNumber();
    if (lno < 0) lno = 0;
-   CashewValue zv = CashewValue.numericValue(CashewConstants.INT_TYPE,lno);
+   CashewValue zv = CashewValue.numericValue(typer.INT_TYPE,lno);
    ctx.define(LINE_NAME,CashewValue.createReference(zv,false));
 
    setLookupContext(ctx);
@@ -261,7 +264,7 @@ private void setupContext(List<CashewValue> args)
 /*										*/
 /********************************************************************************/
 
-private CuminRunStatus evaluateInstruction() throws CuminRunException
+private CuminRunStatus evaluateInstruction() throws CuminRunException, CashewException 
 {
    CashewValue vstack = null;
    JcodeInstruction nextins = null;
@@ -270,6 +273,7 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException
    int idxv;
 
    JcodeInstruction jins = jcode_method.getInstruction(current_instruction);
+   JcompTyper typer = getTyper();
 
    if (jins == null)
       return CuminRunStatus.Factory.createError("Native method " + jcode_method);
@@ -278,7 +282,7 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException
       CuminRunStatus tsts = checkTimeout();
       if (tsts != null) return tsts;
       last_line = lno;
-      CashewValue lvl = CashewValue.numericValue(CashewConstants.INT_TYPE,lno);
+      CashewValue lvl = CashewValue.numericValue(typer.INT_TYPE,lno);
       lookup_context.findReference(LINE_NAME).setValueAt(execution_clock,lvl);
       if (Thread.currentThread().isInterrupted()) {
 	 return CuminRunStatus.Factory.createStopped();
@@ -296,7 +300,7 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException
       case LADD :
 	 v1 = execution_stack.pop();
 	 v0 = execution_stack.pop();
-	 vstack = CuminEvaluator.evaluate(execution_clock,CuminOperator.ADD,v0,v1);
+	 vstack = CuminEvaluator.evaluate(typer,execution_clock,CuminOperator.ADD,v0,v1);
 	 break;
       case DSUB :
       case FSUB :
@@ -304,7 +308,7 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException
       case LSUB :
 	 v1 = execution_stack.pop();
 	 v0 = execution_stack.pop();
-	 vstack = CuminEvaluator.evaluate(execution_clock,CuminOperator.SUB,v0,v1);
+	 vstack = CuminEvaluator.evaluate(typer,execution_clock,CuminOperator.SUB,v0,v1);
 	 break;
       case DMUL :
       case FMUL :
@@ -312,7 +316,7 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException
       case LMUL :
 	 v1 = execution_stack.pop();
 	 v0 = execution_stack.pop();
-	 vstack = CuminEvaluator.evaluate(execution_clock,CuminOperator.MUL,v0,v1);
+	 vstack = CuminEvaluator.evaluate(typer,execution_clock,CuminOperator.MUL,v0,v1);
 	 break;
       case DDIV :
       case FDIV :
@@ -320,7 +324,7 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException
       case LDIV :
 	 v1 = execution_stack.pop();
 	 v0 = execution_stack.pop();
-	 vstack = CuminEvaluator.evaluate(execution_clock,CuminOperator.DIV,v0,v1);
+	 vstack = CuminEvaluator.evaluate(typer,execution_clock,CuminOperator.DIV,v0,v1);
 	 break;
       case DREM :
       case FREM :
@@ -328,43 +332,43 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException
       case LREM :
 	 v1 = execution_stack.pop();
 	 v0 = execution_stack.pop();
-	 vstack = CuminEvaluator.evaluate(execution_clock,CuminOperator.MOD,v0,v1);
+	 vstack = CuminEvaluator.evaluate(typer,execution_clock,CuminOperator.MOD,v0,v1);
 	 break;
       case IAND :
       case LAND :
 	 v1 = execution_stack.pop();
 	 v0 = execution_stack.pop();
-	 vstack = CuminEvaluator.evaluate(execution_clock,CuminOperator.AND,v0,v1);
+	 vstack = CuminEvaluator.evaluate(typer,execution_clock,CuminOperator.AND,v0,v1);
 	 break;
       case IOR :
       case LOR :
 	 v1 = execution_stack.pop();
 	 v0 = execution_stack.pop();
-	 vstack = CuminEvaluator.evaluate(execution_clock,CuminOperator.OR,v0,v1);
+	 vstack = CuminEvaluator.evaluate(typer,execution_clock,CuminOperator.OR,v0,v1);
 	 break;
       case IXOR :
       case LXOR :
 	 v1 = execution_stack.pop();
 	 v0 = execution_stack.pop();
-	 vstack = CuminEvaluator.evaluate(execution_clock,CuminOperator.XOR,v0,v1);
+	 vstack = CuminEvaluator.evaluate(typer,execution_clock,CuminOperator.XOR,v0,v1);
 	 break;
       case ISHL :
       case LSHL :
 	 v1 = execution_stack.pop();
 	 v0 = execution_stack.pop();
-	 vstack = CuminEvaluator.evaluate(execution_clock,CuminOperator.LSH,v0,v1);
+	 vstack = CuminEvaluator.evaluate(typer,execution_clock,CuminOperator.LSH,v0,v1);
 	 break;
       case ISHR :
       case LSHR :
 	 v1 = execution_stack.pop();
 	 v0 = execution_stack.pop();
-	 vstack = CuminEvaluator.evaluate(execution_clock,CuminOperator.RSH,v0,v1);
+	 vstack = CuminEvaluator.evaluate(typer,execution_clock,CuminOperator.RSH,v0,v1);
 	 break;
       case IUSHR :
       case LUSHR :
 	 v1 = execution_stack.pop();
 	 v0 = execution_stack.pop();
-	 vstack = CuminEvaluator.evaluate(execution_clock,CuminOperator.RSHU,v0,v1);
+	 vstack = CuminEvaluator.evaluate(typer,execution_clock,CuminOperator.RSHU,v0,v1);
 	 break;
       case DCMPG :
       case DCMPL :
@@ -373,35 +377,35 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException
       case LCMP :
 	 v1 = execution_stack.pop();
 	 v0 = execution_stack.pop();
-	 vstack = CuminEvaluator.evaluate(execution_clock,CuminOperator.SIG,v0,v1);
+	 vstack = CuminEvaluator.evaluate(typer,execution_clock,CuminOperator.SIG,v0,v1);
 	 break;
       case DNEG :
       case FNEG :
       case INEG :
       case LNEG :
 	 v0 = execution_stack.pop();
-	 vstack = CuminEvaluator.evaluate(execution_clock,CuminOperator.NEG,v0);
+	 vstack = CuminEvaluator.evaluate(typer,execution_clock,CuminOperator.NEG,v0);
 	 break;
 
 
 // Constant operators
       case ACONST_NULL :
-	 vstack = CashewValue.nullValue();
+	 vstack = CashewValue.nullValue(typer);
 	 break;
       case DCONST_0 :
-	 vstack = CashewValue.numericValue(DOUBLE_TYPE,0.0);
+	 vstack = CashewValue.numericValue(typer.DOUBLE_TYPE,0.0);
 	 break;
       case DCONST_1 :
-	 vstack = CashewValue.numericValue(DOUBLE_TYPE,1.0);
+	 vstack = CashewValue.numericValue(typer.DOUBLE_TYPE,1.0);
 	 break;
       case FCONST_0 :
-	 vstack = CashewValue.numericValue(FLOAT_TYPE,0.0f);
+	 vstack = CashewValue.numericValue(typer.FLOAT_TYPE,0.0f);
 	 break;
       case FCONST_1 :
-	 vstack = CashewValue.numericValue(FLOAT_TYPE,1.0f);
+	 vstack = CashewValue.numericValue(typer.FLOAT_TYPE,1.0f);
 	 break;
       case FCONST_2 :
-	 vstack = CashewValue.numericValue(FLOAT_TYPE,2.0f);
+	 vstack = CashewValue.numericValue(typer.FLOAT_TYPE,2.0f);
 	 break;
       case ICONST_0 :
       case ICONST_1 :
@@ -410,76 +414,76 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException
       case ICONST_4 :
       case ICONST_5 :
       case ICONST_M1 :
-	 vstack = CashewValue.numericValue(INT_TYPE,jins.getIntValue());
+	 vstack = CashewValue.numericValue(typer.INT_TYPE,jins.getIntValue());
 	 break;
       case LCONST_0 :
       case LCONST_1 :
-	 vstack = CashewValue.numericValue(LONG_TYPE,jins.getIntValue());
+	 vstack = CashewValue.numericValue(typer.LONG_TYPE,jins.getIntValue());
 	 break;
       case LDC :
 	 Object o = jins.getObjectValue();
 	 if (o instanceof String) {
-	    vstack = CashewValue.stringValue((String) o);
+	    vstack = CashewValue.stringValue(typer.STRING_TYPE,(String) o);
 	  }
 	 else if (o instanceof Integer) {
-	    vstack = CashewValue.numericValue(INT_TYPE,((Number) o).intValue());
+	    vstack = CashewValue.numericValue(typer.INT_TYPE,((Number) o).intValue());
 	  }
 	 else if (o instanceof Long) {
-	    vstack = CashewValue.numericValue(LONG_TYPE,((Number) o).longValue());
+	    vstack = CashewValue.numericValue(typer.LONG_TYPE,((Number) o).longValue());
 	  }
 	 else if (o instanceof Float) {
-	    vstack = CashewValue.numericValue(FLOAT_TYPE,((Number) o).floatValue());
+	    vstack = CashewValue.numericValue(typer.FLOAT_TYPE,((Number) o).floatValue());
 	  }
 	 else if (o instanceof Double) {
-	    vstack = CashewValue.numericValue(DOUBLE_TYPE,((Number) o).doubleValue());
+	    vstack = CashewValue.numericValue(typer.DOUBLE_TYPE,((Number) o).doubleValue());
 	  }
 	 else if (o instanceof Type) {
 	    Type t = (Type) o;
 	    JcompType jtyp = type_converter.findSystemType(t.getClassName());
-	    vstack = CashewValue.classValue(jtyp);
+	    vstack = CashewValue.classValue(typer,jtyp);
 	  }
 	 break;
       case BIPUSH :
       case SIPUSH :
-	 vstack = CashewValue.numericValue(INT_TYPE,jins.getIntValue());
+	 vstack = CashewValue.numericValue(typer.INT_TYPE,jins.getIntValue());
 	 break;
 
 // CONVERSION OPERATORS
       case I2B :
 	 v0 = execution_stack.pop();
-	 vstack = CuminEvaluator.castValue(this,v0,BYTE_TYPE);
+	 vstack = CuminEvaluator.castValue(this,v0,typer.BYTE_TYPE);
 	 break;
       case I2C :
 	 v0 = execution_stack.pop();
-	 vstack = CuminEvaluator.castValue(this,v0,CHAR_TYPE);
+	 vstack = CuminEvaluator.castValue(this,v0,typer.CHAR_TYPE);
 	 break;
       case F2D :
       case I2D :
       case L2D :
 	 v0 = execution_stack.pop();
-	 vstack = CuminEvaluator.castValue(this,v0,DOUBLE_TYPE);
+	 vstack = CuminEvaluator.castValue(this,v0,typer.DOUBLE_TYPE);
 	 break;
       case D2F :
       case I2F :
       case L2F :
 	 v0 = execution_stack.pop();
-	 vstack = CuminEvaluator.castValue(this,v0,FLOAT_TYPE);
+	 vstack = CuminEvaluator.castValue(this,v0,typer.FLOAT_TYPE);
 	 break;
       case D2L :
       case F2L :
       case I2L :
 	 v0 = execution_stack.pop();
-	 vstack = CuminEvaluator.castValue(this,v0,LONG_TYPE);
+	 vstack = CuminEvaluator.castValue(this,v0,typer.LONG_TYPE);
 	 break;
       case I2S :
 	 v0 = execution_stack.pop();
-	 vstack = CuminEvaluator.castValue(this,v0,SHORT_TYPE);
+	 vstack = CuminEvaluator.castValue(this,v0,typer.SHORT_TYPE);
 	 break;
       case D2I :
       case F2I :
       case L2I :
 	 v0 = execution_stack.pop();
-	 vstack = CuminEvaluator.castValue(this,v0,INT_TYPE);
+	 vstack = CuminEvaluator.castValue(this,v0,typer.INT_TYPE);
 	 break;
 
 // Stack manipulation
@@ -599,74 +603,74 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException
       case IF_ICMPEQ :
 	 v1 = execution_stack.pop();
 	 v0 = execution_stack.pop();
-	 v2 = CuminEvaluator.evaluate(execution_clock,CuminOperator.EQL,v0,v1);
+	 v2 = CuminEvaluator.evaluate(typer,execution_clock,CuminOperator.EQL,v0,v1);
 	 if (v2.getBoolean(execution_clock)) nextins = jins.getTargetInstruction();
 	 break;
       case IF_ACMPNE :
       case IF_ICMPNE :
 	 v1 = execution_stack.pop();
 	 v0 = execution_stack.pop();
-	 v2 = CuminEvaluator.evaluate(execution_clock,CuminOperator.NEQ,v0,v1);
+	 v2 = CuminEvaluator.evaluate(typer,execution_clock,CuminOperator.NEQ,v0,v1);
 	 if (v2.getBoolean(execution_clock)) nextins = jins.getTargetInstruction();
 	 break;
       case IF_ICMPGE :
 	 v1 = execution_stack.pop();
 	 v0 = execution_stack.pop();
-	 v2 = CuminEvaluator.evaluate(execution_clock,CuminOperator.GEQ,v0,v1);
+	 v2 = CuminEvaluator.evaluate(typer,execution_clock,CuminOperator.GEQ,v0,v1);
 	 if (v2.getBoolean(execution_clock)) nextins = jins.getTargetInstruction();
 	 break;
       case IF_ICMPGT :
 	 v1 = execution_stack.pop();
 	 v0 = execution_stack.pop();
-	 v2 = CuminEvaluator.evaluate(execution_clock,CuminOperator.GTR,v0,v1);
+	 v2 = CuminEvaluator.evaluate(typer,execution_clock,CuminOperator.GTR,v0,v1);
 	 if (v2.getBoolean(execution_clock)) nextins = jins.getTargetInstruction();
 	 break;
       case IF_ICMPLE :
 	 v1 = execution_stack.pop();
 	 v0 = execution_stack.pop();
-	 v2 = CuminEvaluator.evaluate(execution_clock,CuminOperator.LEQ,v0,v1);
+	 v2 = CuminEvaluator.evaluate(typer,execution_clock,CuminOperator.LEQ,v0,v1);
 	 if (v2.getBoolean(execution_clock)) nextins = jins.getTargetInstruction();
 	 break;
       case IF_ICMPLT :
 	 v1 = execution_stack.pop();
 	 v0 = execution_stack.pop();
-	 v2 = CuminEvaluator.evaluate(execution_clock,CuminOperator.LSS,v0,v1);
+	 v2 = CuminEvaluator.evaluate(typer,execution_clock,CuminOperator.LSS,v0,v1);
 	 if (v2.getBoolean(execution_clock)) nextins = jins.getTargetInstruction();
 	 break;
       case IFEQ :
 	 v0 = execution_stack.pop();
 	 v1 = CashewValue.numericValue(v0.getDataType(execution_clock),0);
-	 v2 = CuminEvaluator.evaluate(execution_clock,CuminOperator.EQL,v0,v1);
+	 v2 = CuminEvaluator.evaluate(typer,execution_clock,CuminOperator.EQL,v0,v1);
 	 if (v2.getBoolean(execution_clock)) nextins = jins.getTargetInstruction();
 	 break;
       case IFGE :
 	 v0 = execution_stack.pop();
 	 v1 = CashewValue.numericValue(v0.getDataType(execution_clock),0);
-	 v2 = CuminEvaluator.evaluate(execution_clock,CuminOperator.GEQ,v0,v1);
+	 v2 = CuminEvaluator.evaluate(typer,execution_clock,CuminOperator.GEQ,v0,v1);
 	 if (v2.getBoolean(execution_clock)) nextins = jins.getTargetInstruction();
 	 break;
       case IFGT :
 	 v0 = execution_stack.pop();
 	 v1 = CashewValue.numericValue(v0.getDataType(execution_clock),0);
-	 v2 = CuminEvaluator.evaluate(execution_clock,CuminOperator.GTR,v0,v1);
+	 v2 = CuminEvaluator.evaluate(typer,execution_clock,CuminOperator.GTR,v0,v1);
 	 if (v2.getBoolean(execution_clock)) nextins = jins.getTargetInstruction();
 	 break;
       case IFLE :
 	 v0 = execution_stack.pop();
 	 v1 = CashewValue.numericValue(v0.getDataType(execution_clock),0);
-	 v2 = CuminEvaluator.evaluate(execution_clock,CuminOperator.LEQ,v0,v1);
+	 v2 = CuminEvaluator.evaluate(typer,execution_clock,CuminOperator.LEQ,v0,v1);
 	 if (v2.getBoolean(execution_clock)) nextins = jins.getTargetInstruction();
 	 break;
       case IFLT :
 	 v0 = execution_stack.pop();
 	 v1 = CashewValue.numericValue(v0.getDataType(execution_clock),0);
-	 v2 = CuminEvaluator.evaluate(execution_clock,CuminOperator.LSS,v0,v1);
+	 v2 = CuminEvaluator.evaluate(typer,execution_clock,CuminOperator.LSS,v0,v1);
 	 if (v2.getBoolean(execution_clock)) nextins = jins.getTargetInstruction();
 	 break;
       case IFNE :
 	 v0 = execution_stack.pop();
 	 v1 = CashewValue.numericValue(v0.getDataType(execution_clock),0);
-	 v2 = CuminEvaluator.evaluate(execution_clock,CuminOperator.NEQ,v0,v1);
+	 v2 = CuminEvaluator.evaluate(typer,execution_clock,CuminOperator.NEQ,v0,v1);
 	 if (v2.getBoolean(execution_clock)) nextins = jins.getTargetInstruction();
 	 break;
       case IFNONNULL :
@@ -683,7 +687,7 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException
 	 v1 = execution_stack.pop();
 	 idxv = v0.getNumber(execution_clock).intValue();
 	 if (idxv < 0 || idxv >= v1.getDimension(execution_clock))
-	    return CuminEvaluator.returnException(CashewConstants.IDX_BNDS_EXC);
+	    return CuminEvaluator.returnException(typer,"java.lang.IndexOutOfBoundsException");
 	 vstack = v1.getIndexValue(execution_clock,idxv);
 	 break;
       case BALOAD :
@@ -693,9 +697,9 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException
 	 v1 = execution_stack.pop();
 	 idxv = v0.getNumber(execution_clock).intValue();
 	 if (idxv < 0 || idxv >= v1.getDimension(execution_clock))
-	    return CuminEvaluator.returnException(CashewConstants.IDX_BNDS_EXC);
+	    return CuminEvaluator.returnException(typer,"java.lang.IndexOutOfBoundsException");
 	 vstack = v1.getIndexValue(execution_clock,idxv);
-	 vstack = CuminEvaluator.castValue(this,vstack,INT_TYPE);
+	 vstack = CuminEvaluator.castValue(this,vstack,typer.INT_TYPE);
 	 break;
       case DALOAD :
       case LALOAD :
@@ -705,7 +709,7 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException
 	 v1 = execution_stack.pop();
 	 idxv = v0.getNumber(execution_clock).intValue();
 	 if (idxv < 0 || idxv >= v1.getDimension(execution_clock))
-	    return CuminEvaluator.returnException(CashewConstants.IDX_BNDS_EXC);
+	    return CuminEvaluator.returnException(typer,"java.lang.IndexOutOfBoundsException");
 	 vstack = v1.getIndexValue(execution_clock,idxv);
 	 break;
 
@@ -716,77 +720,77 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException
 	 v2 = execution_stack.pop();
 	 idxv = v1.getNumber(execution_clock).intValue();
 	 if (idxv < 0 || idxv >= v2.getDimension(execution_clock))
-	    return CuminEvaluator.returnException(CashewConstants.IDX_BNDS_EXC);
+	    return CuminEvaluator.returnException(typer,"java.lang.IndexOutOfBoundsException");
 	 v2.setIndexValue(execution_clock,idxv,v0);
 	 break;
       case BASTORE :
 	 v0 = execution_stack.pop();
-	 v0 = CuminEvaluator.castValue(this,v0,BYTE_TYPE);
+	 v0 = CuminEvaluator.castValue(this,v0,typer.BYTE_TYPE);
 	 v1 = execution_stack.pop();
 	 v2 = execution_stack.pop();
 	 idxv = v1.getNumber(execution_clock).intValue();
 	 if (idxv < 0 || idxv >= v2.getDimension(execution_clock))
-	    return CuminEvaluator.returnException(CashewConstants.IDX_BNDS_EXC);
+	    return CuminEvaluator.returnException(typer,"java.lang.IndexOutOfBoundsException");
 	 v2.setIndexValue(execution_clock,idxv,v0);
 	 break;
       case CASTORE :
 	 v0 = execution_stack.pop();
-	 v0 = CuminEvaluator.castValue(this,v0,CHAR_TYPE);
+	 v0 = CuminEvaluator.castValue(this,v0,typer.CHAR_TYPE);
 	 v1 = execution_stack.pop();
 	 v2 = execution_stack.pop();
 	 idxv = v1.getNumber(execution_clock).intValue();
 	 if (idxv < 0 || idxv >= v2.getDimension(execution_clock))
-	    return CuminEvaluator.returnException(CashewConstants.IDX_BNDS_EXC);
+	    return CuminEvaluator.returnException(typer,"java.lang.IndexOutOfBoundsException");
 	 v2.setIndexValue(execution_clock,idxv,v0);
 	 break;
       case DASTORE :
 	 v0 = execution_stack.pop();
-	 v0 = CuminEvaluator.castValue(this,v0,DOUBLE_TYPE);
+	 v0 = CuminEvaluator.castValue(this,v0,typer.DOUBLE_TYPE);
 	 v1 = execution_stack.pop();
 	 v2 = execution_stack.pop();
 	 idxv = v1.getNumber(execution_clock).intValue();
 	 if (idxv < 0 || idxv >= v2.getDimension(execution_clock))
-	    return CuminEvaluator.returnException(CashewConstants.IDX_BNDS_EXC);
+	    return CuminEvaluator.returnException(typer,"java.lang.IndexOutOfBoundsException");
 	 v2.setIndexValue(execution_clock,idxv,v0);
 	 break;
       case FASTORE :
 	 v0 = execution_stack.pop();
-	 v0 = CuminEvaluator.castValue(this,v0,FLOAT_TYPE);
+	 v0 = CuminEvaluator.castValue(this,v0,typer.FLOAT_TYPE);
 	 v1 = execution_stack.pop();
 	 v2 = execution_stack.pop();
 	 idxv = v1.getNumber(execution_clock).intValue();
 	 if (idxv < 0 || idxv >= v2.getDimension(execution_clock))
-	    return CuminEvaluator.returnException(CashewConstants.IDX_BNDS_EXC);
+	    return CuminEvaluator.returnException(typer,"java.lang.IndexOutOfBoundsException");
 	 v2.setIndexValue(execution_clock,idxv,v0);
 	 break;
       case IASTORE :
 	 v0 = execution_stack.pop();
-	 v0 = CuminEvaluator.castValue(this,v0,INT_TYPE);
+	 v0 = CuminEvaluator.castValue(this,v0,typer.INT_TYPE);
 	 v1 = execution_stack.pop();
 	 v2 = execution_stack.pop();
 	 idxv = v1.getNumber(execution_clock).intValue();
 	 if (idxv < 0 || idxv >= v2.getDimension(execution_clock))
-	    return CuminEvaluator.returnException(CashewConstants.IDX_BNDS_EXC);
+	    return CuminEvaluator.returnException(typer,"java.lang.IndexOutOfBoundsException");
 	 v2.setIndexValue(execution_clock,idxv,v0);
 	 break;
       case LASTORE :
 	 v0 = execution_stack.pop();
-	 v0 = CuminEvaluator.castValue(this,v0,LONG_TYPE);
+	 v0 = CuminEvaluator.castValue(this,v0,typer.LONG_TYPE);
 	 v1 = execution_stack.pop();
 	 v2 = execution_stack.pop();
 	 idxv = v1.getNumber(execution_clock).intValue();
 	 if (idxv < 0 || idxv >= v2.getDimension(execution_clock))
-	    return CuminEvaluator.returnException(CashewConstants.IDX_BNDS_EXC);
+	    return CuminEvaluator.returnException(typer,"java.lang.IndexOutOfBoundsException");
 	 v2.setIndexValue(execution_clock,idxv,v0);
 	 break;
       case SASTORE :
 	 v0 = execution_stack.pop();
-	 v0 = CuminEvaluator.castValue(this,v0,SHORT_TYPE);
+	 v0 = CuminEvaluator.castValue(this,v0,typer.SHORT_TYPE);
 	 v1 = execution_stack.pop();
 	 v2 = execution_stack.pop();
 	 idxv = v1.getNumber(execution_clock).intValue();
 	 if (idxv < 0 || idxv >= v2.getDimension(execution_clock))
-	    return CuminEvaluator.returnException(CashewConstants.IDX_BNDS_EXC);
+	    return CuminEvaluator.returnException(typer,"java.lang.IndexOutOfBoundsException");
 	 v2.setIndexValue(execution_clock,idxv,v0);
 	 break;
 
@@ -797,22 +801,22 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException
       case DLOAD :
 	 vidx = jins.getLocalVariable();
 	 vstack = lookup_context.findReference(vidx).getActualValue(execution_clock);
-	 vstack = CuminEvaluator.castValue(this,vstack,DOUBLE_TYPE);
+	 vstack = CuminEvaluator.castValue(this,vstack,typer.DOUBLE_TYPE);
 	 break;
       case FLOAD :
 	 vidx = jins.getLocalVariable();
 	 vstack = lookup_context.findReference(vidx).getActualValue(execution_clock);
-	 vstack = CuminEvaluator.castValue(this,vstack,FLOAT_TYPE);
+	 vstack = CuminEvaluator.castValue(this,vstack,typer.FLOAT_TYPE);
 	 break;
       case ILOAD :
 	 vidx = jins.getLocalVariable();
 	 vstack = lookup_context.findReference(vidx).getActualValue(execution_clock);
-	 vstack = CuminEvaluator.castValue(this,vstack,INT_TYPE);
+	 vstack = CuminEvaluator.castValue(this,vstack,typer.INT_TYPE);
 	 break;
       case LLOAD :
 	 vidx = jins.getLocalVariable();
 	 vstack = lookup_context.findReference(vidx).getActualValue(execution_clock);
-	 vstack = CuminEvaluator.castValue(this,vstack,LONG_TYPE);
+	 vstack = CuminEvaluator.castValue(this,vstack,typer.LONG_TYPE);
 	 break;
 
       case ASTORE :
@@ -825,28 +829,28 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException
 	 vidx = jins.getLocalVariable();
 	 v0 = lookup_context.findReference(vidx);
 	 v1 = execution_stack.pop().getActualValue(execution_clock);
-	 v1 = CuminEvaluator.castValue(this,v1,DOUBLE_TYPE);
+	 v1 = CuminEvaluator.castValue(this,v1,typer.DOUBLE_TYPE);
 	 v0.setValueAt(execution_clock,v1);
 	 break;
       case FSTORE :
 	 vidx = jins.getLocalVariable();
 	 v0 = lookup_context.findReference(vidx);
 	 v1 = execution_stack.pop().getActualValue(execution_clock);
-	 v1 = CuminEvaluator.castValue(this,v1,FLOAT_TYPE);
+	 v1 = CuminEvaluator.castValue(this,v1,typer.FLOAT_TYPE);
 	 v0.setValueAt(execution_clock,v1);
 	 break;
       case LSTORE :
 	 vidx = jins.getLocalVariable();
 	 v0 = lookup_context.findReference(vidx);
 	 v1 = execution_stack.pop().getActualValue(execution_clock);
-	 v1 = CuminEvaluator.castValue(this,v1,LONG_TYPE);
+	 v1 = CuminEvaluator.castValue(this,v1,typer.LONG_TYPE);
 	 v0.setValueAt(execution_clock,v1);
 	 break;
       case ISTORE :
 	 vidx = jins.getLocalVariable();
 	 v0 = lookup_context.findReference(vidx);
 	 v1 = execution_stack.pop().getActualValue(execution_clock);
-	 v1 = CuminEvaluator.castValue(this,v1,INT_TYPE);
+	 v1 = CuminEvaluator.castValue(this,v1,typer.INT_TYPE);
 	 v0.setValueAt(execution_clock,v1);
 	 break;
 
@@ -868,12 +872,12 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException
 
       case ARRAYLENGTH :
 	 v0 = execution_stack.pop();
-	 vstack = CashewValue.numericValue(INT_TYPE,v0.getDimension(execution_clock));
+	 vstack = CashewValue.numericValue(typer.INT_TYPE,v0.getDimension(execution_clock));
 	 break;
       case IINC :
 	 vidx = jins.getLocalVariable();
 	 v0 = lookup_context.findReference(vidx);
-	 v1 = CashewValue.numericValue(INT_TYPE,v0.getNumber(execution_clock).intValue() +
+	 v1 = CashewValue.numericValue(typer.INT_TYPE,v0.getNumber(execution_clock).intValue() +
 	       jins.getIntValue());
 	 v0.setValueAt(execution_clock,v1);
 	 break;
@@ -882,15 +886,15 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException
 	 JcompType jty = convertType(jins.getTypeReference());
 	 v0 = execution_stack.pop();
 	 if (v0.getDataType(execution_clock).isCompatibleWith(jty))
-	    vstack = CashewValue.booleanValue(true);
+	    vstack = CashewValue.booleanValue(typer,true);
 	 else
-	    vstack = CashewValue.booleanValue(false);
+	    vstack = CashewValue.booleanValue(typer,false);
 	 break;
       case CHECKCAST :
 	 v0 = execution_stack.peek(0);
 	 jty = convertType(jins.getTypeReference());
 	 if (!v0.getDataType(execution_clock).isCompatibleWith(jty)) {
-	    return CuminEvaluator.returnException(CAST_EXC);
+	    return CuminEvaluator.returnException(typer,"java.lang.ClassCastException");
 	  }
 	 break;
 
@@ -902,8 +906,8 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException
 	    nm = fld.getDeclaringClass().getName() + "." + fld.getName();
 	  }
 	 if (v0.isNull(execution_clock))
-	    return CuminEvaluator.returnException(CashewConstants.NULL_PTR_EXC);
-	 vstack = v0.getFieldValue(execution_clock,nm);
+	    return CuminEvaluator.returnException(typer,"java.lang.NullPointerException");
+	 vstack = v0.getFieldValue(typer,execution_clock,nm);
 	 vstack = vstack.getActualValue(execution_clock);
 	 break;
       case GETSTATIC :
@@ -911,8 +915,8 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException
 	 JcompType fldtyp = convertType(fld.getDeclaringClass());
 	 fldtyp.defineAll(type_converter);
 	 lookup_context.enableAccess(fldtyp.getName());
-	 vstack = lookup_context.findReference(fld);
-	 if (vstack == null) vstack = CashewValue.nullValue();
+	 vstack = lookup_context.findReference(type_converter,fld);
+	 if (vstack == null) vstack = CashewValue.nullValue(typer);
 	 else vstack = vstack.getActualValue(execution_clock);
 	 break;
       case PUTFIELD :
@@ -922,14 +926,14 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException
 	 String dcname = fld.getDeclaringClass().getName();
 	 nm = dcname + "." + fld.getName();
 	 if (v1.isNull(execution_clock))
-	    return CuminEvaluator.returnException(CashewConstants.NULL_PTR_EXC);
-	 v1.setFieldValue(execution_clock,nm,v0);
+	    return CuminEvaluator.returnException(typer,"java.lang.NullPointerException");
+	 v1.setFieldValue(typer,execution_clock,nm,v0);
 	 break;
       case PUTSTATIC :
 	 v0 = execution_stack.pop();
 	 v0 = v0.getActualValue(execution_clock);
 	 fld = jins.getFieldReference();
-	 v1 = lookup_context.findReference(fld);
+	 v1 = lookup_context.findReference(type_converter,fld);
 	 v1.setValueAt(execution_clock,v0);
 	 break;
 
@@ -971,7 +975,7 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException
 	 JcompType arrtyp = convertType(dty);
 	 arrtyp = type_converter.findArrayType(arrtyp);
 	 int dim = execution_stack.pop().getNumber(execution_clock).intValue();
-	 vstack = CashewValue.arrayValue(arrtyp,dim);
+	 vstack = CashewValue.arrayValue(typer,arrtyp,dim);
 	 break;
 
       case MULTIANEWARRAY :
@@ -1003,7 +1007,7 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException
 
    if (vstack != null) {
       if (AcornLog.isTracing())
-	 AcornLog.logD("RESULT: " + vstack.getString(execution_clock,0,true));
+	 AcornLog.logD("RESULT: " + vstack.getString(typer,execution_clock,0,true));
       execution_stack.push(vstack);
     }
    if (nextins != null) next = nextins.getIndex();
@@ -1046,7 +1050,7 @@ private void handleDynamicCall(JcodeInstruction ins)
    JcompType t1 = buildMethodType1(args[5]);
    JcompType rt1 = JcompType.createFunctionRefType(t1,null,null);
 
-   CashewValue cv = new CashewValueFunctionRef(rt1,args[4]);
+   CashewValue cv = new CashewValueFunctionRef(getTyper(),rt1,args[4]);
    execution_stack.push(cv);
 
    /***** this doesn't work
@@ -1134,7 +1138,7 @@ private JcompType buildMethodType1(String typ)
    JcodeDataType jdt = getCodeFactory().findJavaType(typ);
    JcompType rtyp = getTyper().findSystemType(jdt.getReturnType().getName());
    JcodeDataType [] atyps = jdt.getArgumentTypes();
-   List<JcompType> atypl = new ArrayList<JcompType>();
+   List<JcompType> atypl = new ArrayList<>();
    for (int i = 0; i < atyps.length; ++i) {
       JcompType atyp = getTyper().findSystemType(atyps[i].getName());
       atypl.add(atyp);
@@ -1156,140 +1160,157 @@ private CuminRunStatus checkSpecial() throws CuminRunException
 
    CuminRunStatus sts = null;
 
-   switch (cls) {
-      case "java.lang.String" :
-	 CuminDirectEvaluation cde = new CuminDirectEvaluation(this);
-	 sts = cde.checkStringMethods();
-	 break;
-      case "java.lang.StrictMath" :
-      case "java.lang.Math" :
-	 cde = new CuminDirectEvaluation(this);
-	 sts = cde.checkMathMethods();
-	 break;
-      case "java.lang.Runtime" :
-	 cde = new CuminDirectEvaluation(this);
-	 sts = cde.checkRuntimeMethods();
-	 break;
-      case "java.lang.Float" :
-	 cde = new CuminDirectEvaluation(this);
-	 sts = cde.checkFloatMethods();
-	 break;
-      case "java.lang.Double" :
-	 cde = new CuminDirectEvaluation(this);
-	 sts = cde.checkDoubleMethods();
-	 break;
-      case "java.lang.ClassLoader" :
-	 // handle class loader methods
-	 break;
-      case "java.lang.Class" :
-	 cde = new CuminDirectEvaluation(this);
-	 sts = cde.checkClassMethods();
-	 break;
-      case "java.lang.Object" :
-	 cde = new CuminDirectEvaluation(this);
-	 sts = cde.checkObjectMethods();
-	 break;
-      case "java.lang.System" :
-	 cde = new CuminDirectEvaluation(this);
-	 sts = cde.checkSystemMethods();
-	 break;
-      case "java.lang.Thread" :
-	 cde = new CuminDirectEvaluation(this);
-	 sts = cde.checkThreadMethods();
-	 break;
-      case "java.lang.Throwable" :
-	 cde = new CuminDirectEvaluation(this);
-	 sts = cde.checkThrowableMethods();
-	 break;
-
-      case "java.io.FileDescriptor" :
-      case "java.io.RandomAccessFile" :
-      case "java.nio.file.FileSystem" :
-      case "java.nio.file.spi.FileSystemProvider" :
-      case "java.nio.file.Files" :
-      case "sun.nio.cs.FastCharsetProvider" :
-	 // TODO: handle other IO methods
-	 break;
-
-      case "java.io.File" :
-	 CuminIOEvaluator cie = new CuminIOEvaluator(this);
-	 sts = cie.checkFileMethods();
-	 break;
-      case "java.io.FileOutputStream" :
-	 cie = new CuminIOEvaluator(this);
-	 sts = cie.checkOutputStreamMethods();
-	 break;
-      case "java.io.FileInputStream" :
-	 cie = new CuminIOEvaluator(this);
-	 sts = cie.checkInputStreamMethods();
-	 break;
-      case "java.io.Console" :
-	 cie = new CuminIOEvaluator(this);
-	 sts = cie.checkConsoleMethods();
-	 break;
-      case "java.io.PrintStream" :
-	 cie = new CuminIOEvaluator(this);
-	 sts  = cie.checkPrintMethods("java.io.PrintStream");
-	 break;
-      case "java.io.PrintWriter" :
-	 cie = new CuminIOEvaluator(this);
-	 sts  = cie.checkPrintMethods("java.io.PrintWriter");
-	 break;
-
-      case "java.io.ObjectOutputStream" :
-      case "java.io.ObjectInputStream" :
-	 cie = new CuminIOEvaluator(this);
-	 sts = cie.checkObjectStreamMethods();
-	 break;
-
-      case "sun.misc.FloatingDecimal" :
-	 cde = new CuminDirectEvaluation(this);
-	 sts = cde.checkFloatingDecimalMehtods();
-	 break;
-      case "javax.swing.SwingUtilities" :
-	 cde = new CuminDirectEvaluation(this);
-	 sts = cde.checkSwingUtilityMethods();
-	 break;
-      case "java.lang.reflect.Array" :
-	 cde = new CuminDirectEvaluation(this);
-	 sts = cde.checkReflectArrayMethods();
-	 break;
-      case "java.security.AccessController" :
-	 cde = new CuminDirectEvaluation(this);
-	 sts = cde.checkAccessControllerMethods();
-	 break;
-      case "sun.reflect.Reflection" :
-	 cde = new CuminDirectEvaluation(this);
-	 sts = cde.checkSunReflectionMethods();
-	 break;
-
-      case "edu.brown.cs.seede.poppy.PoppyGraphics" :
-	 CuminGraphicsEvaluator cge = new CuminGraphicsEvaluator(this);
-	 sts = cge.checkPoppyGraphics();
-	 break;
-      case "sun.awt.SunGraphicsCallback" :
-	 cge = new CuminGraphicsEvaluator(this);
-	 sts = cge.checkGraphicsCallback();
-	 break;
-
-      case "java.util.concurrent.atomic.AtomicInteger" :
-      case "java.util.concurrent.atomic.AtomicLong" :
-	 CuminConcurrentEvaluator cce = new CuminConcurrentEvaluator(this);
-	 sts = cce.checkAtomicIntMethods();
-	 break;
-      case "java.util.concurrent.atomic.AtomicBoolean" :
-	 cce = new CuminConcurrentEvaluator(this);
-	 sts = cce.checkAtomicBooleanMethods();
-	 break;
-      case "java.util.concurrent.ConcurrentHashMap" :
-	 cce = new CuminConcurrentEvaluator(this);
-	 sts = cce.checkConcurrentHashMapMethods();
-	 break;
-
-      case "sun.misc.Unsafe" :
-	 cce = new CuminConcurrentEvaluator(this);
-	 sts = cce.checkUnsafeMethods();
-	 break;
+   try {
+      switch (cls) {
+         case "java.lang.String" :
+            CuminDirectEvaluation cde = new CuminDirectEvaluation(this);
+            sts = cde.checkStringMethods();
+            break;
+         case "java.lang.StrictMath" :
+         case "java.lang.Math" :
+            cde = new CuminDirectEvaluation(this);
+            sts = cde.checkMathMethods();
+            break;
+         case "java.lang.Runtime" :
+            cde = new CuminDirectEvaluation(this);
+            sts = cde.checkRuntimeMethods();
+            break;
+         case "java.lang.Float" :
+            cde = new CuminDirectEvaluation(this);
+            sts = cde.checkFloatMethods();
+            break;
+         case "java.lang.Double" :
+            cde = new CuminDirectEvaluation(this);
+            sts = cde.checkDoubleMethods();
+            break;
+         case "java.lang.ClassLoader" :
+            // handle class loader methods
+            break;
+         case "java.lang.Class" :
+            cde = new CuminDirectEvaluation(this);
+            sts = cde.checkClassMethods();
+            break;
+         case "java.lang.Object" :
+            cde = new CuminDirectEvaluation(this);
+            sts = cde.checkObjectMethods();
+            break;
+         case "java.lang.System" :
+            cde = new CuminDirectEvaluation(this);
+            sts = cde.checkSystemMethods();
+            break;
+         case "java.lang.Thread" :
+            cde = new CuminDirectEvaluation(this);
+            sts = cde.checkThreadMethods();
+            break;
+         case "java.lang.Throwable" :
+            cde = new CuminDirectEvaluation(this);
+            sts = cde.checkThrowableMethods();
+            break;
+         case "java.util.Random" :
+            cde = new CuminDirectEvaluation(this);
+            sts = cde.checkRandomMethods();
+            break;
+            
+         case "java.io.FileDescriptor" :
+         case "java.io.RandomAccessFile" :
+         case "java.nio.file.FileSystem" :
+         case "java.nio.file.spi.FileSystemProvider" :
+         case "java.nio.file.Files" :
+         case "sun.nio.cs.FastCharsetProvider" :
+            // TODO: handle other IO methods
+            break;
+            
+         case "java.io.File" :
+            CuminIOEvaluator cie = new CuminIOEvaluator(this);
+            sts = cie.checkFileMethods();
+            break;
+         case "java.io.FileOutputStream" :
+            cie = new CuminIOEvaluator(this);
+            sts = cie.checkOutputStreamMethods();
+            break;
+         case "java.io.FileInputStream" :
+            cie = new CuminIOEvaluator(this);
+            sts = cie.checkInputStreamMethods();
+            break;
+         case "java.io.Console" :
+            cie = new CuminIOEvaluator(this);
+            sts = cie.checkConsoleMethods();
+            break;
+         case "java.io.PrintStream" :
+            cie = new CuminIOEvaluator(this);
+            sts  = cie.checkPrintMethods("java.io.PrintStream");
+            break;
+         case "java.io.PrintWriter" :
+            cie = new CuminIOEvaluator(this);
+            sts  = cie.checkPrintMethods("java.io.PrintWriter");
+            break;
+            
+         case "java.io.ObjectOutputStream" :
+         case "java.io.ObjectInputStream" :
+            cie = new CuminIOEvaluator(this);
+            sts = cie.checkObjectStreamMethods();
+            break;
+            
+         case "sun.misc.FloatingDecimal" :
+            cde = new CuminDirectEvaluation(this);
+            sts = cde.checkFloatingDecimalMehtods();
+            break;
+         case "javax.swing.SwingUtilities" :
+            cde = new CuminDirectEvaluation(this);
+            sts = cde.checkSwingUtilityMethods();
+            break;
+         case "java.lang.reflect.Array" :
+            cde = new CuminDirectEvaluation(this);
+            sts = cde.checkReflectArrayMethods();
+            break;
+         case "java.security.AccessController" :
+            cde = new CuminDirectEvaluation(this);
+            sts = cde.checkAccessControllerMethods();
+            break;
+         case "sun.reflect.Reflection" :
+            cde = new CuminDirectEvaluation(this);
+            sts = cde.checkSunReflectionMethods();
+            break;
+            
+         case "edu.brown.cs.seede.poppy.PoppyGraphics" :
+            CuminGraphicsEvaluator cge = new CuminGraphicsEvaluator(this);
+            sts = cge.checkPoppyGraphics();
+            break;
+         case "sun.awt.SunGraphicsCallback" :
+            cge = new CuminGraphicsEvaluator(this);
+            sts = cge.checkGraphicsCallback();
+            break;
+            
+         case "java.util.concurrent.atomic.AtomicInteger" :
+         case "java.util.concurrent.atomic.AtomicLong" :
+            CuminConcurrentEvaluator cce = new CuminConcurrentEvaluator(this);
+            sts = cce.checkAtomicIntMethods();
+            break;
+         case "java.util.concurrent.atomic.AtomicBoolean" :
+            cce = new CuminConcurrentEvaluator(this);
+            sts = cce.checkAtomicBooleanMethods();
+            break;
+         case "java.util.concurrent.ConcurrentHashMap" :
+            cce = new CuminConcurrentEvaluator(this);
+            sts = cce.checkConcurrentHashMapMethods();
+            break;
+            
+         case "sun.misc.Unsafe" :
+            cce = new CuminConcurrentEvaluator(this);
+            sts = cce.checkUnsafeMethods();
+            break;
+       }
+    }
+   catch (CuminRunException e) {
+      throw e;
+    }
+   catch (CashewException e) {
+      AcornLog.logD("Problem in special evaluation",e);
+      throw CuminRunStatus.Factory.createCompilerError();
+    }
+   catch (Throwable t) {
+      AcornLog.logE("Unknown Problem in special evaluation",t);
+      throw CuminRunStatus.Factory.createCompilerError();
     }
 
    return sts;
@@ -1304,4 +1325,200 @@ private CuminRunStatus checkSpecial() throws CuminRunException
 
 
 /* end of CuminRunnerByteCode.java */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

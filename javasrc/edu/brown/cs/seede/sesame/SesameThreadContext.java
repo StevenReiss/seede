@@ -24,6 +24,7 @@
 
 package edu.brown.cs.seede.sesame;
 
+import edu.brown.cs.ivy.jcomp.JcompTyper;
 import edu.brown.cs.seede.cashew.CashewContext;
 import edu.brown.cs.seede.cashew.CashewValue;
 
@@ -79,10 +80,10 @@ SesameThreadContext(String tid,String tnm,SesameSession sess,SesameContext gbl)
 
 
 
-public CashewValue findStaticFieldReference(String name,String type)
+public CashewValue findStaticFieldReference(JcompTyper typer,String name,String type)
 {
    if (name.equals(CURRENT_THREAD_FIELD)) {
-      CashewValue cv = findReference(name);
+      CashewValue cv = findActualReference(name);
       if (cv != null) return cv;
       SesameValueData svd = for_session.evaluateData("java.lang.Thread.currentThread()",thread_id);
       if (svd != null) {
@@ -94,10 +95,10 @@ public CashewValue findStaticFieldReference(String name,String type)
        }
     }
    else if (name.equals(CURRENT_THREAD_NAME_FIELD)) {
-      return CashewValue.stringValue(thread_name);
+      return CashewValue.stringValue(typer.STRING_TYPE,thread_name);
     }
    
-   return super.findStaticFieldReference(name,type);
+   return super.findStaticFieldReference(typer,name,type);
 }
 
 

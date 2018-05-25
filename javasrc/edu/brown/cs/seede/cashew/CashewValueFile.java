@@ -26,7 +26,9 @@ package edu.brown.cs.seede.cashew;
 
 import java.io.File;
 
+import edu.brown.cs.ivy.jcomp.JcompTyper;
 import edu.brown.cs.ivy.xml.IvyXmlWriter;
+import edu.brown.cs.seede.acorn.AcornLog;
 
 public class CashewValueFile extends CashewValueObject implements CashewConstants
 {
@@ -47,15 +49,15 @@ private File            user_file;
 /*                                                                              */
 /********************************************************************************/
 
-CashewValueFile(String path)
+CashewValueFile(JcompTyper typer,String path)
 {
-   this(new File(path));
+   this(typer,new File(path));
 }
 
 
-public CashewValueFile(File path)
+public CashewValueFile(JcompTyper typer,File path)
 {
-   super(FILE_TYPE,null,false);
+   super(typer,typer.findSystemType("java.io.File"),null,false);
    user_file = path;
 }
 
@@ -72,7 +74,7 @@ public void setInitialValue(File f)
 }
 
 
-@Override public String getString(CashewClock cc,int idx,boolean dbg)
+@Override public String getString(JcompTyper typer,CashewClock cc,int idx,boolean dbg)
 {
    if (user_file == null) return "File(null)";
    return user_file.toString();
@@ -84,29 +86,41 @@ public File getFile()                   { return user_file; }
 
 
 
-@Override public CashewValue getFieldValue(CashewClock cc,String nm,boolean force)
+@Override public CashewValue getFieldValue(JcompTyper typer,CashewClock cc,String nm,boolean force)
 {
    switch (nm) {
+      case "java.io.File.path" :
       case "path" :
-         return CashewValue.stringValue(user_file.getPath());
+         if (user_file == null) return CashewValue.nullValue(typer);
+         return CashewValue.stringValue(typer.STRING_TYPE,user_file.getPath());
+      case "java.io.File.status" :
       case "status" :
          // return PathStatus.CHECKED
          break;
+      case "java.io.File.prefixLength" :
       case "prefixLength" :
-         return CashewValue.numericValue(INT_TYPE,0);
+         return CashewValue.numericValue(typer.INT_TYPE,0);
          
-      // static fields   
+      // static fields 
+      case "java.io.File.fs" :
       case "fs" :
          // return DefaultFileSystem.getFileSystem()
          break;
+      case "java.io.File.separator" :
       case "separator" :
-         return CashewValue.stringValue(File.separator);
+         return CashewValue.stringValue(typer.STRING_TYPE,File.separator);
+      case "java.io.File.separatorChar" :
       case "separatorChar" :
-         return CashewValue.numericValue(CHAR_TYPE,File.separatorChar);
+         return CashewValue.numericValue(typer.CHAR_TYPE,File.separatorChar);
+      case "java.io.File.pathSeparator" :
       case "pathSeparator" :
-         return CashewValue.stringValue(File.pathSeparator);     
+         return CashewValue.stringValue(typer.STRING_TYPE,File.pathSeparator);     
+      case "java.io.File.pathSeparatorChar" :
       case "pathSeparatorChar" :
-         return CashewValue.numericValue(CHAR_TYPE,File.pathSeparatorChar);
+         return CashewValue.numericValue(typer.CHAR_TYPE,File.pathSeparatorChar);
+      default :
+         AcornLog.logE("Unknown File field: " + nm);
+         break;
     }
    
    return null;
@@ -114,7 +128,7 @@ public File getFile()                   { return user_file; }
 
 
 
-@Override public CashewValue setFieldValue(CashewClock cc,String nm,CashewValue cv)
+@Override public CashewValue setFieldValue(JcompTyper typer,CashewClock cc,String nm,CashewValue cv)
 {
    return this;
 }

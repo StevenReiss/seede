@@ -25,6 +25,7 @@
 package edu.brown.cs.seede.cumin;
 
 import edu.brown.cs.ivy.jcomp.JcompType;
+import edu.brown.cs.seede.cashew.CashewException;
 import edu.brown.cs.seede.cashew.CashewValue;
 
 class CuminConcurrentEvaluator extends CuminNativeEvaluator
@@ -58,7 +59,7 @@ CuminConcurrentEvaluator(CuminRunnerByteCode bc)
 /*										*/
 /********************************************************************************/
 
-CuminRunStatus checkAtomicIntMethods()
+CuminRunStatus checkAtomicIntMethods() throws CashewException 
 {
    CashewValue rslt = null;
 
@@ -67,12 +68,12 @@ CuminRunStatus checkAtomicIntMethods()
    String valfld = clsnm + ".value";
 
    synchronized (thisarg) {
-      CashewValue value = thisarg.getFieldValue(getClock(),valfld);
+      CashewValue value = thisarg.getFieldValue(getTyper(),getClock(),valfld);
       long lval = value.getNumber(getClock()).longValue();
-      JcompType dtyp = LONG_TYPE;
+      JcompType dtyp = getTyper().LONG_TYPE;
       int secondarg = 3;
       if (clsnm.contains("Integer")){
-	 dtyp = INT_TYPE;
+	 dtyp = getTyper().INT_TYPE;
 	 secondarg = 2;
        }
 
@@ -82,50 +83,50 @@ CuminRunStatus checkAtomicIntMethods()
 	    break;
 	 case "set" :
 	 case "lazySet" :
-	    thisarg.setFieldValue(getClock(),valfld,getValue(1));
+	    thisarg.setFieldValue(getTyper(),getClock(),valfld,getValue(1));
 	    break;
 	 case "getAndSet" :
 	    rslt = value.getActualValue(getClock());
-	    thisarg.setFieldValue(getClock(),valfld,getValue(1));
+	    thisarg.setFieldValue(getTyper(),getClock(),valfld,getValue(1));
 	    break;
 	 case "getAndAdd" :
 	    rslt = value.getActualValue(getClock());
 	    lval += getLong(1);
-	    thisarg.setFieldValue(getClock(),valfld,CashewValue.numericValue(dtyp,lval));
+	    thisarg.setFieldValue(getTyper(),getClock(),valfld,CashewValue.numericValue(dtyp,lval));
 	    break;
 	 case "getAndDecrement" :
 	    rslt = value.getActualValue(getClock());
 	    lval -= 1;
-	    thisarg.setFieldValue(getClock(),valfld,CashewValue.numericValue(dtyp,lval));
+	    thisarg.setFieldValue(getTyper(),getClock(),valfld,CashewValue.numericValue(dtyp,lval));
 	    break;
 	 case "getAndIncrement" :
 	    rslt = value.getActualValue(getClock());
 	    lval += 1;
-	    thisarg.setFieldValue(getClock(),valfld,CashewValue.numericValue(dtyp,lval));
+	    thisarg.setFieldValue(getTyper(),getClock(),valfld,CashewValue.numericValue(dtyp,lval));
 	    break;
 	 case "decrementAndGet" :
 	    lval -= 1;
 	    rslt = CashewValue.numericValue(dtyp,lval);
-	    thisarg.setFieldValue(getClock(),valfld,rslt);
+	    thisarg.setFieldValue(getTyper(),getClock(),valfld,rslt);
 	    break;
 	 case "incrementAndGet" :
 	    lval += 1;
 	    rslt = CashewValue.numericValue(dtyp,lval);
-	    thisarg.setFieldValue(getClock(),valfld,rslt);
+	    thisarg.setFieldValue(getTyper(),getClock(),valfld,rslt);
 	    break;
 	 case "addAndGet" :
 	    lval += getLong(1);
 	    rslt = CashewValue.numericValue(dtyp,lval);
-	    thisarg.setFieldValue(getClock(),valfld,rslt);
+	    thisarg.setFieldValue(getTyper(),getClock(),valfld,rslt);
 	    break;
 	 case "weakCompareAndSet" :
 	 case "compareAndSet" :
 	    if (lval == getLong(1)) {
-	       thisarg.setFieldValue(getClock(),valfld,getValue(secondarg));
-	       rslt = CashewValue.booleanValue(true);
+	       thisarg.setFieldValue(getTyper(),getClock(),valfld,getValue(secondarg));
+	       rslt = CashewValue.booleanValue(getTyper(),true);
 	     }
 	    else {
-	       rslt = CashewValue.booleanValue(false);
+	       rslt = CashewValue.booleanValue(getTyper(),false);
 	     }
 	    break;
 	 default :
@@ -139,7 +140,7 @@ CuminRunStatus checkAtomicIntMethods()
 
 
 
-CuminRunStatus checkAtomicBooleanMethods()
+CuminRunStatus checkAtomicBooleanMethods() throws CashewException
 {
    CashewValue rslt = null;
 
@@ -148,7 +149,7 @@ CuminRunStatus checkAtomicBooleanMethods()
    String valfld = clsnm + ".value";
 
    synchronized (thisarg) {
-      CashewValue value = thisarg.getFieldValue(getClock(),valfld);
+      CashewValue value = thisarg.getFieldValue(getTyper(),getClock(),valfld);
       boolean bval = value.getBoolean(getClock());
 
       switch (getMethod().getName()) {
@@ -157,20 +158,20 @@ CuminRunStatus checkAtomicBooleanMethods()
 	    break;
 	 case "set" :
 	 case "lazySet" :
-	    thisarg.setFieldValue(getClock(),valfld,getValue(1));
+	    thisarg.setFieldValue(getTyper(),getClock(),valfld,getValue(1));
 	    break;
 	 case "getAndSet" :
 	    rslt = value.getActualValue(getClock());
-	    thisarg.setFieldValue(getClock(),valfld,getValue(1));
+	    thisarg.setFieldValue(getTyper(),getClock(),valfld,getValue(1));
 	    break;
 	 case "weakCompareAndSet" :
 	 case "compareAndSet" :
 	    if (bval == getBoolean(1)) {
-	       thisarg.setFieldValue(getClock(),valfld,getValue(2));
-	       rslt = CashewValue.booleanValue(true);
+	       thisarg.setFieldValue(getTyper(),getClock(),valfld,getValue(2));
+	       rslt = CashewValue.booleanValue(getTyper(),true);
 	     }
 	    else {
-	       rslt = CashewValue.booleanValue(false);
+	       rslt = CashewValue.booleanValue(getTyper(),false);
 	     }
 	    break;
 	 default :
@@ -189,7 +190,7 @@ CuminRunStatus checkAtomicBooleanMethods()
 /*                                                                              */
 /********************************************************************************/
 
-CuminRunStatus checkConcurrentHashMapMethods() throws CuminRunException
+CuminRunStatus checkConcurrentHashMapMethods() throws CuminRunException, CashewException
 {
    CashewValue rslt = null;
    
@@ -208,10 +209,10 @@ CuminRunStatus checkConcurrentHashMapMethods() throws CuminRunException
             CashewValue v1 = a1.getIndexValue(getClock(),idxv).getActualValue(getClock());
             if (v1 == a2) {
                a1.setIndexValue(getClock(),idxv,a3);
-               rslt = CashewValue.booleanValue(true);
+               rslt = CashewValue.booleanValue(getTyper(),true);
              }
             else {
-               rslt = CashewValue.booleanValue(false);
+               rslt = CashewValue.booleanValue(getTyper(),false);
              }
             break;
          default :
@@ -234,7 +235,7 @@ CuminRunStatus checkConcurrentHashMapMethods() throws CuminRunException
 /*                                                                              */
 /********************************************************************************/
 
-synchronized CuminRunStatus checkUnsafeMethods() throws CuminRunException
+synchronized CuminRunStatus checkUnsafeMethods() throws CuminRunException, CashewException
 {
    CashewValue rslt = null;
    
@@ -252,12 +253,12 @@ synchronized CuminRunStatus checkUnsafeMethods() throws CuminRunException
              }
           }
          if (fld == null) return null;
-         CashewValue oldv = cv1.getFieldValue(getClock(),fld);
+         CashewValue oldv = cv1.getFieldValue(getTyper(),getClock(),fld);
          int oldint = oldv.getNumber(getClock()).intValue();
-         if (oldint != v1) rslt = CashewValue.booleanValue(false);
+         if (oldint != v1) rslt = CashewValue.booleanValue(getTyper(),false);
          else {
-            cv1.setFieldValue(getClock(),fld,v2);
-            rslt = CashewValue.booleanValue(true);
+            cv1.setFieldValue(getTyper(),getClock(),fld,v2);
+            rslt = CashewValue.booleanValue(getTyper(),true);
           }
          break;
       case "compareAndSwapLong" :
@@ -273,12 +274,12 @@ synchronized CuminRunStatus checkUnsafeMethods() throws CuminRunException
              }
           }
          if (fld == null) return null;
-         oldv = cv1.getFieldValue(getClock(),fld);
+         oldv = cv1.getFieldValue(getTyper(),getClock(),fld);
          long oldlong = oldv.getNumber(getClock()).longValue();
-         if (oldlong != lv1) rslt = CashewValue.booleanValue(false);
+         if (oldlong != lv1) rslt = CashewValue.booleanValue(getTyper(),false);
          else {
-            cv1.setFieldValue(getClock(),fld,v2);
-            rslt = CashewValue.booleanValue(true);
+            cv1.setFieldValue(getTyper(),getClock(),fld,v2);
+            rslt = CashewValue.booleanValue(getTyper(),true);
           }
          break;
       default :

@@ -48,6 +48,7 @@ import edu.brown.cs.seede.acorn.AcornLog;
 import edu.brown.cs.seede.cashew.CashewClock;
 import edu.brown.cs.seede.cashew.CashewConstants;
 import edu.brown.cs.seede.cashew.CashewContext;
+import edu.brown.cs.seede.cashew.CashewException;
 import edu.brown.cs.seede.cashew.CashewSynchronizationModel;
 import edu.brown.cs.seede.cashew.CashewValue;
 import edu.brown.cs.seede.cashew.CashewValueFunctionRef;
@@ -65,9 +66,9 @@ public abstract class CuminRunner implements CuminConstants, CashewConstants
 /********************************************************************************/
 
 public static CuminRunner createRunner(CuminProject cp,CashewContext glblctx,
-      MethodDeclaration method,List<CashewValue> args)
+      MethodDeclaration method,List<CashewValue> args,boolean top)
 {
-   return new CuminRunnerAst(cp,glblctx,null,method,args);
+   return new CuminRunnerAst(cp,glblctx,null,method,args,top);
 }
 
 
@@ -128,8 +129,10 @@ protected CashewClock	execution_clock;
 protected CashewContext lookup_context;
 protected CashewContext global_context;
 protected List<CashewValue> call_args;
+protected JcompTyper    type_converter;
 
 protected long		max_time;
+protected int           max_depth;
 
 
 
@@ -155,6 +158,8 @@ protected CuminRunner(CuminProject cp,CashewContext gblctx,CashewClock cc,List<C
    global_context = gblctx;
    lookup_context = null;
    max_time = 0;
+   max_depth = 0;
+   type_converter = cp.getTyper();
 }
 
 
@@ -182,7 +187,8 @@ boolean isComplete()
    return false;
 }
 
-JcompTyper getTyper()			{ return base_project.getTyper(); }
+public JcompTyper getTyper()			{ return type_converter; }
+protected void setTyper(JcompTyper typer)       { type_converter = typer; }
 
 JcodeFactory getCodeFactory()		{ return base_project.getJcodeFactory(); }
 
@@ -222,6 +228,12 @@ public void setMaxTime(long t)
 }
 
 
+public void setMaxDepth(int d)
+{
+   max_depth = d;
+}
+
+
 
 public String findReferencedVariableName(String name)
 {
@@ -237,7 +249,8 @@ public String findReferencedVariableName(String name)
 
 
 
-public CashewValue findReferencedVariableValue(String name,long when)
+public CashewValue findReferencedVariableValue(JcompTyper typer,String name,long when)
+        throws CashewException 
 {
    int idx = name.indexOf("?");
    if (idx < 0) return null;
@@ -246,7 +259,7 @@ public CashewValue findReferencedVariableValue(String name,long when)
    int idx1 = ctxname.indexOf("#");
    if (idx1 > 0) ctxname = ctxname.substring(0,idx1);
    if (!ctxname.equals(lookup_context.getName())) return null;
-   return lookup_context.findReferencedVariableValue(varname,when);
+   return lookup_context.findReferencedVariableValue(typer,varname,when);
 }
 
 
@@ -268,6 +281,9 @@ protected void reset()
    execution_stack = new CuminStack();
    execution_clock = new CashewClock();
    lookup_context = null;
+   if (base_project != null) {
+      type_converter = base_project.getTyper();
+    }
 }
 
 
@@ -338,13 +354,23 @@ protected void saveReturn(CashewValue cv)
 }
 
 
-protected CuminRunStatus checkTimeout() throws CuminRunException
+protected CuminRunStatus checkTimeout()
 {
    if (max_time <= 0) return null;
    if (execution_clock.getTimeValue() > max_time)
       return CuminRunStatus.Factory.createTimeout();
 
    return null;
+}
+
+
+protected void checkStackOverflow() throws CuminRunException
+{
+   if (lookup_context == null || max_depth <= 0) return;
+   if (lookup_context.getDepth() > max_depth)
+      throw CuminRunStatus.Factory.createStackOverflow();
+   
+   return;
 }
 
 
@@ -359,6 +385,8 @@ protected CuminRunStatus checkTimeout() throws CuminRunException
 protected CuminRunner handleCall(CashewClock cc,JcompSymbol method,List<CashewValue> args,
       CallType ctyp) throws CuminRunException
 {
+   checkStackOverflow();
+   
    CashewValue thisarg = null;
    if (args != null && args.size() > 0) {
       thisarg = args.get(0);
@@ -369,7 +397,7 @@ protected CuminRunner handleCall(CashewClock cc,JcompSymbol method,List<CashewVa
    if (cmethod == null) {
       AcornLog.logE("Couldn't find method to call " + method);
       for (CashewValue cv : args) {
-	 AcornLog.logE("ARG: " + cv.getDebugString(cc));
+	 AcornLog.logE("ARG: " + cv.getDebugString(getTyper(),cc));
        }
       throw CuminRunStatus.Factory.createError("Missing method " + method);
     }
@@ -405,6 +433,8 @@ protected CuminRunner handleCall(CashewClock cc,JcompSymbol method,List<CashewVa
 CuminRunner handleCall(CashewClock cc,JcodeMethod method,List<CashewValue> args,
       CallType ctyp) throws CuminRunException
 {
+   checkStackOverflow();
+   
    CashewValue thisarg = null;
    if (args != null && args.size() > 0 && !method.isStatic()) {
       thisarg = args.get(0);
@@ -431,7 +461,7 @@ CuminRunner handleCall(CashewClock cc,JcodeMethod method,List<CashewValue> args,
       if (args != null) {
          for (CashewValue cv : args) {
             if (ctr++ > 0) buf.append(",");
-            buf.append(cv.getDebugString(cc));
+            buf.append(cv.getDebugString(getTyper(),cc));
           }
        }
       buf.append(")");
@@ -473,8 +503,9 @@ CuminRunner handleCall(CashewClock cc,JcodeMethod method,List<CashewValue> args,
 
 private CuminRunner doCall(CashewClock cc,ASTNode ast,List<CashewValue> args)
 {
-   CuminRunnerAst rast = new CuminRunnerAst(base_project,global_context,cc,ast,args);
-   lookup_context.addNestedContext(rast.getLookupContext());
+   CuminRunnerAst rast = new CuminRunnerAst(base_project,global_context,cc,ast,args,false);
+   CashewContext ctx = rast.getLookupContext();
+   lookup_context.addNestedContext(ctx);
 
    JcompSymbol js = JcompAst.getDefinition(ast);
    AcornLog.logD("Start ast call to " + js.getName());
@@ -497,11 +528,13 @@ CuminRunner doCall(CashewClock cc,JcodeMethod mthd,List<CashewValue> args)
 private JcompSymbol findTargetMethod(CashewClock cc,JcompSymbol method,
       CashewValue arg0,CallType ctyp)
 {
-   JcompType base = null;
-   if (arg0 != null) base = arg0.getDataType(cc);
    if (method.isStatic() || ctyp == CallType.STATIC || ctyp == CallType.SPECIAL) {
       return method;
     }
+   
+   JcompType base = null;
+   if (arg0 != null) base = arg0.getDataType(cc);
+   
    JcompSymbol nmethod = base.lookupMethod(getTyper(),method.getName(),method.getType());
    if (nmethod == null) {
       base.defineAll(getTyper());
@@ -649,15 +682,15 @@ protected CashewValue handleNew(JcompType nty)
 {
    CashewValue rslt = null;
 
-   if (nty == STRING_TYPE) {
-      rslt = CashewValue.stringValue(null);
+   if (nty == type_converter.STRING_TYPE) {
+      rslt = CashewValue.stringValue(type_converter.STRING_TYPE,null);
     }
-   else if (nty == FILE_TYPE) {
-      rslt = CashewValue.fileValue();
+   else if (nty.getName().equals("java.io.File")) {
+      rslt = CashewValue.fileValue(getTyper());
     }
    else {
       nty.defineAll(getTyper());
-      rslt = CashewValue.objectValue(nty);
+      rslt = CashewValue.objectValue(getTyper(),nty);
     }
 
    return rslt;

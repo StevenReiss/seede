@@ -35,6 +35,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
+import edu.brown.cs.ivy.jcomp.JcompTyper;
 import edu.brown.cs.ivy.xml.IvyXmlWriter;
 
 public class CashewInputOutputModel implements CashewConstants
@@ -156,7 +157,7 @@ synchronized public long fileAvailable(CashewClock clk,int fd)
 
 
 
-synchronized public void checkInputFile(CashewContext ctx,CashewClock cc,CashewValue cv,int fd,String path,
+synchronized public void checkInputFile(JcompTyper typer,CashewContext ctx,CashewClock cc,CashewValue cv,int fd,String path,
       boolean prior) throws IOException
 {
    InputData id = input_files.get(fd);
@@ -174,13 +175,18 @@ synchronized public void checkInputFile(CashewContext ctx,CashewClock cc,CashewV
 	 if (name != null) {
 	    String expr = "edu.brown.cs.seede.poppy.PoppyValue.getFileData(" + name  + ")";
 	    CashewValue rv = ctx.evaluate(expr);
-	    if (rv != null && rv.getDataType() == STRING_TYPE) {
-	       String finfo = rv.getString(cc);
-	       if (finfo.equals("*")) {
-		  throw new IOException("File not open");
-		}
-	       int idx = finfo.indexOf("@");
-	       pos = Long.parseLong(finfo.substring(idx+1));
+	    if (rv != null && rv.getDataType().isStringType()) {
+               try {
+                  String finfo = rv.getString(typer,cc);
+                  if (finfo.equals("*")) {
+                     throw new IOException("File not open");
+                   }
+                  int idx = finfo.indexOf("@");
+                  pos = Long.parseLong(finfo.substring(idx+1));
+                }
+               catch (CashewException e) {
+                  throw new IOException("Bad file");
+                }
 	     }
 	  }
        }

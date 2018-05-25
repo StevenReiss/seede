@@ -39,6 +39,7 @@ import org.w3c.dom.Element;
 
 import edu.brown.cs.ivy.jcomp.JcompAst;
 import edu.brown.cs.ivy.mint.MintDefaultReply;
+import edu.brown.cs.ivy.mint.MintConstants.CommandArgs;
 import edu.brown.cs.ivy.xml.IvyXml;
 import edu.brown.cs.seede.cashew.CashewContext;
 import edu.brown.cs.seede.cashew.CashewInputOutputModel;
@@ -90,6 +91,7 @@ private Map<CuminRunner,SesameLocation> runner_location;
 private Set<SesameExecRunner> exec_runners;
 private CashewInputOutputModel	cashew_iomodel;
 private Set<String>     expand_names;
+private boolean         compute_tostring;
 
 
 
@@ -122,7 +124,14 @@ protected SesameSession(SesameMain sm,String sid,Element xml)
    runner_location = new WeakHashMap<CuminRunner,SesameLocation>();
    cashew_iomodel = new CashewInputOutputModel();
    expand_names = null;
+   compute_tostring = sm.getComputeToString();
 }
+
+
+
+void setupSession()                             { }
+protected void waitForReady()                   { }
+
 
 
 
@@ -134,7 +143,10 @@ protected SesameSession(SesameMain sm,String sid,Element xml)
 
 public String getSessionId()			{ return session_id; }
 
-public SesameProject getProject()		{ return for_project; }
+public SesameProject getProject()		
+{ 
+   return for_project; 
+}
 
 public MethodDeclaration getCallMethod(SesameLocation loc)
 {
@@ -200,6 +212,17 @@ void setInitialValue(String what,String thread,String expr) throws SesameExcepti
 String getValueName(CashewValue cv,String thread)
 {
    return null;
+}
+
+
+boolean getComputeToString()
+{       
+   return compute_tostring;
+}
+
+void setComputeToString(boolean fg)
+{
+   compute_tostring = fg;
 }
 
 
@@ -299,7 +322,7 @@ CuminRunner createRunner(SesameLocation loc,SesameContext gblctx)
    if (args == null) return null;
    SesameThreadContext tctx = new SesameThreadContext(loc.getThread(),
 	 loc.getThreadName(),this,gblctx);
-   CuminRunner cr = CuminRunner.createRunner(getProject(),tctx,mthd,args);
+   CuminRunner cr = CuminRunner.createRunner(getProject(),tctx,mthd,args,true);
    runner_location.put(cr,loc);
 
    return cr;
@@ -363,7 +386,7 @@ synchronized void resetRunners()
 
 
 
-private void resetRunners(SesameExecRunner run)
+void resetRunners(SesameExecRunner run)
 {
    run.removeAllRunners();
    SesameContext gblctx = run.getBaseContext();

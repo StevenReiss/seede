@@ -56,6 +56,14 @@ public CashewClock()
 }
 
 
+CashewClock(long when)
+{
+   time_count = when;
+   max_time = 0;
+   freeze_lock = null;
+}
+
+
 
 /********************************************************************************/
 /*                                                                              */
@@ -65,7 +73,7 @@ public CashewClock()
 
 public long tick()
 {
-   if (freeze_lock.isHeldByCurrentThread()) return time_count;
+   if (freeze_lock != null && freeze_lock.isHeldByCurrentThread()) return time_count;
    
    ++time_count;
    if (time_count > max_time) max_time = time_count;
@@ -77,10 +85,16 @@ public long getTimeValue()                      { return time_count; }
 
 
 
+/********************************************************************************/
+/*                                                                              */
+/*      Freeze time to allow multiple sets in one step in a single thread       */
+/*                                                                              */
+/********************************************************************************/
 
 public synchronized void freezeTime()
 {
-   freeze_lock.lock();
+   if (freeze_lock != null) 
+      freeze_lock.lock();
 }
 
 
@@ -88,7 +102,7 @@ public synchronized void freezeTime()
 
 public void unfreezeTime()
 {
-   freeze_lock.unlock();
+   if (freeze_lock != null) freeze_lock.unlock();
 }
 
 
