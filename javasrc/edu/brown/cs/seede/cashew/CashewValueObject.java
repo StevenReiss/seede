@@ -97,7 +97,7 @@ CashewValueObject(JcompTyper typer,JcompType jt,Map<String,Object> inits,boolean
 		}
 	     }
 	    if (cr == null) cr = new CashewRef(cv,caninit);
-	
+
 	    if (fsym.isStatic()) {
 	       if (!static_values.containsKey(key)) {
 		  static_values.put(key,cr);
@@ -256,6 +256,7 @@ private CashewRef findFieldForName(JcompTyper typer,String nm,boolean force)
 	 buf.append(":");
 	 CashewValue cv = getFieldValue(typer,cc,fldname);
 	 buf.append(cv.getString(typer,cc,lvl-1,dbg));
+	 if ((ctr % 10) == 0 && Thread.currentThread().isInterrupted()) break;
        }
       buf.append("}");
     }
@@ -358,7 +359,7 @@ public CashewValueObject cloneObject(JcompTyper typer,CashewClock cc,long when)
        }
     }
    else {
-      CashewClock cc = outctx.getRunner().getClock();
+      CashewClock cc = outctx.getClock();
       String last = null;
       for (Long t : times) {
 	 CashewValue crv = cloneObject(outctx.getTyper(),cc,t+1);

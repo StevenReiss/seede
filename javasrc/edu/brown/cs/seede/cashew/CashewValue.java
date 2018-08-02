@@ -749,30 +749,30 @@ private static class ValueNumeric extends CashewValue {
    private Number fixValue(Number v) {
        if (getDataType() == null) return v;
        switch (getDataType().getName()) {
-	  case "int" :
-	     v = v.intValue();
-	     break;
-	  case "long" :
-	     v = v.longValue();
-	     break;
-	  case "short" :
-	     v = v.shortValue();
-	     break;
-	  case "byte" :
-	     v = v.byteValue();
-	     break;
-	  case "char" :
-	     v = v.shortValue();
-	     break;
-	  case "float" :
-	     v = v.floatValue();
-	     break;
-	  case "double" :
-	     v = v.doubleValue();
-	     break;
-	  default :
-	     break;
-	}
+          case "int" :
+             v = v.intValue();
+             break;
+          case "long" :
+             v = v.longValue();
+             break;
+          case "short" :
+             v = v.shortValue();
+             break;
+          case "byte" :
+             v = v.byteValue();
+             break;
+          case "char" :
+             v = v.shortValue();
+             break;
+          case "float" :
+             v = v.floatValue();
+             break;
+          case "double" :
+             v = v.doubleValue();
+             break;
+          default :
+             break;
+        }
        return v;
     }
 
@@ -818,6 +818,11 @@ private static class ValueNull extends CashewValue
     }
 
 }	// end of inner class ValueNull
+
+
+
+
+
 
 
 

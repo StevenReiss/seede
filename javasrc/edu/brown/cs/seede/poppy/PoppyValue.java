@@ -34,7 +34,10 @@ import java.lang.invoke.LambdaMetafactory;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.nio.channels.FileChannel;
 
 
@@ -309,6 +312,104 @@ public static ClassLoader getClassLoaderUsingPoppy(String cls)
    catch (ClassNotFoundException e) { }
    return null;
 }
+
+
+public static Constructor<?> getConstructorUsingPoppy(String cls, String ... args)
+        throws NoSuchMethodException
+{
+   try {
+      Class<?> cl = Class.forName(cls);
+      Class<?> [] acl = new Class<?>[args.length];
+      for (int i = 0; i < args.length; ++i) {
+         acl[i] = getClassForName(args[i]);
+       }
+      Constructor<?> rslt = cl.getConstructor(acl);
+      return rslt;
+    }
+   catch (ClassNotFoundException e) { }
+   
+   return null;
+}
+
+
+
+
+public static Method getMethodUsingPoppy(String cls,String name,boolean decl,String ... args)
+        throws NoSuchMethodException
+        {
+   try {
+      Class<?> cl = Class.forName(cls);
+      Class<?> [] acl = new Class<?>[args.length];
+      for (int i = 0; i < args.length; ++i) {
+         acl[i] = getClassForName(args[i]);
+       }
+      Method rslt = null;
+      if (decl) rslt = cl.getDeclaredMethod(name,acl);
+      else rslt = cl.getMethod(name,acl);
+      return rslt;
+    }
+   catch (ClassNotFoundException e) { }
+   
+   return null;
+}
+
+
+
+private static Class<?> getClassForName(String name) throws ClassNotFoundException
+{
+   switch (name) {
+      case "int" :
+         return int.class;
+      case "short" :
+         return short.class;
+      case "byte" :
+         return byte.class;
+      case "char" :
+         return char.class;
+      case "long" :
+         return long.class;
+      case "float" :
+         return float.class;
+      case "double" :
+         return double.class;
+    }
+   
+   return Class.forName(name);
+}
+
+
+
+public static Constructor<?>[] getDeclaredConstructorsUsingPoppy(String cls,boolean pub)
+{
+   try {
+      Class<?> cl = Class.forName(cls);
+      Constructor<?>[] rslt = cl.getDeclaredConstructors();
+      if (pub) {
+         int ct = 0;
+         for (int i = 0; i < rslt.length; ++i) {
+            if (Modifier.isPublic(rslt[i].getModifiers())) ++ct;
+          }
+         if (ct != rslt.length) {
+            Constructor<?>[] nrslt = new Constructor<?>[ct];
+            int nct = 0;
+            for (int i = 0; i < rslt.length; ++i) {
+               if (Modifier.isPublic(rslt[i].getModifiers())) {
+                  nrslt[nct++] = rslt[i];
+                }
+             }
+            rslt = nrslt;
+          }
+       }
+      return rslt;
+    }
+   catch (ClassNotFoundException e) { }
+   
+   return null; 
+}
+
+
+
+
 
 
 public static Object getNewInstance(String name)

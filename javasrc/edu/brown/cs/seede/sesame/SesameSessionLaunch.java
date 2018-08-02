@@ -146,7 +146,7 @@ String getAnyThread()
    waitForReady();
    
    MethodDeclaration md = getCallMethod(loc);
-   List<CashewValue> args = new ArrayList<CashewValue>();
+   List<CashewValue> args = new ArrayList<>();
    JcompSymbol msym = JcompAst.getDefinition(md.getName());
    if (msym == null) {
       getProject().getTyper();
@@ -171,7 +171,7 @@ String getAnyThread()
 	 JcompType jtyp = argval.getDataType(null);
 	 // need to check that 'this' is  compatible with COMPONENT
          JcompType g2dtype = getProject().getTyper().findSystemType("java.awt.Graphics2D");
-	 if (jtyp.isCompatibleWith(g2dtype)) {
+	 if (jtyp.isCompatibleWith(g2dtype) && !argval.isNull(null)) {
 	    if (!jtyp.getName().contains("PoppyGraphics")) {
 	       String gname = "MAIN_" + loc.getThreadName();
 	       getProject().getJcodeFactory().findClass("edu.brown.cs.seede.poppy.PoppyGraphics");

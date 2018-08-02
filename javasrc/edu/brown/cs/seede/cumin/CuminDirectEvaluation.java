@@ -27,7 +27,10 @@ package edu.brown.cs.seede.cumin;
 import java.io.UnsupportedEncodingException;
 
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.List;
 
+import edu.brown.cs.ivy.jcomp.JcompSymbol;
 import edu.brown.cs.ivy.jcomp.JcompType;
 import edu.brown.cs.ivy.jcomp.JcompTyper;
 import edu.brown.cs.seede.cashew.CashewException;
@@ -913,7 +916,7 @@ CuminRunStatus checkObjectMethods() throws CuminRunException, CashewException
 /*										*/
 /********************************************************************************/
 
-CuminRunStatus checkClassMethods() throws CashewException
+CuminRunStatus checkClassMethods() throws CashewException, CuminRunException
 {
    CashewValue rslt = null;
    JcompType rtype = null;
@@ -953,16 +956,81 @@ CuminRunStatus checkClassMethods() throws CashewException
 	    rslt = exec_runner.getLookupContext().evaluate(expr);
 	    break;
 	 case "newInstance" :
-	    exec_runner.ensureLoaded("edu.brown.cs.seede.poppy.PoppyValue");
-	    expr = "edu.brown.cs.seede.poppy.PoppyValue.getNewInstance(\"" +
-	    thistype.getName() + "\")";
-	    rslt = exec_runner.getLookupContext().evaluate(expr);
+            JcompSymbol csym = null;
+            JcompType ctyp = JcompType.createMethodType(null,null,false,null);
+            csym = thistype.lookupMethod(getTyper(),"<init>",ctyp);
+            if (csym != null) {
+               CashewValue nv = exec_runner.handleNew(thistype);
+               List<CashewValue> argv = new ArrayList<>();
+               argv.add(nv);
+               exec_runner.getStack().push(nv);
+               CuminRunner nrun = exec_runner.handleCall(getClock(),csym,argv,CallType.SPECIAL);
+               return CuminRunStatus.Factory.createCall(nrun);
+             }
+	    // exec_runner.ensureLoaded("edu.brown.cs.seede.poppy.PoppyValue");
+	    // expr = "edu.brown.cs.seede.poppy.PoppyValue.getNewInstance(\"" +
+	    // thistype.getName() + "\")";
+	    // rslt = exec_runner.getLookupContext().evaluate(expr);
 	    break;
 	 case "isPrimitive" :
 	    rslt = CashewValue.booleanValue(getTyper(),thistype.isPrimitiveType());
 	    break;
 	 case "isArray" :
 	    rslt = CashewValue.booleanValue(getTyper(),thistype.isArrayType());
+	    break;
+         case "isInterface" :
+            rslt = CashewValue.booleanValue(getTyper(),thistype.isInterfaceType());
+            break;
+         case "getModifiers" :
+            JcompSymbol sym = thistype.getDefinition();
+            rslt = CashewValue.numericValue(getTyper().INT_TYPE,sym.getModifiers());
+            break;
+         case "getSuperclass" :
+            rtype = thistype.getSuperType();
+            if (rtype == null) rslt = CashewValue.nullValue(getTyper());
+            break;
+         case "getConstructor" :
+            expr = "edu.brown.cs.seede.poppy.PoppyValue.getConstructorUsingPoppy(\"" +
+                thistype.getName() + "\"";
+            CashewValue av = getValue(1);
+            int sz = av.getFieldValue(getTyper(),getClock(),"length").getNumber(getClock()).intValue();
+            for (int i = 0; i < sz; ++i) {
+               CashewValue tv = av.getIndexValue(getClock(),i);
+               tv = tv.getActualValue(getClock());
+               JcompType argtype = ((CashewValueClass) tv).getJcompType();
+               expr += ",\"" + argtype.getName() + "\"";
+             }
+            expr += ")";
+            rslt = exec_runner.getLookupContext().evaluate(expr);
+            break;
+         case "getMethod" :
+         case "getDeclaredMethod" :
+            expr = "edu.brown.cs.seede.poppy.PoppyValue.getMethodUsingPoppy(\"" +
+            thistype.getName() + "\"";
+            String nm = getString(1);
+            expr += ",\"" + nm + "\"";
+            boolean declfg = (getMethod().getName().equals("getMethod") ? false : true);
+            expr += "," + declfg;
+            av = getValue(2);
+            sz = av.getFieldValue(getTyper(),getClock(),"length").getNumber(getClock()).intValue();
+            for (int i = 0; i < sz; ++i) {
+               CashewValue tv = av.getIndexValue(getClock(),i);
+               tv = tv.getActualValue(getClock());
+               JcompType argtype = ((CashewValueClass) tv).getJcompType();
+               expr += ",\"" + argtype.getName() + "\"";
+             }
+            expr += ")";
+            rslt = exec_runner.getLookupContext().evaluate(expr);
+            break;
+         case "getDelcaredConstructors" :
+         case "privateGetDeclaredConstructors" :
+         case "getDeclaredConstructors0" :
+            exec_runner.ensureLoaded("edu.brown.cs.seede.poppy.PoppyValue");   
+            boolean fg = false;
+            if (getNumArgs() == 2) fg = getBoolean(1);
+            expr = "edu.brown.cs.seede.poppy.PoppyValue.getDeclaredConstructorsUsingPoppy(\"" +
+                thistype.getName() + "\"," + fg + ")";
+	    rslt = exec_runner.getLookupContext().evaluate(expr);
 	    break;
 	 default :
 	    AcornLog.logE("Unknown call to java.lang.Class." + getMethod());
@@ -976,6 +1044,158 @@ CuminRunStatus checkClassMethods() throws CashewException
    return CuminRunStatus.Factory.createReturn(rslt);
 }
 
+
+
+CuminRunStatus checkClassReturn(CuminRunStatus r)
+{
+   if (!getMethod().isStatic()) {
+      switch (getMethod().getName()) {
+         case "newInstance" :
+            CashewValue rslt = exec_runner.getStack().pop();
+            return CuminRunStatus.Factory.createReturn(rslt);
+       }
+    }
+   
+   return r;
+   
+}
+
+
+
+CuminRunStatus checkConstructorMethods()
+{
+   switch (getMethod().getName()) {
+      case "newInstance" :
+         try {
+            CashewValue cnst = getValue(0);
+            CashewValue clzz = cnst.getFieldValue(getTyper(),getClock(),"java.lang.reflect.Constructor.clazz");
+            clzz = clzz.getActualValue(getClock());
+            CashewValue prms = cnst.getFieldValue(getTyper(),getClock(),"java.lang.reflect.Constructor.parameterTypes");
+            prms = prms.getActualValue(getClock());
+            CashewValueClass cvc = (CashewValueClass) clzz;
+            JcompType newtyp = cvc.getJcompType();
+            List<JcompType> argtyp = new ArrayList<>();
+            CashewValue szv = prms.getFieldValue(getTyper(),getClock(),"length");
+            int sz = szv.getNumber(getClock()).intValue();
+            for (int i = 0; i < sz; ++i) {
+               CashewValue v0 = prms.getIndexValue(getClock(),i);
+               CashewValueClass avc = (CashewValueClass) v0.getActualValue(getClock());
+               argtyp.add(avc.getJcompType());
+             }
+            JcompType mtyp = JcompType.createMethodType(null,argtyp,false,null);
+            JcompSymbol jsym = newtyp.lookupMethod(getTyper(),"<init>",mtyp);
+            if (jsym != null) {
+               CashewValue pval = getValue(1);
+               CashewValue nv = exec_runner.handleNew(newtyp);
+               exec_runner.getStack().push(nv);
+               List<CashewValue> argv = new ArrayList<>();
+               argv.add(nv);
+               CashewValue pszv = pval.getFieldValue(getTyper(),getClock(),"length");
+               int psz = pszv.getNumber(getClock()).intValue();
+               for (int i = 0; i < sz; ++i) {
+                  JcompType t0 = argtyp.get(i);
+                  CashewValue v0 = pval.getIndexValue(getClock(),i);
+                  if (i == sz-1 && jsym.getType().isVarArgs()) {
+                     if (psz == sz) {
+                        // check for array as last arg
+                      }
+                     // handle varargs here
+                   }
+                  CashewValue v1 = CuminEvaluator.castValue(exec_runner,v0,t0);
+                  argv.add(v1);
+                }
+               CuminRunner nrun = exec_runner.handleCall(getClock(),jsym,argv,CallType.SPECIAL);
+               return CuminRunStatus.Factory.createCall(nrun);
+             }
+          }
+         catch (CashewException e) {
+            
+          }
+	 catch (CuminRunException _ex) {}
+         
+         // todo: create object and call constructor
+         break;
+    }
+   return null;
+}
+
+
+
+CuminRunStatus checkConstructorReturn(CuminRunStatus r)
+{
+   if (!getMethod().isStatic()) {
+      switch (getMethod().getName()) {
+         case "newInstance" :
+            CashewValue rslt = exec_runner.getStack().pop();
+            return CuminRunStatus.Factory.createReturn(rslt);
+       }
+    }
+   
+   return r;
+   
+}
+
+
+CuminRunStatus checkMethodMethods() 
+{
+   switch (getMethod().getName()) {
+      case "invoke" :
+         try {
+            CashewValue mthd = getValue(0);
+            CashewValue clzz = mthd.getFieldValue(getTyper(),getClock(),"java.lang.reflect.Method.clazz");
+            clzz = clzz.getActualValue(getClock());
+            CashewValue prms = mthd.getFieldValue(getTyper(),getClock(),"java.lang.reflect.Method.parameterTypes");
+            prms = prms.getActualValue(getClock());
+            CashewValue rettvl = mthd.getFieldValue(getTyper(),getClock(),"java.lang.reflect.Method.returnType");
+            rettvl = rettvl.getActualValue(getClock());
+            CashewValue namvl = mthd.getFieldValue(getTyper(),getClock(),"java.lang.reflect.Method.name");
+            String name = namvl.getString(getTyper(),getClock());
+            CashewValueClass cvc = (CashewValueClass) clzz;
+            JcompType newtyp = cvc.getJcompType();
+            CashewValueClass rvc = (CashewValueClass) rettvl;
+            JcompType rettyp = rvc.getJcompType();
+            List<JcompType> argtyp = new ArrayList<>();
+            CashewValue szv = prms.getFieldValue(getTyper(),getClock(),"length");
+            int sz = szv.getNumber(getClock()).intValue();
+            for (int i = 0; i < sz; ++i) {
+               CashewValue v0 = prms.getIndexValue(getClock(),i);
+               CashewValueClass avc = (CashewValueClass) v0.getActualValue(getClock());
+               argtyp.add(avc.getJcompType());
+             }
+            JcompType mtyp = JcompType.createMethodType(rettyp,argtyp,false,null);
+            JcompSymbol jsym = newtyp.lookupMethod(getTyper(),name,mtyp);
+            if (jsym != null) {
+               CashewValue pval = getValue(2);
+               List<CashewValue> argv = new ArrayList<>();
+               if (!jsym.isStatic()) {
+                  argv.add(getValue(1));
+                }
+               CashewValue pszv = pval.getFieldValue(getTyper(),getClock(),"length");
+               int psz = pszv.getNumber(getClock()).intValue();
+               for (int i = 0; i < sz; ++i) {
+                  JcompType t0 = argtyp.get(i);
+                  CashewValue v0 = pval.getIndexValue(getClock(),i);
+                  if (i == sz-1 && jsym.getType().isVarArgs()) {
+                     if (psz == sz) {
+                        // check for array as last arg
+                      }
+                     // handle varargs here
+                   }
+                  CashewValue v1 = CuminEvaluator.castValue(exec_runner,v0,t0);
+                  argv.add(v1);
+                }
+               CuminRunner nrun = exec_runner.handleCall(getClock(),jsym,argv,CallType.SPECIAL);
+               return CuminRunStatus.Factory.createCall(nrun);
+             }
+          }
+         catch (CashewException e) {
+            
+          }
+         catch (CuminRunException e) { }
+         break;
+    }
+   return null;
+}
 
 
 
@@ -1246,11 +1466,41 @@ CuminRunStatus checkSunReflectionMethods() throws CuminRunException
       case "getClassAccessFlags" :
 	 rslt = CashewValue.numericValue(getTyper().INT_TYPE,Modifier.PUBLIC);
 	 break;
+      case "getCallerClass" :
+         CuminRunner cr = exec_runner.getOuterCall();
+         if (cr == null) return null;
+         CuminRunner cr1 = cr.getOuterCall();
+         if (cr1 == null) return null;
+         String cls = cr1.getCallingClass();
+         JcompTyper typer = exec_runner.getTyper();
+         JcompType typ1 = typer.findType(cls);
+         if (typ1 == null) typ1 = typer.findSystemType(cls);
+         if (typ1 == null) return null; 
+         rslt = CashewValue.classValue(getTyper(),typ1);
+         break;
       default :
 	 return null;
     }
 
    return CuminRunValue.Factory.createReturn(rslt);
+}
+
+
+
+CuminRunStatus checkClassAtomicMethods() throws CuminRunException
+{
+   CashewValue rslt = null;
+   
+   switch (getMethod().getName()) {
+      case "casReflectionData" :
+      case "casAnnotationType" :
+      case "casAnnotationData" :
+         synchronized (this) {
+            rslt = CashewValue.booleanValue(getTyper(),true);
+            return CuminRunValue.Factory.createReturn(rslt);
+          }
+    }
+   return null;
 }
 
 
@@ -1298,8 +1548,40 @@ CuminRunStatus checkAccessControllerMethods()
 /*										*/
 /********************************************************************************/
 
-CuminRunStatus checkRandomMethods()
+CuminRunStatus checkRandomMethods() throws CuminRunException
 {
+   if (getMethod().isConstructor() && getNumArgs() == 1) {
+      // new Random()
+      JcompType inttype = getTyper().LONG_TYPE;
+      String tnm = getMethod().getDeclaringClass().getName();
+      JcompType thistype = getTyper().findType(tnm);
+      List<JcompType> argt = new ArrayList<>();
+      argt.add(inttype);
+      JcompType mtyp = JcompType.createMethodType(null,argt,false,null);
+      JcompSymbol jsym = thistype.lookupMethod(getTyper(),"<init>",mtyp);
+      
+      if (jsym != null) {
+         List<CashewValue> argv = new ArrayList<>();
+         CashewValue cv = getValue(0);
+         argv.add(cv);
+         CashewValue nv = CashewValue.numericValue(inttype,173797);
+         argv.add(nv);
+         CuminRunner nrun = exec_runner.handleCall(getClock(),jsym,argv,CallType.SPECIAL);
+         return CuminRunStatus.Factory.createCall(nrun);
+       }
+      // exec_runner.ensureLoaded("edu.brown.cs.seede.poppy.PoppyValue");
+      // String expr = "edu.brown.cs.seede.poppy.PoppyValue.getDefaultRandom()";
+      // CashewValue nrslt = exec_runner.getLookupContext().evaluate(expr);
+      // 
+      // CashewValue rslt = getContext().findReference(0).getActualValue(getClock());
+      // try {
+         // CashewValue srslt = nrslt.getFieldValue(getTyper(),getClock(),"java.util.Random.seed");
+         // rslt.setFieldValue(getTyper(),getClock(),"java.util.Random.seed",srslt);
+         // return  CuminRunStatus.Factory.createReturn();
+       // }
+      // catch (CashewException e) { }
+    }
+
    return null;
 }
 

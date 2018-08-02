@@ -1,0 +1,6 @@
+<FAIT>
+  <METHOD NAME='edu.brown.cs.seede.cumin.CuminEvaluator.throwException'
+	  SCAN='true' NORETURN='true' />
+  <METHOD NAME='org.eclipse.jdt.core.JavaCore.getPlugin' ANNOTATIONS='NonNull' />
+
+</FAIT>

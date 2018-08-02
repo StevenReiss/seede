@@ -25,6 +25,7 @@
 package edu.brown.cs.seede.sesame;
 
 import edu.brown.cs.ivy.jcomp.JcompTyper;
+import edu.brown.cs.seede.acorn.AcornLog;
 import edu.brown.cs.seede.cashew.CashewContext;
 import edu.brown.cs.seede.cashew.CashewInputOutputModel;
 import edu.brown.cs.seede.cashew.CashewValue;
@@ -105,7 +106,8 @@ SesameContext(SesameSession ss)
       String expr = "edu.brown.cs.seede.poppy.PoppyValue.getStaticFieldValue";
       expr += suffix + "(\"" + name + "\")";
       cv = for_session.lookupValue(expr,type);
-      System.err.println("HANDLE PROBLEM FIELDS " + cv);
+      // System.err.println("HANDLE PROBLEM FIELDS " + cv);
+      AcornLog.logI("Handle problem fields: " + suffix + "('" + name + "') => " + cv);
     }
    if (cv != null) {
       cv = CashewValue.createReference(cv,true);

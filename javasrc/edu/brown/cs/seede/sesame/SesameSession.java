@@ -90,8 +90,8 @@ private Map<String,SesameLocation> location_map;
 private Map<CuminRunner,SesameLocation> runner_location;
 private Set<SesameExecRunner> exec_runners;
 private CashewInputOutputModel	cashew_iomodel;
-private Set<String>     expand_names;
-private boolean         compute_tostring;
+private Set<String>	expand_names;
+private boolean 	compute_tostring;
 
 
 
@@ -129,8 +129,8 @@ protected SesameSession(SesameMain sm,String sid,Element xml)
 
 
 
-void setupSession()                             { }
-protected void waitForReady()                   { }
+void setupSession()				{ }
+protected void waitForReady()			{ }
 
 
 
@@ -143,9 +143,9 @@ protected void waitForReady()                   { }
 
 public String getSessionId()			{ return session_id; }
 
-public SesameProject getProject()		
-{ 
-   return for_project; 
+public SesameProject getProject()	
+{
+   return for_project;
 }
 
 public MethodDeclaration getCallMethod(SesameLocation loc)
@@ -216,7 +216,7 @@ String getValueName(CashewValue cv,String thread)
 
 
 boolean getComputeToString()
-{       
+{
    return compute_tostring;
 }
 
@@ -267,26 +267,26 @@ synchronized void addExpandName(String name)
    expand_names.add(name);
 }
 
-Set<String> getExpandNames()            { return expand_names; }
+Set<String> getExpandNames()		{ return expand_names; }
 
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Methods to help in variable history                                     */
-/*                                                                              */
+/*										*/
+/*	Methods to help in variable history					*/
+/*										*/
 /********************************************************************************/
 
-CashewContext findContext(int idn) 
+CashewContext findContext(int idn)
 {
    if (idn <= 0) return null;
-   
+
    for (CuminRunner cr : runner_location.keySet()) {
       CashewContext ctx = cr.getLookupContext();
       CashewContext nctx = findContext(idn,ctx);
       if (nctx != null) return nctx;
     }
-   
+
    return null;
 }
 
@@ -298,14 +298,14 @@ CashewContext findContext(int idn)
 private CashewContext findContext(int id,CashewContext ctx)
 {
    if (ctx.getId() == id) return ctx;
-   
+
    CashewContext pctx = null;
    for (CashewContext cctx : ctx.getChildContexts()) {
       if (cctx.getId() > id) break;
       pctx = cctx;
     }
    if (pctx == null) return null;
-   
+
    return findContext(id,pctx);
 }
 
@@ -377,7 +377,7 @@ synchronized void startRunners()
 /*										*/
 /********************************************************************************/
 
-synchronized void resetRunners()
+void resetRunners()
 {
    for (SesameExecRunner run : exec_runners) {
       resetRunners(run);

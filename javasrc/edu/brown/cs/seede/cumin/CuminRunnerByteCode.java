@@ -94,6 +94,10 @@ CuminRunnerByteCode(CuminProject sp,CashewContext gblctx,CashewClock clock,
 
 JcodeMethod getCodeMethod()		{ return jcode_method; }
 int getNumArg() 			{ return num_arg; }
+String getCallingClass()
+{
+   return jcode_method.getDeclaringClass().getName();
+}
 
 
 @Override protected CashewValue synchronizeOn()
@@ -126,7 +130,6 @@ int getNumArg() 			{ return num_arg; }
 }
 
 
-
 @Override protected CuminRunStatus interpretRun(CuminRunStatus r)
 {
    if (r == null) {
@@ -137,11 +140,17 @@ int getNumArg() 			{ return num_arg; }
       catch (CuminRunException e) {
 	 sts = e;
        }
+      if (sts != null && sts.getReason() == Reason.CALL) current_instruction = -1;
       if (sts != null) return sts;
       current_instruction = 0;
       lookup_context.enableAccess(jcode_method.getDeclaringClass().getName());
     }
    else if (r.getReason() == Reason.RETURN) {
+      if (current_instruction < 0) {
+         CuminRunStatus sts = checkSpecialReturn(r);
+         if (sts != null) return sts;
+         else return r;
+       }
       current_instruction = current_instruction+1;
       CashewValue rv = r.getValue();
       if (rv != null) execution_stack.push(rv);
@@ -1271,7 +1280,18 @@ private CuminRunStatus checkSpecial() throws CuminRunException
             cde = new CuminDirectEvaluation(this);
             sts = cde.checkSunReflectionMethods();
             break;
-            
+         case "java.lang.Class$Atomic" :
+            cde = new CuminDirectEvaluation(this);
+            sts = cde.checkClassAtomicMethods();
+            break;
+         case "java.lang.reflect.Constructor" :
+            cde = new CuminDirectEvaluation(this);
+            sts = cde.checkConstructorMethods();
+            break;
+         case "java.lang.reflect.Method" :
+            cde = new CuminDirectEvaluation(this);
+            sts = cde.checkMethodMethods();
+            break;
          case "edu.brown.cs.seede.poppy.PoppyGraphics" :
             CuminGraphicsEvaluator cge = new CuminGraphicsEvaluator(this);
             sts = cge.checkPoppyGraphics();
@@ -1314,6 +1334,24 @@ private CuminRunStatus checkSpecial() throws CuminRunException
     }
 
    return sts;
+}
+
+
+
+private CuminRunStatus checkSpecialReturn(CuminRunStatus r)
+{  
+   String cls = jcode_method.getDeclaringClass().getName();
+   switch (cls) {
+      case "java.lang.Class" :
+         CuminDirectEvaluation cde = new CuminDirectEvaluation(this);
+         r = cde.checkClassReturn(r);
+         break;     
+      case "java.lang.reflect.Constructor" :
+         cde = new CuminDirectEvaluation(this);
+         r = cde.checkConstructorReturn(r);
+         break;  
+    }
+   return r;
 }
 
 

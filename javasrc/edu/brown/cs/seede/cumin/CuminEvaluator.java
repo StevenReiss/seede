@@ -512,7 +512,7 @@ static CashewValue castValue(CuminRunner cr,CashewValue cv,JcompType target)
 	 cv = CashewValue.numericValue(target,cv.getNumber(cc).doubleValue());
        }
       else {
-	 cv = CashewValue.numericValue(target,cv.getNumber(cc).longValue());
+	 cv = CashewValue.numericValue(typer,target,cv.getNumber(cc).longValue());
        }
     }
    else if (target.isBooleanType()) {

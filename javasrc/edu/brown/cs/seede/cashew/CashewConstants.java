@@ -24,8 +24,7 @@
 
 package edu.brown.cs.seede.cashew;
 
-
-
+import edu.brown.cs.ivy.jcomp.JcompTyper;
 
 public interface CashewConstants
 {
@@ -75,6 +74,12 @@ interface CashewDeferredValue {
    
 }
 
+interface CashewRunner {
+   void ensureLoaded(String cls);
+   CashewClock getClock();
+   CashewValue executeCall(String method,CashewValue ... args);
+   JcompTyper getTyper();
+}
 
 
 

@@ -58,7 +58,7 @@ public class SesameProject implements SesameConstants, CuminProject
 /*										*/
 /********************************************************************************/
 
-private SesameMain      sesame_control;
+private SesameMain	sesame_control;
 private String		project_name;
 private List<String>	class_paths;
 private Set<SesameFile> active_files;
@@ -109,7 +109,12 @@ SesameProject(SesameMain sm,String name)
 	 int idx = bn.lastIndexOf("rt.jar");
 	 ignore = bn.substring(0,idx);
        }
+      if (bn.endsWith("/lib/jrt-fs.jar")) {
+	 int idx = bn.lastIndexOf("/lib/jrt-fs.jar");
+	 ignore = bn.substring(0,idx);
+       }
       if (bn.contains("poppy.jar")) havepoppy = true;
+      if (IvyXml.getAttrBool(rpe,"SYSTEM")) continue;
       class_paths.add(bn);
     }
    if (ignore != null) {
@@ -194,7 +199,7 @@ boolean noteFileChanged(SesameFile sf,boolean force)
 {
    if (!force && !active_files.contains(sf)) return false;
 
-   project_lock.readLock().lock(); 
+   project_lock.readLock().lock();
    try {
       if (force || active_files.contains(sf)) {
 	 synchronized (changed_files) {

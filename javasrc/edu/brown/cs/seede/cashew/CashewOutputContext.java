@@ -36,7 +36,6 @@ import edu.brown.cs.ivy.jcomp.JcompType;
 import edu.brown.cs.ivy.jcomp.JcompTyper;
 import edu.brown.cs.ivy.xml.IvyXmlWriter;
 import edu.brown.cs.seede.acorn.AcornLog;
-import edu.brown.cs.seede.cumin.CuminRunner;
 
 
 
@@ -54,7 +53,7 @@ private IvyXmlWriter xml_writer;
 private Map<CashewValue,Integer> values_output;
 private List<ExpandName> expand_names;
 private CashewContext current_context;
-private CuminRunner for_runner;
+private CashewRunner for_runner;
 private JcompTyper type_context;
 
 private static AtomicInteger id_counter = new AtomicInteger();
@@ -67,7 +66,7 @@ private static AtomicInteger id_counter = new AtomicInteger();
 /*                                                                              */
 /********************************************************************************/
 
-public CashewOutputContext(CuminRunner cr,IvyXmlWriter xw,Set<String> exp)
+public CashewOutputContext(CashewRunner cr,IvyXmlWriter xw,Set<String> exp)
 {
    values_output = new HashMap<CashewValue,Integer>();
    xml_writer = xw;
@@ -101,8 +100,7 @@ public String getContents()
 }
 
 public JcompTyper getTyper()                    { return type_context; }
-public CuminRunner getRunner()                  { return for_runner; }
-
+public CashewClock getClock()                   { return for_runner.getClock(); }
 
 void setContext(CashewContext ctx)
 {

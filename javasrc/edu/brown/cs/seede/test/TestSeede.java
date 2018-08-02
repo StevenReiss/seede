@@ -67,6 +67,7 @@ private static final String		TEST3_SID = "SEED_12348";
 private static final String		TEST4_SID = "SEED_12349";
 private static final String             TEST5_SID = "SEED_12950";
 private static final String             TEST6_SID = "SEED_12951";
+private static final String             TEST7_SID = "SEED_12952";
 
 private static final String		TEST_PROJECT = "sample1";
 private static final String		LAUNCH1_NAME = "test1";
@@ -74,6 +75,7 @@ private static final String		LAUNCH2_NAME = "test2";
 private static final String		LAUNCH4_NAME = "test3";
 private static final String             LAUNCH5_NAME = "testLambda";
 private static final String             LAUNCH6_NAME = "testList";
+private static final String             LAUNCH7_NAME = "testNative";
 private static final String		REL_PATH1 = "src/edu/brown/cs/seede/sample/Tester.java";
 
 
@@ -559,6 +561,38 @@ private static class SeedeThread extends Thread {
 
 
 
+@Test public void test7()
+{
+   System.err.println("Start TEST7");
+   LaunchData ld = startLaunch(LAUNCH7_NAME);
+   
+   IvyXmlWriter xw = new IvyXmlWriter();
+   xw.begin("SESSION");
+   xw.field("TYPE","LAUNCH");
+   xw.field("PROJECT",TEST_PROJECT);
+   xw.field("LAUNCHID",ld.getLaunchId());
+   xw.field("THREADID",ld.getThreadId());
+   xw.end("SESSION");
+   String cnts = xw.toString();
+   xw.close();
+   MintDefaultReply rply = new MintDefaultReply();
+   sendSeedeMessage("BEGIN",TEST7_SID,null,cnts,rply);
+   Element status = rply.waitForXml();
+   Assert.assertTrue(IvyXml.isElement(status,"RESULT"));
+   
+   rply = new MintDefaultReply();
+   seede_result = null;
+   CommandArgs args = new CommandArgs("EXECID","test6");
+   sendSeedeMessage("EXEC",TEST7_SID,args,cnts,rply);
+   String sstatus = rply.waitForString();
+   System.err.println("RESULT IS " + sstatus);
+   Element xml = waitForSeedeResult();
+   Assert.assertNotNull(xml);
+   System.err.println("SEED RESULT IS " + IvyXml.convertXmlToString(xml));
+}
+
+
+
 /********************************************************************************/
 /*										*/
 /*	Bubbles Messaging methods						*/
@@ -651,57 +685,57 @@ private class IDEHandler implements MintHandler {
       String cmd = args.getArgument(0);
       Element e = msg.getXml();
       if (cmd == null) return;
-
+   
       switch (cmd) {
-	 case "ELISIION" :
-	    break;
-	 case "EDITERROR" :
-	    break;
-	 case "FILEERROR" :
-	    break;
-	 case "PRIVATEERROR" :
-	    break;
-	 case "EDIT" :
-	    break;
-	 case "BREAKEVENT" :
-	    break;
-	 case "LAUNCHCONFIGEVENT" :
-	    break;
-	 case "RUNEVENT" :
-	    long when = IvyXml.getAttrLong(e,"TIME");
-	    for (Element re : IvyXml.children(e,"RUNEVENT")) {
-	       handleRunEvent(re,when);
-	     }
-	    msg.replyTo("<OK/>");
-	    break;
-	 case "NAMES" :
-	 case "ENDNAMES" :
-	    break;
-	 case "PING" :
-	    msg.replyTo("<PONG/>");
-	    break;
-	 case "PROGRESS" :
-	    msg.replyTo("<OK/>");
-	    break;
-	 case "RESOURCE" :
-	    break;
-	 case "CONSOLE" :
-	    msg.replyTo("<OK/>");
-	    break;
-	 case "OPENEDITOR" :
-	    break;
-	 case "EVALUATION" :
-	    msg.replyTo("<OK/>");
-	    break;
-	 case "BUILDDONE" :
-	 case "FILECHANGE" :
-	 case "PROJECTDATA" :
-	 case "PROJECTOPEN" :
-	    break;
-	 case "STOP" :
-	    break;
-	 default :
-	    break;
+         case "ELISIION" :
+            break;
+         case "EDITERROR" :
+            break;
+         case "FILEERROR" :
+            break;
+         case "PRIVATEERROR" :
+            break;
+         case "EDIT" :
+            break;
+         case "BREAKEVENT" :
+            break;
+         case "LAUNCHCONFIGEVENT" :
+            break;
+         case "RUNEVENT" :
+            long when = IvyXml.getAttrLong(e,"TIME");
+            for (Element re : IvyXml.children(e,"RUNEVENT")) {
+               handleRunEvent(re,when);
+             }
+            msg.replyTo("<OK/>");
+            break;
+         case "NAMES" :
+         case "ENDNAMES" :
+            break;
+         case "PING" :
+            msg.replyTo("<PONG/>");
+            break;
+         case "PROGRESS" :
+            msg.replyTo("<OK/>");
+            break;
+         case "RESOURCE" :
+            break;
+         case "CONSOLE" :
+            msg.replyTo("<OK/>");
+            break;
+         case "OPENEDITOR" :
+            break;
+         case "EVALUATION" :
+            msg.replyTo("<OK/>");
+            break;
+         case "BUILDDONE" :
+         case "FILECHANGE" :
+         case "PROJECTDATA" :
+         case "PROJECTOPEN" :
+            break;
+         case "STOP" :
+            break;
+         default :
+            break;
        }
     }
 
