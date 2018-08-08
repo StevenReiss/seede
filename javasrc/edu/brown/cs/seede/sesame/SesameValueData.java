@@ -24,9 +24,6 @@
 
 package edu.brown.cs.seede.sesame;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -79,7 +76,8 @@ SesameValueData(SesameSessionLaunch sm,String thread,Element xml,String name)
 {
    sesame_session = sm;
    val_thread = thread;
-   if (name == null) val_name = IvyXml.getAttrString(xml,"NAME");
+   if (name == null) 
+      val_name = IvyXml.getAttrString(xml,"NAME");
    else val_name = name;
    val_expr = null;
    initialize(xml,null);
@@ -89,10 +87,15 @@ SesameValueData(SesameValueData par,Element xml)
 {
    sesame_session = par.sesame_session;
    val_thread = par.val_thread;
+   String vnm = IvyXml.getAttrString(xml,"NAME");
    if (par.val_expr != null) {
-      val_expr = par.val_expr + "." + IvyXml.getAttrString(xml,"NAME");
+      val_expr = par.val_expr + "." + vnm;
     }
-   val_name = par.val_name + "?" + IvyXml.getAttrString(xml,"NAME");
+   String cnm = IvyXml.getAttrString(xml,"DECLTYPE");
+   if (cnm != null) {
+      vnm = getFieldKey(vnm,cnm);
+    }
+   val_name = par.val_name + "?" + vnm;
 
    initialize(xml,val_expr);
 }
@@ -197,10 +200,14 @@ CashewValue getCashewValue()
 	 Map<String,SesameValueData> sets = new HashMap<String,SesameValueData>();
 	 for (Map.Entry<String,JcompType> ent : typ.getFields().entrySet()) {
 	    String fnm = ent.getKey();
+            String cnm = null;
 	    String key = fnm;
 	    int idx1 = fnm.lastIndexOf(".");
-	    if (idx1 >= 0) key = fnm.substring(idx1+1);
-	    key = getKey(key);
+	    if (idx1 >= 0) {
+               cnm = fnm.substring(0,idx1);
+               key = fnm.substring(idx1+1);
+             }
+	    key = getKey(key,cnm);
 	    if (sub_values != null && sub_values.get(key) != null) {
 	       SesameValueData fsvd = sub_values.get(key);
 	       fsvd = sesame_session.getUniqueValue(fsvd);
@@ -235,7 +242,7 @@ CashewValue getCashewValue()
 	 Map<Integer,Object> ainits = new HashMap<Integer,Object>();
 	 for (int i = 0; i < array_length; ++i) {
 	    String key = "[" + i + "]";
-	    String fullkey = getKey(key);
+	    String fullkey = getKey(key,null);
 	    if (sub_values != null && sub_values.get(fullkey) != null) {
 	       SesameValueData fsvd = sub_values.get(fullkey);
 	       fsvd = sesame_session.getUniqueValue(fsvd);
@@ -282,26 +289,36 @@ CashewValue getCashewValue()
 }
 
 
-private String getKey(String fnm)
+private String getKey(String fnm,String cnm)
 {
    if (fnm.equals(CashewConstants.HASH_CODE_FIELD)) return fnm;
-   return val_name + "?" + fnm;
+   
+   String knm = getFieldKey(fnm,cnm);
+   
+   return val_name + "?" + knm;
 }
 
 
-Collection<String> getVariables()
- {
-   computeValues();
-   if (sub_values == null) return Collections.emptyList();
-   return new ArrayList<String>(sub_values.keySet());
-}
 
-SesameValueData getValue(String var)
+private String getFieldKey(String fnm,String cnm)
 {
-   computeValues();
-   if (sub_values == null) return null;
-   return sub_values.get(var);
+   if (fnm.equals(CashewConstants.HASH_CODE_FIELD)) return fnm;
+   
+   if (fnm.startsWith("[")) return fnm;
+   
+   if (cnm == null) {
+      System.err.println("CHECK NULL HERE");
+    }
+   
+   if (cnm != null) return cnm.replace("$",".") + "." + fnm;
+   
+   return fnm;
 }
+
+
+
+
+
 
 
 String findValue(CashewValue cv,int lvl)
@@ -452,9 +469,13 @@ private class DeferredLookup implements CashewConstants.CashewDeferredValue {
    
       if (sub_values == null) return null;
       String fnm = field_name;
+      String cnm = null;
       int idx = fnm.lastIndexOf(".");
-      if (idx >= 0) fnm = fnm.substring(idx+1);
-      String lookup = getKey(fnm);
+      if (idx >= 0) {
+         cnm = fnm.substring(0,idx);
+         fnm = fnm.substring(idx+1);
+       }
+      String lookup = getKey(fnm,cnm);
       SesameValueData svd = sub_values.get(lookup);
       svd = sesame_session.getUniqueValue(svd);
       if (svd == null) {

@@ -112,7 +112,8 @@ static CashewValue evaluateUnchecked(JcompTyper typer,CashewClock cc,CuminOperat
    switch (op) {
       case ADD :
 	 if (isstr) {
-	    String s0 = v1.getString(typer,cc) + v2.getString(typer,cc);
+            // TODO: Need to call toString here to get accurate results
+	    String s0 = getStringValue(v1,typer,cc) + getStringValue(v2,typer,cc);
 	    rslt = CashewValue.stringValue(typer.STRING_TYPE,s0);
 	  }
 	 else if (isdbl) {
@@ -871,6 +872,20 @@ static CashewValue buildArray(CuminRunner runner,int idx,int [] bnds,JcompType b
 }
 
 
+/********************************************************************************/
+/*                                                                              */
+/*      String helper methods                                                   */
+/*                                                                              */
+/********************************************************************************/
+
+static String getStringValue(CashewValue cv,JcompTyper typer,CashewClock cc) throws CashewException
+{
+   JcompType jt = cv.getDataType(cc);
+   if (jt.isEnumType()) {
+      return cv.getFieldValue(typer,cc,"java.lang.Enum.name").getString(typer,cc);
+    }
+   return cv.getString(typer,cc);
+}
 
 
 

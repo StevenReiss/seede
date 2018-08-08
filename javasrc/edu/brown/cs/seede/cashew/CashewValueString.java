@@ -47,7 +47,7 @@ private String string_value;
 private CashewValue value_field;
 private CashewValue hash_field;
 private CashewValue hash32_field;
-
+private CashewValue coder_field;
 
 
 /********************************************************************************/
@@ -63,6 +63,7 @@ CashewValueString(JcompType styp,String s)
    value_field = null;
    hash_field = null;
    hash32_field = null;
+   coder_field = null;
 }
 
 
@@ -157,11 +158,17 @@ CashewValueString(JcompType styp,String s)
 	    hash32_field = CashewValue.numericValue(typer.INT_TYPE,0);
 	  }
 	 return hash32_field;
+      case "coder" :
+      case "java.lang.String.coder" :
+	 if (coder_field == null) {
+	    coder_field = CashewValue.numericValue(typer.BYTE_TYPE,0);
+	  }
+	 return coder_field;
       default :
-         if (force) {
-            throw new Error("Illegal string field access for " + name);
-          }
-         else return null;
+	 if (force) {
+	    throw new Error("Illegal string field access for " + name);
+	  }
+	 else return null;
     }
 }
 
@@ -174,18 +181,18 @@ CashewValueString(JcompType styp,String s)
 /********************************************************************************/
 
 @Override public CashewValue setFieldValue(JcompTyper typer,CashewClock cc,String name,CashewValue v)
-        throws CashewException
+	throws CashewException
 {
    switch (name) {
       case "value" :
       case "java.lang.String.value" :
 	 value_field = v;
-         int dim = v.getDimension(cc);
-         char [] rslt = new char[dim];
-         for (int i = 0; i < dim; ++i) {
-            rslt[i] = v.getIndexValue(cc,i).getChar(cc);
-          }
-         string_value = new String(rslt);
+	 int dim = v.getDimension(cc);
+	 char [] rslt = new char[dim];
+	 for (int i = 0; i < dim; ++i) {
+	    rslt[i] = v.getIndexValue(cc,i).getChar(cc);
+	  }
+	 string_value = new String(rslt);
 	 break;
       case "hash" :
       case "java.lang.String.hash" :
@@ -195,9 +202,13 @@ CashewValueString(JcompType styp,String s)
       case "java.lang.String.hash32" :
 	 hash32_field = v;
 	 break;
+      case "coder" :
+      case "java.lang.String.coder" :
+	 coder_field = v;
+	 break;
       default :
 	 throw new Error("Illegal string field access for " + name);
-	
+
     }
    return v;
 }
@@ -210,7 +221,10 @@ public void setInitialValue(String s)
    value_field = null;
    hash_field = null;
    hash32_field = null;
+   coder_field = null;
 }
+
+
 
 @Override public void outputLocalXml(IvyXmlWriter xw,CashewOutputContext ctx,String name)
 {

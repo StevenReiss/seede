@@ -88,9 +88,10 @@ private PoppyController(String args,Instrumentation inst)
       PrintWriter p1 = new PrintWriter(new FileWriter(f1));
       p1.println("POPPY: Start");
       p1.println("POPPY: CP: " + System.getProperty("java.class.path"));
-      p1.println("POPPY: BCP: " + rmx.getBootClassPath());
+      if (rmx.isBootClassPathSupported()) {
+         p1.println("POPPY: BCP: " + rmx.getBootClassPath());
+       }
       p1.println("POPPY: CP: " + rmx.getClassPath());
-      p1.println("POPPY: BBPS: " + rmx.isBootClassPathSupported()); 
       p1.close();
     }
    catch (IOException e) { }

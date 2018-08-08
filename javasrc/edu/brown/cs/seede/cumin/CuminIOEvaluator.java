@@ -500,8 +500,16 @@ CuminRunStatus checkPrintMethods(String cls) throws CashewException
    if (fdval.isNull(getClock())) return null;
    CashewValue fd = fdval.getFieldValue(getTyper(),getClock(),"java.io.FileDescriptor.fd");
    int fdv = fd.getNumber(getClock()).intValue();
-   CashewValue appv = cv1.getFieldValue(getTyper(),getClock(),"java.io.FileOutputStream.append");
-   boolean app = appv.getBoolean(getClock());
+   
+   boolean app = false;
+   try {
+      CashewValue appv = cv1.getFieldValue(getTyper(),getClock(),"java.io.FileOutputStream.append");
+      app = appv.getBoolean(getClock());
+    }
+   catch (Throwable t) {
+      // append is not defined in Java 10 -- need to compute this some other way
+    }
+   
    String path = null;
    try {
       CashewValue pathv = cv1.getFieldValue(getTyper(),getClock(),"java.io.FileOutputStream.path");

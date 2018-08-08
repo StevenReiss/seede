@@ -413,7 +413,8 @@ CuminRunner handleCall(CashewClock cc,JcompSymbol method,List<CashewValue> args,
    if (!type.isKnownType()) {
       ASTNode an = cmethod.getDefinitionNode();
       if (an == null) {
-	 AcornLog.logE("Missing AST for method declaration " + cmethod);
+         if (type.isEnumType() && cmethod.getName().equals("values")) ;
+         else AcornLog.logE("Missing AST for method declaration " + cmethod);
        }
       else if (an instanceof MethodDeclaration) {
 	 MethodDeclaration md = (MethodDeclaration) an;
@@ -542,7 +543,7 @@ private JcompSymbol findTargetMethod(CashewClock cc,JcompSymbol method,
    if (method.isStatic() || ctyp == CallType.STATIC || ctyp == CallType.SPECIAL) {
       return method;
     }
-
+   
    JcompType base = null;
    if (arg0 != null) base = arg0.getDataType(cc);
 

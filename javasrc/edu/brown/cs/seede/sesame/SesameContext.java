@@ -78,6 +78,11 @@ SesameContext(SesameSession ss)
       cv = CashewValue.booleanValue(typer,true);
       return cv;
     }
+   if (name.endsWith("ENUM$VALUES")) {
+      String expr = name.replace("ENUM$VALUES","values()");
+      cv = for_session.lookupValue(expr,type);
+      if (cv != null) return cv;
+    }
 
    cv = for_session.lookupValue(name,type);
    if (cv == null) {

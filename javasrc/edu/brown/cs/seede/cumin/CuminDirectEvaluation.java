@@ -1003,6 +1003,20 @@ CuminRunStatus checkClassMethods() throws CashewException, CuminRunException
             expr += ")";
             rslt = exec_runner.getLookupContext().evaluate(expr);
             break;
+         case "getDeclaredConstructor" :
+            expr = "edu.brown.cs.seede.poppy.PoppyValue.getDeclaredConstructorUsingPoppy(\"" +
+            thistype.getName() + "\"";
+            av = getValue(1);
+            sz = av.getFieldValue(getTyper(),getClock(),"length").getNumber(getClock()).intValue();
+            for (int i = 0; i < sz; ++i) {
+               CashewValue tv = av.getIndexValue(getClock(),i);
+               tv = tv.getActualValue(getClock());
+               JcompType argtype = ((CashewValueClass) tv).getJcompType();
+               expr += ",\"" + argtype.getName() + "\"";
+             }
+            expr += ")";
+            rslt = exec_runner.getLookupContext().evaluate(expr);
+            break;
          case "getMethod" :
          case "getDeclaredMethod" :
             expr = "edu.brown.cs.seede.poppy.PoppyValue.getMethodUsingPoppy(\"" +

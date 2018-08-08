@@ -176,9 +176,16 @@ public static Object getStaticFieldValue(String itm)
 	 break;
        }
       catch (ClassNotFoundException e) { }
+      // System.err.println("POPPY: Can't find class " + cls);
       int idx = cls.lastIndexOf(".");
-      if (idx < 0) return null;
+      if (idx < 0) {
+         System.err.println("POPPY: Problem getting class for static field: " + itm);
+         return null;
+       }     
       cls = cls.substring(0,idx) + "$" + cls.substring(idx+1);
+    }
+   if (fld.equals("ENUM$VALUES")) {
+      return c1.getEnumConstants();
     }
    try {
       Field f1 = c1.getDeclaredField(fld);
@@ -186,6 +193,8 @@ public static Object getStaticFieldValue(String itm)
       return f1.get(null);
     }
    catch (Throwable t) { }
+   
+   System.err.println("POPPY: Problem getting static field: " + c1 + " " + fld);
    return null;
 }
 
@@ -333,6 +342,25 @@ public static Constructor<?> getConstructorUsingPoppy(String cls, String ... arg
 
 
 
+public static Constructor<?> getDeclaredConstructorUsingPoppy(String cls, String ... args)
+        throws NoSuchMethodException
+        {
+   try {
+      Class<?> cl = Class.forName(cls);
+      Class<?> [] acl = new Class<?>[args.length];
+      for (int i = 0; i < args.length; ++i) {
+         acl[i] = getClassForName(args[i]);
+       }
+      Constructor<?> rslt = cl.getDeclaredConstructor(acl);
+      return rslt;
+    }
+   catch (ClassNotFoundException e) { }
+   
+   return null;
+}
+
+
+
 
 public static Method getMethodUsingPoppy(String cls,String name,boolean decl,String ... args)
         throws NoSuchMethodException
@@ -416,7 +444,7 @@ public static Object getNewInstance(String name)
 {
    try {
       Class<?> c = Class.forName(name);
-      return c.newInstance();
+      return c.getDeclaredConstructor().newInstance();
     }
    catch (Throwable t) {
       return null;

@@ -306,10 +306,14 @@ String getAnyThread()
 @Override void enableAccess(String type)
 {
    if (accessible_types.contains(type)) return;
+   
+   if (type.startsWith("jdk.internal.ref.")) {
+      accessible_types.add(type);
+      return;
+    }
 
    String type1 = type.replace('$','.');
 
-   //String expr1 = "java.lang.reflect.AccessibleObject.setAccessible(Class.forName(\"" + type + "\")";
    String expr = "java.lang.reflect.AccessibleObject.setAccessible(" + type1 + ".class";
    expr += ".getDeclaredFields(),true)";
    evaluateVoid(expr);

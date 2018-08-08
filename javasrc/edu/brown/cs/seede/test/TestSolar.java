@@ -105,7 +105,7 @@ public TestSolar()
    mint_control.register("<BEDROCK SOURCE='ECLIPSE' TYPE='_VAR_0' />",new PingHandler());
    
    System.err.println("SETTING UP BEDROCK");
-   File ec1 = new File("/u/spr/eclipse-neonx/eclipse/eclipse");
+   File ec1 = new File("/u/spr/eclipse-oxygenx/eclipse/eclipse");
    File ec2 = new File("/u/spr/Eclipse/solar");
    if (!ec1.exists()) {
       ec1 = new File("/Developer/eclipse42/eclipse");

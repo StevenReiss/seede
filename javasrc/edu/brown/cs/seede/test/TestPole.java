@@ -102,7 +102,7 @@ public TestPole()
    mint_control.register("<BEDROCK SOURCE='ECLIPSE' TYPE='_VAR_0' />",new PingHandler());
    
    System.err.println("SETTING UP BEDROCK");
-   File ec1 = new File("/u/spr/eclipse-neonx/eclipse/eclipse");
+   File ec1 = new File("/u/spr/eclipse-oxygenx/eclipse/eclipse");
    File ec2 = new File("/u/spr/Eclipse/hump");
    if (!ec1.exists()) {
       ec1 = new File("/Developer/eclipse42/eclipse");
@@ -351,8 +351,8 @@ private static class SeedeThread extends Thread {
     }
 
    @Override public void run() {
-      SesameMain.main(new String [] { "-m", MINT_NAME });
-    }
+      SesameMain.main(new String [] { "-m", MINT_NAME, "-T", "-D", "-L", "/u/spr/seede.log" });
+   }
 
 }	// end of inner class SeedeThread
 
