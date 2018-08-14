@@ -27,6 +27,7 @@ package edu.brown.cs.seede.cumin;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.jdt.core.dom.ASTNode;
@@ -451,12 +452,31 @@ CuminRunner handleCall(CashewClock cc,JcodeMethod method,List<CashewValue> args,
 
    JcodeMethod cmethod = findTargetMethod(cc,method,thisarg,ctyp);
    if (thisarg != null && thisarg.isFunctionRef(cc)) {
+      CashewValueFunctionRef fref = (CashewValueFunctionRef) thisarg;
       List<CashewValue> nargs = new ArrayList<>(args);
       nargs.remove(0);
       if (cmethod == null) {
-	 CashewValueFunctionRef fref = (CashewValueFunctionRef) thisarg;
 	 ASTNode an = fref.getEvalNode();
 	 return doCall(cc,an,args);
+       }
+      Map<Object,CashewValue> bind = fref.getBindings();
+      if (bind != null) {
+         for (int i = 0; ; ++i) {
+            CashewValue cv = bind.get(i);
+            if (cv == null) break;
+            nargs.add(i,cv);
+          }
+       }
+      if (cmethod.isConstructor()) {
+         JcodeDataType dt = cmethod.getDeclaringClass();
+         JcompType nty = convertType(dt);
+         CashewValue vnew = handleNew(nty);
+         nargs.add(0,vnew);
+         execution_stack.push(vnew);
+       }
+      if (ctyp == CallType.INTERFACE) {
+         JcodeMethod nmethod = findTargetMethod(cc,cmethod,nargs.get(0),ctyp);
+         if (nmethod != null) cmethod = nmethod;
        }
       args = nargs;
     }
@@ -531,7 +551,10 @@ CuminRunner doCall(CashewClock cc,JcodeMethod mthd,List<CashewValue> args)
    rbyt.setMaxTime(max_time);
    rbyt.setMaxDepth(max_depth);
 
-   AcornLog.logD("Start binary call to " + mthd + " with " + args);
+   AcornLog.logD("Start binary call to " + mthd);
+   for (CashewValue v0 : args) {
+      AcornLog.logD("\tArg: " + v0);
+    }
 
    return rbyt;
 }

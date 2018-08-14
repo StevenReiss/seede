@@ -1046,6 +1046,11 @@ CuminRunStatus checkClassMethods() throws CashewException, CuminRunException
                 thistype.getName() + "\"," + fg + ")";
 	    rslt = exec_runner.getLookupContext().evaluate(expr);
 	    break;
+         case "isInstance" :
+            CashewValue v0 = getValue(1);
+            fg = v0.getDataType(getClock()).isCompatibleWith(thistype);
+            rslt = CashewValue.booleanValue(getTyper(),fg);
+            break;
 	 default :
 	    AcornLog.logE("Unknown call to java.lang.Class." + getMethod());
 	    return null;

@@ -880,6 +880,8 @@ static CashewValue buildArray(CuminRunner runner,int idx,int [] bnds,JcompType b
 
 static String getStringValue(CashewValue cv,JcompTyper typer,CashewClock cc) throws CashewException
 {
+   if (cv.isNull(cc)) return "null";
+   
    JcompType jt = cv.getDataType(cc);
    if (jt.isEnumType()) {
       return cv.getFieldValue(typer,cc,"java.lang.Enum.name").getString(typer,cc);

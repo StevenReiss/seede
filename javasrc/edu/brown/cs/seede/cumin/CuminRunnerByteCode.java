@@ -42,7 +42,9 @@ import edu.brown.cs.seede.cashew.CashewValueFunctionRef;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -1055,13 +1057,75 @@ private CuminRunStatus handleCall(JcodeMethod method,CallType cty)
 
 private void handleDynamicCall(JcodeInstruction ins)
 {
+   CashewValue cv = null;
    String [] args = ins.getDynamicReference();
-   JcompType t1 = buildMethodType1(args[5]);
-   JcompType rt1 = JcompType.createFunctionRefType(t1,null,null);
+   
+   if (args[2].startsWith("java/lang/invoke/LambdaMetafactory.metafactory")) {
+      JcompType t1 = buildMethodType1(args[5]);
+      Map<Object,CashewValue> bind = null;
+      int act = 0;
+      if (!args[1].startsWith("()")) {
+          if (bind == null) bind = new HashMap<>();
+          Type t0 = Type.getType(args[1]);
+          Type [] argtyps = t0.getArgumentTypes();
+          for (int i = 0; i < argtyps.length; ++i) {
+             CashewValue v0 = execution_stack.pop();
+             bind.put(act++,v0);
+           }
+       }
+      JcompType rt1 = JcompType.createFunctionRefType(t1,null,null);
+      
+      cv = new CashewValueFunctionRef(getTyper(),rt1,args[4],bind);
+    }
+   else if (args[2].startsWith("java/lang/invoke/StringConcatFactory.makeConcatWithConstants")) {
+      StringBuffer buf = new StringBuffer();
+      for (int i = 0; i < args[3].length(); ++i) {
+         char c = args[3].charAt(i);
+         if (c == 1) {
+            CashewValue v0 = execution_stack.pop();
+            if (v0.isNull(getClock())) buf.append("null");
+            try {
+               String v1 = CuminEvaluator.getStringValue(v0,getTyper(),getClock());
+               buf.append(v1);
+             }
+            catch (CashewException e) {
+               buf.append("???");
+             }
+          }
+         else buf.append(c);
+       }
+      cv = CashewValue.stringValue(getTyper().STRING_TYPE,buf.toString());
+    }
+   else if (args[2].startsWith("java/lang/invoke/StringConcatFactory.makeConcat")) {
+      StringBuffer buf = new StringBuffer();
+      Type t0 = Type.getType(args[1]);
+      Type [] argtyps = t0.getArgumentTypes();
+      for (int i = 0; i < argtyps.length; ++i) {
+         CashewValue v0 = execution_stack.pop();
+         try {
+            String v1 = CuminEvaluator.getStringValue(v0,getTyper(),getClock());
+            buf.append(v1);
+          }
+         catch (CashewException e) {
+            buf.append("???");
+          }
+       }
+      cv = CashewValue.stringValue(getTyper().STRING_TYPE,buf.toString());
+    }
+   else {
+      AcornLog.logE("Unknown dynamic call user: " + args[2]);
+      // need to do something here, setting cv
+    }
 
-   CashewValue cv = new CashewValueFunctionRef(getTyper(),rt1,args[4]);
+   try {
+      if (AcornLog.isTracing()) {
+         AcornLog.logD("RESULT: " + cv.getString(getTyper(),execution_clock,0,true));
+       }
+    }
+   catch (CashewException e) { }
+   
    execution_stack.push(cv);
-
+   
    /***** this doesn't work
    if (args[2].startsWith("java/lang/invoke/LambdaMetafactory.metafactory")) {
       JcodeMethod m1 = ins.getMethodReference();

@@ -66,10 +66,11 @@ public CashewValueFunctionRef(JcompTyper typer,JcompType typ,ASTNode nx,List<Jco
 }
 
 
-public CashewValueFunctionRef(JcompTyper typer,JcompType typ,String method)
+public CashewValueFunctionRef(JcompTyper typer,JcompType typ,String method,
+        Map<Object,CashewValue> bind)
 {
    super(typer,typ,null,false);
-   initial_bindings = null;
+   initial_bindings = bind;
    method_name = method;
    eval_node = null;
 }
