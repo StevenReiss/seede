@@ -1,21 +1,21 @@
 /********************************************************************************/
-/*                                                                              */
-/*              CashewOutputContext.java                                        */
-/*                                                                              */
-/*      Information for providing concise outputs                               */
-/*                                                                              */
+/*										*/
+/*		CashewOutputContext.java					*/
+/*										*/
+/*	Information for providing concise outputs				*/
+/*										*/
 /********************************************************************************/
-/*      Copyright 2011 Brown University -- Steven P. Reiss                    */
+/*	Copyright 2011 Brown University -- Steven P. Reiss		      */
 /*********************************************************************************
- *  Copyright 2011, Brown University, Providence, RI.                            *
- *                                                                               *
- *                        All Rights Reserved                                    *
- *                                                                               *
- * This program and the accompanying materials are made available under the      *
+ *  Copyright 2011, Brown University, Providence, RI.				 *
+ *										 *
+ *			  All Rights Reserved					 *
+ *										 *
+ * This program and the accompanying materials are made available under the	 *
  * terms of the Eclipse Public License v1.0 which accompanies this distribution, *
- * and is available at                                                           *
- *      http://www.eclipse.org/legal/epl-v10.html                                *
- *                                                                               *
+ * and is available at								 *
+ *	http://www.eclipse.org/legal/epl-v10.html				 *
+ *										 *
  ********************************************************************************/
 
 /* SVN: $Id$ */
@@ -44,9 +44,9 @@ public class CashewOutputContext implements CashewConstants
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Private Storage                                                         */
-/*                                                                              */
+/*										*/
+/*	Private Storage 							*/
+/*										*/
 /********************************************************************************/
 
 private IvyXmlWriter xml_writer;
@@ -61,9 +61,9 @@ private static AtomicInteger id_counter = new AtomicInteger();
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Constructors                                                            */
-/*                                                                              */
+/*										*/
+/*	Constructors								*/
+/*										*/
 /********************************************************************************/
 
 public CashewOutputContext(CashewRunner cr,IvyXmlWriter xw,Set<String> exp)
@@ -83,9 +83,9 @@ public CashewOutputContext(CashewRunner cr,IvyXmlWriter xw,Set<String> exp)
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Access methods                                                          */
-/*                                                                              */
+/*										*/
+/*	Access methods								*/
+/*										*/
 /********************************************************************************/
 
 public IvyXmlWriter getXmlWriter()
@@ -94,13 +94,13 @@ public IvyXmlWriter getXmlWriter()
 }
 
 
-public String getContents() 
+public String getContents()
 {
    return xml_writer.toString();
 }
 
-public JcompTyper getTyper()                    { return type_context; }
-public CashewClock getClock()                   { return for_runner.getClock(); }
+public JcompTyper getTyper()			{ return type_context; }
+public CashewClock getClock()			{ return for_runner.getClock(); }
 
 void setContext(CashewContext ctx)
 {
@@ -109,15 +109,15 @@ void setContext(CashewContext ctx)
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Processing methods                                                      */
-/*                                                                              */
+/*										*/
+/*	Processing methods							*/
+/*										*/
 /********************************************************************************/
 
 public int noteValue(CashewValue cv)
 {
    // returns -id if new, id if old
-   
+
    Integer v = values_output.get(cv);
    if (v != null && v != 0) return v;
    v = id_counter.incrementAndGet();
@@ -143,9 +143,9 @@ public void resetValues()
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Handle to String                                                        */
-/*                                                                              */
+/*										*/
+/*	Handle to String							*/
+/*										*/
 /********************************************************************************/
 
 public String getToString(CashewValue cv)
@@ -160,14 +160,14 @@ public String getToString(CashewValue cv)
       case "java.lang.String" :
       case "java.awt.Graphics" :
       case "java.awt.Component" :
-         return null;
+	 return null;
     }
-   
+
    for_runner.ensureLoaded("edu.brown.cs.seede.poppy.PoppyValue");
    String rtn = "edu.brown.cs.seede.poppy.PoppyValue.getToString";
    CashewValue rslt = for_runner.executeCall(rtn,cv);
    if (rslt == null || rslt.isNull(for_runner.getClock())) return null;
-   
+
    try {
       CashewClock clk = for_runner.getClock();
       return rslt.getString(type_context,clk);
@@ -175,14 +175,17 @@ public String getToString(CashewValue cv)
    catch (CashewException e) {
       AcornLog.logE("Problem getting toString",e);
     }
-   
+
    return null;
 }
 
+
+
+
 /********************************************************************************/
-/*                                                                              */
-/*      Handle name expansion                                                   */
-/*                                                                              */
+/*										*/
+/*	Handle name expansion							*/
+/*										*/
 /********************************************************************************/
 
 public boolean expand(String name)
@@ -215,54 +218,54 @@ private static class ExpandName {
 
    private String context_name;
    private String variable_name;
-   
+
    ExpandName(String nm) {
       int idx = nm.indexOf("?");
       if (idx >= 0) {
-         context_name = nm.substring(0,idx);
-         variable_name = nm.substring(idx+1);
-         int idx1 = context_name.indexOf("#");
-         if (idx1 > 0) context_name = context_name.substring(0,idx1);
+	 context_name = nm.substring(0,idx);
+	 variable_name = nm.substring(idx+1);
+	 int idx1 = context_name.indexOf("#");
+	 if (idx1 > 0) context_name = context_name.substring(0,idx1);
        }
       else {
-         context_name = null;
-         variable_name = nm;
+	 context_name = null;
+	 variable_name = nm;
        }
-      
+
       int idx1 = variable_name.indexOf("@");
       if (idx1 > 0) {
-         int idx2 = variable_name.indexOf("?",idx1);
-         if (idx2 < 0) variable_name = variable_name.substring(0,idx1);
-         else {
-            variable_name = variable_name.substring(0,idx1) + variable_name.substring(idx2);
-          }
+	 int idx2 = variable_name.indexOf("?",idx1);
+	 if (idx2 < 0) variable_name = variable_name.substring(0,idx1);
+	 else {
+	    variable_name = variable_name.substring(0,idx1) + variable_name.substring(idx2);
+	  }
        }
-      
+
     }
-   
+
    boolean match(CashewContext ctx,String name) {
       String ctxnm = ctx.getName();
       if (context_name != null && !context_name.equals(ctxnm)) return false;
       if (variable_name == null) return true;
       if (name.startsWith(variable_name)) {
-         int ln = variable_name.length(); 
-         if (ln == name.length()) return true;
-         if (ln == name.lastIndexOf("?")) return true;
+	 int ln = variable_name.length();
+	 if (ln == name.length()) return true;
+	 if (ln == name.lastIndexOf("?")) return true;
        }
       return false;
     }
-   
+
    boolean matchChild(CashewContext ctx,String name) {
       String ctxnm = ctx.getName();
       if (context_name != null && !context_name.equals(ctxnm)) return false;
-      if (variable_name != null && !variable_name.startsWith(name)) return false;   
+      if (variable_name != null && !variable_name.startsWith(name)) return false;
       return true;
    }
-   
+
 }
 
 
-}       // end of class CashewOutputContext
+}	// end of class CashewOutputContext
 
 
 

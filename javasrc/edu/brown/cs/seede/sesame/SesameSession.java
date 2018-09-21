@@ -143,7 +143,7 @@ protected void waitForReady()			{ }
 
 public String getSessionId()			{ return session_id; }
 
-public SesameProject getProject()	
+public SesameProject getProject()
 {
    return for_project;
 }
@@ -204,10 +204,12 @@ void noteContinue(String launch,String thread)			{ }
 
 void setInitialValue(String what,Element value) throws SesameException	   { }
 
+
 void setInitialValue(String what,String thread,String expr) throws SesameException
 {
    throw new SesameException("Initial expression value not implemented");
 }
+
 
 String getValueName(CashewValue cv,String thread)
 {
@@ -219,6 +221,7 @@ boolean getComputeToString()
 {
    return compute_tostring;
 }
+
 
 void setComputeToString(boolean fg)
 {

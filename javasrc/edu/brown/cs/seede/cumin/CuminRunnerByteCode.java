@@ -1072,7 +1072,7 @@ private void handleDynamicCall(JcodeInstruction ins)
              CashewValue v0 = execution_stack.pop();
              bind.put(act++,v0);
            }
-       }
+       } 
       JcompType rt1 = JcompType.createFunctionRefType(t1,null,null);
       
       cv = new CashewValueFunctionRef(getTyper(),rt1,args[4],bind);

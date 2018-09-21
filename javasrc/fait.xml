@@ -2,5 +2,6 @@
   <METHOD NAME='edu.brown.cs.seede.cumin.CuminEvaluator.throwException'
 	  SCAN='true' NORETURN='true' />
   <METHOD NAME='org.eclipse.jdt.core.JavaCore.getPlugin' ANNOTATIONS='NonNull' />
-
+  <PACKAGE NAME='edu.brown.cs.ivy.jflow' />
+  <PACKAGE NAME='jdk.lang.module' />
 </FAIT>

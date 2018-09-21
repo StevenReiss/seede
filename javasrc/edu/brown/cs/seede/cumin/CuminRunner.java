@@ -125,7 +125,7 @@ public static void resetGraphics()
 
 private CuminProject	base_project;
 private CuminRunner	nested_call;
-private CuminRunner     outer_call;
+private CuminRunner	outer_call;
 
 protected CuminStack	execution_stack;
 protected CashewClock	execution_clock;
@@ -204,7 +204,7 @@ CuminStack getStack()			{ return execution_stack; }
 
 public CashewContext getLookupContext() { return lookup_context; }
 public List<CashewValue> getCallArgs()	{ return call_args; }
-CuminRunner getOuterCall()              { return outer_call; }
+CuminRunner getOuterCall()		{ return outer_call; }
 abstract String getCallingClass();
 
 protected JcompType convertType(JcodeDataType cty)
@@ -304,14 +304,14 @@ public CuminRunStatus interpret(EvalType et) throws CuminRunException
       for ( ; ; ) {
 	 if (nested_call != null) {
 	    CuminRunStatus rsts = null;
-            nested_call.outer_call = this;
+	    nested_call.outer_call = this;
 	    try {
 	       rsts = nested_call.interpret(et);
 	     }
 	    catch (CuminRunException r) {
 	       rsts = r;
 	     }
-            nested_call.outer_call = null;
+	    nested_call.outer_call = null;
 	    if (rsts.getReason() == Reason.RETURN) {
 	       if (rsts.getValue() != null)
 		  nested_call.getLookupContext().define("*RETURNS*",rsts.getValue());
@@ -414,8 +414,8 @@ CuminRunner handleCall(CashewClock cc,JcompSymbol method,List<CashewValue> args,
    if (!type.isKnownType()) {
       ASTNode an = cmethod.getDefinitionNode();
       if (an == null) {
-         if (type.isEnumType() && cmethod.getName().equals("values")) ;
-         else AcornLog.logE("Missing AST for method declaration " + cmethod);
+	 if (type.isEnumType() && cmethod.getName().equals("values")) ;
+	 else AcornLog.logE("Missing AST for method declaration " + cmethod);
        }
       else if (an instanceof MethodDeclaration) {
 	 MethodDeclaration md = (MethodDeclaration) an;
@@ -461,22 +461,22 @@ CuminRunner handleCall(CashewClock cc,JcodeMethod method,List<CashewValue> args,
        }
       Map<Object,CashewValue> bind = fref.getBindings();
       if (bind != null) {
-         for (int i = 0; ; ++i) {
-            CashewValue cv = bind.get(i);
-            if (cv == null) break;
-            nargs.add(i,cv);
-          }
+	 for (int i = 0; ; ++i) {
+	    CashewValue cv = bind.get(i);
+	    if (cv == null) break;
+	    nargs.add(i,cv);
+	  }
        }
       if (cmethod.isConstructor()) {
-         JcodeDataType dt = cmethod.getDeclaringClass();
-         JcompType nty = convertType(dt);
-         CashewValue vnew = handleNew(nty);
-         nargs.add(0,vnew);
-         execution_stack.push(vnew);
+	 JcodeDataType dt = cmethod.getDeclaringClass();
+	 JcompType nty = convertType(dt);
+	 CashewValue vnew = handleNew(nty);
+	 nargs.add(0,vnew);
+	 execution_stack.push(vnew);
        }
       if (ctyp == CallType.INTERFACE) {
-         JcodeMethod nmethod = findTargetMethod(cc,cmethod,nargs.get(0),ctyp);
-         if (nmethod != null) cmethod = nmethod;
+	 JcodeMethod nmethod = findTargetMethod(cc,cmethod,nargs.get(0),ctyp);
+	 if (nmethod != null) cmethod = nmethod;
        }
       args = nargs;
     }
@@ -538,7 +538,7 @@ private CuminRunner doCall(CashewClock cc,ASTNode ast,List<CashewValue> args)
    lookup_context.addNestedContext(ctx);
 
    JcompSymbol js = JcompAst.getDefinition(ast);
-   AcornLog.logD("Start ast call to " + js.getName());
+   AcornLog.logD("Start ast call to " + js.getFullName());
 
    return rast;
 }
@@ -566,7 +566,7 @@ private JcompSymbol findTargetMethod(CashewClock cc,JcompSymbol method,
    if (method.isStatic() || ctyp == CallType.STATIC || ctyp == CallType.SPECIAL) {
       return method;
     }
-   
+
    JcompType base = null;
    if (arg0 != null) base = arg0.getDataType(cc);
 
@@ -669,7 +669,7 @@ private void beginSynch()
 }
 
 
-private void endSynch() 
+private void endSynch()
 {
    CashewValue cv = synchronizeOn();
    if (cv != null) {
