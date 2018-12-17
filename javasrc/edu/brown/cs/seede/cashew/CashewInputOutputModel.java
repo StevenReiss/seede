@@ -118,6 +118,8 @@ synchronized public void fileWrite(CashewClock clk,int fd,String path,byte [] bu
       file = new OutputData(fd,path);
       output_files.put(fd,file);
     }
+   
+   // if (len > 4096) len = 4096;
 
    file.addBytes(clk.tick(),buf,off,len);
 }
@@ -428,9 +430,9 @@ private static class OutputData {
 
    void addBytes(long when,byte [] buf,int off,int len) {
       if (!is_binary) {
-	 for (int i = 0; i < len; ++i) {
-	    if (buf[i+off] >= 128) is_binary = false;
-	  }
+         for (int i = 0; i < len; ++i) {
+            if (buf[i+off] >= 128) is_binary = false;
+          }
        }
       write_data.add(new WriteData(when,buf,off,len));
     }

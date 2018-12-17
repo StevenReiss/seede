@@ -734,7 +734,7 @@ private static class ValueNumeric extends CashewValue {
     }
 
    @Override public boolean isNull(CashewClock cc) {
-      throw new Error("Illegal value conversion");
+      return false;
     }
 
    @Override public String getInternalRepresentation(CashewClock cc) {
@@ -818,6 +818,16 @@ private static class ValueNull extends CashewValue
     }
 
 }	// end of inner class ValueNull
+
+
+
+
+
+
+
+
+
+
 
 
 

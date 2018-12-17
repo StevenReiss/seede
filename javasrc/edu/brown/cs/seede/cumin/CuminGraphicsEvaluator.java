@@ -497,6 +497,22 @@ private String encodeField(CashewValue cv) throws CashewException
 	 int m12 = getIntField(cv,"java.awt.geom.AffineTransform.m12");
 	 return "<TRANSFORM M00='" + m00 + "' M01='" + m01 + "' M02='" + m02 + "' " +
 		"M10='" + m10 + "' M11='" + m11 + "' M12='" + m12 + "' />";
+         
+      case "java.awt.GradientPaint" :
+          CashewValue col1 = cv.getFieldValue(getTyper(),getClock(),"java.awt.GradientPaint.color1");
+          int cval1 = getIntField(col1,"java.awt.Color.value");
+          CashewValue col2 = cv.getFieldValue(getTyper(),getClock(),"java.awt.GradientPaint.color2");
+          int cval2 = getIntField(col2,"java.awt.Color.value");
+          CashewValue pt1 = cv.getFieldValue(getTyper(),getClock(),"java.awt.GradientPaint.p1");
+          float f1x = getFloatField(pt1,"java.awt.geom.Point2D.Float,x");
+          float f1y = getFloatField(pt1,"java.awt.geom.Point2D.Float.y");
+          CashewValue pt2 = cv.getFieldValue(getTyper(),getClock(),"java.awt.GradientPaint.p2");
+          float f2x = getFloatField(pt2,"java.awt.geom.Point2D.Float,x");
+          float f2y = getFloatField(pt2,"java.awt.geom.Point2D.Float.y");
+          boolean cyc = getBooleanField(cv,"java.awt.GradientPaint.cyclic");
+          return "<GRADIENT C1='#" + Integer.toHexString(cval1) + "' C2='#" + Integer.toHexString(cval2) + "' " +
+               " X1='" + f1x + "' Y1='" + f1y + "' X2='" + f2x + "' Y2='" + f2y + "' CYC='" + cyc + "' />"; 
+          
       default :
 	 break;
     }
@@ -527,6 +543,22 @@ private double getDoubleField(CashewValue cv,String name) throws CashewException
    CashewValue fval = cv.getFieldValue(getTyper(),getClock(),name);
    if (fval == null) return 0;
    return fval.getNumber(getClock()).doubleValue();
+}
+
+
+private float getFloatField(CashewValue cv,String name) throws CashewException 
+{
+   CashewValue fval = cv.getFieldValue(getTyper(),getClock(),name);
+   if (fval == null) return 0;
+   return fval.getNumber(getClock()).floatValue();
+}
+
+
+private boolean getBooleanField(CashewValue cv,String name) throws CashewException 
+{
+   CashewValue fval = cv.getFieldValue(getTyper(),getClock(),name);
+   if (fval == null) return false;
+   return fval.getBoolean(getClock());
 }
 
 

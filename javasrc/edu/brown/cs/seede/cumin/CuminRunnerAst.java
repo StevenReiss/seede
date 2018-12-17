@@ -953,6 +953,9 @@ private CuminRunStatus visit(NumberLiteral v)
       default :
 	 String sv = v.getToken();
 	 long lv = 0;
+	 if (sv.endsWith("L") || sv.endsWith("l")) {
+	    sv = sv.substring(0,sv.length()-1);
+	  }
 	 if (sv.startsWith("0x") && sv.length() > 2) {
 	    sv = sv.substring(2);
 	    lv = Long.parseLong(sv,16);
@@ -968,10 +971,6 @@ private CuminRunStatus visit(NumberLiteral v)
 	 else if (sv.startsWith("0B") && sv.length() > 2) {
 	    sv = sv.substring(2);
 	    lv = Long.parseLong(sv,2);
-	  }
-	 else if (sv.endsWith("L") || sv.endsWith("l")) {
-	    sv = sv.substring(0,sv.length()-1);
-	    lv = Long.parseLong(sv);
 	  }
 	 else if (sv.startsWith("0") && sv.length() > 1) {
 	    sv = sv.substring(1);
@@ -2847,6 +2846,7 @@ private CashewValue handleThisAccess(JcompType base)
    String nm = thistyp.getName() + "." + OUTER_NAME;
    CashewValue cv1 = lookup_context.findReference(OUTER_NAME);
    if (cv1 == null) cv1 = lookup_context.findReference(nm);
+   if (cv1 == null) cv1 = cv.getFieldValue(type_converter,execution_clock,nm);
    if (cv1 == null) {
       AcornLog.logE("Can't find outer this for " + base + " " + thistyp);
     }
