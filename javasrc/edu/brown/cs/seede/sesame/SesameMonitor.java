@@ -331,7 +331,7 @@ private void handleConsoleEvent(Element e)
 private void handleBegin(String sid,Element xml,IvyXmlWriter xw) throws SesameException
 {
    SesameSession ss = SesameSession.createSession(sesame_control,sid,xml);
-   System.err.println("BEGIN " + sid + " " + ss);
+   AcornLog.logD("BEGIN " + sid + " " + ss);
    xw.begin("SESSION");
    xw.field("ID",ss.getSessionId());
    xw.end();
@@ -369,14 +369,18 @@ private void handleExec(String sid,Element xml,IvyXmlWriter xw)
 
    SesameSession ss = session_map.get(sid);
    if (ss == null) throw new SesameException("Session " + sid + " not found");
+   AcornLog.logD("WAIT FOR SESSION READY");
    ss.waitForReady();
    SesameContext gblctx = new SesameContext(ss);
-
+   
+   AcornLog.logD("COMPILE PROJECT");
    ss.getProject().compileProject();
    SesameExecRunner execer = null;
+   int nr = 0;
    for (SesameLocation loc : ss.getActiveLocations()) {
       CuminRunner cr = ss.createRunner(loc,gblctx);
       if (cr == null) continue;
+      ++nr;
       if (execer == null) {
 	 execer = new SesameExecRunner(ss,xid,gblctx,iscont,maxtime,maxdepth,cr);
 	 ss.addRunner(execer);
@@ -385,6 +389,7 @@ private void handleExec(String sid,Element xml,IvyXmlWriter xw)
 	 execer.addRunner(cr);
        }
     }
+   AcornLog.logD("START RUNNER " + nr + " " + execer);
    if (execer != null) {
       execer.startExecution();
     }

@@ -1416,6 +1416,10 @@ private CuminRunStatus visit(ClassInstanceCreation v, ASTNode after)
     }
 
    JcompType rty = JcompAst.getJavaType(v.getType());
+   if (v.getAnonymousClassDeclaration() != null) {
+      rty = JcompAst.getJavaType(v.getAnonymousClassDeclaration());
+    }
+
    JcompSymbol csym = JcompAst.getReference(v);
    if (csym == null) {
       JcompType ctyp = JcompType.createMethodType(null,null,false,null);
@@ -2167,22 +2171,31 @@ private CuminRunStatus visit(SwitchStatement s,ASTNode after)
    List<?> stmts = s.statements();
 
    if (after != null && after instanceof SwitchCase) {
-      CashewValue cv = execution_stack.pop();
-      CashewValue sv = execution_stack.pop();
-      cv = cv.getActualValue(getClock());
-      sv = sv.getActualValue(getClock());
-      boolean match = (cv == sv);
-      if (!match && sv.getDataType(getClock()).isStringType()) {
-	 String s1 = sv.getString(getTyper(),getClock());
-	 String s2 = cv.getString(getTyper(),getClock());
-	 match = s1.equals(s2);
+      List<CashewValue> cases = new ArrayList<>();
+      int sz = ((SwitchCase) after).expressions().size();
+      for (int i = 0; i < sz; ++i) {
+	 CashewValue casev = execution_stack.pop();
+	 casev = casev.getActualValue(getClock());
+	 cases.add(casev);
        }
-      else if (!match && cv.getDataType(getClock()).isNumericType()) {
-	 Number n0 = cv.getNumber(getClock());
-	 Number n1 = sv.getNumber(getClock());
-	 if (n0 instanceof Float || n0 instanceof Double)
-	    match = n0.doubleValue() == n1.doubleValue();
-	 else match = n0.longValue() == n1.longValue();
+      CashewValue switchv = execution_stack.pop();
+      switchv = switchv.getActualValue(getClock());
+      boolean match = false;
+      for (CashewValue casev : cases) {
+	 if (casev == switchv) match = true;
+	 if (!match && switchv.getDataType(getClock()).isStringType()) {
+	    String s1 = switchv.getString(getTyper(),getClock());
+	    String s2 = casev.getString(getTyper(),getClock());
+	    match = s1.equals(s2);
+	  }
+	 else if (!match && casev.getDataType(getClock()).isNumericType()) {
+	    Number n0 = casev.getNumber(getClock());
+	    Number n1 = switchv.getNumber(getClock());
+	    if (n0 instanceof Float || n0 instanceof Double)
+	       match = n0.doubleValue() == n1.doubleValue();
+	    else match = n0.longValue() == n1.longValue();
+	  }
+	 if (match) break;
        }
       int idx = stmts.indexOf(after) + 1;
       if (match) {
@@ -2197,7 +2210,7 @@ private CuminRunStatus visit(SwitchStatement s,ASTNode after)
 	  }
 	 return null;
        }
-      execution_stack.push(sv);
+      execution_stack.push(switchv);
     }
    if (after == s.getExpression() || after instanceof SwitchCase) {
       int idx = 0;
@@ -2272,9 +2285,18 @@ private CuminRunStatus visitThrow(SwitchStatement s,CuminRunStatus r)
 
 
 
+@SuppressWarnings("deprecation")
 private CuminRunStatus visit(SwitchCase s,ASTNode after)
 {
-   if (after == null && s.getExpression() != null) next_node = s.getExpression();
+   try {
+      List<?> exprs = s.expressions();
+      int idx = 0;
+      if (after != null) idx = exprs.indexOf(after)+1;
+      if (idx < exprs.size()) next_node = (ASTNode) exprs.get(idx);
+    }
+   catch (Throwable t) {
+      if (after == null) next_node = s.getExpression();
+    }
 
    return null;
 }
@@ -2323,7 +2345,7 @@ private CuminRunStatus visit(ThrowStatement s,ASTNode after)
 
 private CuminRunStatus visit(TryStatement s,ASTNode after) throws CuminRunException
 {
-   if (after == null || after.getLocationInParent() == TryStatement.RESOURCES_PROPERTY) {
+   if (after == null || after.getLocationInParent() == TryStatement.RESOURCES2_PROPERTY) {
       if (after == null) {
 	 execution_stack.pushMarker(s,TryState.BODY);
        }

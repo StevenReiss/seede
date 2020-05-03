@@ -40,11 +40,20 @@
    </target>
 
    <target name='test' depends='compile'>
-      <junit fork='true' printsummary='on'>
+      <junit fork='true' printsummary='on' showoutput='true' logfailedtests='true' >
+	 <classpath refid='test.classpath' />
+	 <assertions><enable/></assertions>
+	 <formatter type='xml' usefile='false' />
+	 <test name='edu.brown.cs.seede.test.TestSeede' outfile='test.out' />
+      </junit>
+   </target>
+
+   <target name='test4' depends='compile'>
+      <junit printsummary='on'>
 	 <classpath refid='test.classpath' />
 	 <assertions><enable/></assertions>
 	 <formatter type='xml' usefile='true' />
-	 <test name='edu.brown.cs.seede.test.TestSeede' outfile='test.out' />
+	 <test name='edu.brown.cs.seede.test.TestSeede' methods='test4' outfile='test4.out' />
       </junit>
    </target>
 
@@ -67,5 +76,9 @@
    </target>
 
 </project>
+
+
+
+
 
 

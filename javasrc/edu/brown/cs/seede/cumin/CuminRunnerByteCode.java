@@ -149,9 +149,9 @@ String getCallingClass()
     }
    else if (r.getReason() == Reason.RETURN) {
       if (current_instruction < 0) {
-         CuminRunStatus sts = checkSpecialReturn(r);
-         if (sts != null) return sts;
-         else return r;
+	 CuminRunStatus sts = checkSpecialReturn(r);
+	 if (sts != null) return sts;
+	 else return r;
        }
       current_instruction = current_instruction+1;
       CashewValue rv = r.getValue();
@@ -171,10 +171,10 @@ String getCallingClass()
 	 catch (CuminRunException cr) {
 	    sts = cr;
 	  }
-         catch (CashewException e) {
-            AcornLog.logD("Bad value access: " + e);
-            sts = CuminRunStatus.Factory.createCompilerError();
-          }
+	 catch (CashewException e) {
+	    AcornLog.logD("Bad value access: " + e);
+	    sts = CuminRunStatus.Factory.createCompilerError();
+	  }
 	 if (sts != null) {
 	    if (sts.getReason() == Reason.EXCEPTION) {
 	       sts = handleException(sts);
@@ -275,7 +275,7 @@ private void setupContext(List<CashewValue> args)
 /*										*/
 /********************************************************************************/
 
-private CuminRunStatus evaluateInstruction() throws CuminRunException, CashewException 
+private CuminRunStatus evaluateInstruction() throws CuminRunException, CashewException
 {
    CashewValue vstack = null;
    JcodeInstruction nextins = null;
@@ -945,7 +945,12 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException, CashewExc
 	 v0 = v0.getActualValue(execution_clock);
 	 fld = jins.getFieldReference();
 	 v1 = lookup_context.findReference(type_converter,fld);
-	 v1.setValueAt(execution_clock,v0);
+	 if (v1 == null) {
+	    AcornLog.logE("Cannot find field " + fld);
+	  }
+	 else {
+	    v1.setValueAt(execution_clock,v0);
+	  }
 	 break;
 
       case NEW :
@@ -1059,40 +1064,40 @@ private void handleDynamicCall(JcodeInstruction ins)
 {
    CashewValue cv = null;
    String [] args = ins.getDynamicReference();
-   
+
    if (args[2].startsWith("java/lang/invoke/LambdaMetafactory.metafactory")) {
       JcompType t1 = buildMethodType1(args[5]);
       Map<Object,CashewValue> bind = null;
       int act = 0;
       if (!args[1].startsWith("()")) {
-          if (bind == null) bind = new HashMap<>();
-          Type t0 = Type.getType(args[1]);
-          Type [] argtyps = t0.getArgumentTypes();
-          for (int i = 0; i < argtyps.length; ++i) {
-             CashewValue v0 = execution_stack.pop();
-             bind.put(act++,v0);
-           }
-       } 
+	  if (bind == null) bind = new HashMap<>();
+	  Type t0 = Type.getType(args[1]);
+	  Type [] argtyps = t0.getArgumentTypes();
+	  for (int i = 0; i < argtyps.length; ++i) {
+	     CashewValue v0 = execution_stack.pop();
+	     bind.put(act++,v0);
+	   }
+       }
       JcompType rt1 = JcompType.createFunctionRefType(t1,null,null);
-      
+
       cv = new CashewValueFunctionRef(getTyper(),rt1,args[4],bind);
     }
    else if (args[2].startsWith("java/lang/invoke/StringConcatFactory.makeConcatWithConstants")) {
       StringBuffer buf = new StringBuffer();
       for (int i = 0; i < args[3].length(); ++i) {
-         char c = args[3].charAt(i);
-         if (c == 1) {
-            CashewValue v0 = execution_stack.pop();
-            if (v0.isNull(getClock())) buf.append("null");
-            try {
-               String v1 = CuminEvaluator.getStringValue(v0,getTyper(),getClock());
-               buf.append(v1);
-             }
-            catch (CashewException e) {
-               buf.append("???");
-             }
-          }
-         else buf.append(c);
+	 char c = args[3].charAt(i);
+	 if (c == 1) {
+	    CashewValue v0 = execution_stack.pop();
+	    if (v0.isNull(getClock())) buf.append("null");
+	    try {
+	       String v1 = CuminEvaluator.getStringValue(v0,getTyper(),getClock());
+	       buf.append(v1);
+	     }
+	    catch (CashewException e) {
+	       buf.append("???");
+	     }
+	  }
+	 else buf.append(c);
        }
       cv = CashewValue.stringValue(getTyper().STRING_TYPE,buf.toString());
     }
@@ -1101,14 +1106,14 @@ private void handleDynamicCall(JcodeInstruction ins)
       Type t0 = Type.getType(args[1]);
       Type [] argtyps = t0.getArgumentTypes();
       for (int i = 0; i < argtyps.length; ++i) {
-         CashewValue v0 = execution_stack.pop();
-         try {
-            String v1 = CuminEvaluator.getStringValue(v0,getTyper(),getClock());
-            buf.append(v1);
-          }
-         catch (CashewException e) {
-            buf.append("???");
-          }
+	 CashewValue v0 = execution_stack.pop();
+	 try {
+	    String v1 = CuminEvaluator.getStringValue(v0,getTyper(),getClock());
+	    buf.append(v1);
+	  }
+	 catch (CashewException e) {
+	    buf.append("???");
+	  }
        }
       cv = CashewValue.stringValue(getTyper().STRING_TYPE,buf.toString());
     }
@@ -1119,13 +1124,13 @@ private void handleDynamicCall(JcodeInstruction ins)
 
    try {
       if (AcornLog.isTracing()) {
-         AcornLog.logD("RESULT: " + cv.getString(getTyper(),execution_clock,0,true));
+	 AcornLog.logD("RESULT: " + cv.getString(getTyper(),execution_clock,0,true));
        }
     }
    catch (CashewException e) { }
-   
+
    execution_stack.push(cv);
-   
+
    /***** this doesn't work
    if (args[2].startsWith("java/lang/invoke/LambdaMetafactory.metafactory")) {
       JcodeMethod m1 = ins.getMethodReference();
@@ -1235,154 +1240,163 @@ private CuminRunStatus checkSpecial() throws CuminRunException
 
    try {
       switch (cls) {
-         case "java.lang.String" :
-            CuminDirectEvaluation cde = new CuminDirectEvaluation(this);
-            sts = cde.checkStringMethods();
-            break;
-         case "java.lang.StrictMath" :
-         case "java.lang.Math" :
-            cde = new CuminDirectEvaluation(this);
-            sts = cde.checkMathMethods();
-            break;
-         case "java.lang.Runtime" :
-            cde = new CuminDirectEvaluation(this);
-            sts = cde.checkRuntimeMethods();
-            break;
-         case "java.lang.Float" :
-            cde = new CuminDirectEvaluation(this);
-            sts = cde.checkFloatMethods();
-            break;
-         case "java.lang.Double" :
-            cde = new CuminDirectEvaluation(this);
-            sts = cde.checkDoubleMethods();
-            break;
-         case "java.lang.ClassLoader" :
-            // handle class loader methods
-            break;
-         case "java.lang.Class" :
-            cde = new CuminDirectEvaluation(this);
-            sts = cde.checkClassMethods();
-            break;
-         case "java.lang.Object" :
-            cde = new CuminDirectEvaluation(this);
-            sts = cde.checkObjectMethods();
-            break;
-         case "java.lang.System" :
-            cde = new CuminDirectEvaluation(this);
-            sts = cde.checkSystemMethods();
-            break;
-         case "java.lang.Thread" :
-            cde = new CuminDirectEvaluation(this);
-            sts = cde.checkThreadMethods();
-            break;
-         case "java.lang.Throwable" :
-            cde = new CuminDirectEvaluation(this);
-            sts = cde.checkThrowableMethods();
-            break;
-         case "java.util.Random" :
-            cde = new CuminDirectEvaluation(this);
-            sts = cde.checkRandomMethods();
-            break;
-            
-         case "java.io.FileDescriptor" :
-         case "java.io.RandomAccessFile" :
-         case "java.nio.file.FileSystem" :
-         case "java.nio.file.spi.FileSystemProvider" :
-         case "java.nio.file.Files" :
-         case "sun.nio.cs.FastCharsetProvider" :
-            // TODO: handle other IO methods
-            break;
-            
-         case "java.io.File" :
-            CuminIOEvaluator cie = new CuminIOEvaluator(this);
-            sts = cie.checkFileMethods();
-            break;
-         case "java.io.FileOutputStream" :
-            cie = new CuminIOEvaluator(this);
-            sts = cie.checkOutputStreamMethods();
-            break;
-         case "java.io.FileInputStream" :
-            cie = new CuminIOEvaluator(this);
-            sts = cie.checkInputStreamMethods();
-            break;
-         case "java.io.Console" :
-            cie = new CuminIOEvaluator(this);
-            sts = cie.checkConsoleMethods();
-            break;
-         case "java.io.PrintStream" :
-            cie = new CuminIOEvaluator(this);
-            sts  = cie.checkPrintMethods("java.io.PrintStream");
-            break;
-         case "java.io.PrintWriter" :
-            cie = new CuminIOEvaluator(this);
-            sts  = cie.checkPrintMethods("java.io.PrintWriter");
-            break;
-            
-         case "java.io.ObjectOutputStream" :
-         case "java.io.ObjectInputStream" :
-            cie = new CuminIOEvaluator(this);
-            sts = cie.checkObjectStreamMethods();
-            break;
-            
-         case "sun.misc.FloatingDecimal" :
-            cde = new CuminDirectEvaluation(this);
-            sts = cde.checkFloatingDecimalMehtods();
-            break;
-         case "javax.swing.SwingUtilities" :
-            cde = new CuminDirectEvaluation(this);
-            sts = cde.checkSwingUtilityMethods();
-            break;
-         case "java.lang.reflect.Array" :
-            cde = new CuminDirectEvaluation(this);
-            sts = cde.checkReflectArrayMethods();
-            break;
-         case "java.security.AccessController" :
-            cde = new CuminDirectEvaluation(this);
-            sts = cde.checkAccessControllerMethods();
-            break;
-         case "sun.reflect.Reflection" :
-            cde = new CuminDirectEvaluation(this);
-            sts = cde.checkSunReflectionMethods();
-            break;
-         case "java.lang.Class$Atomic" :
-            cde = new CuminDirectEvaluation(this);
-            sts = cde.checkClassAtomicMethods();
-            break;
-         case "java.lang.reflect.Constructor" :
-            cde = new CuminDirectEvaluation(this);
-            sts = cde.checkConstructorMethods();
-            break;
-         case "java.lang.reflect.Method" :
-            cde = new CuminDirectEvaluation(this);
-            sts = cde.checkMethodMethods();
-            break;
-         case "edu.brown.cs.seede.poppy.PoppyGraphics" :
-            CuminGraphicsEvaluator cge = new CuminGraphicsEvaluator(this);
-            sts = cge.checkPoppyGraphics();
-            break;
-         case "sun.awt.SunGraphicsCallback" :
-            cge = new CuminGraphicsEvaluator(this);
-            sts = cge.checkGraphicsCallback();
-            break;
-            
-         case "java.util.concurrent.atomic.AtomicInteger" :
-         case "java.util.concurrent.atomic.AtomicLong" :
-            CuminConcurrentEvaluator cce = new CuminConcurrentEvaluator(this);
-            sts = cce.checkAtomicIntMethods();
-            break;
-         case "java.util.concurrent.atomic.AtomicBoolean" :
+	 case "java.lang.String" :
+	    CuminDirectEvaluation cde = new CuminDirectEvaluation(this);
+	    sts = cde.checkStringMethods();
+	    break;
+	 case "java.lang.StrictMath" :
+	 case "java.lang.Math" :
+	    cde = new CuminDirectEvaluation(this);
+	    sts = cde.checkMathMethods();
+	    break;
+	 case "java.lang.Runtime" :
+	    cde = new CuminDirectEvaluation(this);
+	    sts = cde.checkRuntimeMethods();
+	    break;
+	 case "java.lang.Float" :
+	    cde = new CuminDirectEvaluation(this);
+	    sts = cde.checkFloatMethods();
+	    break;
+	 case "java.lang.Double" :
+	    cde = new CuminDirectEvaluation(this);
+	    sts = cde.checkDoubleMethods();
+	    break;
+	 case "java.lang.ClassLoader" :
+	    // handle class loader methods
+	    break;
+	 case "java.lang.Class" :
+	    cde = new CuminDirectEvaluation(this);
+	    sts = cde.checkClassMethods();
+	    break;
+	 case "java.lang.Object" :
+	    cde = new CuminDirectEvaluation(this);
+	    sts = cde.checkObjectMethods();
+	    break;
+	 case "java.lang.System" :
+	    cde = new CuminDirectEvaluation(this);
+	    sts = cde.checkSystemMethods();
+	    break;
+	 case "java.lang.Thread" :
+	    cde = new CuminDirectEvaluation(this);
+	    sts = cde.checkThreadMethods();
+	    break;
+	 case "java.lang.Throwable" :
+	    cde = new CuminDirectEvaluation(this);
+	    sts = cde.checkThrowableMethods();
+	    break;
+	 case "java.util.Random" :
+	    cde = new CuminDirectEvaluation(this);
+	    sts = cde.checkRandomMethods();
+	    break;
+	
+	 case "java.io.FileDescriptor" :
+	 case "java.io.RandomAccessFile" :
+	 case "java.nio.file.FileSystem" :
+	 case "java.nio.file.spi.FileSystemProvider" :
+	 case "java.nio.file.Files" :
+	 case "sun.nio.cs.FastCharsetProvider" :
+	    // TODO: handle other IO methods
+	    break;
+	
+	 case "java.io.File" :
+	    CuminIOEvaluator cie = new CuminIOEvaluator(this);
+	    sts = cie.checkFileMethods();
+	    break;
+	 case "java.io.FileOutputStream" :
+	    cie = new CuminIOEvaluator(this);
+	    sts = cie.checkOutputStreamMethods();
+	    break;
+	 case "java.io.FileInputStream" :
+	    cie = new CuminIOEvaluator(this);
+	    sts = cie.checkInputStreamMethods();
+	    break;
+	 case "java.io.Console" :
+	    cie = new CuminIOEvaluator(this);
+	    sts = cie.checkConsoleMethods();
+	    break;
+	 case "java.io.PrintStream" :
+	    cie = new CuminIOEvaluator(this);
+	    sts  = cie.checkPrintMethods("java.io.PrintStream");
+	    break;
+	 case "java.io.PrintWriter" :
+	    cie = new CuminIOEvaluator(this);
+	    sts  = cie.checkPrintMethods("java.io.PrintWriter");
+	    break;
+	
+	 case "java.io.ObjectOutputStream" :
+	 case "java.io.ObjectInputStream" :
+	    cie = new CuminIOEvaluator(this);
+	    sts = cie.checkObjectStreamMethods();
+	    break;
+	
+	 case "sun.misc.FloatingDecimal" :
+	    cde = new CuminDirectEvaluation(this);
+	    sts = cde.checkFloatingDecimalMehtods();
+	    break;
+	 case "javax.swing.SwingUtilities" :
+	    cde = new CuminDirectEvaluation(this);
+	    sts = cde.checkSwingUtilityMethods();
+	    break;
+	 case "java.lang.reflect.Array" :
+	    cde = new CuminDirectEvaluation(this);
+	    sts = cde.checkReflectArrayMethods();
+	    break;
+	 case "java.security.AccessController" :
+	    cde = new CuminDirectEvaluation(this);
+	    sts = cde.checkAccessControllerMethods();
+	    break;
+	 case "sun.reflect.Reflection" :
+	    cde = new CuminDirectEvaluation(this);
+	    sts = cde.checkSunReflectionMethods();
+	    break;
+	 case "java.lang.Class$Atomic" :
+	    cde = new CuminDirectEvaluation(this);
+	    sts = cde.checkClassAtomicMethods();
+	    break;
+	 case "java.lang.reflect.Constructor" :
+	    cde = new CuminDirectEvaluation(this);
+	    sts = cde.checkConstructorMethods();
+	    break;
+	 case "java.lang.reflect.Method" :
+	    cde = new CuminDirectEvaluation(this);
+	    sts = cde.checkMethodMethods();
+	    break;
+	 case "edu.brown.cs.seede.poppy.PoppyGraphics" :
+	    CuminGraphicsEvaluator cge = new CuminGraphicsEvaluator(this);
+	    sts = cge.checkPoppyGraphics();
+	    break;
+	 case "sun.awt.SunGraphicsCallback" :
+	    cge = new CuminGraphicsEvaluator(this);
+	    sts = cge.checkGraphicsCallback();
+	    break;
+	
+	 case "java.util.concurrent.atomic.AtomicInteger" :
+	 case "java.util.concurrent.atomic.AtomicLong" :
+	    CuminConcurrentEvaluator cce = new CuminConcurrentEvaluator(this);
+	    sts = cce.checkAtomicIntMethods();
+	    break;
+	 case "java.util.concurrent.atomic.AtomicBoolean" :
+	    cce = new CuminConcurrentEvaluator(this);
+	    sts = cce.checkAtomicBooleanMethods();
+	    break;
+	 case "java.util.concurrent.ConcurrentHashMap" :
+	    cce = new CuminConcurrentEvaluator(this);
+	    sts = cce.checkConcurrentHashMapMethods();
+	    break;
+         case "sun.awt.SunToolkit" :
+            // this can be removed once VarHandle works
             cce = new CuminConcurrentEvaluator(this);
-            sts = cce.checkAtomicBooleanMethods();
-            break;
-         case "java.util.concurrent.ConcurrentHashMap" :
-            cce = new CuminConcurrentEvaluator(this);
-            sts = cce.checkConcurrentHashMapMethods();
+            sts = cce.checkSunToolkitMethods();
             break;
             
-         case "sun.misc.Unsafe" :
-            cce = new CuminConcurrentEvaluator(this);
-            sts = cce.checkUnsafeMethods();
-            break;
+         // need to handle java.util.concurrent.locks.ReentrantLock   
+         // need to handle java.lang.VarHandle methods
+            
+	 case "sun.misc.Unsafe" :
+	 case "jdk.internal.misc.Unsafe" :
+	    cce = new CuminConcurrentEvaluator(this);
+	    sts = cce.checkUnsafeMethods();
+	    break;
        }
     }
    catch (CuminRunException e) {
@@ -1403,17 +1417,17 @@ private CuminRunStatus checkSpecial() throws CuminRunException
 
 
 private CuminRunStatus checkSpecialReturn(CuminRunStatus r)
-{  
+{
    String cls = jcode_method.getDeclaringClass().getName();
    switch (cls) {
       case "java.lang.Class" :
-         CuminDirectEvaluation cde = new CuminDirectEvaluation(this);
-         r = cde.checkClassReturn(r);
-         break;     
+	 CuminDirectEvaluation cde = new CuminDirectEvaluation(this);
+	 r = cde.checkClassReturn(r);
+	 break; 
       case "java.lang.reflect.Constructor" :
-         cde = new CuminDirectEvaluation(this);
-         r = cde.checkConstructorReturn(r);
-         break;  
+	 cde = new CuminDirectEvaluation(this);
+	 r = cde.checkConstructorReturn(r);
+	 break; 
     }
    return r;
 }

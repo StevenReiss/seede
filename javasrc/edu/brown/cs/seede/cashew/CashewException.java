@@ -47,13 +47,13 @@ private static final long serialVersionUID = 1;
 /*                                                                              */
 /********************************************************************************/
 
-CashewException(String msg)
+public CashewException(String msg)
 {
    super(msg);
 }
 
 
-CashewException(String msg,Throwable cause)
+public CashewException(String msg,Throwable cause)
 {
    super(msg,cause);
 }

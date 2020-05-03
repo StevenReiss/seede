@@ -248,15 +248,7 @@ ASTNode getAst()
 
 private ASTNode buildAst()
 {
-   ASTParser parser = ASTParser.newParser(AST.JLS8);
-   parser.setKind(ASTParser.K_COMPILATION_UNIT);
-   parser.setSource(edit_document.get().toCharArray());
-   Map<String,String> options = JavaCore.getOptions();
-   JavaCore.setComplianceOptions(JavaCore.VERSION_1_8,options);
-   parser.setCompilerOptions(options);
-   parser.setResolveBindings(false);
-   parser.setStatementsRecovery(true);
-   ASTNode an = parser.createAST(null);
+   ASTNode an = JcompAst.parseSourceFile(edit_document.get().toCharArray());
    JcompAst.setSource(an,this);
    cleanupAstRoot((CompilationUnit) an);
 
@@ -270,7 +262,7 @@ private void cleanupAstRoot(CompilationUnit an)
    for (Object typn : an.types()) {
       if (typn instanceof TypeDeclaration) {
 	 TypeDeclaration td = (TypeDeclaration) typn;
-         fixType(td);
+	 fixType(td);
        }
     }
 }
@@ -286,22 +278,22 @@ private void fixType(TypeDeclaration td)
    for (Object o : td.bodyDeclarations()) {
       BodyDeclaration bd = (BodyDeclaration) o;
       if (bd instanceof MethodDeclaration) {
-         MethodDeclaration md = (MethodDeclaration) bd;
-         if (md.isConstructor()) havecnst = true;
+	 MethodDeclaration md = (MethodDeclaration) bd;
+	 if (md.isConstructor()) havecnst = true;
        }
       else if (bd instanceof FieldDeclaration) {
-         FieldDeclaration fd = (FieldDeclaration) bd;
-         if (Modifier.isStatic(fd.getModifiers())) continue;
-         for (Object o1 : fd.fragments()) {
-            VariableDeclarationFragment vdf = (VariableDeclarationFragment) o1;
-            if (vdf.getInitializer() != null) {
-               if (cnstinits == null) cnstinits = new ArrayList<>();
-               cnstinits.add(vdf);
-             }
-          }
+	 FieldDeclaration fd = (FieldDeclaration) bd;
+	 if (Modifier.isStatic(fd.getModifiers())) continue;
+	 for (Object o1 : fd.fragments()) {
+	    VariableDeclarationFragment vdf = (VariableDeclarationFragment) o1;
+	    if (vdf.getInitializer() != null) {
+	       if (cnstinits == null) cnstinits = new ArrayList<>();
+	       cnstinits.add(vdf);
+	     }
+	  }
        }
     }
-   
+
    if (!havecnst) {
       MethodDeclaration md = ast.newMethodDeclaration();
       md.setConstructor(true);
@@ -310,35 +302,35 @@ private void fixType(TypeDeclaration td)
       md.setName(ast.newSimpleName(td.getName().getIdentifier()));
       td.bodyDeclarations().add(md);
     }
-   
+
    if (td.getSuperclassType() != null || cnstinits != null) {
       for (MethodDeclaration md : td.getMethods()) {
-         if (!md.isConstructor()) continue;
-         int idx = 0;
-         Block blk = md.getBody();
-         List<Object> stmts = blk.statements();
-         if (stmts.size() > 0) {
-            Statement st0 = (Statement) stmts.get(0);
-            if (st0 instanceof SuperConstructorInvocation ||
-                  st0 instanceof ConstructorInvocation) idx = 1;
-          }
-         if (idx == 0 && td.getSuperclassType() != null) {
-            SuperConstructorInvocation sci = ast.newSuperConstructorInvocation();
-            stmts.add(0,sci);
-            idx = 1;
-          }
-         if (cnstinits != null) {
-            for (VariableDeclarationFragment vdf : cnstinits) {
-               Assignment asgn = ast.newAssignment();
-               asgn.setLeftHandSide(ast.newSimpleName(vdf.getName().getIdentifier()));
-               asgn.setRightHandSide((Expression) ASTNode.copySubtree(ast,vdf.getInitializer()));
-               ExpressionStatement es = ast.newExpressionStatement(asgn);
-               stmts.add(idx++,es);
-             }
-          }
+	 if (!md.isConstructor()) continue;
+	 int idx = 0;
+	 Block blk = md.getBody();
+	 List<Object> stmts = blk.statements();
+	 if (stmts.size() > 0) {
+	    Statement st0 = (Statement) stmts.get(0);
+	    if (st0 instanceof SuperConstructorInvocation ||
+		  st0 instanceof ConstructorInvocation) idx = 1;
+	  }
+	 if (idx == 0 && td.getSuperclassType() != null) {
+	    SuperConstructorInvocation sci = ast.newSuperConstructorInvocation();
+	    stmts.add(0,sci);
+	    idx = 1;
+	  }
+	 if (cnstinits != null) {
+	    for (VariableDeclarationFragment vdf : cnstinits) {
+	       Assignment asgn = ast.newAssignment();
+	       asgn.setLeftHandSide(ast.newSimpleName(vdf.getName().getIdentifier()));
+	       asgn.setRightHandSide((Expression) ASTNode.copySubtree(ast,vdf.getInitializer()));
+	       ExpressionStatement es = ast.newExpressionStatement(asgn);
+	       stmts.add(idx++,es);
+	     }
+	  }
        }
     }
-   
+
    for (TypeDeclaration itd : td.getTypes()) {
       fixType(itd);
     }
@@ -353,7 +345,7 @@ ASTNode getResolvedAst(SesameProject sp)
       an = ast_roots.get(sp.getName());
       if (an != null && JcompAst.isResolved(an)) return an;
     }
-											   
+									
    JcompProject proj = sp.getJcompProject();
    proj.resolve();
    JcompSemantics semdata = SesameMain.getJcompBase().getSemanticData(this);
@@ -434,9 +426,9 @@ boolean removeUse()
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Debugging methods                                                       */
-/*                                                                              */
+/*										*/
+/*	Debugging methods							*/
+/*										*/
 /********************************************************************************/
 
 @Override public String toString()

@@ -1,10 +1,12 @@
 <project name='seede' default='jar'>
 
+   <property name='UPRO' value='/research/people/spr' />
    <property name='PRO' value='/pro' />
    <property name='BUBBLESLIB' value='${PRO}/bubbles/lib' />
 
    <target name='all'>
       <ant antfile="build.xml" dir="javasrc" />
+      <ant antfile='build.xml' dir='${UPRO}/seedebb' />
    </target>
 
    <path id='jdocsrc'>
@@ -21,10 +23,20 @@
    <target name='jar' depends='all'>
       <jar destfile='seede.jar'>
 	 <manifest>
+	    <attribute name="Bubbles-start"
+	      value='edu.brown.cs.seedebb.bicex.BicexFactory edu.brown.cs.seedebb.brepair.BrepairFactory' />
+	    <attribute name="Bubbles-palette" value='seedebb.palette' />
+	    <attribute name="Bubbles-depends" value='' />
 	 </manifest>
 	 <fileset dir='./java' includes='**/*.class' />
+	 <fileset dir='${UPRO}/seedebb/java' includes='**/*.class' />
+	 <fileset dir='./lib' includes='Bicex.props' />
+	 <fileset dir='./lib' includes='poppy.jar' />
+	 <fileset dir='${UPRO}/seedebb' includes='seedebb.palette' />
       </jar>
-      <copy file='seede.jar' tofile='${BUBBLESLIB}/seede.jar' />
+      <copy file='seede.jar' tofile='${PRO}/bubbles/dropins/seede.jar' verbose='true' />
+      <copy file='seede.jar' tofile='${PRO}/bubbles/dropins.export/seede.jar' verbose='true' />
+      <copy file='seede.jar' tofile='${BUBBLESLIB}/seede.jar' verbose='true' />
    </target>
 
    <target name='jarall' depends='all'>

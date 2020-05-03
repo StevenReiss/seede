@@ -59,7 +59,7 @@ CuminConcurrentEvaluator(CuminRunnerByteCode bc)
 /*										*/
 /********************************************************************************/
 
-CuminRunStatus checkAtomicIntMethods() throws CashewException 
+CuminRunStatus checkAtomicIntMethods() throws CashewException
 {
    CashewValue rslt = null;
 
@@ -185,44 +185,44 @@ CuminRunStatus checkAtomicBooleanMethods() throws CashewException
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Handle concurrent hash maps                                             */
-/*                                                                              */
+/*										*/
+/*	Handle concurrent hash maps						*/
+/*										*/
 /********************************************************************************/
 
 CuminRunStatus checkConcurrentHashMapMethods() throws CuminRunException, CashewException
 {
    CashewValue rslt = null;
-   
+
    if (getMethod().isStatic()) {
       switch (getMethod().getName()) {
-         case "tabAt" :
-           CashewValue a1 = getArrayValue(0);
-           long idx = getLong(1);
-           rslt = a1.getIndexValue(getClock(),(int) idx);
-           break;
-         case "casTabAt" :
-            a1 = getArrayValue(0);
-            int idxv = getInt(1);
-            CashewValue a2 = getValue(2);
-            CashewValue a3 = getValue(3);
-            CashewValue v1 = a1.getIndexValue(getClock(),idxv).getActualValue(getClock());
-            if (v1 == a2) {
-               a1.setIndexValue(getClock(),idxv,a3);
-               rslt = CashewValue.booleanValue(getTyper(),true);
-             }
-            else {
-               rslt = CashewValue.booleanValue(getTyper(),false);
-             }
-            break;
-         default :
-            return null;
+	 case "tabAt" :
+	   CashewValue a1 = getArrayValue(0);
+	   long idx = getLong(1);
+	   rslt = a1.getIndexValue(getClock(),(int) idx);
+	   break;
+	 case "casTabAt" :
+	    a1 = getArrayValue(0);
+	    int idxv = getInt(1);
+	    CashewValue a2 = getValue(2);
+	    CashewValue a3 = getValue(3);
+	    CashewValue v1 = a1.getIndexValue(getClock(),idxv).getActualValue(getClock());
+	    if (v1 == a2) {
+	       a1.setIndexValue(getClock(),idxv,a3);
+	       rslt = CashewValue.booleanValue(getTyper(),true);
+	     }
+	    else {
+	       rslt = CashewValue.booleanValue(getTyper(),false);
+	     }
+	    break;
+	 default :
+	    return null;
        }
     }
    else {
       return null;
     }
-   
+
    return CuminRunStatus.Factory.createReturn(rslt);
 }
 
@@ -230,57 +230,87 @@ CuminRunStatus checkConcurrentHashMapMethods() throws CuminRunException, CashewE
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Handle sun.misc.Unsafe methods                                          */
-/*                                                                              */
+/*										*/
+/*	Handle sun.misc.Unsafe methods						*/
+/*										*/
 /********************************************************************************/
 
 synchronized CuminRunStatus checkUnsafeMethods() throws CuminRunException, CashewException
 {
    CashewValue rslt = null;
+
+   switch (getMethod().getName()) {
+      case "compareAndSetInt" :
+      case "compareAndSwapInt" :
+	 CashewValue cv1 = getValue(1);
+	 long off = getLong(2);
+	 int v1 = getInt(4);
+	 CashewValue v2 = getValue(5);
+	 JcompType typ = cv1.getDataType(getClock());
+	 String fld = null;
+	 if (typ.getName().equals("java.util.concurrent.ConcurrentHashMap")) {
+	    if (off == 20) {
+	       fld = "java.util.concurrent.ConcurrentHashMap.sizeCtl";
+	     }
+	  }
+	 if (fld == null) return null;
+	 CashewValue oldv = cv1.getFieldValue(getTyper(),getClock(),fld);
+	 int oldint = oldv.getNumber(getClock()).intValue();
+	 if (oldint != v1) rslt = CashewValue.booleanValue(getTyper(),false);
+	 else {
+	    cv1.setFieldValue(getTyper(),getClock(),fld,v2);
+	    rslt = CashewValue.booleanValue(getTyper(),true);
+	  }
+	 break;
+      case "compareAndSetLong" :
+      case "compareAndSwapLong" :
+	 cv1 = getValue(1);
+	 off = getLong(2);
+	 long lv1 = getLong(4);
+	 v2 = getValue(6);
+	 typ = cv1.getDataType(getClock());
+	 fld = null;
+	 if (typ.getName().equals("java.util.concurrent.ConcurrentHashMap")) {
+	    if (off == 24) {
+	       fld = "java.util.concurrent.ConcurrentHashMap.baseCount";
+	     }
+	  }
+	 if (fld == null) return null;
+	 oldv = cv1.getFieldValue(getTyper(),getClock(),fld);
+	 long oldlong = oldv.getNumber(getClock()).longValue();
+	 if (oldlong != lv1) rslt = CashewValue.booleanValue(getTyper(),false);
+	 else {
+	    cv1.setFieldValue(getTyper(),getClock(),fld,v2);
+	    rslt = CashewValue.booleanValue(getTyper(),true);
+	  }
+	 break;
+      default :
+	 return null;
+    }
+
+   return CuminRunStatus.Factory.createReturn(rslt);
+}
+
+
+
+synchronized CuminRunStatus checkSunToolkitMethods() throws CuminRunException, CashewException
+{
+   CashewValue rslt = null;
    
    switch (getMethod().getName()) {
-      case "compareAndSwapInt" :
-         CashewValue cv1 = getValue(1);
-         long off = getLong(2);
-         int v1 = getInt(4);
-         CashewValue v2 = getValue(5);
-         JcompType typ = cv1.getDataType(getClock());
-         String fld = null;
-         if (typ.getName().equals("java.util.concurrent.ConcurrentHashMap")) {
-            if (off == 20) {
-               fld = "java.util.concurrent.ConcurrentHashMap.sizeCtl";
-             }
-          }
-         if (fld == null) return null;
-         CashewValue oldv = cv1.getFieldValue(getTyper(),getClock(),fld);
-         int oldint = oldv.getNumber(getClock()).intValue();
-         if (oldint != v1) rslt = CashewValue.booleanValue(getTyper(),false);
-         else {
-            cv1.setFieldValue(getTyper(),getClock(),fld,v2);
-            rslt = CashewValue.booleanValue(getTyper(),true);
-          }
+      case "awtLock" :
+      case "awtLockWait" :
          break;
-      case "compareAndSwapLong" :
-         cv1 = getValue(1);
-         off = getLong(2);
-         long lv1 = getLong(4);
-         v2 = getValue(6);
-         typ = cv1.getDataType(getClock());
-         fld = null;
-         if (typ.getName().equals("java.util.concurrent.ConcurrentHashMap")) {
-            if (off == 24) {
-               fld = "java.util.concurrent.ConcurrentHashMap.baseCount";
-             }
-          }
-         if (fld == null) return null;
-         oldv = cv1.getFieldValue(getTyper(),getClock(),fld);
-         long oldlong = oldv.getNumber(getClock()).longValue();
-         if (oldlong != lv1) rslt = CashewValue.booleanValue(getTyper(),false);
-         else {
-            cv1.setFieldValue(getTyper(),getClock(),fld,v2);
-            rslt = CashewValue.booleanValue(getTyper(),true);
-          }
+      case "awtTryLock" :
+         rslt = CashewValue.booleanValue(getTyper(),true);
+         break;
+      case "awtUnlock" :
+         break;
+      case "awtLockNotify" :
+      case "awtLockNotifyAll" :
+         break;
+      case "isAWTLockHeldByCurrentThread" : 
+         rslt = CashewValue.booleanValue(getTyper(),true);
          break;
       default :
          return null;

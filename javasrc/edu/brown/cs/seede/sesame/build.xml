@@ -34,7 +34,7 @@
    </target>
 
    <target name='clean'>
-      <delete dir='${FAIT}/java/edu/brown/cs/seede/sesame' />
+      <delete dir='${SEEDE}/java/edu/brown/cs/seede/sesame' />
    </target>
 
    <target name='test' depends='compile'>

@@ -44,6 +44,7 @@ import edu.brown.cs.ivy.jcomp.JcompType;
 import edu.brown.cs.ivy.jcomp.JcompTyper;
 import edu.brown.cs.ivy.xml.IvyXml;
 import edu.brown.cs.ivy.mint.MintConstants.CommandArgs;
+import edu.brown.cs.seede.acorn.AcornLog;
 import edu.brown.cs.seede.cashew.CashewException;
 import edu.brown.cs.seede.cashew.CashewValue;
 
@@ -67,7 +68,7 @@ private Map<String,SesameValueData> unique_values;
 private Map<String,String> thread_frame;
 private Set<String>	accessible_types;
 private SesameSessionCache value_cache;
-private boolean         session_ready;
+private boolean 	session_ready;
 
 private static AtomicInteger eval_counter = new AtomicInteger();
 
@@ -94,7 +95,7 @@ SesameSessionLaunch(SesameMain sm,String sid,Element xml)
    unique_values = new HashMap<String,SesameValueData>();
    accessible_types = new HashSet<String>();
    value_cache = new SesameSessionCache();
-   
+
    session_ready = false;
 }
 
@@ -106,6 +107,7 @@ SesameSessionLaunch(SesameMain sm,String sid,Element xml)
       session_ready = true;
       notifyAll();
     }
+   AcornLog.logD("SESSION " + getSessionId() + " SETUP");
 }
 
 
@@ -114,7 +116,7 @@ SesameSessionLaunch(SesameMain sm,String sid,Element xml)
 {
    while (!session_ready) {
       try {
-         wait(10000);
+	 wait(10000);
        }
       catch (InterruptedException e) { }
     }
@@ -133,7 +135,7 @@ String getFrameId(String thread)	{ return thread_frame.get(thread); }
 String getAnyThread()
 {
    waitForReady();
-   
+
    for (String s : thread_ids) {
       return s;
     }
@@ -144,7 +146,7 @@ String getAnyThread()
 @Override public List<CashewValue> getCallArgs(SesameLocation loc)
 {
    waitForReady();
-   
+
    MethodDeclaration md = getCallMethod(loc);
    List<CashewValue> args = new ArrayList<>();
    JcompSymbol msym = JcompAst.getDefinition(md.getName());
@@ -170,7 +172,7 @@ String getAnyThread()
 	 CashewValue argval = val.getCashewValue();
 	 JcompType jtyp = argval.getDataType(null);
 	 // need to check that 'this' is  compatible with COMPONENT
-         JcompType g2dtype = getProject().getTyper().findSystemType("java.awt.Graphics2D");
+	 JcompType g2dtype = getProject().getTyper().findSystemType("java.awt.Graphics2D");
 	 if (jtyp.isCompatibleWith(g2dtype) && !argval.isNull(null)) {
 	    if (!jtyp.getName().contains("PoppyGraphics")) {
 	       String gname = "MAIN_" + loc.getThreadName();
@@ -283,7 +285,7 @@ String getAnyThread()
 
 
 
-@Override void evaluateVoid(String expr)
+@Override void evaluateVoid(String expr) throws CashewException
 {
    String eid = "E_" + eval_counter.incrementAndGet();
    String thread = getAnyThread();
@@ -293,11 +295,15 @@ String getAnyThread()
 	 "LEVEL",4,"REPLYID",eid);
    Element xml = getControl().getXmlReply("EVALUATE",getProject(),args,null,0);
    if (IvyXml.isElement(xml,"RESULT")) {
-      getControl().waitForEvaluation(eid);
-      // Element root = getControl().waitForEvaluation(eid);
-      // Element v = IvyXml.getChild(root,"EVAL");
-      // Element v1 = IvyXml.getChild(v,"VALUE");
-      // SesameValueData svd = new SesameValueData(this,v1);
+      Element rslt = getControl().waitForEvaluation(eid);
+      Element v = IvyXml.getChild(rslt,"EVAL");
+      String sts = IvyXml.getAttrString(v,"STATUS");
+      if (sts.equals("EXCEPTION")) {
+	 String exc = IvyXml.getTextElement(v,"EXCEPTION");
+	 if (exc != null && exc.contains("thread not suspended")) {
+	    throw new CashewException("Process continued");
+	  }
+       }
       return;
     }
 }
@@ -306,7 +312,7 @@ String getAnyThread()
 @Override void enableAccess(String type)
 {
    if (accessible_types.contains(type)) return;
-   
+
    if (type.startsWith("jdk.internal.ref.")) {
       accessible_types.add(type);
       return;
@@ -316,7 +322,10 @@ String getAnyThread()
 
    String expr = "java.lang.reflect.AccessibleObject.setAccessible(" + type1 + ".class";
    expr += ".getDeclaredFields(),true)";
-   evaluateVoid(expr);
+   try {
+      evaluateVoid(expr);
+    }
+   catch (CashewException e) { }
 
    accessible_types.add(type);
 }
@@ -404,15 +413,15 @@ SesameValueData getUniqueValue(SesameValueData svd)
    switch (svd.getKind()) {
       case OBJECT :
       case ARRAY :
-         String dnm = svd.getValue();
-         if (dnm != null && dnm.length() > 0) {
-            SesameValueData nsvd = unique_values.get(dnm);
-            if (nsvd != null) svd = nsvd;
-            else unique_values.put(dnm,svd);
-          }
-         break;
+	 String dnm = svd.getValue();
+	 if (dnm != null && dnm.length() > 0) {
+	    SesameValueData nsvd = unique_values.get(dnm);
+	    if (nsvd != null) svd = nsvd;
+	    else unique_values.put(dnm,svd);
+	  }
+	 break;
       default :
-         break;
+	 break;
     }
    return svd;
 }

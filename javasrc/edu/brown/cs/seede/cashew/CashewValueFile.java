@@ -25,7 +25,9 @@
 package edu.brown.cs.seede.cashew;
 
 import java.io.File;
+import java.util.Map;
 
+import edu.brown.cs.ivy.jcomp.JcompType;
 import edu.brown.cs.ivy.jcomp.JcompTyper;
 import edu.brown.cs.ivy.xml.IvyXmlWriter;
 import edu.brown.cs.seede.acorn.AcornLog;
@@ -60,6 +62,22 @@ public CashewValueFile(JcompTyper typer,File path)
    super(typer,typer.findSystemType("java.io.File"),null,false);
    user_file = path;
 }
+
+
+CashewValueFile(JcompTyper typer,JcompType jt,Map<String,Object> inits,boolean caninit)
+{
+   super(typer,jt,inits,caninit);
+   user_file = null;
+   CashewValue cv = getFieldValue(typer,null,"java.io.File.path",true);
+   if (!cv.isNull(null)) {
+      try { 
+         String path = cv.getString(typer,null);
+         user_file = new File(path);
+       }
+      catch (CashewException e) { }
+    }
+}
+
 
 
 /********************************************************************************/

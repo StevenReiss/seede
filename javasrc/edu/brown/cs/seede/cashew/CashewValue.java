@@ -377,6 +377,12 @@ public static CashewValue objectValue(JcompTyper typer,JcompType otyp)
 public static CashewValue objectValue(JcompTyper typer,JcompType otyp,Map<String,Object> inits,boolean caninit)
 {
    if (otyp.isParameterizedType()) otyp = otyp.getBaseType();
+   
+   if (otyp.getName().equals("java.io.File")) {
+      CashewValueFile cf = new CashewValueFile(typer,otyp,inits,caninit);
+      return cf;
+    }
+
    CashewValueObject vo = new CashewValueObject(typer,otyp,inits,caninit);
    return vo;
 }

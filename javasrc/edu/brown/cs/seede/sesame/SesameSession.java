@@ -42,6 +42,7 @@ import edu.brown.cs.ivy.mint.MintDefaultReply;
 import edu.brown.cs.ivy.mint.MintConstants.CommandArgs;
 import edu.brown.cs.ivy.xml.IvyXml;
 import edu.brown.cs.seede.cashew.CashewContext;
+import edu.brown.cs.seede.cashew.CashewException;
 import edu.brown.cs.seede.cashew.CashewInputOutputModel;
 import edu.brown.cs.seede.cashew.CashewValue;
 import edu.brown.cs.seede.cumin.CuminRunner;
@@ -444,7 +445,7 @@ SesameValueData evaluateData(String expr,String tid)
    return null;
 }
 
-void evaluateVoid(String expr)
+void evaluateVoid(String expr) throws CashewException
 {
 }
 

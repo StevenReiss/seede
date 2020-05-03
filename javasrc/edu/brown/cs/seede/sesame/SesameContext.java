@@ -27,6 +27,7 @@ package edu.brown.cs.seede.sesame;
 import edu.brown.cs.ivy.jcomp.JcompTyper;
 import edu.brown.cs.seede.acorn.AcornLog;
 import edu.brown.cs.seede.cashew.CashewContext;
+import edu.brown.cs.seede.cashew.CashewException;
 import edu.brown.cs.seede.cashew.CashewInputOutputModel;
 import edu.brown.cs.seede.cashew.CashewValue;
 
@@ -135,7 +136,7 @@ SesameContext(SesameSession ss)
 }
 
 
-@Override public CashewValue evaluateVoid(String expr)
+@Override public CashewValue evaluateVoid(String expr) throws CashewException 
 {
    for_session.evaluateVoid(expr);
 

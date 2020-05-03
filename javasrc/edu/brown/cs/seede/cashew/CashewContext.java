@@ -45,6 +45,7 @@ import edu.brown.cs.ivy.jcomp.JcompTyper;
 import edu.brown.cs.ivy.xml.IvyXmlWriter;
 import edu.brown.cs.seede.acorn.AcornLog;
 
+
 public class CashewContext implements CashewConstants
 {
 
@@ -427,7 +428,7 @@ public CashewValue evaluate(String expr,String tid)
 }
 
 
-public CashewValue evaluateVoid(String expr)
+public CashewValue evaluateVoid(String expr) throws CashewException
 {
    if (parent_context != null) return parent_context.evaluateVoid(expr);
 
