@@ -26,6 +26,7 @@
 	    <attribute name="Bubbles-start"
 	      value='edu.brown.cs.seedebb.bicex.BicexFactory edu.brown.cs.seedebb.brepair.BrepairFactory' />
 	    <attribute name="Bubbles-palette" value='seedebb.palette' />
+	    <attribute name="Bubbles-resource" value='Bicex.props' />
 	    <attribute name="Bubbles-depends" value='' />
 	 </manifest>
 	 <fileset dir='./java' includes='**/*.class' />

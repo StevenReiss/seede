@@ -431,6 +431,10 @@ CuminRunner handleCall(CashewClock cc,JcompSymbol method,List<CashewValue> args,
        }
     }
 
+   while (type.isParameterizedType()) {
+      type = type.getBaseType();
+    }
+
    JcodeClass mcls = getCodeFactory().findClass(type.getName());
    String jtyp = cmethod.getType().getJavaTypeName();
    JcodeMethod mthd = mcls.findMethod(cmethod.getName(),jtyp);
