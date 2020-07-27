@@ -31,7 +31,7 @@
 	 </manifest>
 	 <fileset dir='./java' includes='**/*.class' />
 	 <fileset dir='${UPRO}/seedebb/java' includes='**/*.class' />
-	 <fileset dir='./lib' includes='Bicex.props' />
+	 <fileset dir='./lib' includes='*.props' />
 	 <fileset dir='./lib' includes='poppy.jar' />
 	 <fileset dir='${UPRO}/seedebb' includes='seedebb.palette' />
       </jar>
