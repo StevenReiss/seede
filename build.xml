@@ -1,12 +1,29 @@
 <project name='seede' default='jar'>
 
-   <property name='UPRO' value='/research/people/spr' />
-   <property name='PRO' value='/pro' />
+   <property file='build.properties' />
+
+   <available file="./build.properties" type='file' property='setup.done' />
+   <path id='setuppath'>
+      <pathelement location='..' />
+   </path>
+   <path id='seedepath'>
+      <pathelement location='.' />
+   </path>
+   <property name='setupfile' refid='setuppath' />
+   <property name='seedefile' refid='seedepath' />
+   <target name='setup' unless='setup.done'>
+      <echo file='./build.properties' message="PRO=${setupfile}${line.separator}" />
+      <echo file='./build.properties' message='SEEDE=${seedefile}${line.separator}' append='true' />
+      <property name='PRO' value='${setupfile}' />
+      <property name='SEEDE' value='${seedefile}' />
+      <mkdir dir='./java/edu/brown/cs/seede' />
+   </target>
+
    <property name='BUBBLESLIB' value='${PRO}/bubbles/lib' />
 
-   <target name='all'>
+   <target name='all' depends='setup'>
       <ant antfile="build.xml" dir="javasrc" />
-      <ant antfile='build.xml' dir='${UPRO}/seedebb' />
+      <ant antfile='build.xml' dir='${PRO}/seedebb' />
    </target>
 
    <path id='jdocsrc'>
@@ -30,10 +47,10 @@
 	    <attribute name="Bubbles-depends" value='' />
 	 </manifest>
 	 <fileset dir='./java' includes='**/*.class' />
-	 <fileset dir='${UPRO}/seedebb/java' includes='**/*.class' />
+	 <fileset dir='${PRO}/seedebb/java' includes='**/*.class' />
 	 <fileset dir='./lib' includes='*.props' />
 	 <fileset dir='./lib' includes='poppy.jar' />
-	 <fileset dir='${UPRO}/seedebb' includes='seedebb.palette' />
+	 <fileset dir='${PRO}/seedebb' includes='seedebb.palette' />
       </jar>
       <copy file='seede.jar' tofile='${PRO}/bubbles/dropins/seede.jar' verbose='true' />
       <copy file='seede.jar' tofile='${PRO}/bubbles/dropins.export/seede.jar' verbose='true' />
