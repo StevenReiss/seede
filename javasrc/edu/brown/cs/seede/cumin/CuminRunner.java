@@ -438,6 +438,10 @@ CuminRunner handleCall(CashewClock cc,JcompSymbol method,List<CashewValue> args,
    JcodeClass mcls = getCodeFactory().findClass(type.getName());
    String jtyp = cmethod.getType().getJavaTypeName();
    JcodeMethod mthd = mcls.findMethod(cmethod.getName(),jtyp);
+   if (mthd == null) {
+      throw CuminRunStatus.Factory.createError("Can't find method " + cmethod.getName() + " for " + jtyp);
+    }
+
    return doCall(cc,mthd,args);
 }
 

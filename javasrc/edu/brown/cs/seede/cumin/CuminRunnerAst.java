@@ -2010,14 +2010,13 @@ private CuminRunStatus visitThrow(EnhancedForStatement s,CuminRunStatus r)
 	 break;
       case CONTINUE :
 	 if (checkLabel(s,lbl)) {
-	    // do next
+	    return enhancedCheck(s);
 	  }
 	 else {
 	    execution_stack.popMarker(s);
 	    execution_stack.pop();
 	    return r;
 	  }
-	 break;
       default :
 	 return r;
     }
