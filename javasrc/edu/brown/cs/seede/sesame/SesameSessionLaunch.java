@@ -85,15 +85,15 @@ SesameSessionLaunch(SesameMain sm,String sid,Element xml)
    super(sm,sid,xml);
 
    launch_id = IvyXml.getAttrString(xml,"LAUNCHID");
-   thread_ids = new HashSet<String>();
-   thread_frame = new HashMap<String,String>();
+   thread_ids = new HashSet<>();
+   thread_frame = new HashMap<>();
    String s = IvyXml.getAttrString(xml,"THREADID");
    for (StringTokenizer tok = new StringTokenizer(s," ,;\t\n"); tok.hasMoreTokens(); ) {
       thread_ids.add(tok.nextToken());
     }
-   thread_values = new HashMap<String,Map<String,SesameValueData>>();
-   unique_values = new HashMap<String,SesameValueData>();
-   accessible_types = new HashSet<String>();
+   thread_values = new HashMap<>();
+   unique_values = new HashMap<>();
+   accessible_types = new HashSet<>();
    value_cache = new SesameSessionCache();
 
    session_ready = false;

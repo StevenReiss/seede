@@ -377,7 +377,7 @@ public static CashewValue objectValue(JcompTyper typer,JcompType otyp)
 public static CashewValue objectValue(JcompTyper typer,JcompType otyp,Map<String,Object> inits,boolean caninit)
 {
    if (otyp.isParameterizedType()) otyp = otyp.getBaseType();
-   
+
    if (otyp.getName().equals("java.io.File")) {
       CashewValueFile cf = new CashewValueFile(typer,otyp,inits,caninit);
       return cf;
@@ -493,7 +493,7 @@ public final String getString(JcompTyper typer,CashewClock cc) throws CashewExce
 }
 
 
-public String getDebugString(JcompTyper typer,CashewClock cc) 
+public String getDebugString(JcompTyper typer,CashewClock cc)
 {
    try {
       return getString(typer,cc,2,true);
@@ -516,7 +516,7 @@ public CashewValue getActualValue(CashewClock cc)
 }
 
 public CashewValue getFieldValue(JcompTyper typer,CashewClock cc,String name)
-        throws CashewException
+	throws CashewException
 {
    return getFieldValue(typer,cc,name,true);
 }
@@ -658,12 +658,12 @@ protected void localResetType(JcompTyper typer,Set<CashewValue> done)		 { }
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Create a copy of the object from a given time                           */
-/*                                                                              */
+/*										*/
+/*	Create a copy of the object from a given time				*/
+/*										*/
 /********************************************************************************/
 
-void getChangeTimes(Set<Long> times,Set<CashewValue> done)              { }
+void getChangeTimes(Set<Long> times,Set<CashewValue> done)		{ }
 
 
 
@@ -755,30 +755,30 @@ private static class ValueNumeric extends CashewValue {
    private Number fixValue(Number v) {
        if (getDataType() == null) return v;
        switch (getDataType().getName()) {
-          case "int" :
-             v = v.intValue();
-             break;
-          case "long" :
-             v = v.longValue();
-             break;
-          case "short" :
-             v = v.shortValue();
-             break;
-          case "byte" :
-             v = v.byteValue();
-             break;
-          case "char" :
-             v = v.shortValue();
-             break;
-          case "float" :
-             v = v.floatValue();
-             break;
-          case "double" :
-             v = v.doubleValue();
-             break;
-          default :
-             break;
-        }
+	  case "int" :
+	     v = v.intValue();
+	     break;
+	  case "long" :
+	     v = v.longValue();
+	     break;
+	  case "short" :
+	     v = v.shortValue();
+	     break;
+	  case "byte" :
+	     v = v.byteValue();
+	     break;
+	  case "char" :
+	     v = v.shortValue();
+	     break;
+	  case "float" :
+	     v = v.floatValue();
+	     break;
+	  case "double" :
+	     v = v.doubleValue();
+	     break;
+	  default :
+	     break;
+	}
        return v;
     }
 
@@ -824,31 +824,6 @@ private static class ValueNull extends CashewValue
     }
 
 }	// end of inner class ValueNull
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
