@@ -130,13 +130,13 @@ SesameSession(SesameSession parent)
 
 private void initialize(String sid)
 {
-   if (sid == null) {
+   if (sid == null || sid.equals("*")) {
       Random r = new Random();
       sid = "SESAME_" + r.nextInt(10000000);
     }
    session_id = sid;
 
-   location_map = new HashMap<String,SesameLocation>(); 
+   location_map = new HashMap<String,SesameLocation>();
 
    exec_runners = new HashSet<SesameExecRunner>();
    runner_location = new WeakHashMap<CuminRunner,SesameLocation>();
