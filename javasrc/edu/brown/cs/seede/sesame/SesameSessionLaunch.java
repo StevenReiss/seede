@@ -60,6 +60,7 @@ class SesameSessionLaunch extends SesameSession
 
 private String		launch_id;
 private Set<String>	thread_ids;
+private Set<String>     frmae_ids;
 private String		method_name;
 private SesameFile	source_file;
 private int		line_number;
@@ -91,6 +92,15 @@ SesameSessionLaunch(SesameMain sm,String sid,Element xml)
    for (StringTokenizer tok = new StringTokenizer(s," ,;\t\n"); tok.hasMoreTokens(); ) {
       thread_ids.add(tok.nextToken());
     }
+   String s1 = IvyXml.getAttrString(xml,"FRAMEID");
+   frmae_ids = null;
+   if (s1 != null) {
+      frmae_ids = new HashSet<>();
+      for (StringTokenizer tok = new StringTokenizer(s1," ,;\t\n"); tok.hasMoreTokens(); ) {
+         frmae_ids.add(tok.nextToken());
+       }
+    }
+   
    thread_values = new HashMap<>();
    unique_values = new HashMap<>();
    accessible_types = new HashSet<>();
@@ -380,7 +390,7 @@ private void loadInitialValues()
       String teid = IvyXml.getAttrString(telt,"ID");
       if (!thread_ids.contains(teid)) continue;
       String thnm = IvyXml.getAttrString(telt,"NAME");
-      Element frm = IvyXml.getChild(telt,"STACKFRAME");
+      Element frm = getFrameForThread(telt);
       String feid = IvyXml.getAttrString(frm,"ID");
       thread_frame.put(teid,feid);
       method_name = IvyXml.getAttrString(frm,"METHOD");
@@ -403,6 +413,22 @@ private void loadInitialValues()
       getProject().addFile(source_file);
       addLocation(loc);
     }
+}
+
+
+
+private Element getFrameForThread(Element telt)
+{
+   if (thread_ids == null) return IvyXml.getChild(telt,"STACKFRAME");
+   
+   Element dflt = null;
+   for (Element felt : IvyXml.children(telt,"STACKFRAME")) {
+      if (dflt == null) dflt = felt;
+      String fid = IvyXml.getAttrString(felt,"ID");
+      if (thread_ids.contains(fid)) return felt;
+    }
+   
+   return dflt;
 }
 
 

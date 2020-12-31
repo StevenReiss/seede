@@ -77,6 +77,7 @@ private File			for_file;
 private Map<String,ASTNode>	ast_roots;
 private Set<Integer>		error_lines;
 private int			use_count;
+private boolean                 is_local;
 
 private static SesameProject	current_project;
 private static Object		project_lock = new Object();
@@ -94,6 +95,22 @@ private static final String NO_PROJECT = "*NOPROJECT*";
 SesameFile(File f,String cnts,String linesep)
 {
    for_file = f;
+   initialize(cnts);
+   is_local = false;
+}
+
+
+
+SesameFile(SesameFile base)
+{
+   for_file = base.for_file;
+   initialize(base.getFileContents());
+   is_local = true;
+}
+
+
+private void initialize(String cnts)
+{
    edit_document = new Document(cnts);
    ast_roots = new HashMap<String,ASTNode>();
    error_lines = new HashSet<>();
@@ -407,6 +424,9 @@ public File getFile()
 {
    return for_file;
 }
+
+
+boolean isLocal()                       { return is_local; }
 
 
 void addUse()

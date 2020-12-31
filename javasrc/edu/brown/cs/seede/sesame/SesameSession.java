@@ -109,29 +109,53 @@ protected SesameSession(SesameMain sm,String sid,Element xml)
    String proj = IvyXml.getAttrString(xml,"PROJECT");
    for_project = sm.getProject(proj);
 
-   if (sid == null) {
-      Random r = new Random();
-      sid = "SESAME_" + r.nextInt(10000000);
-    }
-   session_id = sid;
+   initialize(sid);
 
    location_map = new HashMap<String,SesameLocation>();
    for (Element locxml : IvyXml.children(xml,"LOCATION")) {
       SesameLocation sloc = new SesameLocation(sm,locxml);
       addLocation(sloc);
     }
+}
+
+
+SesameSession(SesameSession parent)
+{
+   sesame_control = parent.sesame_control;
+   for_project = parent.for_project;
+
+   initialize(null);
+}
+
+
+private void initialize(String sid)
+{
+   if (sid == null) {
+      Random r = new Random();
+      sid = "SESAME_" + r.nextInt(10000000);
+    }
+   session_id = sid;
+
+   location_map = new HashMap<String,SesameLocation>(); 
 
    exec_runners = new HashSet<SesameExecRunner>();
    runner_location = new WeakHashMap<CuminRunner,SesameLocation>();
    cashew_iomodel = new CashewInputOutputModel();
    expand_names = null;
-   compute_tostring = sm.getComputeToString();
+   compute_tostring = sesame_control.getComputeToString();
 }
 
 
 
+/********************************************************************************/
+/*										*/
+/*	Setup methods								*/
+/*										*/
+/********************************************************************************/
+
 void setupSession()				{ }
 protected void waitForReady()			{ }
+SesameSubsession getSubsession()		{ return null; }
 
 
 
@@ -154,7 +178,7 @@ public MethodDeclaration getCallMethod(SesameLocation loc)
    if (!loc.isActive()) return null;
 
    SesameFile sf = loc.getFile();
-   ASTNode root = sf.getResolvedAst(for_project);
+   ASTNode root = sf.getResolvedAst(getProject());
    ASTNode mnode = JcompAst.findNodeAtOffset(root,loc.getStartPositiion().getOffset());
    while (!(mnode instanceof MethodDeclaration)) {
       mnode = mnode.getParent();
@@ -187,12 +211,13 @@ SesameMain getControl() 			{ return sesame_control; }
 protected void addLocation(SesameLocation sl)
 {
    location_map.put(sl.getId(),sl);
-   for_project.addFile(sl.getFile());
+   getProject().addFile(sl.getFile());
 }
 
 void noteFileChanged(SesameFile sf)
 {
-   if (for_project.noteFileChanged(sf,false)) {
+   SesameProject sp = getProject();
+   if (sp.noteFileChanged(sf,false)) {
       restartRunners();
     }
 }
@@ -295,10 +320,6 @@ CashewContext findContext(int idn)
 }
 
 
-
-
-
-
 private CashewContext findContext(int id,CashewContext ctx)
 {
    if (ctx.getId() == id) return ctx;
@@ -312,6 +333,9 @@ private CashewContext findContext(int id,CashewContext ctx)
 
    return findContext(id,pctx);
 }
+
+
+
 
 /********************************************************************************/
 /*										*/

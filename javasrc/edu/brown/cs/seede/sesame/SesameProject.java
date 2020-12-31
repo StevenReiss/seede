@@ -24,6 +24,7 @@
 
 package edu.brown.cs.seede.sesame;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -58,7 +59,7 @@ public class SesameProject implements SesameConstants, CuminProject
 /*										*/
 /********************************************************************************/
 
-private SesameMain	sesame_control;
+protected SesameMain	sesame_control;
 private String		project_name;
 private List<String>	class_paths;
 private Set<SesameFile> active_files;
@@ -130,6 +131,22 @@ SesameProject(SesameMain sm,String name)
 
 
 
+SesameProject(SesameProject par)
+{
+   sesame_control = par.sesame_control;
+   project_name = par.project_name;
+   base_project = null;
+   class_paths = new ArrayList<String>();
+   
+   active_files = new HashSet<SesameFile>();
+   changed_files = new HashSet<SesameFile>();
+   
+   project_lock = new ReentrantReadWriteLock();
+   class_paths = par.class_paths;
+}
+
+
+
 /********************************************************************************/
 /*										*/
 /*	Access methods								*/
@@ -152,6 +169,31 @@ void removeFile(SesameFile sf)
    if (active_files.remove(sf)) {
       noteFileChanged(sf,true);
     }
+}
+
+
+protected SesameFile findFile(File f)
+{
+   SesameFile sf = sesame_control.getFileManager().openFile(f);
+   
+   return sf;
+}
+
+
+
+protected SesameFile localizeFile(File f)
+{
+   if (f == null) return null;
+   
+   SesameFile sf = findFile(f);
+   if (sf == null || sf.isLocal()) return sf;
+   
+   if (active_files.contains(sf)) active_files.remove(sf);
+   SesameFile newfile = new SesameFile(sf);
+   active_files.add(newfile);
+   if (changed_files.remove(sf)) changed_files.add(newfile);
+   
+   return newfile;
 }
 
 

@@ -452,57 +452,57 @@ private class IDEHandler implements MintHandler {
       String cmd = args.getArgument(0);
       Element e = msg.getXml();
       if (cmd == null) return;
-
+   
       switch (cmd) {
-	 case "ELISIION" :
-	    break;
-	 case "EDITERROR" :
-	    break;
-	 case "FILEERROR" :
-	    break;
-	 case "PRIVATEERROR" :
-	    break;
-	 case "EDIT" :
-	    break;
-	 case "BREAKEVENT" :
-	    break;
-	 case "LAUNCHCONFIGEVENT" :
-	    break;
-	 case "RUNEVENT" :
-	    long when = IvyXml.getAttrLong(e,"TIME");
-	    for (Element re : IvyXml.children(e,"RUNEVENT")) {
-	       handleRunEvent(re,when);
-	     }
-	    msg.replyTo("<OK/>");
-	    break;
-	 case "NAMES" :
-	 case "ENDNAMES" :
-	    break;
-	 case "PING" :
-	    msg.replyTo("<PONG/>");
-	    break;
-	 case "PROGRESS" :
-	    msg.replyTo("<OK/>");
-	    break;
-	 case "RESOURCE" :
-	    break;
-	 case "CONSOLE" :
-	    msg.replyTo("<OK/>");
-	    break;
-	 case "OPENEDITOR" :
-	    break;
-	 case "EVALUATION" :
-	    msg.replyTo("<OK/>");
-	    break;
-	 case "BUILDDONE" :
-	 case "FILECHANGE" :
-	 case "PROJECTDATA" :
-	 case "PROJECTOPEN" :
-	    break;
-	 case "STOP" :
-	    break;
-	 default :
-	    break;
+         case "ELISIION" :
+            break;
+         case "EDITERROR" :
+            break;
+         case "FILEERROR" :
+            break;
+         case "PRIVATEERROR" :
+            break;
+         case "EDIT" :
+            break;
+         case "BREAKEVENT" :
+            break;
+         case "LAUNCHCONFIGEVENT" :
+            break;
+         case "RUNEVENT" :
+            long when = IvyXml.getAttrLong(e,"TIME");
+            for (Element re : IvyXml.children(e,"RUNEVENT")) {
+               handleRunEvent(re,when);
+             }
+            msg.replyTo("<OK/>");
+            break;
+         case "NAMES" :
+         case "ENDNAMES" :
+            break;
+         case "PING" :
+            msg.replyTo("<PONG/>");
+            break;
+         case "PROGRESS" :
+            msg.replyTo("<OK/>");
+            break;
+         case "RESOURCE" :
+            break;
+         case "CONSOLE" :
+            msg.replyTo("<OK/>");
+            break;
+         case "OPENEDITOR" :
+            break;
+         case "EVALUATION" :
+            msg.replyTo("<OK/>");
+            break;
+         case "BUILDDONE" :
+         case "FILECHANGE" :
+         case "PROJECTDATA" :
+         case "PROJECTOPEN" :
+            break;
+         case "STOP" :
+            break;
+         default :
+            break;
        }
     }
 
