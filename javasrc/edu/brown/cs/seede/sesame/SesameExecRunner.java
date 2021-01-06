@@ -529,67 +529,67 @@ private class MasterThread extends Thread {
    private void runOnce(boolean firsttime) {
       List<RunnerThread> waits = new ArrayList<RunnerThread>();
       SesameProject proj = for_session.getProject();
-
+   
       proj.executionLock();
       run_state = RunState.RUNNING;
       AcornLog.logD("MASTER: Start running");
       try {
-	 synchronized (this) {
-	    if (!firsttime) {
-	       // this might not be needed any more
-	       // cumin_runners.clear();
-	       // SesameContext gblctx = getBaseContext();
-	       // for (SesameLocation loc : for_session.getActiveLocations()) {
-	       // CuminRunner cr = for_session.createRunner(loc,gblctx);
-	       // cr.setMaxTime(max_time);
-	       // cr.setMaxDepth(max_depth);
-	       // cumin_runners.add(cr);
-	       // }
-	     }
-	    for (CuminRunner cr : cumin_runners) {
-	       if (!firsttime) {
-		  MethodDeclaration mthd = for_session.getRunnerMethod(cr);
-		  if (mthd == null) continue;
-		  cr.reset(mthd);
-		  cr.setMaxTime(max_time);
-		  cr.setMaxDepth(max_depth);
-		}
-	       RunnerThread rt = new RunnerThread(SesameExecRunner.this,cr);
-	       runner_threads.put(cr,rt);
-	       waits.add(rt);
-	       rt.start();
-	     }
-	  }
-
-	 // wait for all to exit
-	 while (!waits.isEmpty()) {
-	    for (Iterator<RunnerThread> it = waits.iterator(); it.hasNext(); ) {
-	       RunnerThread rt = it.next();
-	       try {
-		  rt.join();
-		  synchronized (this) {
-		     runner_threads.remove(rt.getRunner());
-		     if (runner_threads.isEmpty()) {
-			notifyAll();
-		      }
-		   }
-		  it.remove();
-		}
-	       catch (InterruptedException e) { }
-	     }
-	  }
-
-	 if (stop_state == StopState.RUN) {
-	    for (CuminRunner cr : cumin_runners) {
-	       addSwingGraphics(cr);
-	     }
-	    runSwingThreads();
-	  }
+         synchronized (this) {
+            if (!firsttime) {
+               // this might not be needed any more
+               // cumin_runners.clear();
+               // SesameContext gblctx = getBaseContext();
+               // for (SesameLocation loc : for_session.getActiveLocations()) {
+               // CuminRunner cr = for_session.createRunner(loc,gblctx);
+               // cr.setMaxTime(max_time);
+               // cr.setMaxDepth(max_depth);
+               // cumin_runners.add(cr);
+               // }
+             }
+            for (CuminRunner cr : cumin_runners) {
+               if (!firsttime) {
+        	  MethodDeclaration mthd = for_session.getRunnerMethod(cr);
+        	  if (mthd == null) continue;
+        	  cr.reset(mthd);
+        	  cr.setMaxTime(max_time);
+        	  cr.setMaxDepth(max_depth);
+        	}
+               RunnerThread rt = new RunnerThread(SesameExecRunner.this,cr);
+               runner_threads.put(cr,rt);
+               waits.add(rt);
+               rt.start();
+             }
+          }
+   
+         // wait for all to exit
+         while (!waits.isEmpty()) {
+            for (Iterator<RunnerThread> it = waits.iterator(); it.hasNext(); ) {
+               RunnerThread rt = it.next();
+               try {
+        	  rt.join();
+        	  synchronized (this) {
+        	     runner_threads.remove(rt.getRunner());
+        	     if (runner_threads.isEmpty()) {
+        		notifyAll();
+        	      }
+        	   }
+        	  it.remove();
+        	}
+               catch (InterruptedException e) { }
+             }
+          }
+   
+         if (stop_state == StopState.RUN) {
+            for (CuminRunner cr : cumin_runners) {
+               addSwingGraphics(cr);
+             }
+            runSwingThreads();
+          }
        }
       finally {
-	 proj.executionUnlock();
-	 run_state = RunState.STOPPED;
-	 AcornLog.logD("MASTER: Run finished");
+         proj.executionUnlock();
+         run_state = RunState.STOPPED;
+         AcornLog.logD("MASTER: Run finished");
        }
    }
 

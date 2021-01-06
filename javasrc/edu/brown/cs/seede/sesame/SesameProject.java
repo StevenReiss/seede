@@ -68,6 +68,8 @@ private JcompProject	base_project;
 private JcodeFactory	binary_control;
 private ReadWriteLock	project_lock;
 
+static SesameProject NO_PROJECT = new SesameProject();
+
 
 
 /********************************************************************************/
@@ -138,11 +140,25 @@ SesameProject(SesameProject par)
    base_project = null;
    class_paths = new ArrayList<String>();
    
-   active_files = new HashSet<SesameFile>();
-   changed_files = new HashSet<SesameFile>();
+   active_files = new HashSet<SesameFile>(par.getActiveFiles());
+   changed_files = new HashSet<SesameFile>(active_files);
    
    project_lock = new ReentrantReadWriteLock();
    class_paths = par.class_paths;
+}
+
+
+
+private SesameProject()
+{
+   sesame_control = null;
+   project_name = "*NOPROJECT*";
+   class_paths = null;
+   active_files = null;
+   changed_files = null;
+   base_project = null;
+   binary_control = null;
+   project_lock = null;
 }
 
 
@@ -319,7 +335,7 @@ synchronized void removeProject()
    if (base_project != null) return base_project;
 
    JcompControl jc = SesameMain.getJcompBase();
-   Collection<JcompSource> srcs = new ArrayList<JcompSource>(active_files);
+   Collection<JcompSource> srcs = new ArrayList<>(active_files);
   //  base_project = jc.getProject(class_paths,srcs,false);
    base_project = jc.getProject(getJcodeFactory(),srcs);
 

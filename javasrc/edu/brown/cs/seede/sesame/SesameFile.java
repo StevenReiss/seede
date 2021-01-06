@@ -56,13 +56,14 @@ import org.w3c.dom.Element;
 
 import edu.brown.cs.ivy.jcomp.JcompAst;
 import edu.brown.cs.ivy.jcomp.JcompAstCleaner;
+import edu.brown.cs.ivy.jcomp.JcompExtendedSource;
 import edu.brown.cs.ivy.jcomp.JcompProject;
 import edu.brown.cs.ivy.jcomp.JcompSemantics;
 import edu.brown.cs.ivy.xml.IvyXml;
 import edu.brown.cs.seede.acorn.AcornLog;
 
 
-class SesameFile implements SesameConstants, JcompAstCleaner
+class SesameFile implements SesameConstants, JcompAstCleaner, JcompExtendedSource
 {
 
 
@@ -74,7 +75,7 @@ class SesameFile implements SesameConstants, JcompAstCleaner
 
 private IDocument		edit_document;
 private File			for_file;
-private Map<String,ASTNode>	ast_roots;
+private Map<SesameProject,ASTNode> ast_roots;
 private Set<Integer>		error_lines;
 private int			use_count;
 private boolean                 is_local;
@@ -82,8 +83,6 @@ private boolean                 is_local;
 private static SesameProject	current_project;
 private static Object		project_lock = new Object();
 
-
-private static final String NO_PROJECT = "*NOPROJECT*";
 
 
 /********************************************************************************/
@@ -112,7 +111,7 @@ SesameFile(SesameFile base)
 private void initialize(String cnts)
 {
    edit_document = new Document(cnts);
-   ast_roots = new HashMap<String,ASTNode>();
+   ast_roots = new HashMap<>();
    error_lines = new HashSet<>();
    use_count = 0;
 }
@@ -136,7 +135,7 @@ void editFile(int len,int off,String txt,boolean complete)
     }
 
    synchronized (ast_roots) {
-      ast_roots.remove(NO_PROJECT);
+      ast_roots.remove(SesameProject.NO_PROJECT);
     }
 }
 
@@ -145,7 +144,7 @@ void resetSemantics(SesameProject sp)
 {
    // might need to be project specific if we have multiple sesssions active
    synchronized (ast_roots) {
-      ast_roots.remove(sp.getName());
+      ast_roots.remove(sp);
     }
 }
 
@@ -211,12 +210,12 @@ public ASTNode getAstRootNode() 		// if we use extended source
    if (sp != null) {
       ASTNode an = null;
       synchronized (ast_roots) {
-	 an = ast_roots.get(sp.getName());
+	 an = ast_roots.get(sp);
 	 if (an != null) return an;
        }
-      an = getAst();
+      an = buildAst();
       synchronized (ast_roots) {
-	 ast_roots.put(sp.getName(),an);
+	 ast_roots.put(sp,an);
        }
       return an;
     }
@@ -245,16 +244,16 @@ ASTNode getAst()
 {
    ASTNode an = null;
    synchronized (ast_roots) {
-      an = ast_roots.get(NO_PROJECT);
+      an = ast_roots.get(SesameProject.NO_PROJECT);
       if (an != null) return an;
     }
 
    an = buildAst();
 
    synchronized (ast_roots) {
-      ASTNode nan = ast_roots.get(NO_PROJECT);
+      ASTNode nan = ast_roots.get(SesameProject.NO_PROJECT);
       if (nan != null) an = nan;
-      else ast_roots.put(NO_PROJECT,an);
+      else ast_roots.put(SesameProject.NO_PROJECT,an);
     }
 
    return an;
@@ -357,7 +356,7 @@ ASTNode getResolvedAst(SesameProject sp)
 {
    ASTNode an = null;
    synchronized (ast_roots) {
-      an = ast_roots.get(sp.getName());
+      an = ast_roots.get(sp);
       if (an != null && JcompAst.isResolved(an)) return an;
     }
 									
@@ -367,9 +366,9 @@ ASTNode getResolvedAst(SesameProject sp)
    an = semdata.getAstNode();
 
    synchronized (ast_roots) {
-      ASTNode nan = ast_roots.get(sp.getName());
+      ASTNode nan = ast_roots.get(sp);
       if (nan != null) an = nan;
-      else ast_roots.put(sp.getName(),an);
+      else ast_roots.put(sp,an);
     }
 
    return an;
@@ -379,7 +378,7 @@ ASTNode getResolvedAst(SesameProject sp)
 void resetProject(SesameProject sp)
 {
    synchronized (ast_roots) {
-      ast_roots.remove(sp.getName());
+      ast_roots.remove(sp);
     }
 }
 

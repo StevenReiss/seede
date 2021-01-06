@@ -400,6 +400,12 @@ CuminRunner handleCall(CashewClock cc,JcompSymbol method,List<CashewValue> args,
       thisarg = args.get(0);
       // AcornLog.logD("Call " + method + " on " + thisarg.getDebugString(execution_clock));
     }
+   
+   if (!method.isStatic() && ctyp != CallType.STATIC && ctyp != CallType.SPECIAL) {
+      if (thisarg == null || thisarg.isNull(cc)) {
+         CuminEvaluator.throwException(getTyper(),"java.lang.NullPointerException");
+       }
+    }
 
    JcompSymbol cmethod = findTargetMethod(cc,method,thisarg,ctyp);
    if (cmethod == null) {
@@ -577,6 +583,7 @@ private JcompSymbol findTargetMethod(CashewClock cc,JcompSymbol method,
 
    JcompType base = null;
    if (arg0 != null) base = arg0.getDataType(cc);
+   if (base == null) return null;
 
    JcompSymbol nmethod = base.lookupMethod(getTyper(),method.getName(),method.getType());
    if (nmethod == null) {
@@ -584,7 +591,7 @@ private JcompSymbol findTargetMethod(CashewClock cc,JcompSymbol method,
       nmethod = base.lookupMethod(getTyper(),method.getName(),method.getType());
     }
    if (nmethod == null) {
-      AcornLog.logD("Can't find method " + method.getName() + " " + method.getType() +
+      AcornLog.logD("Can't find target method " + method.getName() + " " + method.getType() +
 		       " " + base);
       nmethod = method;
     }

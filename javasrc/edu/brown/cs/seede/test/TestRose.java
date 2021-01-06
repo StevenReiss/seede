@@ -1,8 +1,8 @@
 /********************************************************************************/
 /*                                                                              */
-/*              SesameSubsession.java                                           */
+/*              TestRose.java                                                   */
 /*                                                                              */
-/*      Subsession to allow private editing of files                            */
+/*      Test cases for ROSE                                                     */
 /*                                                                              */
 /********************************************************************************/
 /*      Copyright 2011 Brown University -- Steven P. Reiss                    */
@@ -22,13 +22,13 @@
 
 
 
-package edu.brown.cs.seede.sesame;
+package edu.brown.cs.seede.test;
 
-import java.io.File;
+import org.junit.Test;
 
 import edu.brown.cs.seede.acorn.AcornLog;
 
-class SesameSubsession extends SesameSessionLaunch
+public class TestRose extends TestBase
 {
 
 
@@ -38,8 +38,10 @@ class SesameSubsession extends SesameSessionLaunch
 /*                                                                              */
 /********************************************************************************/
 
-private SesameSubproject   local_project; 
-private SesameSessionLaunch base_session;
+private static final String             TEST1_SID = "SEED_23333";
+private static final String             ROSETEST_WORKSPACE = "rosetest";
+private static final String             ROSETEST_PROJECT = "rosetest";
+private static final String             LAUNCH1_NAME = "test01";
 
 
 
@@ -49,51 +51,41 @@ private SesameSessionLaunch base_session;
 /*                                                                              */
 /********************************************************************************/
 
-SesameSubsession(SesameSessionLaunch base)
+public TestRose()
 {
-   super(base);
-   local_project = new SesameSubproject(base.getProject());
-   base_session = base;
-   AcornLog.logD("Create subsession for " + base_session.getSessionId());
+   super("ROSETEST",ROSETEST_WORKSPACE,ROSETEST_PROJECT);
 }
-
 
 
 /********************************************************************************/
 /*                                                                              */
-/*      Access methods                                                          */
+/*      Actual test                                                             */
 /*                                                                              */
 /********************************************************************************/
 
-SesameSubsession getSubsession()                { return this; }
-
-@Override public SesameProject getProject()     { return local_project; }
-
-
-SesameFile getLocalFile(File file)
+@Test
+public void testRose()
 {
-   if (file == null) return null;
+   AcornLog.logI("TEST: Start ROSETEST");
+   LaunchData ld = startLaunch(LAUNCH1_NAME,0);
+   setupSeedeSession(TEST1_SID,ld,2);
+   addSeedeFiles(TEST1_SID,"src/edu/brown/cs/rosetest/RoseTestExamples.java",
+         "src/edu/brown/cs/rosetest/RoseTestTests.java");
+   runSeede(TEST1_SID);
    
-   return local_project.getLocalFile(file);
+   String ssid = startSeedeSubsession(TEST1_SID);
+   editSeede(ssid,"src/edu/brown/cs/rosetest/RoseTestExamples.java",4,3121,"baby");
+   runSeede(ssid);
+   removeSeede(ssid);
 }
 
 
-SesameFile editLocalFile(File f,int len,int off,String txt)
-{
-   SesameFile editfile = getLocalFile(f);
-   if (editfile == null) return null;
-   editfile.editFile(len,off,txt,false);
-   
-   noteFileChanged(editfile);
-   
-   return editfile;
-}
 
 
-}       // end of class SesameSubsession
+}       // end of class TestRose
 
 
 
 
-/* end of SesameSubsession.java */
+/* end of TestRose.java */
 

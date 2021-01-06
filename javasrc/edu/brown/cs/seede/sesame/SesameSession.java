@@ -111,7 +111,6 @@ protected SesameSession(SesameMain sm,String sid,Element xml)
 
    initialize(sid);
 
-   location_map = new HashMap<String,SesameLocation>();
    for (Element locxml : IvyXml.children(xml,"LOCATION")) {
       SesameLocation sloc = new SesameLocation(sm,locxml);
       addLocation(sloc);
@@ -125,6 +124,12 @@ SesameSession(SesameSession parent)
    for_project = parent.for_project;
 
    initialize(null);
+   
+   location_map.putAll(parent.location_map);
+   if (parent.expand_names != null) {
+      expand_names = new HashSet<>(parent.expand_names);
+    }
+   compute_tostring = parent.compute_tostring;
 }
 
 

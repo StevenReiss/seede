@@ -60,7 +60,7 @@ class SesameSessionLaunch extends SesameSession
 
 private String		launch_id;
 private Set<String>	thread_ids;
-private Set<String>     frmae_ids;
+private Set<String>     frame_ids;
 private String		method_name;
 private SesameFile	source_file;
 private int		line_number;
@@ -93,11 +93,11 @@ SesameSessionLaunch(SesameMain sm,String sid,Element xml)
       thread_ids.add(tok.nextToken());
     }
    String s1 = IvyXml.getAttrString(xml,"FRAMEID");
-   frmae_ids = null;
+   frame_ids = null;
    if (s1 != null) {
-      frmae_ids = new HashSet<>();
+      frame_ids = new HashSet<>();
       for (StringTokenizer tok = new StringTokenizer(s1," ,;\t\n"); tok.hasMoreTokens(); ) {
-         frmae_ids.add(tok.nextToken());
+         frame_ids.add(tok.nextToken());
        }
     }
    
@@ -108,6 +108,23 @@ SesameSessionLaunch(SesameMain sm,String sid,Element xml)
 
    session_ready = false;
 }
+
+protected SesameSessionLaunch(SesameSessionLaunch ssl) 
+{
+   super(ssl);
+   launch_id = ssl.launch_id;
+   thread_ids = ssl.thread_ids;
+   thread_frame = ssl.thread_frame;
+   frame_ids = ssl.frame_ids;
+   thread_values = new HashMap<>(ssl.thread_values);
+   unique_values = ssl.unique_values;
+   accessible_types = ssl.accessible_types;
+   value_cache = new SesameSessionCache();
+   
+   session_ready = true;
+   
+}
+
 
 
 @Override void setupSession()
@@ -181,7 +198,7 @@ String getAnyThread()
       if (val != null) {
 	 CashewValue argval = val.getCashewValue();
 	 JcompType jtyp = argval.getDataType(null);
-	 // need to check that 'this' is  compatible with COMPONENT
+	 // need to check if 'this' is  compatible with COMPONENT
 	 JcompType g2dtype = getProject().getTyper().findSystemType("java.awt.Graphics2D");
 	 if (jtyp.isCompatibleWith(g2dtype) && !argval.isNull(null)) {
 	    if (!jtyp.getName().contains("PoppyGraphics")) {
@@ -419,13 +436,13 @@ private void loadInitialValues()
 
 private Element getFrameForThread(Element telt)
 {
-   if (thread_ids == null) return IvyXml.getChild(telt,"STACKFRAME");
+   if (frame_ids == null) return IvyXml.getChild(telt,"STACKFRAME");
    
    Element dflt = null;
    for (Element felt : IvyXml.children(telt,"STACKFRAME")) {
       if (dflt == null) dflt = felt;
       String fid = IvyXml.getAttrString(felt,"ID");
-      if (thread_ids.contains(fid)) return felt;
+      if (frame_ids.contains(fid)) return felt;
     }
    
    return dflt;

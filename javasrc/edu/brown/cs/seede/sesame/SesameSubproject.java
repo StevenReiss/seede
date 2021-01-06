@@ -38,7 +38,7 @@ class SesameSubproject extends SesameProject
 /*                                                                              */
 /********************************************************************************/
 
-private SesameProject base_project;
+private SesameProject parent_project;
 private Map<File,SesameFile> local_files;
 
 
@@ -52,7 +52,7 @@ private Map<File,SesameFile> local_files;
 SesameSubproject(SesameProject sp)
 {
    super(sp);
-   base_project = sp;
+   parent_project = sp;
    local_files = new HashMap<>();
 }
 
@@ -85,7 +85,7 @@ protected SesameFile findFile(File f)
    SesameFile sf = local_files.get(f);
    if (sf != null) return sf;
    
-   return base_project.findFile(f);
+   return parent_project.findFile(f);
 }
 
 

@@ -851,6 +851,7 @@ private CuminRunStatus evalThrow(ASTNode node,CuminRunStatus cause)
 private CuminRunStatus visit(MethodDeclaration md,ASTNode after) throws CashewException
 {
    if (after == null) {
+      AcornLog.logD("Start executing method " + md.getName());
       List<CashewValue> argvals = getCallArgs();
 
       for (int i = 0; i < argvals.size(); ++i) {
@@ -878,6 +879,7 @@ private CuminRunStatus visit(MethodDeclaration md,ASTNode after) throws CashewEx
 	  }
        }
       //TODO:  need to handle nested this values as well
+      //TODO: handle initial varargs calls
       for (Object o : args) {
 	 SingleVariableDeclaration svd = (SingleVariableDeclaration) o;
 	 JcompSymbol psym = JcompAst.getDefinition(svd.getName());
