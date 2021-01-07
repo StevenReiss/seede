@@ -74,9 +74,13 @@ public void testRose()
    runSeede(TEST1_SID);
    
    String ssid = startSeedeSubsession(TEST1_SID);
+   String ssid1 = startSeedeSubsession(TEST1_SID);
    editSeede(ssid,"src/edu/brown/cs/rosetest/RoseTestExamples.java",4,3121,"baby");
+   editSeede(ssid1,"src/edu/brown/cs/rosetest/RoseTestExamples.java",4,3054,"type");
    runSeede(ssid);
    removeSeede(ssid);
+   runSeede(ssid1);
+   removeSeede(ssid1);
 }
 
 

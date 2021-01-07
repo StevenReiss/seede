@@ -141,14 +141,14 @@ SesameProject(SesameProject par)
    class_paths = new ArrayList<>();
    
    active_files = new HashSet<>();
-   for (SesameFile sf : par.getActiveFiles()) {
-      sf.addUse();
-      active_files.add(sf);
-    }
-   changed_files = new HashSet<>(active_files);
-   
+   changed_files = new HashSet<>();
    project_lock = new ReentrantReadWriteLock();
    class_paths = par.class_paths;
+   
+   for (SesameFile sf : par.getActiveFiles()) {
+      SesameFile nsf = new SesameFile(sf,false);
+      addFile(nsf);
+    }
 }
 
 
@@ -215,7 +215,7 @@ protected SesameFile localizeFile(File f)
       active_files.remove(sf);
       sesame_control.getFileManager().removeFileUse(sf);
     }   
-   SesameFile newfile = new SesameFile(sf);
+   SesameFile newfile = new SesameFile(sf,true);
    active_files.add(newfile);
    newfile.addUse();
    if (changed_files.remove(sf)) changed_files.add(newfile);

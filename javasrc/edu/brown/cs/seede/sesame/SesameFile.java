@@ -97,11 +97,19 @@ SesameFile(File f,String cnts,String linesep)
 
 
 
-SesameFile(SesameFile base)
+SesameFile(SesameFile base,boolean copy)
 {
    for_file = base.for_file;
-   initialize(base.getFileContents());
-   is_local = true;
+   if (copy) {
+      initialize(base.getFileContents());
+      is_local = true;
+    }
+   else {
+      edit_document = base.edit_document;
+      ast_roots = base.ast_roots;
+      error_lines = base.error_lines;
+      use_count = 0;
+    }
 }
 
 
@@ -410,13 +418,13 @@ public File getFile()
 boolean isLocal()                       { return is_local; }
 
 
-void addUse()
+synchronized void addUse()
 {
    ++use_count;
 }
 
 
-boolean removeUse()
+synchronized boolean removeUse()
 {
    --use_count;
    return use_count <= 0;
