@@ -56,14 +56,14 @@ import org.w3c.dom.Element;
 
 import edu.brown.cs.ivy.jcomp.JcompAst;
 import edu.brown.cs.ivy.jcomp.JcompAstCleaner;
-import edu.brown.cs.ivy.jcomp.JcompExtendedSource;
+import edu.brown.cs.ivy.jcomp.JcompExtendedSource1;
 import edu.brown.cs.ivy.jcomp.JcompProject;
 import edu.brown.cs.ivy.jcomp.JcompSemantics;
 import edu.brown.cs.ivy.xml.IvyXml;
 import edu.brown.cs.seede.acorn.AcornLog;
 
 
-class SesameFile implements SesameConstants, JcompAstCleaner, JcompExtendedSource
+class SesameFile implements SesameConstants, JcompAstCleaner, JcompExtendedSource1
 {
 
 
@@ -79,9 +79,6 @@ private Map<SesameProject,ASTNode> ast_roots;
 private Set<Integer>		error_lines;
 private int			use_count;
 private boolean                 is_local;
-
-private static SesameProject	current_project;
-private static Object		project_lock = new Object();
 
 
 
@@ -180,33 +177,9 @@ boolean handleErrors(Element msgs)
 /*										*/
 /********************************************************************************/
 
-static void setCurrentProject(SesameProject sp)
+@Override public ASTNode getAstRootNode(Object key) 	// extended source 1	
 {
-   if (sp != null) {
-      synchronized (project_lock) {
-	 while (current_project != null) {
-	    try {
-	       project_lock.wait(5000);
-	     }
-	    catch (InterruptedException e) { }
-	  }
-	 current_project = sp;
-       }
-    }
-   else {
-      synchronized (project_lock) {
-	 current_project = null;
-	 project_lock.notifyAll();
-       }
-    }
-}
-
-
-
-
-public ASTNode getAstRootNode() 		// if we use extended source
-{
-   SesameProject sp = current_project;
+   SesameProject sp = (SesameProject) key;
    if (sp != null) {
       ASTNode an = null;
       synchronized (ast_roots) {
@@ -219,7 +192,7 @@ public ASTNode getAstRootNode() 		// if we use extended source
        }
       return an;
     }
-
+   
    return getAst();
 }
 
@@ -231,6 +204,15 @@ public ASTNode cleanupAst(ASTNode n)
 
    return n;
 }
+
+
+void clear()
+{
+   edit_document = null;
+   ast_roots = null;
+   error_lines = null;
+}
+
 
 
 

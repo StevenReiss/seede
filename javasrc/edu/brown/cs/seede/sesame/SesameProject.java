@@ -138,10 +138,14 @@ SesameProject(SesameProject par)
    sesame_control = par.sesame_control;
    project_name = par.project_name;
    base_project = null;
-   class_paths = new ArrayList<String>();
+   class_paths = new ArrayList<>();
    
-   active_files = new HashSet<SesameFile>(par.getActiveFiles());
-   changed_files = new HashSet<SesameFile>(active_files);
+   active_files = new HashSet<>();
+   for (SesameFile sf : par.getActiveFiles()) {
+      sf.addUse();
+      active_files.add(sf);
+    }
+   changed_files = new HashSet<>(active_files);
    
    project_lock = new ReentrantReadWriteLock();
    class_paths = par.class_paths;
@@ -169,6 +173,8 @@ private SesameProject()
 /*										*/
 /********************************************************************************/
 
+boolean isLocal()                       { return false; }
+
 String getName()			{ return project_name; }
 
 void addFile(SesameFile sf)
@@ -184,6 +190,7 @@ void removeFile(SesameFile sf)
 {
    if (active_files.remove(sf)) {
       noteFileChanged(sf,true);
+      sesame_control.getFileManager().removeFileUse(sf);
     }
 }
 
@@ -204,9 +211,13 @@ protected SesameFile localizeFile(File f)
    SesameFile sf = findFile(f);
    if (sf == null || sf.isLocal()) return sf;
    
-   if (active_files.contains(sf)) active_files.remove(sf);
+   if (active_files.contains(sf)) {
+      active_files.remove(sf);
+      sesame_control.getFileManager().removeFileUse(sf);
+    }   
    SesameFile newfile = new SesameFile(sf);
    active_files.add(newfile);
+   newfile.addUse();
    if (changed_files.remove(sf)) changed_files.add(newfile);
    
    return newfile;
@@ -285,7 +296,6 @@ void compileProject()
    if (!newfiles.isEmpty()) {
       project_lock.writeLock().lock();
       try {
-	 SesameFile.setCurrentProject(this);
 	 for (SesameFile sf : newfiles) {
 	    sf.resetSemantics(this);
 	  }
@@ -294,12 +304,10 @@ void compileProject()
 	 getTyper();			// this resolves the project
        }
       finally {
-	 SesameFile.setCurrentProject(null);
 	 project_lock.writeLock().unlock();
        }
     }
 }
-
 
 
 synchronized void clearProject()
@@ -317,15 +325,14 @@ synchronized void clearProject()
 
 synchronized void removeProject()
 {
-   if (base_project != null) {
-      JcompControl jc = SesameMain.getJcompBase();
-      jc.freeProject(base_project);
-      base_project = null;
-    }
+   clearProject();
+   base_project = null;
    for (SesameFile sf : active_files) {
       sesame_control.getFileManager().removeFileUse(sf);
     }
    active_files = null;
+   changed_files = null;
+   class_paths = null;
 }
 
 
@@ -338,6 +345,7 @@ synchronized void removeProject()
    Collection<JcompSource> srcs = new ArrayList<>(active_files);
   //  base_project = jc.getProject(class_paths,srcs,false);
    base_project = jc.getProject(getJcodeFactory(),srcs);
+   base_project.setProjectKey(this);
 
    return base_project;
 }

@@ -57,11 +57,15 @@ SesameSubproject(SesameProject sp)
 }
 
 
+
 /********************************************************************************/
 /*                                                                              */
 /*      Access methods                                                          */
 /*                                                                              */
 /********************************************************************************/
+
+boolean isLocal()                               { return true; }
+
 
 SesameFile getLocalFile(File f)
 {

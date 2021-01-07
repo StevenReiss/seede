@@ -197,13 +197,15 @@ SesameProject getProject(String name)
 void removeProject(SesameProject sp)
 {
    if (sp == null) return;
-   SesameProject np = project_map.remove(sp.getName());
-   if (np == null) return;
-   else if (np != sp) {
-      project_map.put(np.getName(),np);
-      return;
+   if (!sp.isLocal()) {
+      SesameProject np = project_map.remove(sp.getName());
+      if (np == null) return;
+      else if (np != sp) {
+         project_map.put(np.getName(),np);
+         return;
+       }
     }
-   // remove files for project
+   sp.removeProject();
 }
 
 

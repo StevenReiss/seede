@@ -105,13 +105,17 @@ SesameFile openFile(File f)
 void removeFileUse(SesameFile sf)
 {
    if (sf.removeUse()) {
-      File f = sf.getFile();
-      synchronized (known_files) {
-         known_files.remove(f);
+      if (!sf.isLocal()) {
+         File f = sf.getFile();
+         synchronized (known_files) {
+            known_files.remove(f);
+          }
+         Map<String,Object> args = new HashMap<>();
+         args.put("FILE",f.getPath());
+         sesame_control.getStringReply("FINISHFILE",null,args,null,0);
+       
        }
-      Map<String,Object> args = new HashMap<>();
-      args.put("FILE",f.getPath());
-      sesame_control.getStringReply("FINISHFILE",null,args,null,0);
+      sf.clear();
     }
 }
 
