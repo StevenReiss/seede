@@ -64,7 +64,7 @@ CuminRunStatus checkAtomicIntMethods() throws CashewException
    CashewValue rslt = null;
 
    CashewValue thisarg = getValue(0);
-   String clsnm = thisarg.getDataType(getClock()).getName();
+   String clsnm = thisarg.getDataType(getClock(),null).getName();
    String valfld = clsnm + ".value";
 
    synchronized (thisarg) {
@@ -145,7 +145,7 @@ CuminRunStatus checkAtomicBooleanMethods() throws CashewException
    CashewValue rslt = null;
 
    CashewValue thisarg = getValue(0);
-   String clsnm = thisarg.getDataType(getClock()).getName();
+   String clsnm = thisarg.getDataType(getClock(),null).getName();
    String valfld = clsnm + ".value";
 
    synchronized (thisarg) {
@@ -246,7 +246,7 @@ synchronized CuminRunStatus checkUnsafeMethods() throws CuminRunException, Cashe
 	 long off = getLong(2);
 	 int v1 = getInt(4);
 	 CashewValue v2 = getValue(5);
-	 JcompType typ = cv1.getDataType(getClock());
+	 JcompType typ = cv1.getDataType(getClock(),getTyper());
 	 String fld = null;
 	 if (typ.getName().equals("java.util.concurrent.ConcurrentHashMap")) {
 	    if (off == 20) {
@@ -268,7 +268,7 @@ synchronized CuminRunStatus checkUnsafeMethods() throws CuminRunException, Cashe
 	 off = getLong(2);
 	 long lv1 = getLong(4);
 	 v2 = getValue(6);
-	 typ = cv1.getDataType(getClock());
+	 typ = cv1.getDataType(getClock(),getTyper());
 	 fld = null;
 	 if (typ.getName().equals("java.util.concurrent.ConcurrentHashMap")) {
 	    if (off == 24) {

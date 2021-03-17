@@ -48,6 +48,7 @@ import edu.brown.cs.seede.cumin.CuminConstants;
 import edu.brown.cs.seede.cumin.CuminRunException;
 import edu.brown.cs.seede.cumin.CuminRunStatus;
 import edu.brown.cs.seede.cumin.CuminRunner;
+import edu.brown.cs.seede.cumin.CuminConstants.Reason;
 
 class SesameExecRunner implements SesameConstants
 {
@@ -271,6 +272,10 @@ private void report(long time)
 	       break;
 	    case RETURN :
 	       break;
+            case TIMEOUT :
+            case STACK_OVERFLOW :
+               complete = false;
+               break;
 	    default :
 	       complete = false;
 	       break;
@@ -287,7 +292,8 @@ private void report(long time)
       args.put("INDEX",report_counter.incrementAndGet());
       if (empty || run_status.isEmpty()) args.put("EMPTY",true);
       else {
-	 IvyXmlWriter xw = new IvyXmlWriter();
+         IvyXmlWriter xw;
+         xw = new IvyXmlWriter();
 	 xw.begin("CONTENTS");
 	 xw.field("EXECTIME",time);
 	 xw.field("PROJECT",for_session.getProject().getName());
@@ -314,6 +320,7 @@ private void report(long time)
 	  }
 
 	 xw.end("CONTENTS");
+         xw.flush();
 	 cnts = xw.toString();
 	 xw.close();
        }
@@ -373,7 +380,12 @@ private void outputResult(IvyXmlWriter xw,CuminRunner cr,CuminRunStatus sts,bool
     }
    xw.end("RETURN");
 
-   ctx.outputXml(outctx);
+   if (sts.getReason() == Reason.STACK_OVERFLOW) {
+    }
+   else {
+      ctx.outputXml(outctx);
+    }
+   
    xw.end("RUNNER");
 
    if (stats) {
@@ -409,49 +421,49 @@ private class MasterThread extends Thread {
 
    @Override public void run() {
       for (int i = 0; ; ++i ) {
-	 // first start all the threads
-	 setupRun(i == 0);
-	 run_state = RunState.INIT;
-
-	 long starttime = System.currentTimeMillis();
-
-	 try {
-	    runOnce(i == 0);
-	  }
-	 catch (Throwable t) {
-	    AcornLog.logE("MASTER: Problem running",t);
-	  }
-
-	 long time = System.currentTimeMillis() - starttime;
-	 AcornLog.logI("MASTER: Execution time = " + time);
-	 try {
-	    report(time);
-	  }
-	 catch (Throwable t) {
-	    AcornLog.logE("MASTER: Problem with reporting: " + t,t);
-	  }
-
-	 synchronized (this) {
-	    if (!is_continuous) break;
-	    while (!run_again) {
-	       AcornLog.logD("MASTER: begin wait " + stop_state + " " + run_state + " " + is_continuous);
-	       if (interrupted()) continue;
-	       if (stop_state == StopState.EXIT_DESIRED) break;
-	       stop_state = StopState.RUN;
-	       run_state = RunState.WAITING;
-	       notifyAll();
-	       if (!is_continuous) break;
-	       try {
-		  wait(5000);
-		}
-	       catch (InterruptedException e) { }
-	     }
-	    run_again = false;
-	    stop_state = StopState.RUN;
-	    if (!is_continuous) break;
-	  }
+         // first start all the threads
+         setupRun(i == 0);
+         run_state = RunState.INIT;
+   
+         long starttime = System.currentTimeMillis();
+   
+         try {
+            runOnce(i == 0);
+          }
+         catch (Throwable t) {
+            AcornLog.logE("MASTER: Problem running",t);
+          }
+   
+         long time = System.currentTimeMillis() - starttime;
+         AcornLog.logI("MASTER: Execution time = " + time);
+         try {
+            report(time);
+          }
+         catch (Throwable t) {
+            AcornLog.logE("MASTER: Problem with reporting: " + t,t);
+          }
+   
+         synchronized (this) {
+            if (!is_continuous) break;
+            while (!run_again) {
+               AcornLog.logD("MASTER: begin wait " + stop_state + " " + run_state + " " + is_continuous);
+               if (interrupted()) continue;
+               if (stop_state == StopState.EXIT_DESIRED) break;
+               stop_state = StopState.RUN;
+               run_state = RunState.WAITING;
+               notifyAll();
+               if (!is_continuous) break;
+               try {
+        	  wait(5000);
+        	}
+               catch (InterruptedException e) { }
+             }
+            run_again = false;
+            stop_state = StopState.RUN;
+            if (!is_continuous) break;
+          }
        }
-
+   
       master_thread = null;
       run_state = RunState.EXIT;
       if (stopper_thread != null) stopper_thread.exit();
@@ -510,19 +522,19 @@ private class MasterThread extends Thread {
       run_status.clear();
       for_session.getIOModel().clear();
       CuminRunner.resetGraphics();
-
+   
       SesameProject proj = for_session.getProject();
-
+   
       if (!firsttime && reply_id != null) {
-	 CommandArgs args = new CommandArgs();
-	 if (reply_id != null) args.put("ID",reply_id);
-	 for_monitor.sendCommand("RESET",args,null,null);
+         CommandArgs args = new CommandArgs();
+         if (reply_id != null) args.put("ID",reply_id);
+         for_monitor.sendCommand("RESET",args,null,null);
        }
-
+   
       graphics_outputs.clear();
-
+   
       proj.compileProject();
-
+   
       for_session.resetCache();
     }
 
@@ -628,19 +640,19 @@ private class MasterThread extends Thread {
 
    private void addSwingGraphics(CuminRunner cr) {
       for (CashewValue cv : cr.getCallArgs()) {
-	 if (cv == null) return;
-	 if (cv.getDataType(cr.getClock()).getName().equals("edu.brown.cs.seede.poppy.PoppyGraphics")) {
-	    CashewValue rv = cr.executeCall("edu.brown.cs.seede.poppy.PoppyGraphics.finalReport",cv);
-	    if (rv != null) {
-	       try  {
-		  String rslt = rv.getString(cr.getTyper(),cr.getClock());
-		  if (rslt != null) graphics_outputs.add(rslt);
-		}
-	       catch (CashewException e) {
-		  AcornLog.logE("Unexpected error getting graphics result",e);
-		}
-	     }
-	  }
+         if (cv == null) return;
+         if (cv.getDataType(cr.getClock(),cr.getTyper()).getName().equals("edu.brown.cs.seede.poppy.PoppyGraphics")) {
+            CashewValue rv = cr.executeCall("edu.brown.cs.seede.poppy.PoppyGraphics.finalReport",cv);
+            if (rv != null) {
+               try  {
+        	  String rslt = rv.getString(cr.getTyper(),cr.getClock());
+        	  if (rslt != null) graphics_outputs.add(rslt);
+        	}
+               catch (CashewException e) {
+        	  AcornLog.logE("Unexpected error getting graphics result",e);
+        	}
+             }
+          }
        }
    }
 

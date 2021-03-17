@@ -13,7 +13,7 @@
 	 <pathelement location='${SEEDE}/java' />
 	 <pathelement location='${IVYBIN}' />
 	 <pathelement location='${BUBBLESBIN}' />
-	 <fileset dir='${SEEDE}/lib/' includes='asm*.jar' />
+	 <fileset dir='${PRO}/ivy/lib/' includes='asm.jar' />
 	 <pathelement location='${PRO}/bubbles/lib/junit.jar' />
 	 <fileset dir='${PRO}/ivy/lib/eclipsejar' includes='*.jar' />
       </path>
@@ -21,7 +21,7 @@
 	 <pathelement location='${SEEDE}/java' />
 	 <pathelement location='${IVYBIN}' />
 	 <pathelement location='${BUBBLESBIN}' />
-	 <fileset dir='${SEEDE}/lib/' includes='asm*.jar' />
+	 <fileset dir='${PRO}/ivy/lib/' includes='asm.jar' />
 	 <pathelement location='${PRO}/bubbles/lib/junit.jar' />
 	 <fileset dir='${PRO}/ivy/lib/eclipsejar' includes='*.jar' />
       </path>

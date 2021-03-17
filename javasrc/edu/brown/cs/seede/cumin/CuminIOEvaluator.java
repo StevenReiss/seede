@@ -470,8 +470,8 @@ CuminRunStatus checkPrintMethods(String cls) throws CashewException
       forceflush = true;
     }
    CashewValue cv1 = thisarg.getFieldValue(getTyper(),getClock(),ocls + ".out");
-   while (!cv1.getDataType(getClock()).getName().equals("java.io.FileOutputStream")) {
-      String typ = cv1.getDataType(getClock()).getName();
+   while (!cv1.getDataType(getClock(),null).getName().equals("java.io.FileOutputStream")) {
+      String typ = cv1.getDataType(getClock(),null).getName();
       String fld = "out";
       String nxt = null;
       switch (typ) {
@@ -532,11 +532,11 @@ CuminRunStatus checkPrintMethods(String cls) throws CashewException
             exec_runner.executeCall(cls + ".flush",thisarg);
           }
          if (cls.equals("java.io.PrintWriter") && getNumArgs() == 2 &&
-               argv.getDataType(getClock()).getName().equals("java.lang.String")) {
+               argv.getDataType(getClock(),null).getName().equals("java.lang.String")) {
             toout = argv.getString(getTyper(),getClock());
           }
          else if (cls.equals("java.io.PrintWriter") && getNumArgs() == 4 &&
-               argv.getDataType(getClock()).getName().equals("java.lang.String")) {
+               argv.getDataType(getClock(),null).getName().equals("java.lang.String")) {
             String s = argv.getString(getTyper(),getClock());
             int off = getInt(2);
             int len = getInt(3);
@@ -555,7 +555,7 @@ CuminRunStatus checkPrintMethods(String cls) throws CashewException
          else if (getNumArgs() != 2) return null;
          else if (argv.isNull(getClock())) toout = "null";
          else {
-            switch (argv.getDataType(getClock()).getName()) {
+            switch (argv.getDataType(getClock(),null).getName()) {
                case "int" :
                case "short" :
                case "byte" :

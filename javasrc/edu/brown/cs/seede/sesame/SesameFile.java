@@ -52,6 +52,7 @@ import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.Position;
+import org.eclipse.text.edits.TextEdit;
 import org.w3c.dom.Element;
 
 import edu.brown.cs.ivy.jcomp.JcompAst;
@@ -142,6 +143,21 @@ void editFile(int len,int off,String txt,boolean complete)
    synchronized (ast_roots) {
       ast_roots.remove(SesameProject.NO_PROJECT);
     }
+}
+
+
+boolean editFile(TextEdit te)
+{
+   try {
+      te.apply(edit_document);
+    }
+   catch (BadLocationException e) {
+      return false;
+    }
+   
+   AcornLog.logD("RESULTANT FILE: " + edit_document.get());
+   
+   return true;
 }
 
 

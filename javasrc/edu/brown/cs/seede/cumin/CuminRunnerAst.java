@@ -191,9 +191,9 @@ static {
 /********************************************************************************/
 
 CuminRunnerAst(CuminProject cp,CashewContext gblctx,CashewClock cc,
-      ASTNode method,List<CashewValue> args,boolean top)
+      ASTNode method,List<CashewValue> args,boolean top,int depth)
 {
-   super(cp,gblctx,cc,args);
+   super(cp,gblctx,cc,args,depth);
 
    method_node = method;
    current_node = method_node;
@@ -1263,7 +1263,7 @@ private CuminRunStatus visit(InstanceofExpression v,ASTNode after) throws CuminR
    else {
       JcompType rt = JcompAst.getJavaType(v.getRightOperand());
       CashewValue nv = execution_stack.pop();
-      boolean fg = nv.getDataType(execution_clock).isCompatibleWith(rt);
+      boolean fg = nv.getDataType(execution_clock,type_converter).isCompatibleWith(rt);
       CashewValue rv = CashewValue.booleanValue(getTyper(),fg);
       execution_stack.push(rv);
     }
@@ -1282,7 +1282,7 @@ private CuminRunStatus visit(SimpleName v) throws CashewException
 	 CashewValue tv = lookup_context.findReference(THIS_NAME);
 	 cv = tv.getFieldValue(getTyper(),execution_clock,js.getFullName(),false);
 	 while (cv == null) {
-	    String nm = tv.getDataType(execution_clock).getName() + "." + OUTER_NAME;
+	    String nm = tv.getDataType(execution_clock,null).getName() + "." + OUTER_NAME;
 	    CashewValue xtv = tv.getFieldValue(getTyper(),execution_clock,nm,false);
 	    if (xtv == null) xtv = tv.getFieldValue(getTyper(),execution_clock,OUTER_NAME,false);
 	    if (xtv == null) break;
@@ -1296,6 +1296,7 @@ private CuminRunStatus visit(SimpleName v) throws CashewException
     }
    else {
       cv = lookup_context.findReference(getTyper(),js);
+      AcornLog.logT("\tReference " + js.getName() + " at " + v.getStartPosition());
     }
 
    if (cv == null || JcompAst.getExprType(v).isErrorType()) {
@@ -1424,7 +1425,7 @@ private CuminRunStatus visit(ClassInstanceCreation v, ASTNode after)
 
    JcompSymbol csym = JcompAst.getReference(v);
    if (csym == null) {
-      JcompType ctyp = JcompType.createMethodType(null,null,false,null);
+      JcompType ctyp = getTyper().createMethodType(null,null,false,null);
       for (JcompType sty = rty.getSuperType(); sty != null; rty = rty.getSuperType()) {
 	 if (sty.getName().equals("java.lang.Object")) break;
 	 JcompSymbol js = sty.lookupMethod(getTyper(),"<init>",ctyp);
@@ -1468,7 +1469,7 @@ private CuminRunStatus visit(ClassInstanceCreation v, ASTNode after)
       CashewValue ncv = CuminEvaluator.castValue(this,cv,argtyp);
       if (ncv == null) {
 	 AcornLog.logD("Conversion problem " + cv + " " + argtyp + " " +
-			  cv.getDataType(execution_clock) );
+			  cv.getDataType(execution_clock,null) );
        }
       argv.add(ncv);
     }
@@ -1512,7 +1513,7 @@ private CuminRunStatus visit(ConstructorInvocation v,ASTNode after)
       CashewValue ncv = CuminEvaluator.castValue(this,cv,argtyp);
       if (ncv == null) {
 	 AcornLog.logD("Conversion problem " + cv + " " + argtyp + " " +
-			  cv.getDataType(execution_clock) );
+			  cv.getDataType(execution_clock,null) );
        }
       argv.add(ncv);
     }
@@ -1555,7 +1556,7 @@ private CuminRunStatus visit(MethodInvocation v,ASTNode after)
       int sz = args.size() - ncomp + 1;
       if (sz == 1) {
 	 CashewValue cv = execution_stack.peek(0);
-	 JcompType cvtyp = cv.getDataType(execution_clock);
+	 JcompType cvtyp = cv.getDataType(execution_clock,type_converter);
 	 if (cvtyp.isArrayType() && cvtyp.isCompatibleWith(vtyp)) {
 	    sz = -1;
 	  }
@@ -1582,7 +1583,7 @@ private CuminRunStatus visit(MethodInvocation v,ASTNode after)
       CashewValue ncv = CuminEvaluator.castValue(this,cv,argtyp);
       if (ncv == null) {
 	 AcornLog.logD("Conversion problem " + cv + " " + argtyp + " " +
-			  cv.getDataType(execution_clock) );
+			  cv.getDataType(execution_clock,null) );
        }
       argv.add(ncv);
     }
@@ -1720,7 +1721,7 @@ private CuminRunStatus visit(SuperMethodInvocation v,ASTNode after)
       int sz = args.size() - ncomp + 1;
       if (sz == 1) {
 	 CashewValue cv = execution_stack.peek(0);
-	 JcompType cvtyp = cv.getDataType(execution_clock);
+	 JcompType cvtyp = cv.getDataType(execution_clock,type_converter);
 	 if (cvtyp.isArrayType() && cvtyp.isCompatibleWith(vtyp)) {
 	    sz = -1;
 	  }
@@ -1747,7 +1748,7 @@ private CuminRunStatus visit(SuperMethodInvocation v,ASTNode after)
       CashewValue ncv = CuminEvaluator.castValue(this,cv,argtyp);
       if (ncv == null) {
 	 AcornLog.logD("Conversion problem " + cv + " " + argtyp + " " +
-	       cv.getDataType(execution_clock) );
+	       cv.getDataType(execution_clock,null) );
        }
       argv.add(ncv);
     }
@@ -1938,7 +1939,7 @@ private CuminRunStatus visit(EnhancedForStatement s,ASTNode after)
 
    if (after == s.getExpression()) {
       CashewValue cv = execution_stack.peek(0).getActualValue(execution_clock);
-      JcompType jt = cv.getDataType(execution_clock);
+      JcompType jt = cv.getDataType(execution_clock,type_converter);
       if (jt.isArrayType()) {
 	 execution_stack.pushMarker(s,0);
        }
@@ -1946,7 +1947,7 @@ private CuminRunStatus visit(EnhancedForStatement s,ASTNode after)
 	 JcompTyper typer = JcompAst.getTyper(s);
 	 JcompType rty = typer.findSystemType("java.util.Iterator");
 	 List<JcompType> args = new ArrayList<>();
-	 JcompType mty = JcompType.createMethodType(rty,args,false,null);
+	 JcompType mty = getTyper().createMethodType(rty,args,false,null);
 	 JcompSymbol js = jt.lookupMethod(typer,"iterator",mty);
 	 if (js == null)
 	    return CuminRunStatus.Factory.createCompilerError();
@@ -2052,8 +2053,8 @@ private CuminRunner forMethod(EnhancedForStatement s,CashewValue cv,ForState sta
 	 return null;
     }
 
-   JcompType jt = cv.getDataType(execution_clock);
-   JcompType mty = JcompType.createMethodType(rty,args,false,null);
+   JcompType jt = cv.getDataType(execution_clock,type_converter);
+   JcompType mty = getTyper().createMethodType(rty,args,false,null);
    JcompSymbol js = jt.lookupMethod(typer,mnm,mty);
    if (js == null) throw CuminRunStatus.Factory.createCompilerError();
    List<CashewValue> argv = new ArrayList<>();
@@ -2184,12 +2185,12 @@ private CuminRunStatus visit(SwitchStatement s,ASTNode after)
       boolean match = false;
       for (CashewValue casev : cases) {
 	 if (casev == switchv) match = true;
-	 if (!match && switchv.getDataType(getClock()).isStringType()) {
+	 if (!match && switchv.getDataType(getClock(),type_converter).isStringType()) {
 	    String s1 = switchv.getString(getTyper(),getClock());
 	    String s2 = casev.getString(getTyper(),getClock());
 	    match = s1.equals(s2);
 	  }
-	 else if (!match && casev.getDataType(getClock()).isNumericType()) {
+	 else if (!match && casev.getDataType(getClock(),type_converter).isNumericType()) {
 	    Number n0 = casev.getNumber(getClock());
 	    Number n1 = switchv.getNumber(getClock());
 	    if (n0 instanceof Float || n0 instanceof Double)
@@ -2383,10 +2384,10 @@ private CuminRunStatus visit(TryStatement s,ASTNode after) throws CuminRunExcept
 	       if (cv == null) continue;
 	       cv = cv.getActualValue(execution_clock);
 	       if (cv == null || cv.isNull(execution_clock)) continue;
-	       JcompType cty = cv.getDataType(execution_clock);
+	       JcompType cty = cv.getDataType(execution_clock,typer);
 	       JcompType vty = typer.findSystemType("void");
 	       List<JcompType> args = new ArrayList<>();
-	       JcompType mty = JcompType.createMethodType(vty,args,false,null);
+	       JcompType mty = getTyper().createMethodType(vty,args,false,null);
 	       JcompSymbol msy = cty.lookupMethod(typer,"close",mty);
 	       if (msy == null) continue;
 	       if (usenext) {
@@ -2417,7 +2418,7 @@ private CuminRunStatus visitThrow(TryStatement s,CuminRunStatus r)
    assert sts != null;
 
    if (r.getReason() == Reason.EXCEPTION && sts == TryState.BODY) {
-      JcompType etyp = r.getValue().getDataType(execution_clock);
+      JcompType etyp = r.getValue().getDataType(execution_clock,type_converter);
       for (Object o : s.catchClauses()) {
 	 CatchClause cc = (CatchClause) o;
 	 SingleVariableDeclaration svd = cc.getException();
@@ -2863,7 +2864,7 @@ private CashewValue handleThisAccess(JcompType base)
    CashewValue cv = lookup_context.findReference(THIS_NAME);
    if (cv == null) return null;
    if (base == null) return cv;
-   JcompType thistyp = cv.getDataType(execution_clock);
+   JcompType thistyp = cv.getDataType(execution_clock,type_converter);
    if (thistyp.isCompatibleWith(base)) return cv;
 
    String nm = thistyp.getName() + "." + OUTER_NAME;
@@ -2885,7 +2886,7 @@ private CashewValue handleThisAccess(JcompType base,CashewValue cv)
 {
    if (cv == null) return null;
    if (base == null) return cv;
-   JcompType thistyp = cv.getDataType(execution_clock);
+   JcompType thistyp = cv.getDataType(execution_clock,type_converter);
    if (thistyp.isCompatibleWith(base)) return cv;
    CashewValue cv1 = cv.getFieldValue(getTyper(),execution_clock,OUTER_NAME,false);
    return handleThisAccess(base,cv1);

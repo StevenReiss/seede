@@ -64,7 +64,7 @@ public TestRose()
 /********************************************************************************/
 
 @Test
-public void testRose()
+public void testRose01()
 {
    AcornLog.logI("TEST: Start ROSETEST");
    LaunchData ld = startLaunch(LAUNCH1_NAME,0);
@@ -75,12 +75,21 @@ public void testRose()
    
    String ssid = startSeedeSubsession(TEST1_SID);
    String ssid1 = startSeedeSubsession(TEST1_SID);
-   editSeede(ssid,"src/edu/brown/cs/rosetest/RoseTestExamples.java",4,3121,"baby");
-   editSeede(ssid1,"src/edu/brown/cs/rosetest/RoseTestExamples.java",4,3054,"type");
+   editSeede(ssid,"src/edu/brown/cs/rosetest/RoseTestExamples.java",4,2979,"baby");
+   editSeede(ssid1,"src/edu/brown/cs/rosetest/RoseTestExamples.java",3,2993,"baby");
    runSeede(ssid);
    removeSeede(ssid);
    runSeede(ssid1);
    removeSeede(ssid1);
+   
+   for (int i = 0; i < 100; ++i) {
+      AcornLog.logI("TEST: Start subsession " + i);
+      System.err.println("TEST: Start subsession " + i);
+      String ssid2 = startSeedeSubsession(TEST1_SID);
+      editSeede(ssid2,"src/edu/brown/cs/rosetest/RoseTestExamples.java",4,3054,"type");
+      runSeede(ssid2);
+      removeSeede(ssid2); 
+    }
 }
 
 

@@ -26,6 +26,8 @@ package edu.brown.cs.seede.sesame;
 
 import java.io.File;
 
+import org.eclipse.text.edits.TextEdit;
+
 import edu.brown.cs.seede.acorn.AcornLog;
 
 class SesameSubsession extends SesameSessionLaunch
@@ -61,6 +63,22 @@ SesameSubsession(SesameSessionLaunch base)
 
 /********************************************************************************/
 /*                                                                              */
+/*      Cleanup methods                                                         */
+/*                                                                              */
+/********************************************************************************/
+
+@Override void removeSession()
+{
+   super.removeSession();
+   local_project = null;
+   base_session = null;
+}
+
+
+
+
+/********************************************************************************/
+/*                                                                              */
 /*      Access methods                                                          */
 /*                                                                              */
 /********************************************************************************/
@@ -88,6 +106,32 @@ SesameFile editLocalFile(File f,int len,int off,String txt)
    
    return editfile;
 }
+
+
+SesameFile editLocalFile(File f,TextEdit te)
+{
+   if (te == null) return null;
+   
+   SesameFile editfile = getLocalFile(f);
+   if (editfile == null) return null;
+   editfile.editFile(te);
+   noteFileChanged(editfile);
+   return editfile;
+}
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Behavioral methods                                                      */
+/*                                                                              */
+/********************************************************************************/
+
+@Override void resetCache()
+{ 
+   // do nothing -- change types as needed
+}
+
 
 
 }       // end of class SesameSubsession

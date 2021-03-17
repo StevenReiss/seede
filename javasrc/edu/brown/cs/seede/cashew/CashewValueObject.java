@@ -101,7 +101,7 @@ CashewValueObject(JcompTyper typer,JcompType jt,Map<String,Object> inits,boolean
 	    if (fsym.isStatic()) {
 	       if (!static_values.containsKey(key)) {
 		  static_values.put(key,cr);
-		  AcornLog.logD("Add static field " + key + " to " + getDataType().getName());
+		  AcornLog.logD("Add static field " + key + " to " + getDataType(null).getName());
 		}
 	     }
 	    else field_values.put(key,cr);
@@ -180,7 +180,7 @@ private CashewRef findFieldForName(JcompTyper typer,String nm,boolean force)
 
    if (ov == null) {
       // TODO: what if new field is static?
-      JcompType jdt = getDataType();
+      JcompType jdt = getDataType(typer);
       Map<String,JcompType> flds = jdt.getFields();
       JcompType fty = flds.get(nm);
       if (fty != null) {
@@ -246,7 +246,7 @@ private CashewRef findFieldForName(JcompTyper typer,String nm,boolean force)
 	throws CashewException
 {
    StringBuffer buf = new StringBuffer();
-   buf.append(getDataType(cc));
+   buf.append(getDataType(cc,typer));
    if (lvl > 0 && field_values != null) {
       buf.append("{");
       int ctr = 0;
@@ -283,7 +283,7 @@ public CashewValueObject cloneObject(JcompTyper typer,CashewClock cc,long when)
       CashewValue cv = ent.getValue().getActualValue(ncc);
       inits.put(key,cv);
     }
-   return new CashewValueObject(typer,getDataType(),inits,false);
+   return new CashewValueObject(typer,getDataType(typer),inits,false);
 }
 
 
@@ -396,7 +396,7 @@ void getChangeTimes(Set<Long> times,Set<CashewValue> done)
 {
    xw.field("OBJECT",true);
    JcompType ctyp = outctx.getTyper().findSystemType("java.awt.Component");
-   if (getDataType().isCompatibleWith(ctyp)) {
+   if (getDataType(outctx.getTyper()).isCompatibleWith(ctyp)) {
       xw.field("COMPONENT",true);
     }
    int rvl = outctx.noteValue(this);

@@ -27,9 +27,11 @@ package edu.brown.cs.seede.sesame;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -67,6 +69,7 @@ private Set<SesameFile> changed_files;
 private JcompProject	base_project;
 private JcodeFactory	binary_control;
 private ReadWriteLock	project_lock;
+private Map<File,SesameFile> local_files;
 
 static SesameProject NO_PROJECT = new SesameProject();
 
@@ -84,6 +87,7 @@ SesameProject(SesameMain sm,String name)
    project_name = name;
    base_project = null;
    class_paths = new ArrayList<String>();
+   local_files = null;
 
    active_files = new HashSet<SesameFile>();
    changed_files = new HashSet<SesameFile>();
@@ -139,14 +143,18 @@ SesameProject(SesameProject par)
    project_name = par.project_name;
    base_project = null;
    class_paths = new ArrayList<>();
+   binary_control = par.binary_control;
    
    active_files = new HashSet<>();
    changed_files = new HashSet<>();
    project_lock = new ReentrantReadWriteLock();
    class_paths = par.class_paths;
    
+   local_files = new HashMap<>();
+   
    for (SesameFile sf : par.getActiveFiles()) {
       SesameFile nsf = new SesameFile(sf,false);
+      local_files.put(sf.getFile(),nsf);
       addFile(nsf);
     }
 }
@@ -163,6 +171,7 @@ private SesameProject()
    base_project = null;
    binary_control = null;
    project_lock = null;
+   local_files = null;
 }
 
 
@@ -190,16 +199,31 @@ void removeFile(SesameFile sf)
 {
    if (active_files.remove(sf)) {
       noteFileChanged(sf,true);
-      sesame_control.getFileManager().removeFileUse(sf);
+      if (local_files.get(sf.getFile()) == null) {
+         sesame_control.getFileManager().removeFileUse(sf);
+       }
     }
 }
 
 
 protected SesameFile findFile(File f)
 {
-   SesameFile sf = sesame_control.getFileManager().openFile(f);
-   
-   return sf;
+   if (local_files != null) {
+      synchronized (local_files) {
+         SesameFile sf = local_files.get(f);
+         if (sf != null) return sf;
+       }
+    }
+  
+   return sesame_control.getFileManager().openFile(f);
+}
+
+
+
+protected SesameFile findLocalFile(File f) 
+{
+   if (f == null || local_files == null) return null;
+   return local_files.get(f);
 }
 
 
@@ -209,16 +233,18 @@ protected SesameFile localizeFile(File f)
    if (f == null) return null;
    
    SesameFile sf = findFile(f);
-   if (sf == null || sf.isLocal()) return sf;
+   if (sf == null || sf.isLocal() || local_files == null) return sf;
    
-   if (active_files.contains(sf)) {
-      active_files.remove(sf);
-      sesame_control.getFileManager().removeFileUse(sf);
-    }   
-   SesameFile newfile = new SesameFile(sf,true);
-   active_files.add(newfile);
-   newfile.addUse();
-   if (changed_files.remove(sf)) changed_files.add(newfile);
+   SesameFile newfile = null;
+   
+   synchronized (local_files) {
+      newfile = new SesameFile(sf,true);
+      removeFile(sf);
+      local_files.put(f,newfile);
+      active_files.add(newfile);
+      newfile.addUse();
+      if (changed_files.remove(sf)) changed_files.add(newfile);
+    }
    
    return newfile;
 }
@@ -327,12 +353,12 @@ synchronized void removeProject()
 {
    clearProject();
    base_project = null;
-   for (SesameFile sf : active_files) {
-      sesame_control.getFileManager().removeFileUse(sf);
-    }
+   List<SesameFile> rem = new ArrayList<>(active_files);
+   for (SesameFile sf : rem) removeFile(sf);
    active_files = null;
    changed_files = null;
    class_paths = null;
+   local_files = null;
 }
 
 

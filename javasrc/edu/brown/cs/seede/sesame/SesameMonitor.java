@@ -31,10 +31,21 @@ import java.util.Map;
 import java.util.HashMap;
 
 import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.text.edits.CopySourceEdit;
+import org.eclipse.text.edits.CopyTargetEdit;
+import org.eclipse.text.edits.CopyingRangeMarker;
+import org.eclipse.text.edits.DeleteEdit;
+import org.eclipse.text.edits.InsertEdit;
+import org.eclipse.text.edits.MoveSourceEdit;
+import org.eclipse.text.edits.MoveTargetEdit;
+import org.eclipse.text.edits.MultiTextEdit;
+import org.eclipse.text.edits.RangeMarker;
+import org.eclipse.text.edits.ReplaceEdit;
+import org.eclipse.text.edits.TextEdit;
 import org.w3c.dom.Element;
 
 import edu.brown.cs.ivy.jcomp.JcompMessage;
-import edu.brown.cs.ivy.mint.MintArguments;
+import edu.brown.cs.ivy.mint.MintArguments; 
 import edu.brown.cs.ivy.mint.MintControl;
 import edu.brown.cs.ivy.mint.MintDefaultReply;
 import edu.brown.cs.ivy.mint.MintHandler;
@@ -65,6 +76,8 @@ private MintControl		mint_control;
 private boolean 		is_done;
 private Map<String,SesameSession> session_map;
 private Map<String,EvalData>	eval_handlers;
+
+private static boolean          use_text_edits = true;
 
 
 
@@ -134,25 +147,25 @@ private class WaitForExit extends Thread {
    @Override public void run() {
       SesameMonitor mon = SesameMonitor.this;
       synchronized (mon) {
-	 for ( ; ; ) {
-	    if (checkEclipse()) break;
-	    try {
-	       mon.wait(30000l);
-	     }
-	    catch (InterruptedException e) { }
-	  }
-
-	 while (!is_done) {
-	    if (!checkEclipse()) is_done = true;
-	    else {
-	       try {
-		  mon.wait(30000l);
-		}
-	       catch (InterruptedException e) { }
-	     }
-	  }
+         for ( ; ; ) {
+            if (checkEclipse()) break;
+            try {
+               mon.wait(30000l);
+             }
+            catch (InterruptedException e) { }
+          }
+   
+         while (!is_done) {
+            if (!checkEclipse()) is_done = true;
+            else {
+               try {
+        	  mon.wait(30000l);
+        	}
+               catch (InterruptedException e) { }
+             }
+          }
        }
-
+   
       System.exit(0);
     }
 
@@ -282,11 +295,18 @@ private void handleLocalEdit(String sid,Element xml,IvyXmlWriter xw)
    for (Element eelt : IvyXml.children(xml)) {
       if (IvyXml.isElement(eelt,"EDIT") ||
 	    IvyXml.isElement(eelt,"REPAIREDIT")) {
-	 String sfile = IvyXml.getAttrString(xml,"FILE");
+	 String sfile = IvyXml.getAttrString(eelt,"FILE");
 	 if (sfile == null) continue;
 	 File file = new File(sfile);
 	 for (Element edit : IvyXml.children(eelt,"EDIT")) {
-	    fg &= handleLocalEdits(sss,file,edit);
+            if (use_text_edits) {
+               TextEdit te = buildTextEdit(edit);
+               AcornLog.logD("LOCAL EDIT: " + te);
+               if (sss.editLocalFile(file,te) == null) fg = false;
+             }
+            else {
+               fg &= handleLocalEdits(sss,file,edit);
+             }
 	  }
        }
     }
@@ -340,6 +360,52 @@ private boolean handleLocalEdits(SesameSubsession sss,File f,Element xml)
     }
 
    return true;
+}
+
+
+
+private TextEdit buildTextEdit(Element xml)
+{
+   if (xml == null) return null;
+
+   String typ = IvyXml.getAttrString(xml,"TYPE");
+   
+   int len = IvyXml.getAttrInt(xml,"LENGTH");
+   int off = IvyXml.getAttrInt(xml,"OFFSET");
+   String txt = null;
+   
+   switch (typ) {
+      case "MULTI" :
+         MultiTextEdit mi = new MultiTextEdit();
+	 for (Element sedit : IvyXml.children(xml,"EDIT")) {
+            TextEdit te = buildTextEdit(sedit);
+            if (te == null) return null;
+	    mi.addChild(te);
+	  }
+	 return mi;
+      case "INSERT" :
+         txt = IvyXml.getText(xml);
+         return new InsertEdit(off,txt);
+      case "DELETE" :
+         return new DeleteEdit(off,len);
+      case "REPLACE" :
+         txt = IvyXml.getText(xml);
+         return new ReplaceEdit(off,len,txt);
+      case "COPYRANGE" :
+         return new CopyingRangeMarker(off,len);
+      case "COPYSOURCE" :
+         return new CopySourceEdit(off,len);
+      case "COPYTARGET" :
+         return new CopyTargetEdit(off);
+      case "MOVESOURCE" :
+         return new MoveSourceEdit(off,len);
+      case "MOVETARGET" :
+         return new MoveTargetEdit(off);
+      case "RANGEMARKER" :
+         return new RangeMarker(off,len);
+    }
+   
+   return null;
 }
 
 
@@ -460,7 +526,7 @@ private void handleExec(String sid,Element xml,IvyXmlWriter xw)
    String xid = IvyXml.getAttrString(xml,"EXECID",sid);
    boolean iscont = IvyXml.getAttrBool(xml,"CONTINUOUS");
    long maxtime = IvyXml.getAttrLong(xml,"MAXTIME",10000000);
-   int maxdepth = IvyXml.getAttrInt(xml,"MAXDEPTH",750);
+   int maxdepth = IvyXml.getAttrInt(xml,"MAXDEPTH",100);
 
    SesameSession ss = session_map.get(sid);
    if (ss == null) throw new SesameException("Session " + sid + " not found");
@@ -513,7 +579,9 @@ private void handleRemove(String sid) throws SesameException
 	 SesameProject np = ns.getProject();
 	 if (np == sp) inuse = true;
        }
-      if (!inuse) sesame_control.removeProject(sp);
+      if (!inuse) {
+         ss.removeSession();
+       }
     }
 }
 
@@ -640,78 +708,78 @@ private class EclipseHandler implements MintHandler {
    @Override public void receive(MintMessage msg,MintArguments args) {
       String cmd = args.getArgument(0);
       Element e = msg.getXml();
-
+   
       switch (cmd) {
-	 case "ELISION" :
-	    return;
+         case "ELISION" :
+            return;
        }
-
+   
       AcornLog.logD("Message from eclipse: " + cmd + " " + msg.getText());
-
+   
       switch (cmd) {
-	 case "PING" :
-	 case "PING1" :
-	 case "PING2" :
-	 case "PING3" :
-	    msg.replyTo("<PONG/>");
-	    break;
-	 case "EDITERROR" :
-	 case "FILEERROR" :
-	    handleErrors(IvyXml.getAttrString(e,"PROJECT"),
-		  new File(IvyXml.getAttrString(e,"FILE")),
-		  IvyXml.getChild(e,"MESSAGES"));
-	    break;
-	 case "EDIT" :
-	    String bid = IvyXml.getAttrString(e,"BID");
-	    if (!bid.equals(SOURCE_ID)) {
-	       msg.replyTo();
-	       break;
-	     }
-	    String txt = IvyXml.getText(e);
-	    boolean complete = IvyXml.getAttrBool(e,"COMPLETE");
-	    boolean remove = IvyXml.getAttrBool(e,"REMOVE");
-	    if (complete) {
-	       byte [] data = IvyXml.getBytesElement(e,"CONTENTS");
-	       if (data != null) txt = new String(data);
-	       else remove = true;
-	     }
-	    handleEdit(msg,bid,null,
-		  new File(IvyXml.getAttrString(e,"FILE")),
-		  IvyXml.getAttrInt(e,"LENGTH"),
-		  IvyXml.getAttrInt(e,"OFFSET"),
-		  complete,remove,txt);
-	    break;
-	 case "RUNEVENT" :
-	    long when = IvyXml.getAttrLong(e,"TIME");
-	    for (Element re : IvyXml.children(e,"RUNEVENT")) {
-	       handleRunEvent(re,when);
-	     }
-	    break;
-	 case "RESOURCE" :
-	    for (Element re : IvyXml.children(e,"DELTA")) {
-	       handleResourceChange(re);
-	     }
-	    break;
-	 case "CONSOLE" :
-	    handleConsoleEvent(e);
-	    break;
-	 case "EVALUATION" :
-	    AcornLog.logD("Eclipse Message: " + msg.getText());
-	    bid = IvyXml.getAttrString(e,"BID");
-	    String id = IvyXml.getAttrString(e,"ID");
-	    if ((bid == null || bid.equals(SOURCE_ID)) && id != null) {
-	       EvalData ed = new EvalData(e);
-	       synchronized (eval_handlers) {
-		  eval_handlers.put(id,ed);
-		  eval_handlers.notifyAll();
-		}
-	     }
-	    msg.replyTo("<OK/>");
-	    break;
-	 case "STOP" :
-	    AcornLog.logD("Eclipse Message: " + msg.getText());
-	    serverDone();
-	    break;
+         case "PING" :
+         case "PING1" :
+         case "PING2" :
+         case "PING3" :
+            msg.replyTo("<PONG/>");
+            break;
+         case "EDITERROR" :
+         case "FILEERROR" :
+            handleErrors(IvyXml.getAttrString(e,"PROJECT"),
+        	  new File(IvyXml.getAttrString(e,"FILE")),
+        	  IvyXml.getChild(e,"MESSAGES"));
+            break;
+         case "EDIT" :
+            String bid = IvyXml.getAttrString(e,"BID");
+            if (!bid.equals(SOURCE_ID)) {
+               msg.replyTo();
+               break;
+             }
+            String txt = IvyXml.getText(e);
+            boolean complete = IvyXml.getAttrBool(e,"COMPLETE");
+            boolean remove = IvyXml.getAttrBool(e,"REMOVE");
+            if (complete) {
+               byte [] data = IvyXml.getBytesElement(e,"CONTENTS");
+               if (data != null) txt = new String(data);
+               else remove = true;
+             }
+            handleEdit(msg,bid,null,
+        	  new File(IvyXml.getAttrString(e,"FILE")),
+        	  IvyXml.getAttrInt(e,"LENGTH"),
+        	  IvyXml.getAttrInt(e,"OFFSET"),
+        	  complete,remove,txt);
+            break;
+         case "RUNEVENT" :
+            long when = IvyXml.getAttrLong(e,"TIME");
+            for (Element re : IvyXml.children(e,"RUNEVENT")) {
+               handleRunEvent(re,when);
+             }
+            break;
+         case "RESOURCE" :
+            for (Element re : IvyXml.children(e,"DELTA")) {
+               handleResourceChange(re);
+             }
+            break;
+         case "CONSOLE" :
+            handleConsoleEvent(e);
+            break;
+         case "EVALUATION" :
+            AcornLog.logD("Eclipse Message: " + msg.getText());
+            bid = IvyXml.getAttrString(e,"BID");
+            String id = IvyXml.getAttrString(e,"ID");
+            if ((bid == null || bid.equals(SOURCE_ID)) && id != null) {
+               EvalData ed = new EvalData(e);
+               synchronized (eval_handlers) {
+        	  eval_handlers.put(id,ed);
+        	  eval_handlers.notifyAll();
+        	}
+             }
+            msg.replyTo("<OK/>");
+            break;
+         case "STOP" :
+            AcornLog.logD("Eclipse Message: " + msg.getText());
+            serverDone();
+            break;
        }
     }
 

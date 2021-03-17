@@ -150,9 +150,9 @@ public void resetValues()
 
 public String getToString(CashewValue cv)
 {
-   JcompType typ = cv.getDataType();
+   JcompType typ = cv.getDataType(getTyper());
    if (typ.isPrimitiveType()) return null;
-   JcompType atyp = JcompType.createMethodType(null,new ArrayList<JcompType>(),false,null);
+   JcompType atyp = type_context.createMethodType(null,new ArrayList<>(),false,null);
    JcompSymbol tostr = typ.lookupMethod(type_context,"toString",atyp);
    if (tostr == null) return null;
    switch (tostr.getClassType().getName()) {

@@ -388,6 +388,11 @@ public static CashewValue objectValue(JcompTyper typer,JcompType otyp,Map<String
 }
 
 
+
+
+
+
+
 /********************************************************************************/
 /*										*/
 /*	Private Static Sotrage for creation methods				*/
@@ -407,13 +412,13 @@ private static Map<JcompType,CashewValueObject> class_values;
 
 static {
    null_value = null;
-   int_values = new HashMap<Integer,ValueNumeric>();
-   long_values = new HashMap<Long,ValueNumeric>();
-   short_values = new HashMap<Short,ValueNumeric>();
-   byte_values = new HashMap<Byte,ValueNumeric>();
-   char_values = new HashMap<Character,ValueNumeric>();
-   string_values = new HashMap<String,CashewValueString>();
-   class_values = new HashMap<JcompType,CashewValueObject>();
+   int_values = new HashMap<>();
+   long_values = new HashMap<>();
+   short_values = new HashMap<>();
+   byte_values = new HashMap<>();
+   char_values = new HashMap<>();
+   string_values = new HashMap<>();
+   class_values = new HashMap<>();
    // true_value = new ValueNumeric(BOOLEAN_TYPE,1);
    // false_value = new ValueNumeric(BOOLEAN_TYPE,0);
 }
@@ -445,8 +450,7 @@ protected CashewValue(JcompType jt)
 }
 
 
-protected CashewValue()
-{
+protected CashewValue() {
    decl_type = null;
 }
 
@@ -456,13 +460,24 @@ protected CashewValue()
 /*										*/
 /********************************************************************************/
 
-public JcompType getDataType(CashewClock cc)	{ return decl_type; }
+public JcompType getDataType(CashewClock cc,JcompTyper typer)	
+{ 
+   // null --> only the name is relevant
+   
+   if (typer == null) return decl_type;
+   
+   return decl_type.resetType(typer); 
+}
 
-protected JcompType getDataType()
+protected JcompType getDataType(JcompTyper typer)
 {
    if (decl_type == null) AcornLog.logX("Illegal use of getDataType without clock");
 
-   return decl_type;
+   // null --> only the name is relevant
+   
+   if (typer == null) return decl_type;
+   
+   return decl_type.resetType(typer);
 }
 
 
@@ -600,7 +615,7 @@ CashewValue lookupVariableName(JcompTyper typer,String name,long when) throws Ca
       rest = name.substring(idx+1);
       name = name.substring(0,idx);
     }
-   if (getDataType().isArrayType()) {
+   if (getDataType(typer).isArrayType()) {
       int index = Integer.parseInt(name);
       val = val.getIndexValue(null,index);
     }
@@ -689,7 +704,7 @@ public void outputXml(CashewOutputContext ctx,String name)
 {
    IvyXmlWriter xw = ctx.getXmlWriter();
    xw.begin("VALUE");
-   xw.field("TYPE",getDataType());
+   xw.field("TYPE",getDataType(ctx.getTyper()));
    outputLocalXml(xw,ctx,name);
    xw.end("VALUE");
 }
@@ -744,41 +759,41 @@ private static class ValueNumeric extends CashewValue {
     }
 
    @Override public String getInternalRepresentation(CashewClock cc) {
-      if (getDataType() == null) return num_value.toString();
-      else if (getDataType().isBooleanType()) {
-	 if (num_value.intValue() != 0) return "true";
-	 else return "false";
+      if (getDataType(null) == null) return num_value.toString();
+      else if (getDataType(null).isBooleanType()) {
+         if (num_value.intValue() != 0) return "true";
+         else return "false";
        }
-      return "((" + getDataType().getName() + ") " + num_value.toString() + ")";
+      return "((" + getDataType(null).getName() + ") " + num_value.toString() + ")";
     }
 
    private Number fixValue(Number v) {
-       if (getDataType() == null) return v;
-       switch (getDataType().getName()) {
-	  case "int" :
-	     v = v.intValue();
-	     break;
-	  case "long" :
-	     v = v.longValue();
-	     break;
-	  case "short" :
-	     v = v.shortValue();
-	     break;
-	  case "byte" :
-	     v = v.byteValue();
-	     break;
-	  case "char" :
-	     v = v.shortValue();
-	     break;
-	  case "float" :
-	     v = v.floatValue();
-	     break;
-	  case "double" :
-	     v = v.doubleValue();
-	     break;
-	  default :
-	     break;
-	}
+       if (getDataType(null) == null) return v;
+       switch (getDataType(null).getName()) {
+          case "int" :
+             v = v.intValue();
+             break;
+          case "long" :
+             v = v.longValue();
+             break;
+          case "short" :
+             v = v.shortValue();
+             break;
+          case "byte" :
+             v = v.byteValue();
+             break;
+          case "char" :
+             v = v.shortValue();
+             break;
+          case "float" :
+             v = v.floatValue();
+             break;
+          case "double" :
+             v = v.doubleValue();
+             break;
+          default :
+             break;
+        }
        return v;
     }
 

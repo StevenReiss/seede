@@ -151,6 +151,19 @@ protected SesameSessionLaunch(SesameSessionLaunch ssl)
 
 
 
+
+@Override void removeSession()
+{
+   super.removeSession();
+   
+   thread_values = null;
+   unique_values = null;
+   thread_frame = null;
+   value_cache = null;
+}
+
+
+
 /********************************************************************************/
 /*										*/
 /*	Access methods								*/
@@ -197,9 +210,10 @@ String getAnyThread()
       val = getUniqueValue(val);
       if (val != null) {
 	 CashewValue argval = val.getCashewValue();
-	 JcompType jtyp = argval.getDataType(null);
+         JcompTyper typer = getProject().getTyper();
+	 JcompType jtyp = argval.getDataType(null,typer);
 	 // need to check if 'this' is  compatible with COMPONENT
-	 JcompType g2dtype = getProject().getTyper().findSystemType("java.awt.Graphics2D");
+	 JcompType g2dtype = typer.findSystemType("java.awt.Graphics2D");
 	 if (jtyp.isCompatibleWith(g2dtype) && !argval.isNull(null)) {
 	    if (!jtyp.getName().contains("PoppyGraphics")) {
 	       String gname = "MAIN_" + loc.getThreadName();
@@ -413,6 +427,7 @@ private void loadInitialValues()
       method_name = IvyXml.getAttrString(frm,"METHOD");
       String fnm = IvyXml.getAttrString(frm,"FILE");
       File sf = new File(fnm);
+      if (!sf.exists()) continue;
       source_file = sesame_control.getFileManager().openFile(sf);
       line_number = IvyXml.getAttrInt(frm,"LINENO");
       Map<String,SesameValueData> valmap = thread_values.get(teid);

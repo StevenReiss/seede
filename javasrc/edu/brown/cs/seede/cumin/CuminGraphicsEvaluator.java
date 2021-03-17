@@ -374,9 +374,9 @@ private void createCommand(GraphicsOutput g,CommandType typ,int ign) throws Cash
    for (int i = 1; i < act; ++i) {
       xw.begin("ARG");
       CashewValue cv = getValue(i);
-      JcompType dtyp = cv.getDataType(getClock());
+      JcompType dtyp = cv.getDataType(getClock(),getTyper());
       xw.field("TYPE",dtyp.getName());
-      if (cv.getDataType(getClock()).isPrimitiveType()) {
+      if (cv.getDataType(getClock(),getTyper()).isPrimitiveType()) {
 	 switch (dtyp.getName()) {
 	    case "int" :
 	    case "short" :
@@ -455,7 +455,7 @@ private String encodeField(CashewValue cv) throws CashewException
 {
    if (cv == null || cv.isNull(getClock())) return null;
 
-   switch (cv.getDataType(getClock()).getName()) {
+   switch (cv.getDataType(getClock(),null).getName()) {
       case "java.awt.Color" :
       case "sun.swing.PrintColorUIResource" :
       case "javax.swing.plaf.ColorUIResource" :
@@ -517,7 +517,7 @@ private String encodeField(CashewValue cv) throws CashewException
 	 break;
     }
 
-   return "<VALUE TYPE='" + cv.getDataType(getClock()) + "' >" + 
+   return "<VALUE TYPE='" + cv.getDataType(getClock(),null) + "' >" + 
         cv.getString(getTyper(),getClock()) + "</VALUE>";
 }
 

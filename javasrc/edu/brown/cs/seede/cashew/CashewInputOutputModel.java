@@ -177,7 +177,7 @@ synchronized public void checkInputFile(JcompTyper typer,CashewContext ctx,Cashe
 	 if (name != null) {
 	    String expr = "edu.brown.cs.seede.poppy.PoppyValue.getFileData(" + name  + ")";
 	    CashewValue rv = ctx.evaluate(expr);
-	    if (rv != null && rv.getDataType().isStringType()) {
+	    if (rv != null && rv.getDataType(null).isStringType()) {
                try {
                   String finfo = rv.getString(typer,cc);
                   if (finfo.equals("*")) {

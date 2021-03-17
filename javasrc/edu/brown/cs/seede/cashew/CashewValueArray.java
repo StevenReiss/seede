@@ -137,7 +137,7 @@ CashewValueArray(JcompTyper typer,JcompType jt,int dim,Map<Integer,Object> inits
    if (rslt != null) return rslt;
 
    StringBuffer buf = new StringBuffer();
-   buf.append("new " + getDataType(cc).getBaseType().getName() + "[" + dim_size + "|");
+   buf.append("new " + getDataType(cc,null).getBaseType().getName() + "[" + dim_size + "|");
    buf.append("{");
    for (int i = 0; i < dim_size; ++i) {
       String r = getIndexValue(cc,i).getInternalRepresentation(cc);
@@ -191,7 +191,7 @@ public CashewValueArray cloneObject(JcompTyper typer,CashewClock cc,long when)
 	 inits.put(i,array_values[i].getActualValue(ncc));
        }
     }
-   return new CashewValueArray(typer,getDataType(),dim_size,inits,false);
+   return new CashewValueArray(typer,getDataType(typer),dim_size,inits,false);
 }
 
 
@@ -263,7 +263,8 @@ void getChangeTimes(Set<Long> times,Set<CashewValue> done)
    else {
       if (oref != 0) xw.field("OREF",oref);
       xw.field("SIZE",dim_size);
-      CashewValue dfltval = createDefaultValue(outctx.getTyper(),getDataType().getBaseType());
+      CashewValue dfltval = createDefaultValue(outctx.getTyper(),
+            getDataType(outctx.getTyper()).getBaseType());
       int numdflt = 0;
       for (int i = 0; i < array_values.length; ++i) {
 	 if (array_values[i].sameValue(dfltval)) {

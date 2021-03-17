@@ -153,6 +153,25 @@ private void initialize(String sid)
 
 
 /********************************************************************************/
+/*                                                                              */
+/*      Cleanup methods                                                         */
+/*                                                                              */
+/********************************************************************************/
+
+void removeSession()
+{
+   sesame_control.removeProject(getProject());
+   for_project = null;
+   location_map = null;
+   runner_location = null;
+   exec_runners = null;
+   cashew_iomodel = null;
+   expand_names = null;
+}
+
+
+
+/********************************************************************************/
 /*										*/
 /*	Setup methods								*/
 /*										*/

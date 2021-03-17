@@ -75,8 +75,8 @@ static CashewValue evaluateUnchecked(JcompTyper typer,CashewClock cc,CuminOperat
    v1 = v1.getActualValue(cc);
    v2 = v2.getActualValue(cc);
 
-   JcompType t1 = v1.getDataType(cc);
-   JcompType t2 = v2.getDataType(cc);
+   JcompType t1 = v1.getDataType(cc,typer);
+   JcompType t2 = v2.getDataType(cc,typer);
    boolean isstr = t1.isStringType() || t2.isStringType();
 
    boolean dounbox = false;
@@ -96,8 +96,8 @@ static CashewValue evaluateUnchecked(JcompTyper typer,CashewClock cc,CuminOperat
       if (t1.isClassType() || t2.isClassType()) {
 	 v1 = unboxValue(typer,cc,v1);
 	 v2 = unboxValue(typer,cc,v2);
-	 t1 = v1.getDataType(cc);
-	 t2 = v2.getDataType(cc);
+	 t1 = v1.getDataType(cc,typer);
+	 t2 = v2.getDataType(cc,typer);
        }
     }
 
@@ -501,14 +501,14 @@ static CashewValue castValue(CuminRunner cr,CashewValue cv,JcompType target)
    CashewClock cc = cr.getClock();
    JcompTyper typer = cr.getTyper();
 
-   JcompType styp = cv.getDataType(cc);
+   JcompType styp = cv.getDataType(cc,cr.getTyper());
    if (styp == typer.ANY_TYPE) return cv;
 
    if (styp == target) return cv;
 
    if (target.isNumericType()) {
       cv = unboxValue(typer,cc,cv);
-      styp = cv.getDataType(cc);
+      styp = cv.getDataType(cc,cr.getTyper());
       if (styp.isFloatingType()) {
 	 cv = CashewValue.numericValue(target,cv.getNumber(cc).doubleValue());
        }
@@ -566,7 +566,7 @@ static CashewValue castValue(CuminRunner cr,CashewValue cv,JcompType target)
 static CashewValue unboxValue(JcompTyper typer,CashewClock cc,CashewValue cv)
 	throws CuminRunException, CashewException
 {
-   JcompType styp = cv.getDataType(cc);
+   JcompType styp = cv.getDataType(cc,typer);
    if (styp.isAnyType()) throwException(typer,"java.lang.NullPointerException");
    if (styp.isNumericType() || styp.isBooleanType()) return cv;
 
@@ -592,8 +592,8 @@ static private CashewValue boxValue(CuminRunner cr,CashewValue cv)
         throws CuminRunException, CashewException
 {
    CashewClock cc = cr.getClock();
-   JcompType typ = cv.getDataType(cc);
    JcompTyper typer = cr.getTyper();
+   JcompType typ = cv.getDataType(cc,typer);
 
    if (typ == typer.INT_TYPE) {
       cv = invokeEvalConverter(cr,"java.lang.Integer","valueOf","(I)Ljava/lang/Integer;",cv);
@@ -656,7 +656,7 @@ private static CashewValue invokeEvalConverter(CuminRunner runner,String cls,Str
       CashewValue arg) 
         throws CuminRunException, CashewException
 {
-   String cast = arg.getDataType(runner.getClock()).getName();
+   String cast = arg.getDataType(runner.getClock(),runner.getTyper()).getName();
    String argv = arg.getString(runner.getTyper(),runner.getClock());
    String expr = cls + "." + mthd + "( (" + cast + ") " + argv + ")";
    CashewValue cv = runner.getLookupContext().evaluate(expr);
@@ -670,10 +670,10 @@ private static CashewValue invokeEvalConverter(CuminRunner runner,String cls,Str
 static CashewValue evaluate(JcompTyper typer,CashewClock cc,CuminOperator op,CashewValue v1)
 	throws CuminRunException, CashewException
 {
-   JcompType t1 = v1.getDataType(cc);
+   JcompType t1 = v1.getDataType(cc,typer);
    if (t1.isClassType()) {
       v1 = unboxValue(typer,cc,v1);
-      t1 = v1.getDataType(cc);
+      t1 = v1.getDataType(cc,typer);
     }
    boolean isflt = t1.isFloatType();
    boolean isdbl = t1.isDoubleType();
@@ -880,9 +880,9 @@ static CashewValue buildArray(CuminRunner runner,int idx,int [] bnds,JcompType b
 
 static String getStringValue(CashewValue cv,JcompTyper typer,CashewClock cc) throws CashewException
 {
-   if (!cv.getDataType(cc).isPrimitiveType() && cv.isNull(cc)) return "null";
+   if (!cv.getDataType(cc,null).isPrimitiveType() && cv.isNull(cc)) return "null";
    
-   JcompType jt = cv.getDataType(cc);
+   JcompType jt = cv.getDataType(cc,typer);
    if (jt.isEnumType()) {
       return cv.getFieldValue(typer,cc,"java.lang.Enum.name").getString(typer,cc);
     }

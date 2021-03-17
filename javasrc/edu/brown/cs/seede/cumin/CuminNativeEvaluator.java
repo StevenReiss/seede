@@ -183,7 +183,7 @@ protected File getFile(int idx)
 
 protected JcompType getDataType(int idx)
 {
-   return getContext().findReference(idx).getDataType(getClock());
+   return getContext().findReference(idx).getDataType(getClock(),getTyper());
 }
 
 protected CashewValue getValue(int idx)
@@ -199,7 +199,7 @@ protected CashewValue getArrayValue(int idx) throws CuminRunException
    String exc = null;
    if (array.isNull(getClock()))
       exc = "java.lang.NullPointerException";
-   if (!array.getDataType(getClock()).isArrayType())
+   if (!array.getDataType(getClock(),getTyper()).isArrayType())
       exc = "java.lang.IllegalArgumentException";
    if (exc != null) CuminEvaluator.throwException(getTyper(),exc);
    return array;

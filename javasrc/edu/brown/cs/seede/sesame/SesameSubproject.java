@@ -25,8 +25,6 @@
 package edu.brown.cs.seede.sesame;
 
 import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
 
 class SesameSubproject extends SesameProject
 {
@@ -37,10 +35,7 @@ class SesameSubproject extends SesameProject
 /*      Private Storage                                                         */
 /*                                                                              */
 /********************************************************************************/
-
-private SesameProject parent_project;
-private Map<File,SesameFile> local_files;
-
+ 
 
 
 /********************************************************************************/
@@ -52,8 +47,6 @@ private Map<File,SesameFile> local_files;
 SesameSubproject(SesameProject sp)
 {
    super(sp);
-   parent_project = sp;
-   local_files = new HashMap<>();
 }
 
 
@@ -69,28 +62,12 @@ boolean isLocal()                               { return true; }
 
 SesameFile getLocalFile(File f)
 {
-   if (f == null) return null;
-   SesameFile sf = local_files.get(f);
-   if (sf != null) return sf;
+   SesameFile sf = findLocalFile(f);
+   if (sf != null && sf.isLocal()) return sf;
    
-   SesameFile newf = null;
-   synchronized(local_files) {
-      newf = localizeFile(f);
-      if (newf == null) return null;
-      local_files.put(f,newf);
-    }
-   
-   return newf;
+   return localizeFile(f);
 }
 
-
-protected SesameFile findFile(File f)
-{
-   SesameFile sf = local_files.get(f);
-   if (sf != null) return sf;
-   
-   return parent_project.findFile(f);
-}
 
 
 

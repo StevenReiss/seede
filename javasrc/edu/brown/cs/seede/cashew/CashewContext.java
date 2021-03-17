@@ -62,7 +62,6 @@ private File   context_file;
 private String context_owner;
 private List<CashewContext> nested_contexts;
 private int context_id;
-private int context_depth;
 private long start_time;
 private long end_time;
 private boolean is_output;
@@ -81,7 +80,6 @@ public CashewContext(JcompSymbol js,File f,CashewContext par)
 {
    this(getNameWithSignature(js),f,par);
 }
-
 
 
 private static String getNameWithSignature(JcompSymbol js)
@@ -137,8 +135,6 @@ public CashewContext(String js,File f,CashewContext par)
    start_time = end_time = 0;
    context_id = id_counter.incrementAndGet();
    is_output = f != null;
-   if (par == null) context_depth = 0;
-   else context_depth = par.getDepth() + 1;
 }
 
 
@@ -165,7 +161,7 @@ public int getId()                              { return context_id; }
 
 public CashewContext getParentContext()         { return parent_context; }
 
-public int getDepth()                           { return context_depth; }
+
 
 public List<CashewContext> getChildContexts()   { return nested_contexts; }
 

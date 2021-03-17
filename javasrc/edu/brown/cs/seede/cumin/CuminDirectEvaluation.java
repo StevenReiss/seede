@@ -962,7 +962,7 @@ CuminRunStatus checkClassMethods() throws CashewException, CuminRunException
 	    break;
 	 case "newInstance" :
 	    JcompSymbol csym = null;
-	    JcompType ctyp = JcompType.createMethodType(null,null,false,null);
+	    JcompType ctyp = getTyper().createMethodType(null,null,false,null);
 	    csym = thistype.lookupMethod(getTyper(),"<init>",ctyp);
 	    if (csym != null) {
 	       CashewValue nv = exec_runner.handleNew(thistype);
@@ -1053,7 +1053,7 @@ CuminRunStatus checkClassMethods() throws CashewException, CuminRunException
 	    break;
 	 case "isInstance" :
 	    CashewValue v0 = getValue(1);
-	    fg = v0.getDataType(getClock()).isCompatibleWith(thistype);
+	    fg = v0.getDataType(getClock(),getTyper()).isCompatibleWith(thistype);
 	    rslt = CashewValue.booleanValue(getTyper(),fg);
 	    break;
 	 default :
@@ -1106,7 +1106,7 @@ CuminRunStatus checkConstructorMethods()
 	       CashewValueClass avc = (CashewValueClass) v0.getActualValue(getClock());
 	       argtyp.add(avc.getJcompType());
 	     }
-	    JcompType mtyp = JcompType.createMethodType(null,argtyp,false,null);
+	    JcompType mtyp = getTyper().createMethodType(null,argtyp,false,null);
 	    JcompSymbol jsym = newtyp.lookupMethod(getTyper(),"<init>",mtyp);
 	    if (jsym != null) {
 	       CashewValue pval = getValue(1);
@@ -1186,7 +1186,7 @@ CuminRunStatus checkMethodMethods()
 	       CashewValueClass avc = (CashewValueClass) v0.getActualValue(getClock());
 	       argtyp.add(avc.getJcompType());
 	     }
-	    JcompType mtyp = JcompType.createMethodType(rettyp,argtyp,false,null);
+	    JcompType mtyp = getTyper().createMethodType(rettyp,argtyp,false,null);
 	    JcompSymbol jsym = newtyp.lookupMethod(getTyper(),name,mtyp);
 	    if (jsym != null) {
 	       CashewValue pval = getValue(2);
@@ -1545,7 +1545,7 @@ CuminRunStatus checkAccessControllerMethods()
 	 CashewValue action = getValue(0);
 	 String rtn = null;
 	 JcompType patype = getTyper().findSystemType("java.security.PrivilegedAction");
-	 if (action.getDataType(getClock()).isCompatibleWith(patype)) {
+	 if (action.getDataType(getClock(),getTyper()).isCompatibleWith(patype)) {
 	    rtn = "java.security.PrivilegedAction.run";
 	  }
 	 else {
@@ -1581,7 +1581,7 @@ CuminRunStatus checkRandomMethods() throws CuminRunException
       JcompType thistype = getTyper().findType(tnm);
       List<JcompType> argt = new ArrayList<>();
       argt.add(inttype);
-      JcompType mtyp = JcompType.createMethodType(null,argt,false,null);
+      JcompType mtyp = getTyper().createMethodType(null,argt,false,null);
       JcompSymbol jsym = thistype.lookupMethod(getTyper(),"<init>",mtyp);
 
       if (jsym != null) {

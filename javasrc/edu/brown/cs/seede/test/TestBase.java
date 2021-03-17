@@ -184,7 +184,8 @@ protected Element runSeede(String id)
 {
    MintDefaultReply rply = new MintDefaultReply();
    seede_result = null;
-   CommandArgs args = new CommandArgs("EXECID",id,"CONTINUOUS",true);
+   CommandArgs args = new CommandArgs("EXECID",id,"CONTINUOUS",true,
+        "MAXTIME",1000000,"MAXDEPTH",100);
    sendSeedeMessage("EXEC",id,args,null,rply);
    String sstatus = rply.waitForString();
    AcornLog.logD("TEST: RESULT IS " + sstatus);

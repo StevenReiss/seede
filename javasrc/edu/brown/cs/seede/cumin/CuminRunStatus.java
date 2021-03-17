@@ -83,7 +83,7 @@ public class Factory {
     }
 
    public static CuminRunStatus createException(CashewValue cv) {
-      return new CuminRunValue(Reason.EXCEPTION,cv,cv.getDataType(null).getName());
+      return new CuminRunValue(Reason.EXCEPTION,cv,cv.getDataType(null,null).getName());
     }
 
    public static CuminRunStatus createBreak(String id) {

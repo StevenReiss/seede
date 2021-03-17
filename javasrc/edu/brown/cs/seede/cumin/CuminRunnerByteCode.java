@@ -74,9 +74,9 @@ private int		num_arg;
 /********************************************************************************/
 
 CuminRunnerByteCode(CuminProject sp,CashewContext gblctx,CashewClock clock,
-      JcodeMethod mthd,List<CashewValue> args)
+      JcodeMethod mthd,List<CashewValue> args,int depth)
 {
-   super(sp,gblctx,clock,args);
+   super(sp,gblctx,clock,args,depth);
 
    jcode_method = mthd;
    current_instruction = 0;
@@ -204,7 +204,7 @@ private CuminRunStatus handleException(CuminRunStatus cr)
       JcodeDataType jdt = jtcb.getException();
       JcompType cdt = null;
       if (jdt != null) cdt = convertType(jdt);
-      if (cdt == null || cdt.isCompatibleWith(ev.getDataType(execution_clock))) {
+      if (cdt == null || cdt.isCompatibleWith(ev.getDataType(execution_clock,type_converter))) {
 	 int sidx = jtcb.getStart().getIndex();
 	 int eidx = jtcb.getEnd().getIndex();
 	 if (current_instruction >= sidx &&  current_instruction <= eidx) {
@@ -650,37 +650,37 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException, CashewExc
 	 break;
       case IFEQ :
 	 v0 = execution_stack.pop();
-	 v1 = CashewValue.numericValue(v0.getDataType(execution_clock),0);
+	 v1 = CashewValue.numericValue(v0.getDataType(execution_clock,type_converter),0);
 	 v2 = CuminEvaluator.evaluate(typer,execution_clock,CuminOperator.EQL,v0,v1);
 	 if (v2.getBoolean(execution_clock)) nextins = jins.getTargetInstruction();
 	 break;
       case IFGE :
 	 v0 = execution_stack.pop();
-	 v1 = CashewValue.numericValue(v0.getDataType(execution_clock),0);
+	 v1 = CashewValue.numericValue(v0.getDataType(execution_clock,type_converter),0);
 	 v2 = CuminEvaluator.evaluate(typer,execution_clock,CuminOperator.GEQ,v0,v1);
 	 if (v2.getBoolean(execution_clock)) nextins = jins.getTargetInstruction();
 	 break;
       case IFGT :
 	 v0 = execution_stack.pop();
-	 v1 = CashewValue.numericValue(v0.getDataType(execution_clock),0);
+	 v1 = CashewValue.numericValue(v0.getDataType(execution_clock,type_converter),0);
 	 v2 = CuminEvaluator.evaluate(typer,execution_clock,CuminOperator.GTR,v0,v1);
 	 if (v2.getBoolean(execution_clock)) nextins = jins.getTargetInstruction();
 	 break;
       case IFLE :
 	 v0 = execution_stack.pop();
-	 v1 = CashewValue.numericValue(v0.getDataType(execution_clock),0);
+	 v1 = CashewValue.numericValue(v0.getDataType(execution_clock,type_converter),0);
 	 v2 = CuminEvaluator.evaluate(typer,execution_clock,CuminOperator.LEQ,v0,v1);
 	 if (v2.getBoolean(execution_clock)) nextins = jins.getTargetInstruction();
 	 break;
       case IFLT :
 	 v0 = execution_stack.pop();
-	 v1 = CashewValue.numericValue(v0.getDataType(execution_clock),0);
+	 v1 = CashewValue.numericValue(v0.getDataType(execution_clock,type_converter),0);
 	 v2 = CuminEvaluator.evaluate(typer,execution_clock,CuminOperator.LSS,v0,v1);
 	 if (v2.getBoolean(execution_clock)) nextins = jins.getTargetInstruction();
 	 break;
       case IFNE :
 	 v0 = execution_stack.pop();
-	 v1 = CashewValue.numericValue(v0.getDataType(execution_clock),0);
+	 v1 = CashewValue.numericValue(v0.getDataType(execution_clock,type_converter),0);
 	 v2 = CuminEvaluator.evaluate(typer,execution_clock,CuminOperator.NEQ,v0,v1);
 	 if (v2.getBoolean(execution_clock)) nextins = jins.getTargetInstruction();
 	 break;
@@ -896,7 +896,7 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException, CashewExc
       case INSTANCEOF :
 	 JcompType jty = convertType(jins.getTypeReference());
 	 v0 = execution_stack.pop();
-	 if (v0.getDataType(execution_clock).isCompatibleWith(jty))
+	 if (v0.getDataType(execution_clock,type_converter).isCompatibleWith(jty))
 	    vstack = CashewValue.booleanValue(typer,true);
 	 else
 	    vstack = CashewValue.booleanValue(typer,false);
@@ -904,7 +904,7 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException, CashewExc
       case CHECKCAST :
 	 v0 = execution_stack.peek(0);
 	 jty = convertType(jins.getTypeReference());
-	 if (!v0.getDataType(execution_clock).isCompatibleWith(jty)) {
+	 if (!v0.getDataType(execution_clock,type_converter).isCompatibleWith(jty)) {
 	    return CuminEvaluator.returnException(typer,"java.lang.ClassCastException");
 	  }
 	 break;
@@ -1221,7 +1221,7 @@ private JcompType buildMethodType1(String typ)
       JcompType atyp = getTyper().findSystemType(atyps[i].getName());
       atypl.add(atyp);
     }
-   return JcompType.createMethodType(rtyp,atypl,false,null);
+   return getTyper().createMethodType(rtyp,atypl,false,null);
 }
 
 

@@ -270,11 +270,11 @@ CashewRef(CashewDeferredValue deferred)
 }
 
 
-@Override public JcompType getDataType(CashewClock cc)
+@Override public JcompType getDataType(CashewClock cc,JcompTyper typer)
 {
    CashewValue cv = getValueAt(cc);
    if (cv == null) return null;
-   return cv.getDataType(cc);
+   return cv.getDataType(cc,typer);
 }
 
 
@@ -409,7 +409,7 @@ void getChangeTimes(Set<Long> times,Set<CashewValue> done)
       if (last_value != null) {
 	 xw.begin("VALUE");
 	 if (can_initialize) xw.field("CANINIT",true);
-	 xw.field("TYPE",last_value.getDataType());
+	 xw.field("TYPE",last_value.getDataType(null));
 	 last_value.outputLocalXml(xw,outctx,name);
 	 xw.end("VALUE");
        }
@@ -420,7 +420,7 @@ void getChangeTimes(Set<Long> times,Set<CashewValue> done)
 	 xw.begin("VALUE");
 	 xw.field("TIME",when);
 	 if (can_initialize) xw.field("CANINIT",true);
-	 xw.field("TYPE",ent.getValue().getDataType());
+	 xw.field("TYPE",ent.getValue().getDataType(null));
 	 if (ent.getValue() != null) {
 	    ent.getValue().outputLocalXml(xw,outctx,name);
 	  }

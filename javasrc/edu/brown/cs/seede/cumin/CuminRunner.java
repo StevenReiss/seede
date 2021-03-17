@@ -70,7 +70,7 @@ public abstract class CuminRunner implements CuminConstants, CashewConstants, Ca
 public static CuminRunner createRunner(CuminProject cp,CashewContext glblctx,
       MethodDeclaration method,List<CashewValue> args,boolean top)
 {
-   return new CuminRunnerAst(cp,glblctx,null,method,args,top);
+   return new CuminRunnerAst(cp,glblctx,null,method,args,top,0);
 }
 
 
@@ -134,6 +134,8 @@ protected CashewContext global_context;
 protected List<CashewValue> call_args;
 protected JcompTyper	type_converter;
 
+private int             cur_depth;
+
 protected long		max_time;
 protected int		max_depth;
 
@@ -147,7 +149,7 @@ protected int		max_depth;
 /*										*/
 /********************************************************************************/
 
-protected CuminRunner(CuminProject cp,CashewContext gblctx,CashewClock cc,List<CashewValue> args)
+protected CuminRunner(CuminProject cp,CashewContext gblctx,CashewClock cc,List<CashewValue> args,int depth)
 {
    base_project = cp;
    nested_call = null;
@@ -163,6 +165,7 @@ protected CuminRunner(CuminProject cp,CashewContext gblctx,CashewClock cc,List<C
    lookup_context = null;
    max_time = 10000000;
    max_depth = 0;
+   cur_depth = depth;
    type_converter = cp.getTyper();
 }
 
@@ -365,8 +368,10 @@ protected void saveReturn(CashewValue cv)
 protected CuminRunStatus checkTimeout()
 {
    if (max_time <= 0) return null;
-   if (execution_clock.getTimeValue() > max_time)
+   if (execution_clock.getTimeValue() > max_time) {
+      AcornLog.logI("Timeout " + max_time);
       return CuminRunStatus.Factory.createTimeout();
+    }
 
    return null;
 }
@@ -375,8 +380,12 @@ protected CuminRunStatus checkTimeout()
 protected void checkStackOverflow() throws CuminRunException
 {
    if (lookup_context == null || max_depth <= 0) return;
-   if (lookup_context.getDepth() > max_depth)
+   int depth = cur_depth;
+   
+   if (depth > max_depth) {
+      AcornLog.logI("Stack overflow " + max_depth);
       throw CuminRunStatus.Factory.createStackOverflow();
+    }
 
    return;
 }
@@ -533,7 +542,7 @@ CuminRunner handleCall(CashewClock cc,JcodeMethod method,List<CashewValue> args,
       JcompType rtyp = convertType(cmethod.getReturnType());
       JcompType mtyp = null;
       if (argtyps != null) {
-	 mtyp = JcompType.createMethodType(rtyp,argtyps,false,null);
+	 mtyp = getTyper().createMethodType(rtyp,argtyps,false,null);
        }
       MethodDeclaration md = findAstForMethod(fullname,mtyp);
       if (md != null) return doCall(cc,md,args);
@@ -545,7 +554,7 @@ CuminRunner handleCall(CashewClock cc,JcodeMethod method,List<CashewValue> args,
 
 private CuminRunner doCall(CashewClock cc,ASTNode ast,List<CashewValue> args)
 {
-   CuminRunnerAst rast = new CuminRunnerAst(base_project,global_context,cc,ast,args,false);
+   CuminRunnerAst rast = new CuminRunnerAst(base_project,global_context,cc,ast,args,false,cur_depth+1);
    rast.setMaxTime(max_time);
    rast.setMaxDepth(max_depth);
    CashewContext ctx = rast.getLookupContext();
@@ -560,7 +569,7 @@ private CuminRunner doCall(CashewClock cc,ASTNode ast,List<CashewValue> args)
 
 CuminRunner doCall(CashewClock cc,JcodeMethod mthd,List<CashewValue> args)
 {
-   CuminRunnerByteCode rbyt = new CuminRunnerByteCode(base_project,global_context,cc,mthd,args);
+   CuminRunnerByteCode rbyt = new CuminRunnerByteCode(base_project,global_context,cc,mthd,args,cur_depth+1);
    lookup_context.addNestedContext(rbyt.getLookupContext());
    rbyt.setMaxTime(max_time);
    rbyt.setMaxDepth(max_depth);
@@ -582,7 +591,7 @@ private JcompSymbol findTargetMethod(CashewClock cc,JcompSymbol method,
     }
 
    JcompType base = null;
-   if (arg0 != null) base = arg0.getDataType(cc);
+   if (arg0 != null) base = arg0.getDataType(cc,type_converter);
    if (base == null) return null;
 
    JcompSymbol nmethod = base.lookupMethod(getTyper(),method.getName(),method.getType());
@@ -605,7 +614,7 @@ private JcodeMethod findTargetMethod(CashewClock cc,JcodeMethod method,
       CashewValue arg0,CallType ctyp)
 {
    JcompType base = null;
-   if (arg0 != null) base = arg0.getDataType(cc);
+   if (arg0 != null) base = arg0.getDataType(cc,type_converter);
    if (method.isStatic() || ctyp == CallType.STATIC || ctyp == CallType.SPECIAL) {
       return method;
     }
