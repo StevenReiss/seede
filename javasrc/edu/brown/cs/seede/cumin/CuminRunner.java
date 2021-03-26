@@ -504,6 +504,10 @@ CuminRunner handleCall(CashewClock cc,JcodeMethod method,List<CashewValue> args,
       args = nargs;
     }
 
+   if (cmethod == null && !method.isStatic() && thisarg.isNull(cc)) {
+      CuminEvaluator.throwException(type_converter,"java.lang.NullPointerException");
+    }
+   
    if (cmethod == null) {
       StringBuffer buf = new StringBuffer();
       buf.append(method);

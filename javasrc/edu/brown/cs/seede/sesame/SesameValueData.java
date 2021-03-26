@@ -137,6 +137,11 @@ int getLength() 		{ return array_length; }
 CashewValue getCashewValue()
 {
    if (result_value != null) return result_value;
+   
+   if (sesame_session == null) {
+      AcornLog.logE("Value has unknown session " + val_kind + " " + val_type + " " + val_expr + " " +
+            val_value + " " + val_thread + " " + is_local + " " + is_static + " " + hash_code);
+    }
 
    JcompTyper typer = sesame_session.getProject().getTyper();
 

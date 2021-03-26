@@ -281,12 +281,18 @@ CuminRunStatus checkStringMethods() throws CuminRunException, CashewException
 	    break;
 	 case "subSequence" :
 	 case "substring" :
-	    if (getNumArgs() == 2) {
-	       rslt = CashewValue.stringValue(getTyper().STRING_TYPE,thisstr.substring(getInt(1)));
-	     }
-	    else {
-	       rslt = CashewValue.stringValue(getTyper().STRING_TYPE,thisstr.substring(getInt(1),getInt(2)));
-	     }
+            try {
+               int a0 = getInt(1);
+               if (getNumArgs() == 2) {
+                  rslt = CashewValue.stringValue(getTyper().STRING_TYPE,thisstr.substring(a0));
+                }
+               else {
+                  rslt = CashewValue.stringValue(getTyper().STRING_TYPE,thisstr.substring(a0,getInt(2)));
+                }
+             }
+            catch (IndexOutOfBoundsException e) {
+               CuminEvaluator.throwException(getTyper(),"java.lang.IndexOutOfBoundsException");
+             }
 	    break;
 	 case "toLowerCase" :
 	    if (getNumArgs() == 1) {
