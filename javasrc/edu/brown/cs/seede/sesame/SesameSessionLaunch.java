@@ -119,7 +119,8 @@ protected SesameSessionLaunch(SesameSessionLaunch ssl)
    thread_values = new HashMap<>(ssl.thread_values);
    unique_values = ssl.unique_values;
    accessible_types = ssl.accessible_types;
-   value_cache = new SesameSessionCache();
+   value_cache = new SesameSessionCache();      // Want to copy from original cache to new
+                                                // at least for initial values.
    
    session_ready = true;
    
@@ -257,7 +258,7 @@ String getAnyThread()
 {
    CashewValue cv = evaluate(expr,thread);
    if (cv == null) throw new SesameException("Evaluation failed");
-   value_cache.setInitialValue(what,cv);
+   if (what != null) value_cache.setInitialValue(what,cv);
 }
 
 
