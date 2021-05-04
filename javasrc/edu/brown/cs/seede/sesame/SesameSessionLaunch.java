@@ -411,7 +411,9 @@ String getAnyThread()
 
 private void loadInitialValues()
 {
-   CommandArgs cargs = new CommandArgs("LAUNCH",launch_id,"THREAD",null,"COUNT",1,
+   int ct = 1;
+   if (frame_ids != null) ct = -1;
+   CommandArgs cargs = new CommandArgs("LAUNCH",launch_id,"THREAD",null,"COUNT",ct,
 					  "ARRAY",-1);
 
    Element stack = sesame_control.getXmlReply("GETSTACKFRAMES",getProject(),cargs,
