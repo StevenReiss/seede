@@ -552,7 +552,7 @@ public void checkToString(CashewOutputContext outctx)
 public void outputXml(CashewOutputContext outctx)
 {
    outctx.setContext(this);
-   if (isOutput()) {
+   if (isOutput() || outctx.getShowAll()) {
       IvyXmlWriter xw = outctx.getXmlWriter();
       xw.begin("CONTEXT");
       xw.field("ID",context_id);

@@ -27,7 +27,9 @@ package edu.brown.cs.seede.sesame;
 import java.io.File;
 
 import org.eclipse.text.edits.TextEdit;
+import org.w3c.dom.Element;
 
+import edu.brown.cs.ivy.xml.IvyXml;
 import edu.brown.cs.seede.acorn.AcornLog;
 
 class SesameSubsession extends SesameSessionLaunch
@@ -51,11 +53,12 @@ private SesameSessionLaunch base_session;
 /*                                                                              */
 /********************************************************************************/
 
-SesameSubsession(SesameSessionLaunch base)
+SesameSubsession(SesameSessionLaunch base,Element xml)
 {
    super(base);
    local_project = new SesameSubproject(base.getProject());
    base_session = base;
+   if (IvyXml.getAttrBool(xml,"SHOWALL")) setShowAll(true);
    AcornLog.logD("Create subsession for " + base_session.getSessionId());
 }
 

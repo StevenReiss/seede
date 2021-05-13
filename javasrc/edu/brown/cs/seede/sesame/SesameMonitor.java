@@ -490,7 +490,7 @@ private void handleSubsession(String sid,Element xml,IvyXmlWriter xw)
    SesameSession ss = session_map.get(sid);
    ss.waitForReady();
 
-   SesameSubsession sss = new SesameSubsession((SesameSessionLaunch) ss);
+   SesameSubsession sss = new SesameSubsession((SesameSessionLaunch) ss,xml);
    AcornLog.logD("SUBSESSION " + sid + " " + sss.getSessionId());
 
    session_map.put(sss.getSessionId(),sss);

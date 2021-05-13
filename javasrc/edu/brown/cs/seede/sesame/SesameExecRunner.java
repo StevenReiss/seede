@@ -342,7 +342,8 @@ private void report(long time)
 
 private void outputResult(IvyXmlWriter xw,CuminRunner cr,CuminRunStatus sts,boolean stats)
 {
-   CashewOutputContext outctx = new CashewOutputContext(cr,xw,for_session.getExpandNames());
+   CashewOutputContext outctx = new CashewOutputContext(cr,xw,for_session.getExpandNames(),
+         for_session.getShowAll());
    CashewContext ctx = cr.getLookupContext();
    CashewValue rval = sts.getValue();
 

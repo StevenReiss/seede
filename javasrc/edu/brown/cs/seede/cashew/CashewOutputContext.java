@@ -55,6 +55,7 @@ private List<ExpandName> expand_names;
 private CashewContext current_context;
 private CashewRunner for_runner;
 private JcompTyper type_context;
+private boolean show_all;
 
 private static AtomicInteger id_counter = new AtomicInteger();
 
@@ -66,7 +67,7 @@ private static AtomicInteger id_counter = new AtomicInteger();
 /*										*/
 /********************************************************************************/
 
-public CashewOutputContext(CashewRunner cr,IvyXmlWriter xw,Set<String> exp)
+public CashewOutputContext(CashewRunner cr,IvyXmlWriter xw,Set<String> exp,boolean showall)
 {
    values_output = new HashMap<CashewValue,Integer>();
    xml_writer = xw;
@@ -78,6 +79,7 @@ public CashewOutputContext(CashewRunner cr,IvyXmlWriter xw,Set<String> exp)
    current_context = null;
    for_runner = cr;
    type_context = cr.getTyper();
+   show_all = showall;
 }
 
 
@@ -106,6 +108,9 @@ void setContext(CashewContext ctx)
 {
    current_context = ctx;
 }
+
+public boolean getShowAll()                     { return show_all; }
+
 
 
 /********************************************************************************/

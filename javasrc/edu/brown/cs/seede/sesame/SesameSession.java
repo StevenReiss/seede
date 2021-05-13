@@ -93,6 +93,7 @@ private Set<SesameExecRunner> exec_runners;
 private CashewInputOutputModel	cashew_iomodel;
 private Set<String>	expand_names;
 private boolean 	compute_tostring;
+private boolean         show_all;
 
 
 
@@ -109,7 +110,7 @@ protected SesameSession(SesameMain sm,String sid,Element xml)
    String proj = IvyXml.getAttrString(xml,"PROJECT");
    for_project = sm.getProject(proj);
 
-   initialize(sid);
+   initialize(sid,xml);
 
    for (Element locxml : IvyXml.children(xml,"LOCATION")) {
       SesameLocation sloc = new SesameLocation(sm,locxml);
@@ -123,17 +124,18 @@ SesameSession(SesameSession parent)
    sesame_control = parent.sesame_control;
    for_project = parent.for_project;
 
-   initialize(null);
+   initialize(null,null);
    
    location_map.putAll(parent.location_map);
    if (parent.expand_names != null) {
       expand_names = new HashSet<>(parent.expand_names);
     }
    compute_tostring = parent.compute_tostring;
+   show_all = parent.show_all;
 }
 
 
-private void initialize(String sid)
+private void initialize(String sid,Element xml)
 {
    if (sid == null || sid.equals("*")) {
       Random r = new Random();
@@ -148,6 +150,7 @@ private void initialize(String sid)
    cashew_iomodel = new CashewInputOutputModel();
    expand_names = null;
    compute_tostring = sesame_control.getComputeToString();
+   show_all = IvyXml.getAttrBool(xml,"SHOWALL");
 }
 
 
@@ -276,6 +279,18 @@ boolean getComputeToString()
 void setComputeToString(boolean fg)
 {
    compute_tostring = fg;
+}
+
+boolean getShowAll()
+{
+   return show_all;
+}
+
+
+
+void setShowAll(boolean fg)
+{
+   show_all = fg;
 }
 
 
