@@ -1779,12 +1779,13 @@ private CuminRunStatus visit(SuperMethodInvocation v,ASTNode after)
 /*										*/
 /********************************************************************************/
 
-private CuminRunStatus visit(AssertStatement s,ASTNode after) throws CashewException
+private CuminRunStatus visit(AssertStatement s,ASTNode after) 
+        throws CashewException, CuminRunException
 {
    if (after == null) next_node = s.getExpression();
    else {
       if (!execution_stack.pop().getBoolean(execution_clock)) {
-	 // throw assertion exception
+         CuminEvaluator.throwException(getTyper(),"java.lang.AssertionError");
        }
     }
    return null;
