@@ -48,7 +48,7 @@ class CuminEvaluator implements CuminConstants, CashewConstants
 /********************************************************************************/
 
 static CashewValue evaluate(JcompTyper typer,CashewClock cc,CuminOperator op,CashewValue v1,CashewValue v2)
-        throws CuminRunException
+	throws CuminRunException
 {
    try {
       return evaluateUnchecked(typer,cc,op,v1,v2);
@@ -112,7 +112,7 @@ static CashewValue evaluateUnchecked(JcompTyper typer,CashewClock cc,CuminOperat
    switch (op) {
       case ADD :
 	 if (isstr) {
-            // TODO: Need to call toString here to get accurate results
+	    // TODO: Need to call toString here to get accurate results
 	    String s0 = getStringValue(v1,typer,cc) + getStringValue(v2,typer,cc);
 	    rslt = CashewValue.stringValue(typer.STRING_TYPE,s0);
 	  }
@@ -199,7 +199,7 @@ static CashewValue evaluateUnchecked(JcompTyper typer,CashewClock cc,CuminOperat
 	    crslt = v1.getNumber(cc).intValue() >= v2.getNumber(cc).intValue();
 	  }
 	 else {
-            throw CuminRunStatus.Factory.createCompilerError();
+	    throw CuminRunStatus.Factory.createCompilerError();
 	  }
 	 break;
       case GTR :
@@ -216,7 +216,7 @@ static CashewValue evaluateUnchecked(JcompTyper typer,CashewClock cc,CuminOperat
 	    crslt = v1.getNumber(cc).intValue() > v2.getNumber(cc).intValue();
 	  }
 	 else {
-            throw CuminRunStatus.Factory.createCompilerError();
+	    throw CuminRunStatus.Factory.createCompilerError();
 	  }
 	 break;
       case LEQ :
@@ -233,7 +233,7 @@ static CashewValue evaluateUnchecked(JcompTyper typer,CashewClock cc,CuminOperat
 	    crslt = v1.getNumber(cc).intValue() <= v2.getNumber(cc).intValue();
 	  }
 	 else {
-            throw CuminRunStatus.Factory.createCompilerError();
+	    throw CuminRunStatus.Factory.createCompilerError();
 	  }
 	 break;
       case LSH :
@@ -260,7 +260,7 @@ static CashewValue evaluateUnchecked(JcompTyper typer,CashewClock cc,CuminOperat
 	    crslt = v1.getNumber(cc).intValue() < v2.getNumber(cc).intValue();
 	  }
 	 else {
-            throw CuminRunStatus.Factory.createCompilerError();
+	    throw CuminRunStatus.Factory.createCompilerError();
 	  }
 	 break;
       case MOD :
@@ -420,6 +420,8 @@ static CashewValue evaluateUnchecked(JcompTyper typer,CashewClock cc,CuminOperat
       throw CuminRunStatus.Factory.createCompilerError();
     }
 
+   AcornLog.logD("EVAL " + op + " " + v1 + " " + v2 + " " + rslt);
+
    return rslt;
 }
 
@@ -496,7 +498,7 @@ static void assignValue(CuminRunner cr,CashewValue vr,CashewValue cv,JcompType t
 
 
 static CashewValue castValue(CuminRunner cr,CashewValue cv,JcompType target)
-	throws CuminRunException, CashewException 
+	throws CuminRunException, CashewException
 {
    CashewClock cc = cr.getClock();
    JcompTyper typer = cr.getTyper();
@@ -588,8 +590,8 @@ static CashewValue unboxValue(JcompTyper typer,CashewClock cc,CashewValue cv)
 
 
 
-static private CashewValue boxValue(CuminRunner cr,CashewValue cv) 
-        throws CuminRunException, CashewException
+static private CashewValue boxValue(CuminRunner cr,CashewValue cv)
+	throws CuminRunException, CashewException
 {
    CashewClock cc = cr.getClock();
    JcompTyper typer = cr.getTyper();
@@ -653,8 +655,8 @@ private static CashewValue invokeConverter(CuminRunner runner,String cls,
 
 
 private static CashewValue invokeEvalConverter(CuminRunner runner,String cls,String mthd,String sgn,
-      CashewValue arg) 
-        throws CuminRunException, CashewException
+      CashewValue arg)
+	throws CuminRunException, CashewException
 {
    String cast = arg.getDataType(runner.getClock(),runner.getTyper()).getName();
    String argv = arg.getString(runner.getTyper(),runner.getClock());
@@ -803,7 +805,7 @@ static CashewValue evaluate(JcompTyper typer,CashewClock cc,CuminOperator op,Cas
 	 rslt = v1.getActualValue(cc);
 	 break;
       default :
-         throw CuminRunStatus.Factory.createCompilerError();
+	 throw CuminRunStatus.Factory.createCompilerError();
     }
 
    return rslt;
@@ -855,7 +857,7 @@ static CuminRunStatus returnException(JcompTyper typer,JcompType typ)
 /********************************************************************************/
 
 static CashewValue buildArray(CuminRunner runner,int idx,int [] bnds,JcompType base)
-        throws CashewException
+	throws CashewException
 {
    JcompType atyp = base;
    for (int i = idx; i < bnds.length; ++i) {
@@ -873,21 +875,21 @@ static CashewValue buildArray(CuminRunner runner,int idx,int [] bnds,JcompType b
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      String helper methods                                                   */
-/*                                                                              */
+/*										*/
+/*	String helper methods							*/
+/*										*/
 /********************************************************************************/
 
 static String getStringValue(CashewValue cv,JcompTyper typer,CashewClock cc) throws CashewException
 {
    if (!cv.getDataType(cc,null).isPrimitiveType() && cv.isNull(cc)) return "null";
-   
+
    JcompType jt = cv.getDataType(cc,typer);
    if (jt.isEnumType()) {
       return cv.getFieldValue(typer,cc,"java.lang.Enum.name").getString(typer,cc);
     }
    String rslt = cv.getString(typer,cc,1,false);
-   
+
    if (rslt.length() > 4096) {
       rslt = cv.getString(typer,cc,0,false);
     }

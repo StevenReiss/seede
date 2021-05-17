@@ -25,6 +25,8 @@
 package edu.brown.cs.seede.sesame;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.eclipse.text.edits.TextEdit;
 import org.w3c.dom.Element;
@@ -121,6 +123,26 @@ SesameFile editLocalFile(File f,TextEdit te)
    noteFileChanged(editfile);
    return editfile;
 }
+
+
+@Override public List<SesameLocation> getActiveLocations()
+{
+   List<SesameLocation> rslt = super.getActiveLocations();
+   List<SesameLocation> nrslt = new ArrayList<>();
+   
+   for (SesameLocation loc : rslt) {
+      SesameFile sf = local_project.getLocalFile(loc.getFile().getFile());
+      if (sf != loc.getFile()) {
+         SesameLocation nloc = new SesameLocation(sf,loc.getMethodName(),
+               loc.getLineNumber(),loc.getThread(),loc.getThreadName());
+         nrslt.add(nloc);
+       }
+      else nrslt.add(loc);
+    }
+   
+   return nrslt; 
+}
+
 
 
 
