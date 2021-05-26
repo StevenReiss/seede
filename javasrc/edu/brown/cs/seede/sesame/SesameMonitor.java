@@ -525,7 +525,7 @@ private void handleExec(String sid,Element xml,IvyXmlWriter xw)
 {
    String xid = IvyXml.getAttrString(xml,"EXECID",sid);
    boolean iscont = IvyXml.getAttrBool(xml,"CONTINUOUS");
-   long maxtime = IvyXml.getAttrLong(xml,"MAXTIME",10000000);
+   long maxtime = IvyXml.getAttrLong(xml,"MAXTIME",100000);
    int maxdepth = IvyXml.getAttrInt(xml,"MAXDEPTH",100);
 
    SesameSession ss = session_map.get(sid);

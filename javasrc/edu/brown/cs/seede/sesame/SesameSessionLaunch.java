@@ -123,7 +123,6 @@ protected SesameSessionLaunch(SesameSessionLaunch ssl)
                                                 // at least for initial values.
    
    session_ready = true;
-   
 }
 
 
@@ -189,12 +188,17 @@ String getAnyThread()
    waitForReady();
 
    MethodDeclaration md = getCallMethod(loc);
+   if (md == null) return null;
+   
    List<CashewValue> args = new ArrayList<>();
    JcompSymbol msym = JcompAst.getDefinition(md.getName());
    if (msym == null) {
       getProject().getTyper();
       msym = JcompAst.getDefinition(md.getName());
-      if (msym == null) return null;
+      if (msym == null) {
+         AcornLog.logE("Can't find method symbol for args " + md + " " + loc);
+         return null;
+       }
     }
 
    Map<String,SesameValueData> valmap = thread_values.get(loc.getThread());
@@ -207,7 +211,8 @@ String getAnyThread()
    for (Object o : md.parameters()) {
       SingleVariableDeclaration svd = (SingleVariableDeclaration) o;
       JcompSymbol psym = JcompAst.getDefinition(svd.getName());
-      SesameValueData val = valmap.get(psym.getName());
+      SesameValueData val = value_cache.lookup(null,psym.getName());
+      if (val == null) val = valmap.get(psym.getName());
       val = getUniqueValue(val);
       if (val != null) {
 	 CashewValue argval = val.getCashewValue();
@@ -222,7 +227,7 @@ String getAnyThread()
 	       String expr = "edu.brown.cs.seede.poppy.PoppyGraphics.computeGraphics1(";
 	       expr += "this,";
 	       expr += psym.getName() +  ",\"" + gname + "\")";
-	       SesameValueData nval = evaluateData(expr,loc.getThread());
+	       SesameValueData nval = evaluateData(expr,loc.getThread(),true);
 	       if (nval != null) {
 		  nval = getUniqueValue(nval);
 		  argval = nval.getCashewValue();
@@ -256,7 +261,7 @@ String getAnyThread()
 @Override void setInitialValue(String what,String thread,String expr)
 	throws SesameException
 {
-   CashewValue cv = evaluate(expr,thread);
+   CashewValue cv = evaluate(expr,thread,true);
    if (cv == null) throw new SesameException("Evaluation failed");
    if (what != null) value_cache.setInitialValue(what,cv);
 }
@@ -286,14 +291,14 @@ String getAnyThread()
    CashewValue cv = super.lookupValue(name,type);
    if (cv != null) return null;
 
-   cv = evaluate(name,null);
+   cv = evaluate(name,null,true);
    if (cv != null) return cv;
 
    return cv;
 }
 
 
-@Override SesameValueData evaluateData(String expr,String thread0)
+@Override SesameValueData evaluateData(String expr,String thread0,boolean allframes)
 {
    String eid = "E_" + eval_counter.incrementAndGet();
    // expr = "edu.brown.cs.seede.poppy.PoppyValue.register(" + expr + ")";
@@ -306,7 +311,7 @@ String getAnyThread()
    String frame = thread_frame.get(thread);
    CommandArgs args = new CommandArgs("THREAD",thread,
 	 "FRAME",frame,"BREAK",false,"EXPR",expr,"IMPLICIT",true,
-	 "LEVEL",3,"ARRAY",-1,"REPLYID",eid);
+	 "LEVEL",3,"ARRAY",-1,"REPLYID",eid,"ALLFRAMES",allframes);
    args.put("SAVEID",eid);
    Element xml = getControl().getXmlReply("EVALUATE",getProject(),args,null,0);
    if (IvyXml.isElement(xml,"RESULT")) {
@@ -327,14 +332,14 @@ String getAnyThread()
 
 
 
-@Override void evaluateVoid(String expr) throws CashewException
+@Override void evaluateVoid(String expr,boolean allframes) throws CashewException
 {
    String eid = "E_" + eval_counter.incrementAndGet();
    String thread = getAnyThread();
    String frame = thread_frame.get(thread);
    CommandArgs args = new CommandArgs("THREAD",getAnyThread(),
 	 "FRAME",frame,"BREAK",false,"EXPR",expr,"IMPLICIT",true,
-	 "LEVEL",4,"REPLYID",eid);
+	 "LEVEL",4,"REPLYID",eid,"ALLFRAMES",allframes);
    Element xml = getControl().getXmlReply("EVALUATE",getProject(),args,null,0);
    if (IvyXml.isElement(xml,"RESULT")) {
       Element rslt = getControl().waitForEvaluation(eid);
@@ -365,7 +370,7 @@ String getAnyThread()
    String expr = "java.lang.reflect.AccessibleObject.setAccessible(" + type1 + ".class";
    expr += ".getDeclaredFields(),true)";
    try {
-      evaluateVoid(expr);
+      evaluateVoid(expr,false);
     }
    catch (CashewException e) { }
 

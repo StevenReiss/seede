@@ -24,6 +24,8 @@
 
 package edu.brown.cs.seede.cumin;
 
+import edu.brown.cs.ivy.jcomp.JcompType;
+import edu.brown.cs.ivy.jcomp.JcompTyper;
 import edu.brown.cs.seede.cashew.CashewValue;
 
 public interface CuminRunStatus extends CuminConstants
@@ -94,13 +96,19 @@ public class Factory {
       return new CuminRunValue(Reason.CONTINUE,id);
     }
 
-   public static CuminRunStatus createTimeout() {
-      return new CuminRunValue(Reason.TIMEOUT);
+   public static CuminRunStatus createTimeout(JcompTyper typer) {
+      JcompType etyp = typer.findSystemType("java.lang.Error");
+      CashewValue cv = CashewValue.objectValue(typer,etyp);
+      return new CuminRunException(Reason.EXCEPTION,"SEEDE TIMOEOUT",null,cv);  
+   // return new CuminRunValue(Reason.TIMEOUT);
     }
 
 
-   public static CuminRunException createStackOverflow() {
-      return new CuminRunException(Reason.STACK_OVERFLOW);
+   public static CuminRunException createStackOverflow(JcompTyper typer) {
+   // return new CuminRunException(Reason.STACK_OVERFLOW);
+      JcompType etyp = typer.findSystemType("java.lang.StackOverflowError");
+      CashewValue cv = CashewValue.objectValue(typer,etyp);
+      return new CuminRunException(Reason.EXCEPTION,etyp.toString(),null,cv);
    }
 
    public static CuminRunException createCompilerError() {

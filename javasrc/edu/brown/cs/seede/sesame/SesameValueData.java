@@ -422,7 +422,7 @@ private synchronized void computeValues()
        }
     }
    else {
-      SesameValueData svd = sesame_session.evaluateData(val_expr,null);
+      SesameValueData svd = sesame_session.evaluateData(val_expr,null,true);
       sub_values = svd.sub_values;
     }
 }
@@ -453,39 +453,39 @@ private class DeferredLookup implements CashewConstants.CashewDeferredValue {
    @Override public CashewValue getValue() {
       computeValues();
       if (field_name.equals(CashewConstants.HASH_CODE_FIELD)) {
-	 if (sub_values == null) sub_values = new HashMap<String,SesameValueData>();
-	 if (sub_values.get(field_name) == null) {
-	    SesameValueData svd = null;
-	    if (val_expr != null) {
-	       svd = sesame_session.evaluateData("System.identityHashCode(" + val_expr + ")",null);
-	     }
-	    else {
-	       CommandArgs args = new CommandArgs("FRAME",getFrame(),"THREAD",getThread(),
-		     "DEPTH",1,"ARRAY",-1);
-	       String var = "<VAR>" + IvyXml.xmlSanitize(val_name) + "?@hashCode</VAR>";
-	       Element xml = sesame_session.getControl().getXmlReply("VARVAL",sesame_session.getProject(),args,var,0);
-	       if (IvyXml.isElement(xml,"RESULT")) {
-		  svd = new SesameValueData(sesame_session,val_thread,IvyXml.getChild(xml,"VALUE"),null);
-		}
-	     }
-	    if (svd != null) sub_values.put(field_name,svd);
-	  }
+         if (sub_values == null) sub_values = new HashMap<String,SesameValueData>();
+         if (sub_values.get(field_name) == null) {
+            SesameValueData svd = null;
+            if (val_expr != null) {
+               svd = sesame_session.evaluateData("System.identityHashCode(" + val_expr + ")",null,true);
+             }
+            else {
+               CommandArgs args = new CommandArgs("FRAME",getFrame(),"THREAD",getThread(),
+        	     "DEPTH",1,"ARRAY",-1);
+               String var = "<VAR>" + IvyXml.xmlSanitize(val_name) + "?@hashCode</VAR>";
+               Element xml = sesame_session.getControl().getXmlReply("VARVAL",sesame_session.getProject(),args,var,0);
+               if (IvyXml.isElement(xml,"RESULT")) {
+                  svd = new SesameValueData(sesame_session,val_thread,IvyXml.getChild(xml,"VALUE"),null);
+                }
+             }
+            if (svd != null) sub_values.put(field_name,svd);
+          }
        }
-
+   
       if (sub_values == null) return null;
       String fnm = field_name;
       String cnm = null;
       int idx = fnm.lastIndexOf(".");
       if (idx >= 0) {
-	 cnm = fnm.substring(0,idx);
-	 fnm = fnm.substring(idx+1);
+         cnm = fnm.substring(0,idx);
+         fnm = fnm.substring(idx+1);
        }
       String lookup = getKey(fnm,cnm);
       SesameValueData svd = sub_values.get(lookup);
       svd = sesame_session.getUniqueValue(svd);
       if (svd == null) {
-	 AcornLog.logE("Deferred Lookup of " + lookup + " not found");
-	 return null;
+         AcornLog.logE("Deferred Lookup of " + lookup + " not found");
+         return null;
        }
       CashewValue cvr = svd.getCashewValue();
       // AcornLog.logD("Deferred Lookup of " + lookup + " = " + cvr);
@@ -506,14 +506,19 @@ private class DeferredLookup implements CashewConstants.CashewDeferredValue {
 {
    StringBuffer buf = new StringBuffer();
    buf.append("<<");
-   buf.append(val_kind);
-   buf.append(":");
-   buf.append(val_type);
-   buf.append("@");
-   buf.append(val_value);
-   if (array_length > 0) buf.append("#" + array_length);
-   buf.append(" ");
-   buf.append(val_name);
+   if (result_value != null && val_kind == ValueKind.UNKNOWN) {
+      buf.append(result_value.toString());
+    }
+   else {
+      buf.append(val_kind);
+      buf.append(":");
+      buf.append(val_type);
+      buf.append("@");
+      buf.append(val_value);
+      if (array_length > 0) buf.append("#" + array_length);
+      buf.append(" ");
+      buf.append(val_name);
+    }
    buf.append(">>");
    return buf.toString();
 }

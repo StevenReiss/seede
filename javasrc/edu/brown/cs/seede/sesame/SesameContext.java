@@ -126,19 +126,19 @@ SesameContext(SesameSession ss)
 
 @Override public CashewValue evaluate(String expr)
 {
-   return for_session.evaluate(expr,null);
+   return for_session.evaluate(expr,null,true);
 }
 
 
 @Override public CashewValue evaluate(String expr,String tid)
 {
-   return for_session.evaluate(expr,tid);
+   return for_session.evaluate(expr,tid,true);
 }
 
 
 @Override public CashewValue evaluateVoid(String expr) throws CashewException 
 {
-   for_session.evaluateVoid(expr);
+   for_session.evaluateVoid(expr,true);
 
    return null;
 }

@@ -273,7 +273,7 @@ String getCallingClass()
 	 sts = r;
        }
       catch (CashewException e) {
-	 AcornLog.logI("Exception evaluating " + current_node + " in:\n " + method_node);
+	 AcornLog.logI("Exception evaluating " + current_node + " in:\n " + method_node + " using: " + call_args);
 	 sts = CuminRunStatus.Factory.createCompilerError();
        }
       catch (Throwable t) {
@@ -1030,7 +1030,7 @@ private CuminRunStatus visit(ArrayAccess v,ASTNode after) throws CashewException
       CashewValue av = execution_stack.pop();
       int idx = cv.getNumber(execution_clock).intValue();
       if (idx < 0 || idx >= av.getDimension(execution_clock)) {
-	 return CuminEvaluator.returnException(getTyper(),"java.lang.IndexOutOfBoundsException");
+	 return CuminEvaluator.returnException(getTyper(),"java.lang.ArrayIndexOutOfBoundsException");
        }
       CashewValue rv = av.getIndexValue(execution_clock,idx);
       execution_stack.push(rv);

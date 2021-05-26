@@ -72,6 +72,19 @@ CuminDirectEvaluation(CuminRunnerByteCode bc)
 
 CuminRunStatus checkStringMethods() throws CuminRunException, CashewException
 {
+   try {
+      return checkStringMethodsLocal();
+    }
+   catch (IndexOutOfBoundsException e) {
+      CuminEvaluator.throwException(getTyper(),e.getClass().getName());
+    }
+   
+   return null;
+}
+
+
+private CuminRunStatus checkStringMethodsLocal() throws CuminRunException, CashewException
+{
    CashewValue rslt = null;
 
    if (getMethod().isStatic()) {
@@ -291,7 +304,7 @@ CuminRunStatus checkStringMethods() throws CuminRunException, CashewException
                 }
              }
             catch (IndexOutOfBoundsException e) {
-               CuminEvaluator.throwException(getTyper(),"java.lang.IndexOutOfBoundsException");
+               CuminEvaluator.throwException(getTyper(),"java.lang.StringIndexOutOfBoundsException");
              }
 	    break;
 	 case "toLowerCase" :
@@ -810,7 +823,7 @@ private CuminRunStatus handleArrayCopy(CashewValue src,int spos,CashewValue dst,
    // check array element types
 
    if (spos < 0 || dpos < 0 || len < 0 || spos+len > sdim || dpos+len > ddim) {
-      return CuminEvaluator.returnException(getTyper(),"java.lang.IndexOutOfBoundsException");
+      return CuminEvaluator.returnException(getTyper(),"java.lang.ArrayIndexOutOfBoundsException");
     }
 
    getClock().freezeTime();

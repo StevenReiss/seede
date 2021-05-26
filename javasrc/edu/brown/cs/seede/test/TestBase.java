@@ -185,7 +185,7 @@ protected Element runSeede(String id)
    MintDefaultReply rply = new MintDefaultReply();
    seede_result = null;
    CommandArgs args = new CommandArgs("EXECID",id,"CONTINUOUS",true,
-        "MAXTIME",1000000,"MAXDEPTH",100);
+        "MAXTIME",100000,"MAXDEPTH",100);
    sendSeedeMessage("EXEC",id,args,null,rply);
    String sstatus = rply.waitForString();
    AcornLog.logD("TEST: RESULT IS " + sstatus);
@@ -312,6 +312,23 @@ protected String startSeedeSubsession(String id)
 }
 
 
+
+protected void setVariable(String id,String var,String valtype,String val)
+{
+   CommandArgs args = new CommandArgs("VAR",var);
+   
+   IvyXmlWriter xw = new IvyXmlWriter();
+   xw.begin("VALUE");
+   xw.field("TYPE",valtype);
+   xw.field("VALUE",val);   
+   xw.end("VALUE");
+   String cnts = xw.toString();
+   xw.close();
+   
+   MintDefaultReply rply = new MintDefaultReply();
+   sendSeedeMessage("SETVALUE",id,args,cnts,rply);
+   rply.waitForXml();
+}
 
 
 /********************************************************************************/

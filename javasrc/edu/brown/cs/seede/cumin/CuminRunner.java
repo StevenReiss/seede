@@ -370,7 +370,7 @@ protected CuminRunStatus checkTimeout()
    if (max_time <= 0) return null;
    if (execution_clock.getTimeValue() > max_time) {
       AcornLog.logI("Timeout " + max_time);
-      return CuminRunStatus.Factory.createTimeout();
+      return CuminRunStatus.Factory.createTimeout(getTyper());
     }
 
    return null;
@@ -384,7 +384,8 @@ protected void checkStackOverflow() throws CuminRunException
    
    if (depth > max_depth) {
       AcornLog.logI("Stack overflow " + max_depth);
-      throw CuminRunStatus.Factory.createStackOverflow();
+      CuminEvaluator.throwException(getTyper(),"java.lang.StackOverflowError");
+//    throw CuminRunStatus.Factory.createStackOverflow();
     }
 
    return;
@@ -407,7 +408,6 @@ CuminRunner handleCall(CashewClock cc,JcompSymbol method,List<CashewValue> args,
    CashewValue thisarg = null;
    if (args != null && args.size() > 0) {
       thisarg = args.get(0);
-      // AcornLog.logD("Call " + method + " on " + thisarg.getDebugString(execution_clock));
     }
    
    if (!method.isStatic() && ctyp != CallType.STATIC && ctyp != CallType.SPECIAL) {
@@ -426,6 +426,8 @@ CuminRunner handleCall(CashewClock cc,JcompSymbol method,List<CashewValue> args,
     }
 
    JcompType type = cmethod.getClassType();
+   while (type.isParameterizedType()) type = type.getBaseType();
+   
    if (!type.isKnownType()) {
       ASTNode an = cmethod.getDefinitionNode();
       if (an == null) {
@@ -451,8 +453,13 @@ CuminRunner handleCall(CashewClock cc,JcompSymbol method,List<CashewValue> args,
     }
 
    JcodeClass mcls = getCodeFactory().findClass(type.getName());
+   JcompSymbol bmethod = cmethod.getBaseSymbol(type_converter);
    String jtyp = cmethod.getType().getJavaTypeName();
+   String jbtype = bmethod.getType().getJavaTypeName();
    JcodeMethod mthd = mcls.findMethod(cmethod.getName(),jtyp);
+   if (mthd == null) {
+      mthd = mcls.findMethod(bmethod.getName(),jbtype);
+    }
    if (mthd == null) {
       throw CuminRunStatus.Factory.createError("Can't find method " + cmethod.getName() + " for " + jtyp);
     }

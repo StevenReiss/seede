@@ -146,6 +146,7 @@ void editFile(int len,int off,String txt,boolean complete)
 }
 
 
+
 boolean editFile(TextEdit te)
 {
    try {
@@ -404,6 +405,17 @@ Position createPosition(int pos)
 }
 
 
+int getLineOfPosition(Position p)
+{
+   if (p == null) return 0;
+   
+   try {
+      return edit_document.getLineOfOffset(p.getOffset());
+    }
+   catch (BadLocationException e) {
+      return 0;
+    }
+}
 
 
 /********************************************************************************/

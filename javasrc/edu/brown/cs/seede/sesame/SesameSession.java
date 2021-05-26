@@ -202,11 +202,11 @@ public SesameProject getProject()
 
 public MethodDeclaration getCallMethod(SesameLocation loc)
 {
-   if (!loc.isActive()) return null;
+   if (!loc.isActive() || loc.getStartPosition() == null) return null;
 
    SesameFile sf = loc.getFile();
    ASTNode root = sf.getResolvedAst(getProject());
-   ASTNode mnode = JcompAst.findNodeAtOffset(root,loc.getStartPositiion().getOffset());
+   ASTNode mnode = JcompAst.findNodeAtOffset(root,loc.getStartPosition().getOffset());
    while (!(mnode instanceof MethodDeclaration)) {
       mnode = mnode.getParent();
     }
@@ -396,6 +396,9 @@ CuminRunner createRunner(SesameLocation loc,SesameContext gblctx)
 }
 
 
+
+
+
 MethodDeclaration getRunnerMethod(CuminRunner cr)
 {
    SesameLocation loc = getLocation(cr);
@@ -492,9 +495,9 @@ CashewValue lookupValue(String name,String type)
 }
 
 
-CashewValue evaluate(String expr,String thread)
+CashewValue evaluate(String expr,String thread,boolean allframes)
 {
-   SesameValueData svd = evaluateData(expr,thread);
+   SesameValueData svd = evaluateData(expr,thread,allframes);
 
    if (svd == null) return null;
 
@@ -503,12 +506,12 @@ CashewValue evaluate(String expr,String thread)
 
 
 
-SesameValueData evaluateData(String expr,String tid)
+SesameValueData evaluateData(String expr,String tid,boolean allframes)
 {
    return null;
 }
 
-void evaluateVoid(String expr) throws CashewException
+void evaluateVoid(String expr,boolean allframes) throws CashewException
 {
 }
 

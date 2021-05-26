@@ -85,7 +85,7 @@ public CashewValue findStaticFieldReference(JcompTyper typer,String name,String 
    if (name.equals(CURRENT_THREAD_FIELD)) {
       CashewValue cv = findActualReference(name);
       if (cv != null) return cv;
-      SesameValueData svd = for_session.evaluateData("java.lang.Thread.currentThread()",thread_id);
+      SesameValueData svd = for_session.evaluateData("java.lang.Thread.currentThread()",thread_id,false);
       if (svd != null) {
          cv = svd.getCashewValue();
          if (cv != null) {
