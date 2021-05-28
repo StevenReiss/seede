@@ -25,7 +25,10 @@
 package edu.brown.cs.seede.cumin;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.WeakHashMap;
 
 import edu.brown.cs.ivy.jcode.JcodeClass;
 import edu.brown.cs.ivy.jcode.JcodeMethod;
@@ -39,6 +42,19 @@ import edu.brown.cs.seede.cashew.CashewValue;
 
 class CuminEvaluator implements CuminConstants, CashewConstants
 {
+
+/********************************************************************************/
+/*                                                                              */
+/*      Private Storage                                                         */
+/*                                                                              */
+/********************************************************************************/
+
+private static Map<Object,Map<String,CashewValue>> cached_values;
+
+
+static {
+   cached_values = new WeakHashMap<>();
+}
 
 
 /********************************************************************************/
@@ -83,6 +99,7 @@ static CashewValue evaluateUnchecked(JcompTyper typer,CashewClock cc,CuminOperat
    switch (op) {
       case EQL :
       case NEQ :
+         if (t1.isPrimitiveType() || t2.isPrimitiveType()) dounbox = true;
 	 break;
       case ADD :
 	 if (!isstr) dounbox = true;
@@ -661,10 +678,31 @@ private static CashewValue invokeEvalConverter(CuminRunner runner,String cls,Str
    String cast = arg.getDataType(runner.getClock(),runner.getTyper()).getName();
    String argv = arg.getString(runner.getTyper(),runner.getClock());
    String expr = cls + "." + mthd + "( (" + cast + ") " + argv + ")";
-   CashewValue cv = runner.getLookupContext().evaluate(expr);
-   if (cv != null) return cv;
-
-   return invokeConverter(runner,cls,mthd,sgn,arg);
+   
+   Map<String,CashewValue> cache = null;
+   Object sess = runner.getLookupContext().getSessionKey();
+   CashewValue cv = null;
+   if (sess != null) {
+      synchronized (cached_values) {
+         cache = cached_values.get(sess);
+         if (cache == null) {
+            cache = new HashMap<>();
+            cached_values.put(sess,cache);
+          }
+       }
+      cv = cache.get(expr);
+      if (cv != null) return cv;
+    }
+   
+   cv = runner.getLookupContext().evaluate(expr);
+   if (cv == null) {
+      cv = invokeConverter(runner,cls,mthd,sgn,arg);
+    }
+   if (cv != null && cache != null) {
+      cache.put(expr,cv);
+    }
+  
+   return cv;
 }
 
 

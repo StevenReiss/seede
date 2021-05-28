@@ -95,6 +95,11 @@ SesameSubsession(SesameSessionLaunch base,Element xml)
 
 SesameSubsession getSubsession()                { return this; }
 
+Object getSessionKey()
+{
+   return base_session.getSessionKey();
+}
+
 @Override public SesameProject getProject()     { return local_project; }
 
 

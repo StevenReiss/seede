@@ -294,6 +294,12 @@ void setShowAll(boolean fg)
 }
 
 
+Object getSessionKey()
+{
+   return this;
+}
+
+
 
 /********************************************************************************/
 /*										*/

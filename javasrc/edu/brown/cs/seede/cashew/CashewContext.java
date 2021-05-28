@@ -169,6 +169,13 @@ public long getStartTime()                      { return start_time; }
 
 public long getEndTime()                        { return end_time; }
 
+public Object getSessionKey()
+{
+   if (parent_context == null) return null;
+   return parent_context.getSessionKey();
+}
+
+
 public CashewValue findReference(JcompTyper typer,JcompSymbol js)
 {
    CashewValue cv = null;

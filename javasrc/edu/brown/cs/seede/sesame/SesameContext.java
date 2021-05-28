@@ -169,6 +169,12 @@ SesameContext(SesameSession ss)
    return inp;
 }
 
+@Override public Object getSessionKey()
+{
+   if (for_session == null) return null;
+   return for_session.getSessionKey();
+}
+
 
 }	// end of class SesameContext
 
