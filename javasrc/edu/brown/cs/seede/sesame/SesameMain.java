@@ -82,6 +82,8 @@ private static JcompControl	jcomp_base;
 
 private SesameMain(String [] args)
 {
+   AcornLog.setup();
+   
    message_id = null;
    project_map = new HashMap<String,SesameProject>();
    jcomp_base = new JcompControl();

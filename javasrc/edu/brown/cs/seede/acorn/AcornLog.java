@@ -24,96 +24,13 @@
 
 package edu.brown.cs.seede.acorn;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
+
+import edu.brown.cs.ivy.file.IvyLog;
 
 
 
-public class AcornLog implements AcornConstants
+public class AcornLog extends IvyLog
 {
-
-
-
-/********************************************************************************/
-/*										*/
-/*	Internal classes							*/
-/*										*/
-/********************************************************************************/
-
-public enum LogLevel {
-   ERROR, WARNING, INFO, DEBUG
-}
-
-
-/********************************************************************************/
-/*										*/
-/*	Private Storage 							*/
-/*										*/
-/********************************************************************************/
-
-private static LogLevel log_level;
-private static boolean	use_stderr;
-private static PrintWriter log_writer;
-private static boolean	trace_execution;
-
-static {
-   use_stderr = false;
-   log_level = LogLevel.INFO;
-   log_writer = null;
-   trace_execution = false;
-}
-
-
-/********************************************************************************/
-/*										*/
-/*	Logging entries 							*/
-/*										*/
-/********************************************************************************/
-
-public static void logE(String msg,Throwable t)
-{
-   log(LogLevel.ERROR,msg,t);
-}
-
-
-public static void logE(String msg)
-{
-   log(LogLevel.ERROR,msg,null);
-}
-
-
-public static void logX(String msg)
-{
-   Throwable t = new Throwable(msg);
-   log(LogLevel.ERROR,msg,t);
-}
-
-
-public static void logW(String msg)
-{
-   log(LogLevel.WARNING,msg,null);
-}
-
-
-public static void logI(String msg)
-{
-   log(LogLevel.INFO,msg,null);
-}
-
-
-public static void logD(String msg,Throwable t)
-{
-   log(LogLevel.DEBUG,msg,t);
-}
-
-
-public static void logD(String msg)
-{
-   log(LogLevel.DEBUG,msg,null);
-}
-
 
 
 /********************************************************************************/
@@ -122,30 +39,11 @@ public static void logD(String msg)
 /*										*/
 /********************************************************************************/
 
-public static void setLogLevel(LogLevel lvl)
+public static void setup()
 {
-   log_level = lvl;
+   setupLogging("SEEDE",true);
 }
 
-
-public static void setLogFile(File f)
-{
-   if (log_writer != null) return;
-
-   f = f.getAbsoluteFile();
-   try {
-      log_writer = new PrintWriter(new FileWriter(f));
-    }
-   catch (IOException e) {
-
-    }
-}
-
-
-public static void useStdErr(boolean fg)
-{
-   use_stderr = fg;
-}
 
 
 /********************************************************************************/
@@ -154,43 +52,11 @@ public static void useStdErr(boolean fg)
 /*										*/
 /********************************************************************************/
 
-public static boolean isTracing()		{ return trace_execution; }
-
-public static void setTracing(boolean fg)	{ trace_execution = fg; }
-
-public static LogLevel getLogLevel()		{ return log_level; }
-
-public static void logT(Object msg)
+public static void logT(String msg)
 {
-   if (trace_execution) {
-      logD("EXEC: " + msg);
-    }
+   logT("EXEC",msg);
 }
 
-
-/********************************************************************************/
-/*										*/
-/*	Actual logging routines 						*/
-/*										*/
-/********************************************************************************/
-
-private static void log(LogLevel lvl,String msg,Throwable t)
-{
-   if (lvl.ordinal() > log_level.ordinal()) return;
-
-   String s = lvl.toString().substring(0,1);
-   String pfx = "SEEDE:" + s + ": ";
-   if (log_writer != null) {
-      log_writer.println(pfx + msg);
-      if (t != null) t.printStackTrace(log_writer);
-      log_writer.flush();
-    }
-   if (use_stderr || log_writer == null) {
-      System.err.println(pfx + msg);
-      if (t != null) t.printStackTrace();
-      System.err.flush();
-    }
-}
 
 
 

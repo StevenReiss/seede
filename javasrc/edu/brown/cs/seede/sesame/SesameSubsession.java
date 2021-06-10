@@ -30,10 +30,22 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.eclipse.jdt.core.dom.AST;
+import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jdt.core.dom.Block;
+import org.eclipse.jdt.core.dom.ConstructorInvocation;
+import org.eclipse.jdt.core.dom.EmptyStatement;
+import org.eclipse.jdt.core.dom.Expression;
+import org.eclipse.jdt.core.dom.MethodDeclaration;
+import org.eclipse.jdt.core.dom.Statement;
+import org.eclipse.jdt.core.dom.SuperConstructorInvocation;
+import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
+import org.eclipse.jdt.core.dom.rewrite.ListRewrite;
 import org.eclipse.jface.text.Position;
 import org.eclipse.text.edits.TextEdit;
 import org.w3c.dom.Element;
 
+import edu.brown.cs.ivy.jcomp.JcompAst;
 import edu.brown.cs.ivy.xml.IvyXml;
 import edu.brown.cs.seede.acorn.AcornLog;
 
@@ -111,6 +123,13 @@ SesameFile getLocalFile(File file)
 }
 
 
+
+/********************************************************************************/
+/*                                                                              */
+/*      Editing methods                                                         */
+/*                                                                              */
+/********************************************************************************/
+
 SesameFile editLocalFile(File f,int len,int off,String txt)
 {
    SesameFile editfile = getLocalFile(f);
@@ -142,6 +161,14 @@ SesameFile editLocalFile(File f,TextEdit te)
 }
 
 
+SesameFile editLocalFile(SesameFile sf,ASTRewrite rw)
+{
+   sf.editFile(rw);
+   noteFileChanged(sf);
+   return sf;
+}
+
+
 
 private void editFileSetup(SesameFile sf)
 {
@@ -154,10 +181,124 @@ private void editFileSetup(SesameFile sf)
 }
 
 
+
 private void editFileFixup(SesameFile sf)
 {
-   
+   // nothing to do for now - positions will be needed later
 }
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Handle initializations                                                  */
+/*                                                                              */
+/********************************************************************************/
+
+@SuppressWarnings("unchecked")
+SesameFile handleInitialization(String thread,String expr)
+{
+   if (expr == null) return null;
+   SesameLocation useloc = null;
+   for (SesameLocation loc : getActiveLocations()) {
+      if (loc.getThread().equals(thread) || loc.getThreadName().equals(thread)) {
+         useloc = loc;
+         break;
+       }
+    }
+   if (useloc == null) return null;
+   
+   SesameFile sf = getLocalFile(useloc.getFile().getFile());
+   if (sf == null) return null;
+   if (sf != useloc.getFile()) {
+      // we created a new local file -- restart to get proper lcoation for it
+      return handleInitialization(thread,expr);
+    }
+   
+   MethodDeclaration md = getCallMethod(useloc);
+   AST ast = md.getAST();
+   Expression exprast = JcompAst.parseExpression(expr);
+   if (exprast == null) return null;
+   exprast = (Expression) ASTNode.copySubtree(ast,exprast);
+   Block b = (Block) md.getBody();
+   if (b == null) return null;
+   ASTRewrite rw = ASTRewrite.create(ast);
+   Block initblk = findInitBlock(md,b,rw);
+   if (initblk == null) {
+      initblk = md.getAST().newBlock();
+      initblk.statements().add(ast.newEmptyStatement());
+      initblk.statements().add(ast.newEmptyStatement());
+      initblk.statements().add(exprast);
+      initblk = addInitBlock(md,initblk,rw);
+    }
+   else {
+      ListRewrite lrw = rw.getListRewrite(initblk,Block.STATEMENTS_PROPERTY);
+      lrw.insertLast(exprast,null);
+    }
+   
+   editLocalFile(sf,rw);
+   
+   return sf;
+}
+
+
+
+private Block findInitBlock(MethodDeclaration md,Block b,ASTRewrite rw)
+{
+   for (Object o : b.statements()) {
+      if (o instanceof Block) {
+         Block tryblk = (Block) o;
+         if (isInitBlock(tryblk)) return tryblk;
+       }
+    }
+   
+   return null;
+}
+
+
+private Block addInitBlock(MethodDeclaration md,Block newblk,ASTRewrite rw)
+{
+   Block b = md.getBody();
+   int idx = 0;
+   Statement before = null;
+   for (Object o : b.statements()) {
+      if (before == null) {
+         if (md.isConstructor()) {
+            if (o instanceof ConstructorInvocation || o instanceof SuperConstructorInvocation) 
+               ++idx;
+          }
+         before = (Statement) o;
+       }
+    }
+   
+   ListRewrite lrw = rw.getListRewrite(b,Block.STATEMENTS_PROPERTY);
+   lrw.insertAt(newblk,idx,null);
+   
+   return newblk;
+}
+
+
+
+private boolean isInitBlock(Block b)
+{
+   int ctr = 0;
+   for (Object o : b.statements()) {
+      if (o instanceof EmptyStatement) {
+         if (++ctr == 2) return true;
+       }
+      else break;
+    }
+   
+   return false;
+}
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Locations methods                                                       */
+/*                                                                              */
+/********************************************************************************/
 
 @Override public List<SesameLocation> getActiveLocations()
 {

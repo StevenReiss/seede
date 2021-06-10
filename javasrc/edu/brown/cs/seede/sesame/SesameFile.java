@@ -1,4 +1,4 @@
-/********************************************************************************/
+f6*******************************************************************************/
 /*										*/
 /*		SesameFile.java 						*/
 /*										*/
@@ -53,6 +53,7 @@ import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.Position;
 import org.eclipse.text.edits.TextEdit;
+import org.eclipse.wst.jsdt.core.dom.rewrite.ASTRewrite;
 import org.w3c.dom.Element;
 
 import edu.brown.cs.ivy.jcomp.JcompAst;
@@ -79,7 +80,7 @@ private File			for_file;
 private Map<SesameProject,ASTNode> ast_roots;
 private Set<Integer>		error_lines;
 private int			use_count;
-private boolean                 is_local;
+private boolean 		is_local;
 
 
 
@@ -155,11 +156,20 @@ boolean editFile(TextEdit te)
    catch (BadLocationException e) {
       return false;
     }
-   
+
    AcornLog.logD("RESULTANT FILE: " + edit_document.get());
-   
+
    return true;
 }
+
+
+
+boolean editFile(ASTRewrite rw) 
+{
+   TextEdit edits = rw.rewriteAST(edit_document,null);
+   return editFile(edits);
+}
+
 
 
 void resetSemantics(SesameProject sp)
@@ -202,7 +212,7 @@ boolean handleErrors(Element msgs)
 /*										*/
 /********************************************************************************/
 
-@Override public ASTNode getAstRootNode(Object key) 	// extended source 1	
+@Override public ASTNode getAstRootNode(Object key)	// extended source 1
 {
    SesameProject sp = (SesameProject) key;
    if (sp != null) {
@@ -217,7 +227,7 @@ boolean handleErrors(Element msgs)
        }
       return an;
     }
-   
+
    return getAst();
 }
 
@@ -366,7 +376,7 @@ ASTNode getResolvedAst(SesameProject sp)
       an = ast_roots.get(sp);
       if (an != null && JcompAst.isResolved(an)) return an;
     }
-									
+								
    JcompProject proj = sp.getJcompProject();
    proj.resolve();
    JcompSemantics semdata = SesameMain.getJcompBase().getSemanticData(this);
@@ -408,7 +418,7 @@ Position createPosition(int pos)
 int getLineOfPosition(Position p)
 {
    if (p == null) return 0;
-   
+
    try {
       return edit_document.getLineOfOffset(p.getOffset());
     }
@@ -443,7 +453,7 @@ public File getFile()
 }
 
 
-boolean isLocal()                       { return is_local; }
+boolean isLocal()			{ return is_local; }
 
 
 synchronized void addUse()

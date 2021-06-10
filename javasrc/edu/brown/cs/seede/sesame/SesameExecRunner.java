@@ -37,6 +37,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 
 import edu.brown.cs.ivy.xml.IvyXmlWriter;
+import edu.brown.cs.ivy.file.IvyLog.LoggerThread;
 import edu.brown.cs.ivy.mint.MintConstants.CommandArgs;
 import edu.brown.cs.seede.acorn.AcornLog;
 import edu.brown.cs.seede.cashew.CashewContext;
@@ -77,6 +78,7 @@ private long		max_time;
 private int		max_depth;
 
 private AtomicInteger	report_counter = new AtomicInteger(1);
+private AtomicInteger   thread_counter = new AtomicInteger(1);
 
 
 enum RunState { INIT, RUNNING, SWING, STOPPED, WAITING, EXIT };
@@ -235,7 +237,8 @@ private void startRunner()
    if (mth == null) {
       synchronized (this) {
 	 if (master_thread == null) {
-	    master_thread = new MasterThread();
+            int ctr = thread_counter.getAndAdd(1+cumin_runners.size());
+	    master_thread = new MasterThread(ctr);
 	    master_thread.start();
 	  }
 	 if (stopper_thread == null) {
@@ -409,17 +412,21 @@ private void setStatus(CuminRunner cr,CuminRunStatus sts)
 
 
 
-private class MasterThread extends Thread {
+private class MasterThread extends Thread implements LoggerThread {
 
    private RunState	run_state;
    private StopState	stop_state;
+   private int          thread_id;
 
-   MasterThread() {
+   MasterThread(int id) {
       super("SeedeExec_" + reply_id);
       run_state = RunState.INIT;
       stop_state = StopState.RUN;
+      thread_id = id;
     }
 
+   @Override public int getLogId()                      { return thread_id; }
+   
    @Override public void run() {
       for (int i = 0; ; ++i ) {
          // first start all the threads
@@ -559,35 +566,36 @@ private class MasterThread extends Thread {
                // cumin_runners.add(cr);
                // }
              }
+            int ctr = thread_id+1;
             for (CuminRunner cr : cumin_runners) {
                if (!firsttime) {
-        	  MethodDeclaration mthd = for_session.getRunnerMethod(cr);
-        	  if (mthd == null) continue;
-        	  cr.reset(mthd);
-        	  cr.setMaxTime(max_time);
-        	  cr.setMaxDepth(max_depth);
-        	}
-               RunnerThread rt = new RunnerThread(SesameExecRunner.this,cr);
+                  MethodDeclaration mthd = for_session.getRunnerMethod(cr);
+                  if (mthd == null) continue;
+                  cr.reset(mthd);
+                  cr.setMaxTime(max_time);
+                  cr.setMaxDepth(max_depth);
+                }
+               RunnerThread rt = new RunnerThread(SesameExecRunner.this,cr,ctr++);
                runner_threads.put(cr,rt);
                waits.add(rt);
                rt.start();
              }
           }
-   
+         
          // wait for all to exit
          while (!waits.isEmpty()) {
             for (Iterator<RunnerThread> it = waits.iterator(); it.hasNext(); ) {
                RunnerThread rt = it.next();
                try {
-        	  rt.join();
-        	  synchronized (this) {
-        	     runner_threads.remove(rt.getRunner());
-        	     if (runner_threads.isEmpty()) {
-        		notifyAll();
-        	      }
-        	   }
-        	  it.remove();
-        	}
+                  rt.join();
+                  synchronized (this) {
+                     runner_threads.remove(rt.getRunner());
+                     if (runner_threads.isEmpty()) {
+                        notifyAll();
+                      }
+                   }
+                  it.remove();
+                }
                catch (InterruptedException e) { }
              }
           }
@@ -668,18 +676,22 @@ private class MasterThread extends Thread {
 /*										*/
 /********************************************************************************/
 
-private static class RunnerThread extends Thread {
+private static class RunnerThread extends Thread implements LoggerThread {
 
    private SesameExecRunner exec_runner;
    private CuminRunner cumin_runner;
+   private int thread_counter;
 
-   RunnerThread(SesameExecRunner er,CuminRunner cr) {
+   RunnerThread(SesameExecRunner er,CuminRunner cr,int ctr) {
       super("Runner_" + er.reply_id + "_" + cr);
       exec_runner = er;
       cumin_runner = cr;
+      thread_counter = ctr;
     }
 
    CuminRunner getRunner()			{ return cumin_runner; }
+   
+   @Override public int getLogId()              { return thread_counter; }
 
    @Override public void run() {
       CuminRunStatus sts = null;
