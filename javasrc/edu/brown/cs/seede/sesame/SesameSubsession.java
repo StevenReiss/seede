@@ -220,7 +220,7 @@ SesameFile handleInitialization(String thread,String expr)
    Expression exprast = JcompAst.parseExpression(expr);
    if (exprast == null) return null;
    exprast = (Expression) ASTNode.copySubtree(ast,exprast);
-   Block b = (Block) md.getBody();
+   Block b = md.getBody();
    if (b == null) return null;
    ASTRewrite rw = ASTRewrite.create(ast);
    Block initblk = findInitBlock(md,b,rw);

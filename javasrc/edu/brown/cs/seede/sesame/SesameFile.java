@@ -1,4 +1,4 @@
-f6*******************************************************************************/
+/********************************************************************************/
 /*										*/
 /*		SesameFile.java 						*/
 /*										*/
@@ -48,12 +48,12 @@ import org.eclipse.jdt.core.dom.Statement;
 import org.eclipse.jdt.core.dom.SuperConstructorInvocation;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
+import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.Position;
 import org.eclipse.text.edits.TextEdit;
-import org.eclipse.wst.jsdt.core.dom.rewrite.ASTRewrite;
 import org.w3c.dom.Element;
 
 import edu.brown.cs.ivy.jcomp.JcompAst;
@@ -164,7 +164,7 @@ boolean editFile(TextEdit te)
 
 
 
-boolean editFile(ASTRewrite rw) 
+boolean editFile(ASTRewrite rw)
 {
    TextEdit edits = rw.rewriteAST(edit_document,null);
    return editFile(edits);
@@ -376,7 +376,7 @@ ASTNode getResolvedAst(SesameProject sp)
       an = ast_roots.get(sp);
       if (an != null && JcompAst.isResolved(an)) return an;
     }
-								
+							
    JcompProject proj = sp.getJcompProject();
    proj.resolve();
    JcompSemantics semdata = SesameMain.getJcompBase().getSemanticData(this);
