@@ -622,6 +622,25 @@ private void handleSetValue(String sid,Element xml) throws SesameException
 }
 
 
+private void handleInitialization(String sid,Element xml) throws SesameException
+{
+   SesameSession ss = session_map.get(sid);
+   if (ss == null) throw new SesameException("No session");
+   SesameSubsession sss = ss.getSubsession();
+   if (sss == null) throw new SesameException("Initialization must be in subsession");
+   
+   String tid = IvyXml.getAttrString(xml,"THREAD");
+   boolean rem = IvyXml.getAttrBool(xml,"REMOVE");
+   for (Element e : IvyXml.children(xml,"EXPRESSION")) {
+      String expr = IvyXml.getText(e);
+      SesameFile sf = sss.handleInitialization(tid,expr,rem);
+      if (sf == null) throw new SesameException("Initialization failed");
+      rem = false;
+    }
+   if (rem) sss.handleInitialization(tid,null,rem);
+}
+
+
 private void handleDefField(String sid,Element xml) throws SesameException
 {
    SesameSession ss = session_map.get(sid);
@@ -863,6 +882,9 @@ private String processCommand(String cmd,String sid,Element e) throws SesameExce
       case "EDITFILE" :
 	 handleLocalEdit(sid,e,xw);
 	 break;
+      case "INITIALIZATION" :
+         handleInitialization(sid,e);
+         break;
       default :
 	 AcornLog.logE("Unknown command " + cmd);
 	 break;

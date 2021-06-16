@@ -196,9 +196,8 @@ private void editFileFixup(SesameFile sf)
 /********************************************************************************/
 
 @SuppressWarnings("unchecked")
-SesameFile handleInitialization(String thread,String expr)
+SesameFile handleInitialization(String thread,String expr,boolean rem)
 {
-   if (expr == null) return null;
    SesameLocation useloc = null;
    for (SesameLocation loc : getActiveLocations()) {
       if (loc.getThread().equals(thread) || loc.getThreadName().equals(thread)) {
@@ -211,29 +210,39 @@ SesameFile handleInitialization(String thread,String expr)
    SesameFile sf = getLocalFile(useloc.getFile().getFile());
    if (sf == null) return null;
    if (sf != useloc.getFile()) {
+      if (expr == null) return null;
       // we created a new local file -- restart to get proper lcoation for it
-      return handleInitialization(thread,expr);
+      return handleInitialization(thread,expr,rem);
     }
    
    MethodDeclaration md = getCallMethod(useloc);
    AST ast = md.getAST();
+   Block b = md.getBody();
+   Block initblk = findInitBlock(md,b);
+   
+   if (expr == null) {
+      if (rem && initblk != null) {
+         b.statements().remove(initblk);
+       }   
+      return null;
+    }
+   
    Expression exprast = JcompAst.parseExpression(expr);
    if (exprast == null) return null;
    exprast = (Expression) ASTNode.copySubtree(ast,exprast);
-   Block b = md.getBody();
+   Statement exprstmt = ast.newExpressionStatement(exprast);
    if (b == null) return null;
    ASTRewrite rw = ASTRewrite.create(ast);
-   Block initblk = findInitBlock(md,b,rw);
    if (initblk == null) {
       initblk = md.getAST().newBlock();
       initblk.statements().add(ast.newEmptyStatement());
       initblk.statements().add(ast.newEmptyStatement());
-      initblk.statements().add(exprast);
+      initblk.statements().add(exprstmt);
       initblk = addInitBlock(md,initblk,rw);
     }
    else {
       ListRewrite lrw = rw.getListRewrite(initblk,Block.STATEMENTS_PROPERTY);
-      lrw.insertLast(exprast,null);
+      lrw.insertLast(exprstmt,null);
     }
    
    editLocalFile(sf,rw);
@@ -243,7 +252,7 @@ SesameFile handleInitialization(String thread,String expr)
 
 
 
-private Block findInitBlock(MethodDeclaration md,Block b,ASTRewrite rw)
+private Block findInitBlock(MethodDeclaration md,Block b)
 {
    for (Object o : b.statements()) {
       if (o instanceof Block) {
