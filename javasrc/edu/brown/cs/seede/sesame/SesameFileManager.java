@@ -87,6 +87,11 @@ SesameFile openFile(File f)
     }
    String linesep = IvyXml.getAttrString(filerslt,"LINESEP");
    byte [] data = IvyXml.getBytesElement(filerslt,"CONTENTS");
+   if (data == null || data.length == 0) {
+      AcornLog.logE("Can't open file " + f);
+      return null;
+    }
+
    String cnts = new String(data);
 
    AcornLog.logD("File " + f + " started");
@@ -106,14 +111,14 @@ void removeFileUse(SesameFile sf)
 {
    if (sf.removeUse()) {
       if (!sf.isLocal()) {
-         File f = sf.getFile();
-         synchronized (known_files) {
-            known_files.remove(f);
-          }
-         Map<String,Object> args = new HashMap<>();
-         args.put("FILE",f.getPath());
-         sesame_control.getStringReply("FINISHFILE",null,args,null,0);
-       
+	 File f = sf.getFile();
+	 synchronized (known_files) {
+	    known_files.remove(f);
+	  }
+	 Map<String,Object> args = new HashMap<>();
+	 args.put("FILE",f.getPath());
+	 sesame_control.getStringReply("FINISHFILE",null,args,null,0);
+
        }
       sf.clear();
     }

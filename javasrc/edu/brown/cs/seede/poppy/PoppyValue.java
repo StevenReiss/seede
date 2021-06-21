@@ -27,6 +27,8 @@ package edu.brown.cs.seede.poppy;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.lang.invoke.CallSite;
@@ -450,6 +452,34 @@ public static Object getNewInstance(String name)
       return null;
     }
 }
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Handle patterns                                                         */
+/*                                                                              */
+/********************************************************************************/
+
+public static Matcher getPatternMatcher(String pat,String v)
+{
+   Pattern p = Pattern.compile(pat);
+   return p.matcher(v);
+}
+
+
+public static Matcher matchFinder(String pat,String v,int start,boolean fail)
+{ 
+   Pattern p = Pattern.compile(pat);
+   Matcher m = p.matcher(v);
+   if (fail) {
+      m.reset();
+    }
+   else { 
+      m.find(start);
+    }
+   return m;
+}
+
 
 
 /********************************************************************************/

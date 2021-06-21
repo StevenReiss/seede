@@ -213,10 +213,26 @@ protected CashewValueClass getTypeValue(int idx)
 }
 
 
+protected String getStringFieldValue(CashewValue obj,String fld) throws CashewException
+{
+   CashewValue cv = obj.getFieldValue(getTyper(),getClock(),fld);
+   return cv.getString(getTyper(),getClock());
+}
+
+
+protected int getIntFieldValue(CashewValue obj,String fld) throws CashewException
+{
+   CashewValue cv = obj.getFieldValue(getTyper(),getClock(),fld);
+   return cv.getNumber(getClock()).intValue();
+}  
 
 
 
-
+protected void copyField(CashewValue from,CashewValue to,String fld) throws CashewException
+{
+   CashewValue v0 = from.getFieldValue(getTyper(),getClock(),fld);
+   to.setFieldValue(getTyper(),getClock(),fld,v0);
+}
 
 
 }	// end of class CuminNativeEvaluator

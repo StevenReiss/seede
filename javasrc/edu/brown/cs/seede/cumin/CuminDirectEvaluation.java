@@ -30,6 +30,7 @@ import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
 
+import edu.brown.cs.ivy.file.IvyFormat;
 import edu.brown.cs.ivy.jcomp.JcompSymbol;
 import edu.brown.cs.ivy.jcomp.JcompType;
 import edu.brown.cs.ivy.jcomp.JcompTyper;
@@ -1627,6 +1628,93 @@ CuminRunStatus checkRandomMethods() throws CuminRunException
 
    return null;
 }
+
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Pattern methods                                                         */
+/*                                                                              */
+/********************************************************************************/
+
+CuminRunStatus checkPatternMethods() throws CuminRunException 
+{
+   switch (getMethod().getName()) {
+      case "matcherX" :
+         try {
+            CashewValue patv = getValue(0);
+            CashewValue pats = patv.getFieldValue(getTyper(),getClock(),"java.util.regex.Pattern.pattern");
+            String ps = pats.getString(getTyper(),getClock());
+            String v = getString(1);
+            exec_runner.ensureLoaded("edu.brown.cs.seede.poppy.PoppyValue");
+	    String expr = "edu.brown.cs.seede.poppy.PoppyValue.getPatternMatcher(\"" +
+                  IvyFormat.formatString(ps) + "\",\"" + IvyFormat.formatString(v)  + "\")";
+	    CashewValue rslt = exec_runner.getLookupContext().evaluate(expr);
+            return CuminRunStatus.Factory.createReturn(rslt);
+//          Pattern p = Pattern.compile(ps);
+//          Matcher m = p.matcher(v);
+//          System.err.println("RESULT IS " + m);
+          }
+         catch (CashewException e) { 
+            AcornLog.logE("CUMIN","Problem getting pattern information",e);
+          }
+         break;
+    }
+   return null;
+}
+
+
+
+CuminRunStatus checkMatcherMethods() throws CuminRunException
+{
+   switch (getMethod().getName()) {
+      case "find" :
+         try {
+            CashewValue mval = getValue(0);
+            CashewValue patv = mval.getFieldValue(getTyper(),getClock(),"java.util.regex.Matcher.parentPattern");
+            String ps = getStringFieldValue(patv,"java.util.regex.Pattern.pattern");
+            String textv = getStringFieldValue(mval,"java.util.regex.Matcher.text");
+            int first = getIntFieldValue(mval,"java.util.regex.Matcher.first");
+            int last = getIntFieldValue(mval,"java.util.regex.Matcher.last");
+            int from = getIntFieldValue(mval,"java.util.regex.Matcher.from");
+            int to = getIntFieldValue(mval,"java.util.regex.Matcher.to");
+            int pos = last;
+            boolean fail = false;
+            if (getNumArgs() == 2) {
+               pos = getInt(1);
+             }
+            else {
+               if (pos == first) pos = last+1;
+               if (pos < from) pos = from;
+               if (pos > to) {
+                  fail = true;
+                }
+             }
+            String expr = "edu.brown.cs.seede.poppy.PoppyValue.matchFinder(\"" +
+                IvyFormat.formatString(ps) + "\",\"" + 
+                IvyFormat.formatString(textv)  + "\"," + pos + "," + fail + ")";
+            CashewValue rslt = exec_runner.getLookupContext().evaluate(expr);
+            copyField(rslt,mval,"java.util.regex.Matcher.groups");
+            copyField(rslt,mval,"java.util.regex.Matcher.from");
+            copyField(rslt,mval,"java.util.regex.Matcher.to");
+            copyField(rslt,mval,"java.util.regex.Matcher.from");
+            copyField(rslt,mval,"java.util.regex.Matcher.first");
+            copyField(rslt,mval,"java.util.regex.Matcher.last");
+            first = getIntFieldValue(rslt,"java.util.regex.Matcher.first");
+            CashewValue retv = null;
+            if (first >= 0) retv = CashewValue.booleanValue(getTyper(),true);
+            else retv = CashewValue.booleanValue(getTyper(),false);
+            return CuminRunStatus.Factory.createReturn(retv);
+          }
+         catch (CashewException e) {
+            AcornLog.logE("CUMIN","Problem getting pattern information",e);
+          }
+    }
+   return null;
+}
+
+
 
 }	// end of class CuminDirectEvaluation
 

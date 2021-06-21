@@ -1397,6 +1397,15 @@ private CuminRunStatus checkSpecial() throws CuminRunException
 	    cce = new CuminConcurrentEvaluator(this);
 	    sts = cce.checkUnsafeMethods();
 	    break;
+          
+         case "java.util.regex.Pattern" :
+            cde = new CuminDirectEvaluation(this);
+            sts = cde.checkPatternMethods();
+            break;
+         case "java.util.regex.Matcher" :
+            cde = new CuminDirectEvaluation(this);
+            sts = cde.checkMatcherMethods();
+            break;
        }
     }
    catch (CuminRunException e) {

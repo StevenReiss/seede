@@ -63,6 +63,7 @@ private int array_length;
 private Map<String,SesameValueData> sub_values;
 private CashewValue result_value;
 private int hash_code;
+private String decl_type;
 
 
 
@@ -181,6 +182,10 @@ CashewValue getCashewValue()
     }
    if (typ == null) {
       typ = typer.findSystemType(vtype);
+    }
+   if (typ == null && val_type.contains("$$Lambda$") && decl_type != null) {
+      String ityp = decl_type.replace("$",".");
+      typ = typer.findType(ityp);
     }
    if (typ == null) {
       AcornLog.logE("TYPE " + val_type +  " " + vtype + " not found");
@@ -356,6 +361,7 @@ String findValue(CashewValue cv,int lvl)
 private void initialize(Element xml,String expr)
 {
    val_type = IvyXml.getAttrString(xml,"TYPE");
+   decl_type = IvyXml.getAttrString(xml,"DECLTYPE");
    if (val_type != null && val_type.equals("edu.brown.cs.seede.poppy.PoppyValue$Return")) {
       Element objxml = null;
       int refid = 0;
