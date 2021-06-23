@@ -182,10 +182,17 @@ protected void setupSeedeTestSession(String id,String cnts)
 
 protected Element runSeede(String id)
 {
+   return runSeede(id,500000);
+}
+
+
+
+protected Element runSeede(String id,int ct)
+{
    MintDefaultReply rply = new MintDefaultReply();
    seede_result = null;
    CommandArgs args = new CommandArgs("EXECID",id,"CONTINUOUS",true,
-        "MAXTIME",500000,"MAXDEPTH",100);
+        "MAXTIME",ct,"MAXDEPTH",100);
    sendSeedeMessage("EXEC",id,args,null,rply);
    String sstatus = rply.waitForString();
    AcornLog.logD("TEST: RESULT IS " + sstatus);
@@ -430,7 +437,7 @@ private boolean pingEclipse()
 
 private void startSeede()
 {
-   AcornLog.logI("TEST: Setting Up Seede Thread");
+   AcornLog.logI("TEST","Setting Up Seede Thread");
    
    SeedeThread st = new SeedeThread();
    for (int i = 0; i < 100; ++i) {
@@ -789,7 +796,7 @@ private class BedrockHandler implements MintHandler {
 protected Element waitForSeedeResult()
 {
    synchronized (this) {
-      for (int i = 0; i < 250; ++i) {
+      for (int i = 0; i < 5000; ++i) {
          if (seede_result != null) break;
 	 try {
 	    wait(1000);

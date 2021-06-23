@@ -300,7 +300,7 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException, CashewExc
        }
     }
 
-   AcornLog.logT(jins);
+   if (AcornLog.isTracing()) AcornLog.logT(jins);
 
    switch (jins.getOpcode()) {
 
@@ -311,7 +311,7 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException, CashewExc
       case LADD :
 	 v1 = execution_stack.pop();
 	 v0 = execution_stack.pop();
-	 vstack = CuminEvaluator.evaluate(typer,execution_clock,CuminOperator.ADD,v0,v1);
+	 vstack = CuminEvaluator.evaluate(this,typer,execution_clock,CuminOperator.ADD,v0,v1);
 	 break;
       case DSUB :
       case FSUB :
@@ -319,7 +319,7 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException, CashewExc
       case LSUB :
 	 v1 = execution_stack.pop();
 	 v0 = execution_stack.pop();
-	 vstack = CuminEvaluator.evaluate(typer,execution_clock,CuminOperator.SUB,v0,v1);
+	 vstack = CuminEvaluator.evaluate(this,typer,execution_clock,CuminOperator.SUB,v0,v1);
 	 break;
       case DMUL :
       case FMUL :
@@ -327,7 +327,7 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException, CashewExc
       case LMUL :
 	 v1 = execution_stack.pop();
 	 v0 = execution_stack.pop();
-	 vstack = CuminEvaluator.evaluate(typer,execution_clock,CuminOperator.MUL,v0,v1);
+	 vstack = CuminEvaluator.evaluate(this,typer,execution_clock,CuminOperator.MUL,v0,v1);
 	 break;
       case DDIV :
       case FDIV :
@@ -335,7 +335,7 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException, CashewExc
       case LDIV :
 	 v1 = execution_stack.pop();
 	 v0 = execution_stack.pop();
-	 vstack = CuminEvaluator.evaluate(typer,execution_clock,CuminOperator.DIV,v0,v1);
+	 vstack = CuminEvaluator.evaluate(this,typer,execution_clock,CuminOperator.DIV,v0,v1);
 	 break;
       case DREM :
       case FREM :
@@ -343,43 +343,43 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException, CashewExc
       case LREM :
 	 v1 = execution_stack.pop();
 	 v0 = execution_stack.pop();
-	 vstack = CuminEvaluator.evaluate(typer,execution_clock,CuminOperator.MOD,v0,v1);
+	 vstack = CuminEvaluator.evaluate(this,typer,execution_clock,CuminOperator.MOD,v0,v1);
 	 break;
       case IAND :
       case LAND :
 	 v1 = execution_stack.pop();
 	 v0 = execution_stack.pop();
-	 vstack = CuminEvaluator.evaluate(typer,execution_clock,CuminOperator.AND,v0,v1);
+	 vstack = CuminEvaluator.evaluate(this,typer,execution_clock,CuminOperator.AND,v0,v1);
 	 break;
       case IOR :
       case LOR :
 	 v1 = execution_stack.pop();
 	 v0 = execution_stack.pop();
-	 vstack = CuminEvaluator.evaluate(typer,execution_clock,CuminOperator.OR,v0,v1);
+	 vstack = CuminEvaluator.evaluate(this,typer,execution_clock,CuminOperator.OR,v0,v1);
 	 break;
       case IXOR :
       case LXOR :
 	 v1 = execution_stack.pop();
 	 v0 = execution_stack.pop();
-	 vstack = CuminEvaluator.evaluate(typer,execution_clock,CuminOperator.XOR,v0,v1);
+	 vstack = CuminEvaluator.evaluate(this,typer,execution_clock,CuminOperator.XOR,v0,v1);
 	 break;
       case ISHL :
       case LSHL :
 	 v1 = execution_stack.pop();
 	 v0 = execution_stack.pop();
-	 vstack = CuminEvaluator.evaluate(typer,execution_clock,CuminOperator.LSH,v0,v1);
+	 vstack = CuminEvaluator.evaluate(this,typer,execution_clock,CuminOperator.LSH,v0,v1);
 	 break;
       case ISHR :
       case LSHR :
 	 v1 = execution_stack.pop();
 	 v0 = execution_stack.pop();
-	 vstack = CuminEvaluator.evaluate(typer,execution_clock,CuminOperator.RSH,v0,v1);
+	 vstack = CuminEvaluator.evaluate(this,typer,execution_clock,CuminOperator.RSH,v0,v1);
 	 break;
       case IUSHR :
       case LUSHR :
 	 v1 = execution_stack.pop();
 	 v0 = execution_stack.pop();
-	 vstack = CuminEvaluator.evaluate(typer,execution_clock,CuminOperator.RSHU,v0,v1);
+	 vstack = CuminEvaluator.evaluate(this,typer,execution_clock,CuminOperator.RSHU,v0,v1);
 	 break;
       case DCMPG :
       case DCMPL :
@@ -388,7 +388,7 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException, CashewExc
       case LCMP :
 	 v1 = execution_stack.pop();
 	 v0 = execution_stack.pop();
-	 vstack = CuminEvaluator.evaluate(typer,execution_clock,CuminOperator.SIG,v0,v1);
+	 vstack = CuminEvaluator.evaluate(this,typer,execution_clock,CuminOperator.SIG,v0,v1);
 	 break;
       case DNEG :
       case FNEG :
@@ -614,74 +614,74 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException, CashewExc
       case IF_ICMPEQ :
 	 v1 = execution_stack.pop();
 	 v0 = execution_stack.pop();
-	 v2 = CuminEvaluator.evaluate(typer,execution_clock,CuminOperator.EQL,v0,v1);
+	 v2 = CuminEvaluator.evaluate(this,typer,execution_clock,CuminOperator.EQL,v0,v1);
 	 if (v2.getBoolean(execution_clock)) nextins = jins.getTargetInstruction();
 	 break;
       case IF_ACMPNE :
       case IF_ICMPNE :
 	 v1 = execution_stack.pop();
 	 v0 = execution_stack.pop();
-	 v2 = CuminEvaluator.evaluate(typer,execution_clock,CuminOperator.NEQ,v0,v1);
+	 v2 = CuminEvaluator.evaluate(this,typer,execution_clock,CuminOperator.NEQ,v0,v1);
 	 if (v2.getBoolean(execution_clock)) nextins = jins.getTargetInstruction();
 	 break;
       case IF_ICMPGE :
 	 v1 = execution_stack.pop();
 	 v0 = execution_stack.pop();
-	 v2 = CuminEvaluator.evaluate(typer,execution_clock,CuminOperator.GEQ,v0,v1);
+	 v2 = CuminEvaluator.evaluate(this,typer,execution_clock,CuminOperator.GEQ,v0,v1);
 	 if (v2.getBoolean(execution_clock)) nextins = jins.getTargetInstruction();
 	 break;
       case IF_ICMPGT :
 	 v1 = execution_stack.pop();
 	 v0 = execution_stack.pop();
-	 v2 = CuminEvaluator.evaluate(typer,execution_clock,CuminOperator.GTR,v0,v1);
+	 v2 = CuminEvaluator.evaluate(this,typer,execution_clock,CuminOperator.GTR,v0,v1);
 	 if (v2.getBoolean(execution_clock)) nextins = jins.getTargetInstruction();
 	 break;
       case IF_ICMPLE :
 	 v1 = execution_stack.pop();
 	 v0 = execution_stack.pop();
-	 v2 = CuminEvaluator.evaluate(typer,execution_clock,CuminOperator.LEQ,v0,v1);
+	 v2 = CuminEvaluator.evaluate(this,typer,execution_clock,CuminOperator.LEQ,v0,v1);
 	 if (v2.getBoolean(execution_clock)) nextins = jins.getTargetInstruction();
 	 break;
       case IF_ICMPLT :
 	 v1 = execution_stack.pop();
 	 v0 = execution_stack.pop();
-	 v2 = CuminEvaluator.evaluate(typer,execution_clock,CuminOperator.LSS,v0,v1);
+	 v2 = CuminEvaluator.evaluate(this,typer,execution_clock,CuminOperator.LSS,v0,v1);
 	 if (v2.getBoolean(execution_clock)) nextins = jins.getTargetInstruction();
 	 break;
       case IFEQ :
 	 v0 = execution_stack.pop();
 	 v1 = CashewValue.numericValue(v0.getDataType(execution_clock,type_converter),0);
-	 v2 = CuminEvaluator.evaluate(typer,execution_clock,CuminOperator.EQL,v0,v1);
+	 v2 = CuminEvaluator.evaluate(this,typer,execution_clock,CuminOperator.EQL,v0,v1);
 	 if (v2.getBoolean(execution_clock)) nextins = jins.getTargetInstruction();
 	 break;
       case IFGE :
 	 v0 = execution_stack.pop();
 	 v1 = CashewValue.numericValue(v0.getDataType(execution_clock,type_converter),0);
-	 v2 = CuminEvaluator.evaluate(typer,execution_clock,CuminOperator.GEQ,v0,v1);
+	 v2 = CuminEvaluator.evaluate(this,typer,execution_clock,CuminOperator.GEQ,v0,v1);
 	 if (v2.getBoolean(execution_clock)) nextins = jins.getTargetInstruction();
 	 break;
       case IFGT :
 	 v0 = execution_stack.pop();
 	 v1 = CashewValue.numericValue(v0.getDataType(execution_clock,type_converter),0);
-	 v2 = CuminEvaluator.evaluate(typer,execution_clock,CuminOperator.GTR,v0,v1);
+	 v2 = CuminEvaluator.evaluate(this,typer,execution_clock,CuminOperator.GTR,v0,v1);
 	 if (v2.getBoolean(execution_clock)) nextins = jins.getTargetInstruction();
 	 break;
       case IFLE :
 	 v0 = execution_stack.pop();
 	 v1 = CashewValue.numericValue(v0.getDataType(execution_clock,type_converter),0);
-	 v2 = CuminEvaluator.evaluate(typer,execution_clock,CuminOperator.LEQ,v0,v1);
+	 v2 = CuminEvaluator.evaluate(this,typer,execution_clock,CuminOperator.LEQ,v0,v1);
 	 if (v2.getBoolean(execution_clock)) nextins = jins.getTargetInstruction();
 	 break;
       case IFLT :
 	 v0 = execution_stack.pop();
 	 v1 = CashewValue.numericValue(v0.getDataType(execution_clock,type_converter),0);
-	 v2 = CuminEvaluator.evaluate(typer,execution_clock,CuminOperator.LSS,v0,v1);
+	 v2 = CuminEvaluator.evaluate(this,typer,execution_clock,CuminOperator.LSS,v0,v1);
 	 if (v2.getBoolean(execution_clock)) nextins = jins.getTargetInstruction();
 	 break;
       case IFNE :
 	 v0 = execution_stack.pop();
 	 v1 = CashewValue.numericValue(v0.getDataType(execution_clock,type_converter),0);
-	 v2 = CuminEvaluator.evaluate(typer,execution_clock,CuminOperator.NEQ,v0,v1);
+	 v2 = CuminEvaluator.evaluate(this,typer,execution_clock,CuminOperator.NEQ,v0,v1);
 	 if (v2.getBoolean(execution_clock)) nextins = jins.getTargetInstruction();
 	 break;
       case IFNONNULL :
@@ -1022,8 +1022,7 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException, CashewExc
     }
 
    if (vstack != null) {
-      if (AcornLog.isTracing())
-	 AcornLog.logD("RESULT: " + vstack.getString(typer,execution_clock,0,true));
+      if (AcornLog.isTracing()) AcornLog.logT("RESULT: " + vstack.getString(typer,execution_clock,0,true));
       execution_stack.push(vstack);
     }
    if (nextins != null) next = nextins.getIndex();
@@ -1124,7 +1123,7 @@ private void handleDynamicCall(JcodeInstruction ins)
 
    try {
       if (AcornLog.isTracing()) {
-	 AcornLog.logD("RESULT: " + cv.getString(getTyper(),execution_clock,0,true));
+	 AcornLog.logT("RESULT: " + cv.getString(getTyper(),execution_clock,0,true));
        }
     }
    catch (CashewException e) { }

@@ -44,9 +44,9 @@ class CuminEvaluator implements CuminConstants, CashewConstants
 {
 
 /********************************************************************************/
-/*                                                                              */
-/*      Private Storage                                                         */
-/*                                                                              */
+/*										*/
+/*	Private Storage 							*/
+/*										*/
 /********************************************************************************/
 
 private static Map<Object,Map<String,CashewValue>> cached_values;
@@ -63,11 +63,12 @@ static {
 /*										*/
 /********************************************************************************/
 
-static CashewValue evaluate(JcompTyper typer,CashewClock cc,CuminOperator op,CashewValue v1,CashewValue v2)
+static CashewValue evaluate(CuminRunner runner,JcompTyper typer,
+      CashewClock cc,CuminOperator op,CashewValue v1,CashewValue v2)
 	throws CuminRunException
 {
    try {
-      return evaluateUnchecked(typer,cc,op,v1,v2);
+      return evaluateUnchecked(runner,typer,cc,op,v1,v2);
     }
    catch (CuminRunException e) {
       throw e;
@@ -82,7 +83,7 @@ static CashewValue evaluate(JcompTyper typer,CashewClock cc,CuminOperator op,Cas
 
 
 
-static CashewValue evaluateUnchecked(JcompTyper typer,CashewClock cc,CuminOperator op,
+static CashewValue evaluateUnchecked(CuminRunner runner,JcompTyper typer,CashewClock cc,CuminOperator op,
       CashewValue v1,CashewValue v2)
 	throws CuminRunException, CashewException
 {
@@ -99,7 +100,7 @@ static CashewValue evaluateUnchecked(JcompTyper typer,CashewClock cc,CuminOperat
    switch (op) {
       case EQL :
       case NEQ :
-         if (t1.isPrimitiveType() || t2.isPrimitiveType()) dounbox = true;
+	 if (t1.isPrimitiveType() || t2.isPrimitiveType()) dounbox = true;
 	 break;
       case ADD :
 	 if (!isstr) dounbox = true;
@@ -130,7 +131,8 @@ static CashewValue evaluateUnchecked(JcompTyper typer,CashewClock cc,CuminOperat
       case ADD :
 	 if (isstr) {
 	    // TODO: Need to call toString here to get accurate results
-	    String s0 = getStringValue(v1,typer,cc) + getStringValue(v2,typer,cc);
+//	    String s0 = getStringValue(v1,typer,cc) + getStringValue(v2,typer,cc);
+	    String s0 = computeString(runner,typer,cc,v1) + computeString(runner,typer,cc,v2);
 	    rslt = CashewValue.stringValue(typer.STRING_TYPE,s0);
 	  }
 	 else if (isdbl) {
@@ -456,37 +458,37 @@ static CashewValue evaluateAssign(CuminRunner cr,CuminOperator op,CashewValue v1
 	 rslt = v2;
 	 break;
       case ASG_ADD :
-	 rslt = evaluate(typer,cc,CuminOperator.ADD,v1,v2);
+	 rslt = evaluate(cr,typer,cc,CuminOperator.ADD,v1,v2);
 	 break;
       case ASG_AND :
-	 rslt = evaluate(typer,cc,CuminOperator.AND,v1,v2);
+	 rslt = evaluate(cr,typer,cc,CuminOperator.AND,v1,v2);
 	 break;
       case ASG_DIV :
-	 rslt = evaluate(typer,cc,CuminOperator.DIV,v1,v2);
+	 rslt = evaluate(cr,typer,cc,CuminOperator.DIV,v1,v2);
 	 break;
       case ASG_LSH :
-	 rslt = evaluate(typer,cc,CuminOperator.LSH,v1,v2);
+	 rslt = evaluate(cr,typer,cc,CuminOperator.LSH,v1,v2);
 	 break;
       case ASG_MOD :
-	 rslt = evaluate(typer,cc,CuminOperator.MOD,v1,v2);
+	 rslt = evaluate(cr,typer,cc,CuminOperator.MOD,v1,v2);
 	 break;
       case ASG_MUL :
-	 rslt = evaluate(typer,cc,CuminOperator.MUL,v1,v2);
+	 rslt = evaluate(cr,typer,cc,CuminOperator.MUL,v1,v2);
 	 break;
       case ASG_OR :
-	 rslt = evaluate(typer,cc,CuminOperator.OR,v1,v2);
+	 rslt = evaluate(cr,typer,cc,CuminOperator.OR,v1,v2);
 	 break;
       case ASG_RSH :
-	 rslt = evaluate(typer,cc,CuminOperator.RSH,v1,v2);
+	 rslt = evaluate(cr,typer,cc,CuminOperator.RSH,v1,v2);
 	 break;
       case ASG_RSHU :
-	 rslt = evaluate(typer,cc,CuminOperator.RSHU,v1,v2);
+	 rslt = evaluate(cr,typer,cc,CuminOperator.RSHU,v1,v2);
 	 break;
       case ASG_SUB :
-	 rslt = evaluate(typer,cc,CuminOperator.SUB,v1,v2);
+	 rslt = evaluate(cr,typer,cc,CuminOperator.SUB,v1,v2);
 	 break;
       case ASG_XOR :
-	 rslt = evaluate(typer,cc,CuminOperator.XOR,v1,v2);
+	 rslt = evaluate(cr,typer,cc,CuminOperator.XOR,v1,v2);
 	 break;
       default :
 	 // error
@@ -678,22 +680,22 @@ private static CashewValue invokeEvalConverter(CuminRunner runner,String cls,Str
    String cast = arg.getDataType(runner.getClock(),runner.getTyper()).getName();
    String argv = arg.getString(runner.getTyper(),runner.getClock());
    String expr = cls + "." + mthd + "( (" + cast + ") " + argv + ")";
-   
+
    Map<String,CashewValue> cache = null;
    Object sess = runner.getLookupContext().getSessionKey();
    CashewValue cv = null;
    if (sess != null) {
       synchronized (cached_values) {
-         cache = cached_values.get(sess);
-         if (cache == null) {
-            cache = new HashMap<>();
-            cached_values.put(sess,cache);
-          }
+	 cache = cached_values.get(sess);
+	 if (cache == null) {
+	    cache = new HashMap<>();
+	    cached_values.put(sess,cache);
+	  }
        }
       cv = cache.get(expr);
       if (cv != null) return cv;
     }
-   
+
    cv = runner.getLookupContext().evaluate(expr);
    if (cv == null) {
       cv = invokeConverter(runner,cls,mthd,sgn,arg);
@@ -701,8 +703,29 @@ private static CashewValue invokeEvalConverter(CuminRunner runner,String cls,Str
    if (cv != null && cache != null) {
       cache.put(expr,cv);
     }
-  
+
    return cv;
+}
+
+
+
+private static String computeString(CuminRunner runner,JcompTyper typer,CashewClock cc,CashewValue arg)
+	throws CuminRunException, CashewException
+{
+   JcompType typ = arg.getDataType(cc,typer);
+   if (typ.isCharType()) {
+      char v = arg.getChar(cc);
+      return String.valueOf(v);
+    }
+   else if (typ.isPrimitiveType() || typ.isStringType()) {
+      return getStringValue(arg,typer,cc);
+    }
+   String sgn = "(Ljava/lang/Object;)Ljava/lang/String;";
+   if (typ.isArrayType() && typ.getBaseType().isCharType()) {
+      sgn = "([C)Ljava/lang/String;";
+    }
+   CashewValue cv = invokeConverter(runner,"java.lang.String","valueOf",sgn,arg);
+   return getStringValue(cv,typer,cc);
 }
 
 

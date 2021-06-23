@@ -94,6 +94,7 @@ SesameSubsession(SesameSessionLaunch base,Element xml)
    super.removeSession();
    local_project = null;
    base_session = null;
+   position_map.clear();
 }
 
 

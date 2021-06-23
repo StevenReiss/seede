@@ -134,7 +134,7 @@ protected CashewContext global_context;
 protected List<CashewValue> call_args;
 protected JcompTyper	type_converter;
 
-private int             cur_depth;
+private int		cur_depth;
 
 protected long		max_time;
 protected int		max_depth;
@@ -381,7 +381,7 @@ protected void checkStackOverflow() throws CuminRunException
 {
    if (lookup_context == null || max_depth <= 0) return;
    int depth = cur_depth;
-   
+
    if (depth > max_depth) {
       AcornLog.logI("Stack overflow " + max_depth);
       CuminEvaluator.throwException(getTyper(),"java.lang.StackOverflowError");
@@ -409,10 +409,10 @@ CuminRunner handleCall(CashewClock cc,JcompSymbol method,List<CashewValue> args,
    if (args != null && args.size() > 0) {
       thisarg = args.get(0);
     }
-   
+
    if (!method.isStatic() && ctyp != CallType.STATIC && ctyp != CallType.SPECIAL) {
       if (thisarg == null || thisarg.isNull(cc)) {
-         CuminEvaluator.throwException(getTyper(),"java.lang.NullPointerException");
+	 CuminEvaluator.throwException(getTyper(),"java.lang.NullPointerException");
        }
     }
 
@@ -427,7 +427,7 @@ CuminRunner handleCall(CashewClock cc,JcompSymbol method,List<CashewValue> args,
 
    JcompType type = cmethod.getClassType();
    while (type.isParameterizedType()) type = type.getBaseType();
-   
+
    if (!type.isKnownType()) {
       ASTNode an = cmethod.getDefinitionNode();
       if (an == null) {
@@ -477,7 +477,7 @@ CuminRunner handleCall(CashewClock cc,JcodeMethod method,List<CashewValue> args,
    CashewValue thisarg = null;
    if (args != null && args.size() > 0 && !method.isStatic()) {
       thisarg = args.get(0);
-      // AcornLog.logD("Call " + method + " on " + thisarg.getDebugString(execution_clock));
+      // AcornLog.logT("Call " + method + " on " + thisarg.getDebugString(execution_clock));
     }
 
    JcodeMethod cmethod = findTargetMethod(cc,method,thisarg,ctyp);
@@ -514,7 +514,7 @@ CuminRunner handleCall(CashewClock cc,JcodeMethod method,List<CashewValue> args,
    if (cmethod == null && !method.isStatic() && thisarg.isNull(cc)) {
       CuminEvaluator.throwException(type_converter,"java.lang.NullPointerException");
     }
-   
+
    if (cmethod == null) {
       StringBuffer buf = new StringBuffer();
       buf.append(method);
@@ -572,7 +572,7 @@ private CuminRunner doCall(CashewClock cc,ASTNode ast,List<CashewValue> args)
    lookup_context.addNestedContext(ctx);
 
    JcompSymbol js = JcompAst.getDefinition(ast);
-   AcornLog.logD("Start ast call to " + js.getFullName());
+   AcornLog.logT("Start ast call to " + js.getFullName());
 
    return rast;
 }
@@ -585,9 +585,11 @@ CuminRunner doCall(CashewClock cc,JcodeMethod mthd,List<CashewValue> args)
    rbyt.setMaxTime(max_time);
    rbyt.setMaxDepth(max_depth);
 
-   AcornLog.logD("Start binary call to " + mthd);
-   for (CashewValue v0 : args) {
-      AcornLog.logD("\tArg: " + v0);
+   if (AcornLog.isTracing()) {
+      AcornLog.logT("Start binary call to " + mthd);
+      for (CashewValue v0 : args) {
+	 AcornLog.logT("\tArg: " + v0);
+       }
     }
 
    return rbyt;

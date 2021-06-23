@@ -28,6 +28,7 @@ import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.HashMap;
 
 import org.eclipse.jdt.core.dom.ASTNode;
@@ -93,7 +94,7 @@ SesameMonitor(SesameMain sm)
    sesame_control = sm;
    is_done = false;
    eval_handlers = new HashMap<String,EvalData>();
-   session_map = new HashMap<String,SesameSession>();
+   session_map = new ConcurrentHashMap<String,SesameSession>();
 
    mint_control = MintControl.create(sm.getMintId(),MintSyncMode.ONLY_REPLIES);
 }
@@ -445,7 +446,6 @@ private void handleRunEvent(Element event,long when)
 	 for (SesameSession ss : session_map.values()) {
 	    ss.noteContinue(lid,tid);
 	  }
-
 	 break;
       case "SUSPEND" :
 	 break;
@@ -574,13 +574,16 @@ private void handleRemove(String sid) throws SesameException
    else {
       ss.stopRunners();
       SesameProject sp = ss.getProject();
-      boolean inuse = false;
+      String inuse = null;
       for (SesameSession ns : session_map.values()) {
 	 SesameProject np = ns.getProject();
-	 if (np == sp) inuse = true;
+	 if (np == sp) inuse = ns.getSessionId();
        }
-      if (!inuse) {
+      if (inuse == null) {
 	 ss.removeSession();
+       }
+      else {
+         AcornLog.logE("SESAME","Session not remove " + sid + " " + inuse);
        }
     }
 }
@@ -852,7 +855,7 @@ private String processCommand(String cmd,String sid,Element e) throws SesameExce
       case "EXEC" :
 	 handleExec(sid,e,xw);
 	 break;
-      case "pwdOVE" :
+      case "REMOVE" :
 	 handleRemove(sid);
 	 break;
       case "ADDFILE" :
@@ -906,39 +909,39 @@ private class CommandHandler implements MintHandler {
       Element e = msg.getXml();
       String rslt = null;
       try {
-	 rslt = processCommand(cmd,sid,e);
-	 AcornLog.logD("COMMAND RESULT: " + rslt);
+         rslt = processCommand(cmd,sid,e);
+         AcornLog.logD("COMMAND RESULT: " + rslt);
        }
       catch (SesameException t) {
-	 String xmsg = "BEDROCK: error in command " + cmd + ": " + t;
-	 AcornLog.logE(xmsg,t);
-	 IvyXmlWriter xw = new IvyXmlWriter();
-	 xw.cdataElement("ERROR",xmsg);
-	 rslt = xw.toString();
-	 xw.close();
+         String xmsg = "BEDROCK: error in command " + cmd + ": " + t;
+         AcornLog.logE(xmsg,t);
+         IvyXmlWriter xw = new IvyXmlWriter();
+         xw.cdataElement("ERROR",xmsg);
+         rslt = xw.toString();
+         xw.close();
        }
       catch (Throwable t) {
-	 String xmsg = "Problem processing command " + cmd + ": " + t;
-	 AcornLog.logE(xmsg,t);
-	 StringWriter sw = new StringWriter();
-	 PrintWriter pw = new PrintWriter(sw);
-	 t.printStackTrace(pw);
-	 Throwable xt = t;
-	 for ( ; xt.getCause() != null; xt = xt.getCause());
-	 if (xt != null && xt != t) {
-	    pw.println();
-	    xt.printStackTrace(pw);
-	  }
-	 AcornLog.logE("TRACE: " + sw.toString());
-	 IvyXmlWriter xw = new IvyXmlWriter();
-	 xw.begin("ERROR");
-	 xw.textElement("MESSAGE",xmsg);
-	 xw.cdataElement("EXCEPTION",t.toString());
-	 xw.cdataElement("STACK",sw.toString());
-	 xw.end("ERROR");
-	 rslt = xw.toString();
-	 xw.close();
-	 pw.close();
+         String xmsg = "Problem processing command " + cmd + ": " + t;
+         AcornLog.logE(xmsg,t);
+         StringWriter sw = new StringWriter();
+         PrintWriter pw = new PrintWriter(sw);
+         t.printStackTrace(pw);
+         Throwable xt = t;
+         for ( ; xt.getCause() != null; xt = xt.getCause());
+         if (xt != null && xt != t) {
+            pw.println();
+            xt.printStackTrace(pw);
+          }
+         AcornLog.logE("TRACE: " + sw.toString());
+         IvyXmlWriter xw = new IvyXmlWriter();
+         xw.begin("ERROR");
+         xw.textElement("MESSAGE",xmsg);
+         xw.cdataElement("EXCEPTION",t.toString());
+         xw.cdataElement("STACK",sw.toString());
+         xw.end("ERROR");
+         rslt = xw.toString();
+         xw.close();
+         pw.close();
        }
       msg.replyTo(rslt);
     }

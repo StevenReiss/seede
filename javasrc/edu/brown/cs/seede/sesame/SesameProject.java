@@ -358,6 +358,11 @@ synchronized void removeProject()
    active_files = null;
    changed_files = null;
    class_paths = null;
+   for (SesameFile sf : local_files.values()) {
+      if (!rem.contains(sf)) {
+         removeFile(sf);
+       }
+    }
    local_files = null;
 }
 

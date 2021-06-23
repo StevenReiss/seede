@@ -467,12 +467,20 @@ public static Matcher getPatternMatcher(String pat,String v)
 }
 
 
-public static Matcher matchFinder(String pat,String v,int start,boolean fail)
+public static Matcher matchFinder(String pat,String v,int start,
+      int from,int to,boolean fail,int anch)
 { 
    Pattern p = Pattern.compile(pat);
    Matcher m = p.matcher(v);
+   m.region(from,to);
    if (fail) {
       m.reset();
+    }
+   else if (anch == 1) {
+      m.matches();
+    }
+   else if (anch == 0) {
+      m.lookingAt();
     }
    else { 
       m.find(start);

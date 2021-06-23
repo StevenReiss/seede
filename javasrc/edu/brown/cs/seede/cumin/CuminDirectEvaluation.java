@@ -1668,13 +1668,16 @@ CuminRunStatus checkPatternMethods() throws CuminRunException
 
 CuminRunStatus checkMatcherMethods() throws CuminRunException
 {
-   switch (getMethod().getName()) {
-      case "find" :
-         try {
-            CashewValue mval = getValue(0);
-            CashewValue patv = mval.getFieldValue(getTyper(),getClock(),"java.util.regex.Matcher.parentPattern");
-            String ps = getStringFieldValue(patv,"java.util.regex.Pattern.pattern");
-            String textv = getStringFieldValue(mval,"java.util.regex.Matcher.text");
+   if (getMethod().isConstructor() || getMethod().isStatic()) return null;
+
+   CashewValue mval = getValue(0);
+   CashewValue retv = null;
+   try {
+      String ps = getPatternTextFromMatcher(mval);
+      String textv = getStringFieldValue(mval,"java.util.regex.Matcher.text");
+   
+      switch (getMethod().getName()) {
+         case "find" :
             int first = getIntFieldValue(mval,"java.util.regex.Matcher.first");
             int last = getIntFieldValue(mval,"java.util.regex.Matcher.last");
             int from = getIntFieldValue(mval,"java.util.regex.Matcher.from");
@@ -1691,27 +1694,71 @@ CuminRunStatus checkMatcherMethods() throws CuminRunException
                   fail = true;
                 }
              }
-            String expr = "edu.brown.cs.seede.poppy.PoppyValue.matchFinder(\"" +
-                IvyFormat.formatString(ps) + "\",\"" + 
-                IvyFormat.formatString(textv)  + "\"," + pos + "," + fail + ")";
-            CashewValue rslt = exec_runner.getLookupContext().evaluate(expr);
-            copyField(rslt,mval,"java.util.regex.Matcher.groups");
-            copyField(rslt,mval,"java.util.regex.Matcher.from");
-            copyField(rslt,mval,"java.util.regex.Matcher.to");
-            copyField(rslt,mval,"java.util.regex.Matcher.from");
-            copyField(rslt,mval,"java.util.regex.Matcher.first");
-            copyField(rslt,mval,"java.util.regex.Matcher.last");
-            first = getIntFieldValue(rslt,"java.util.regex.Matcher.first");
-            CashewValue retv = null;
-            if (first >= 0) retv = CashewValue.booleanValue(getTyper(),true);
-            else retv = CashewValue.booleanValue(getTyper(),false);
-            return CuminRunStatus.Factory.createReturn(retv);
-          }
-         catch (CashewException e) {
-            AcornLog.logE("CUMIN","Problem getting pattern information",e);
-          }
+            retv = runMatcher(mval,ps,textv,pos,fail,-1);
+            break;
+         case "matches" :
+            retv = runMatcher(mval,ps,textv,-1,false,1);
+            break;
+         case "lookingAt" :
+            retv = runMatcher(mval,ps,textv,-1,false,0);
+            break;
+       }
     }
+   catch (CashewException e) {
+      AcornLog.logE("CUMIN","Problem getting pattern information",e);
+    }
+   
+   if (retv != null) return CuminRunStatus.Factory.createReturn(retv);
+   
    return null;
+}
+
+
+private CashewValue runMatcher(CashewValue mval,String ps,String textv,int pos,boolean fail,int anch)
+        throws CashewException
+{
+   int from = getIntFieldValue(mval,"java.util.regex.Matcher.from");
+   int to = getIntFieldValue(mval,"java.util.regex.Matcher.to");  String expr = "edu.brown.cs.seede.poppy.PoppyValue.matchFinder(\"" +
+      IvyFormat.formatString(ps) + "\",\"" + 
+      IvyFormat.formatString(textv)  + "\"," + pos + "," + from + "," + to + "," + fail + ",-1)";
+   CashewValue rslt = exec_runner.getLookupContext().evaluate(expr);
+   copyMatcherFields(rslt,mval);
+   int first = getIntFieldValue(rslt,"java.util.regex.Matcher.first");
+   CashewValue retv = null;
+   if (first >= 0) retv = CashewValue.booleanValue(getTyper(),true);
+   else retv = CashewValue.booleanValue(getTyper(),false);
+   return retv;
+}
+
+
+
+private String getPatternTextFromMatcher(CashewValue mval) throws CashewException
+{
+   CashewValue patv = mval.getFieldValue(getTyper(),getClock(),"java.util.regex.Matcher.parentPattern");
+   if (patv.isNull(getClock())) return null;
+   
+   String ps = getStringFieldValue(patv,"java.util.regex.Pattern.pattern");
+   return ps;
+}
+
+
+private void copyMatcherFields(CashewValue from,CashewValue to) throws CashewException
+{
+   copyField(from,to,"java.util.regex.Matcher.groups");
+   copyField(from,to,"java.util.regex.Matcher.from");
+   copyField(from,to,"java.util.regex.Matcher.to");
+   copyField(from,to,"java.util.regex.Matcher.from");
+   copyField(from,to,"java.util.regex.Matcher.first");
+   copyField(from,to,"java.util.regex.Matcher.last");
+   copyField(from,to,"java.util.regex.Matcher.lookbehindTo");
+   copyField(from,to,"java.util.regex.Matcher.oldLast");
+   copyField(from,to,"java.util.regex.Matcher.lastAppendPosition");
+   copyField(from,to,"java.util.regex.Matcher.locals");
+   copyField(from,to,"java.util.regex.Matcher.localsPos");
+   copyField(from,to,"java.util.regex.Matcher.hitEnd");
+   copyField(from,to,"java.util.regex.Matcher.requireEnd");
+   copyField(from,to,"java.util.regex.Matcher.modCount");
+   copyField(from,to,"java.util.regex.Matcher.acceptMode");
 }
 
 
