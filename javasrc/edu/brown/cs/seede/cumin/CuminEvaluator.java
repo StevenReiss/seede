@@ -145,11 +145,11 @@ static CashewValue evaluateUnchecked(CuminRunner runner,JcompTyper typer,CashewC
 	  }
 	 else if (islng) {
 	    long v0 = v1.getNumber(cc).longValue() + v2.getNumber(cc).longValue();
-	    rslt = CashewValue.numericValue(typer.LONG_TYPE,v0);
+	    rslt = CashewValue.numericValue(typer,typer.LONG_TYPE,v0);
 	  }
 	 else {
 	    int v0 = v1.getNumber(cc).intValue() + v2.getNumber(cc).intValue();
-	    rslt = CashewValue.numericValue(typer.INT_TYPE,v0);
+	    rslt = CashewValue.numericValue(typer,typer.INT_TYPE,v0);
 	  }
 	 break;
       case AND :
@@ -159,7 +159,7 @@ static CashewValue evaluateUnchecked(CuminRunner runner,JcompTyper typer,CashewC
 	  }
 	 else {
 	    int v0 = v1.getNumber(cc).intValue() & v2.getNumber(cc).intValue();
-	    rslt = CashewValue.numericValue(typer.INT_TYPE,v0);
+	    rslt = CashewValue.numericValue(typer,typer.INT_TYPE,v0);
 	  }
 	 break;
       case DIV :
@@ -177,13 +177,13 @@ static CashewValue evaluateUnchecked(CuminRunner runner,JcompTyper typer,CashewC
 	    long vx = v2.getNumber(cc).longValue();
 	    if (vx == 0) throwException(typer,"java.lang.ArithmeticException");
 	    long v0 = v1.getNumber(cc).longValue() / vx;
-	    rslt = CashewValue.numericValue(typer.LONG_TYPE,v0);
+	    rslt = CashewValue.numericValue(typer,typer.LONG_TYPE,v0);
 	  }
 	 else {
 	    int vx = v2.getNumber(cc).intValue();
 	    if (vx == 0) throwException(typer,"java.lang.ArithmeticException");
 	    int v0 = v1.getNumber(cc).intValue() / vx;
-	    rslt = CashewValue.numericValue(typer.INT_TYPE,v0);
+	    rslt = CashewValue.numericValue(typer,typer.INT_TYPE,v0);
 	  }
 	 break;
       case EQL :
@@ -297,13 +297,13 @@ static CashewValue evaluateUnchecked(CuminRunner runner,JcompTyper typer,CashewC
 	    long vx = v2.getNumber(cc).longValue();
 	    if (vx == 0) throwException(typer,"java.lang.ArithmeticException");
 	    long v0 = v1.getNumber(cc).longValue() % vx;
-	    rslt = CashewValue.numericValue(typer.LONG_TYPE,v0);
+	    rslt = CashewValue.numericValue(typer,typer.LONG_TYPE,v0);
 	  }
 	 else {
 	    int vx = v2.getNumber(cc).intValue();
 	    if (vx == 0) throwException(typer,"java.lang.ArithmeticException");
 	    int v0 = v1.getNumber(cc).intValue() % vx;
-	    rslt = CashewValue.numericValue(typer.INT_TYPE,v0);
+	    rslt = CashewValue.numericValue(typer,typer.INT_TYPE,v0);
 	  }
 	 break;
       case MUL :
@@ -317,11 +317,11 @@ static CashewValue evaluateUnchecked(CuminRunner runner,JcompTyper typer,CashewC
 	  }
 	 else if (islng) {
 	    long v0 = v1.getNumber(cc).longValue() * v2.getNumber(cc).longValue();
-	    rslt = CashewValue.numericValue(typer.LONG_TYPE,v0);
+	    rslt = CashewValue.numericValue(typer,typer.LONG_TYPE,v0);
 	  }
 	 else {
 	    int v0 = v1.getNumber(cc).intValue() * v2.getNumber(cc).intValue();
-	    rslt = CashewValue.numericValue(typer.INT_TYPE,v0);
+	    rslt = CashewValue.numericValue(typer,typer.INT_TYPE,v0);
 	  }
 	 break;
       case NEQ :
@@ -344,31 +344,31 @@ static CashewValue evaluateUnchecked(CuminRunner runner,JcompTyper typer,CashewC
       case OR :
 	 if (islng) {
 	    long v0 = v1.getNumber(cc).longValue() | v2.getNumber(cc).longValue();
-	    rslt = CashewValue.numericValue(typer.LONG_TYPE,v0);
+	    rslt = CashewValue.numericValue(typer,typer.LONG_TYPE,v0);
 	  }
 	 else {
 	    int v0 = v1.getNumber(cc).intValue() | v2.getNumber(cc).intValue();
-	    rslt = CashewValue.numericValue(typer.INT_TYPE,v0);
+	    rslt = CashewValue.numericValue(typer,typer.INT_TYPE,v0);
 	  }
 	 break;
       case RSH :
 	 if (islng) {
 	    long v0 = v1.getNumber(cc).longValue() >> v2.getNumber(cc).intValue();
-	    rslt = CashewValue.numericValue(typer.LONG_TYPE,v0);
+	    rslt = CashewValue.numericValue(typer,typer.LONG_TYPE,v0);
 	  }
 	 else {
 	    int v0 = v1.getNumber(cc).intValue() >> v2.getNumber(cc).intValue();
-	    rslt = CashewValue.numericValue(typer.INT_TYPE,v0);
+	    rslt = CashewValue.numericValue(typer,typer.INT_TYPE,v0);
 	  }
 	 break;
       case RSHU :
 	 if (islng) {
 	    long v0 = v1.getNumber(cc).longValue() >>> v2.getNumber(cc).intValue();
-	    rslt = CashewValue.numericValue(typer.LONG_TYPE,v0);
+	    rslt = CashewValue.numericValue(typer,typer.LONG_TYPE,v0);
 	  }
 	 else {
 	    int v0 = v1.getNumber(cc).intValue() >>> v2.getNumber(cc).intValue();
-	    rslt = CashewValue.numericValue(typer.INT_TYPE,v0);
+	    rslt = CashewValue.numericValue(typer,typer.INT_TYPE,v0);
 	  }
 	 break;
       case SUB :
@@ -382,21 +382,21 @@ static CashewValue evaluateUnchecked(CuminRunner runner,JcompTyper typer,CashewC
 	  }
 	 else if (islng) {
 	    long v0 = v1.getNumber(cc).longValue() - v2.getNumber(cc).longValue();
-	    rslt = CashewValue.numericValue(typer.LONG_TYPE,v0);
+	    rslt = CashewValue.numericValue(typer,typer.LONG_TYPE,v0);
 	  }
 	 else {
 	    int v0 = v1.getNumber(cc).intValue() - v2.getNumber(cc).intValue();
-	    rslt = CashewValue.numericValue(typer.INT_TYPE,v0);
+	    rslt = CashewValue.numericValue(typer,typer.INT_TYPE,v0);
 	  }
 	 break;
       case XOR :
 	 if (islng) {
 	    long v0 = v1.getNumber(cc).longValue() ^ v2.getNumber(cc).longValue();
-	    rslt = CashewValue.numericValue(typer.LONG_TYPE,v0);
+	    rslt = CashewValue.numericValue(typer,typer.LONG_TYPE,v0);
 	  }
 	 else {
 	    int v0 = v1.getNumber(cc).intValue() ^ v2.getNumber(cc).intValue();
-	    rslt = CashewValue.numericValue(typer.INT_TYPE,v0);
+	    rslt = CashewValue.numericValue(typer,typer.INT_TYPE,v0);
 	  }
 	 break;
       case SIG :
@@ -420,7 +420,7 @@ static CashewValue evaluateUnchecked(CuminRunner runner,JcompTyper typer,CashewC
 	    else if (v1.getNumber(cc).intValue() > v2.getNumber(cc).intValue()) irslt = 1;
 	    else irslt = 0;
 	  }
-	 return CashewValue.numericValue(typer.INT_TYPE,irslt);
+	 return CashewValue.numericValue(typer,typer.INT_TYPE,irslt);
       default :
 	 AcornLog.logE("Unknown operator " + op);
 	 // illegal binary operator
@@ -760,13 +760,13 @@ static CashewValue evaluate(JcompTyper typer,CashewClock cc,CuminOperator op,Cas
 	 else if (islng) {
 	    rslt = v1.getActualValue(cc);
 	    long fnv = v1.getNumber(cc).longValue() + 1;
-	    CashewValue nv = CashewValue.numericValue(typer.LONG_TYPE,fnv);
+	    CashewValue nv = CashewValue.numericValue(typer,typer.LONG_TYPE,fnv);
 	    v1.setValueAt(cc,nv);
 	  }
 	 else {
 	    rslt = v1.getActualValue(cc);
 	    int fnv = v1.getNumber(cc).intValue() + 1;
-	    CashewValue nv = CashewValue.numericValue(typer.INT_TYPE,fnv);
+	    CashewValue nv = CashewValue.numericValue(typer,typer.INT_TYPE,fnv);
 	    v1.setValueAt(cc,nv);
 	  }
 	 break;
@@ -786,13 +786,13 @@ static CashewValue evaluate(JcompTyper typer,CashewClock cc,CuminOperator op,Cas
 	 else if (islng) {
 	    rslt = v1.getActualValue(cc);
 	    long fnv = v1.getNumber(cc).longValue() - 1;
-	    CashewValue nv = CashewValue.numericValue(typer.LONG_TYPE,fnv);
+	    CashewValue nv = CashewValue.numericValue(typer,typer.LONG_TYPE,fnv);
 	    v1.setValueAt(cc,nv);
 	  }
 	 else {
 	    rslt = v1.getActualValue(cc);
 	    int fnv = v1.getNumber(cc).intValue() - 1;
-	    CashewValue nv = CashewValue.numericValue(typer.INT_TYPE,fnv);
+	    CashewValue nv = CashewValue.numericValue(typer,typer.INT_TYPE,fnv);
 	    v1.setValueAt(cc,nv);
 	  }
 	 break;
@@ -809,12 +809,12 @@ static CashewValue evaluate(JcompTyper typer,CashewClock cc,CuminOperator op,Cas
 	  }
 	 else if (islng) {
 	    long fnv = v1.getNumber(cc).longValue() + 1;
-	    rslt = CashewValue.numericValue(typer.LONG_TYPE,fnv);
+	    rslt = CashewValue.numericValue(typer,typer.LONG_TYPE,fnv);
 	    v1.setValueAt(cc,rslt);
 	  }
 	 else {
 	    int fnv = v1.getNumber(cc).intValue() + 1;
-	    rslt = CashewValue.numericValue(typer.INT_TYPE,fnv);
+	    rslt = CashewValue.numericValue(typer,typer.INT_TYPE,fnv);
 	    v1.setValueAt(cc,rslt);
 	  }
 	 break;
@@ -831,12 +831,12 @@ static CashewValue evaluate(JcompTyper typer,CashewClock cc,CuminOperator op,Cas
 	  }
 	 else if (islng) {
 	    long fnv = v1.getNumber(cc).longValue() - 1;
-	    rslt = CashewValue.numericValue(typer.LONG_TYPE,fnv);
+	    rslt = CashewValue.numericValue(typer,typer.LONG_TYPE,fnv);
 	    v1.setValueAt(cc,rslt);
 	  }
 	 else {
 	    int fnv = v1.getNumber(cc).intValue() - 1;
-	    rslt = CashewValue.numericValue(typer.INT_TYPE,fnv);
+	    rslt = CashewValue.numericValue(typer,typer.INT_TYPE,fnv);
 	    v1.setValueAt(cc,rslt);
 	  }
 	 break;
@@ -851,17 +851,27 @@ static CashewValue evaluate(JcompTyper typer,CashewClock cc,CuminOperator op,Cas
 	  }
 	 else if (islng) {
 	    long fnv = -v1.getNumber(cc).longValue();
-	    rslt = CashewValue.numericValue(typer.LONG_TYPE,fnv);
+	    rslt = CashewValue.numericValue(typer,typer.LONG_TYPE,fnv);
 	  }
 	 else {
 	    int fnv = -v1.getNumber(cc).intValue();
-	    rslt = CashewValue.numericValue(typer.INT_TYPE,fnv);
+	    rslt = CashewValue.numericValue(typer,typer.INT_TYPE,fnv);
 	  }
 	 break;
       case NOT :
 	 boolean notv = !v1.getBoolean(cc);
 	 rslt = CashewValue.booleanValue(typer,notv);
 	 break;
+      case COMP :
+         if (islng) {
+            long fnv = ~v1.getNumber(cc).longValue();
+            rslt = CashewValue.numericValue(typer,typer.LONG_TYPE,fnv);
+          }
+         else {
+	    int fnv = ~v1.getNumber(cc).intValue();
+	    rslt = CashewValue.numericValue(typer,typer.INT_TYPE,fnv);
+	  }
+         break;
       case NOP :
 	 rslt = v1.getActualValue(cc);
 	 break;

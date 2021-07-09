@@ -84,6 +84,12 @@ SesameContext(SesameSession ss)
       cv = for_session.lookupValue(expr,type);
       if (cv != null) return cv;
     }
+   
+   int idx = name.lastIndexOf(".");
+   if (idx >= 0) {
+//    String cnm = name.substring(0,idx);
+//    enableAccess(cnm);
+    }
 
    cv = for_session.lookupValue(name,type);
    if (cv == null) {

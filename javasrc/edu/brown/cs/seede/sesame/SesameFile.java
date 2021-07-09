@@ -42,6 +42,7 @@ import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.ConstructorInvocation;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.ExpressionStatement;
+import org.eclipse.jdt.core.dom.FieldAccess;
 import org.eclipse.jdt.core.dom.FieldDeclaration;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.Statement;
@@ -342,8 +343,8 @@ private void fixType(TypeDeclaration td)
 	 List<Object> stmts = blk.statements();
 	 if (stmts.size() > 0) {
 	    Statement st0 = (Statement) stmts.get(0);
-	    if (st0 instanceof SuperConstructorInvocation ||
-		  st0 instanceof ConstructorInvocation) idx = 1;
+            if (st0 instanceof ConstructorInvocation) continue;         // done in that constructor
+	    if (st0 instanceof SuperConstructorInvocation) idx = 1;
 	  }
 	 if (idx == 0 && td.getSuperclassType() != null) {
 	    SuperConstructorInvocation sci = ast.newSuperConstructorInvocation();
@@ -353,7 +354,10 @@ private void fixType(TypeDeclaration td)
 	 if (cnstinits != null) {
 	    for (VariableDeclarationFragment vdf : cnstinits) {
 	       Assignment asgn = ast.newAssignment();
-	       asgn.setLeftHandSide(ast.newSimpleName(vdf.getName().getIdentifier()));
+               FieldAccess fa = ast.newFieldAccess();
+               fa.setExpression(ast.newThisExpression());
+               fa.setName(ast.newSimpleName(vdf.getName().getIdentifier()));
+               asgn.setLeftHandSide(fa);
 	       asgn.setRightHandSide((Expression) ASTNode.copySubtree(ast,vdf.getInitializer()));
 	       ExpressionStatement es = ast.newExpressionStatement(asgn);
 	       stmts.add(idx++,es);

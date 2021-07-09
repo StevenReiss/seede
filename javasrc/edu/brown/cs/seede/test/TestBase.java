@@ -32,6 +32,7 @@ import org.junit.Assert;
 import org.w3c.dom.Element;
 
 import edu.brown.cs.ivy.exec.IvyExec;
+import edu.brown.cs.ivy.file.IvyFile;
 import edu.brown.cs.ivy.mint.MintArguments;
 import edu.brown.cs.ivy.mint.MintConstants;
 import edu.brown.cs.ivy.mint.MintControl;
@@ -182,7 +183,7 @@ protected void setupSeedeTestSession(String id,String cnts)
 
 protected Element runSeede(String id)
 {
-   return runSeede(id,500000);
+   return runSeede(id,1000000);
 }
 
 
@@ -300,6 +301,22 @@ protected void addSeedeFiles(String id,String ... files)
    String cnts = xw.toString();
    xw.close();
    
+   MintDefaultReply rply = new MintDefaultReply();
+   sendSeedeMessage("ADDFILE",id,null,cnts,rply);
+   String sstatus = rply.waitForString();
+   AcornLog.logI("TEST: SEEDE ADDFILE STATUS: " + sstatus);
+}
+
+
+protected void addSeedeFiles(String id,File f)
+{
+   String cnts = null;
+   try {
+      cnts = IvyFile.loadFile(f);
+    }
+   catch (IOException e) {
+      throw new Error("File " + f + " not found");
+    }
    MintDefaultReply rply = new MintDefaultReply();
    sendSeedeMessage("ADDFILE",id,null,cnts,rply);
    String sstatus = rply.waitForString();
@@ -510,8 +527,9 @@ private LaunchData doStartLaunch(String name)
    
    File lib = new File(BROWN_SEEDE_LIB);
    if (!lib.exists()) lib = new File(HOME_SEEDE_LIB);
-   File f1 = new File(lib,"poppy.jar");
-   String dargs = "-javaagent:" + f1.getPath();
+   String dargs = null;
+// File f1 = new File(lib,"poppy.jar");
+// dargs = "-javaagent:" + f1.getPath();
    
    stopped_thread = null;
    CommandArgs args = new CommandArgs("NAME",name,"MODE","debug","BUILD","TRUE",

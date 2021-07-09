@@ -28,8 +28,10 @@ import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.HashMap;
+import java.util.HashSet;
 
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.text.edits.CopySourceEdit;
@@ -291,7 +293,8 @@ private void handleLocalEdit(String sid,Element xml,IvyXmlWriter xw)
    if (ss == null) return;
    SesameSubsession sss = ss.getSubsession();
    if (sss == null) return;
-
+   Set<String> edited = new HashSet<>();
+   
    boolean fg = true;
    for (Element eelt : IvyXml.children(xml)) {
       if (IvyXml.isElement(eelt,"EDIT") ||
@@ -299,10 +302,11 @@ private void handleLocalEdit(String sid,Element xml,IvyXmlWriter xw)
 	 String sfile = IvyXml.getAttrString(eelt,"FILE");
 	 if (sfile == null) continue;
 	 File file = new File(sfile);
+         edited.add(sfile);
 	 for (Element edit : IvyXml.children(eelt,"EDIT")) {
 	    if (use_text_edits) {
 	       TextEdit te = buildTextEdit(edit);
-	       AcornLog.logD("LOCAL EDIT: " + te);
+	       AcornLog.logD("SESAME","LOCAL EDIT: " + te);
 	       if (sss.editLocalFile(file,te) == null) fg = false;
 	     }
 	    else {
@@ -316,6 +320,10 @@ private void handleLocalEdit(String sid,Element xml,IvyXmlWriter xw)
    if (fg) {
       sss.getProject().compileProject();
       for (JcompMessage msg : sss.getProject().getJcompProject().getMessages()) {
+         if (msg.getSource().getFileName() != null &&
+               !edited.contains(msg.getSource().getFileName())) continue;
+         AcornLog.logD("SESAME","MESSAGE: " + msg.getSeverity() + " " + msg.getLineNumber() +
+               " " + msg.getText() + " " + msg.getSource().getFileName());
 	 switch (msg.getSeverity()) {
 	    case ERROR :
 	    case FATAL :
@@ -606,6 +614,24 @@ private void handleAddFile(String sid,Element xml)
 }
 
 
+private void handleRemoveFile(String sid,Element xml)
+{
+   SesameSession ss = session_map.get(sid);
+   if (ss == null) return;
+   SesameProject sp = ss.getProject();
+   
+   for (Element e : IvyXml.children(xml,"FILE")) {
+      String file = IvyXml.getAttrString(e,"NAME");
+      SesameFile sf = sesame_control.getFileManager().findOpenFile(new File(file));
+      if (sf != null) {
+         sp.removeFile(sf);
+       }
+    }
+   
+   ss.resetRunners();
+}
+
+
 
 private void handleSetValue(String sid,Element xml) throws SesameException
 {
@@ -861,6 +887,9 @@ private String processCommand(String cmd,String sid,Element e) throws SesameExce
       case "ADDFILE" :
 	 handleAddFile(sid,e);
 	 break;
+      case "REMOVEFILE" :
+         handleRemoveFile(sid,e);
+         break;
       case "SETVALUE" :
 	 handleSetValue(sid,e);
 	 break;

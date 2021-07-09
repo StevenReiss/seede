@@ -164,7 +164,7 @@ public static CashewValue numericValue(JcompTyper typer,JcompType t,long v)
 	 vn = int_values.get(iv);
 	 if (vn == null) {
 	    vn = new ValueNumeric(t,v);
-	    int_values.put(iv,vn);
+	    if (v > -1024 && v < 1024) int_values.put(iv,vn);
 	  }
        }
     }
@@ -193,7 +193,7 @@ public static CashewValue numericValue(JcompTyper typer,JcompType t,long v)
 	 vn = long_values.get(v);
 	 if (vn == null) {
 	    vn = new ValueNumeric(t,v);
-	    long_values.put(v,vn);
+	    if (v > -1024 && v < 1024) long_values.put(v,vn);
 	  }
        }
     }

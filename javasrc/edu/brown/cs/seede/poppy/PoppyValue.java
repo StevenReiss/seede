@@ -170,7 +170,7 @@ public static Object getStaticFieldValue(String itm)
    int idx1 = itm.lastIndexOf(".");
    String fld = itm.substring(idx1+1);
    String cls = itm.substring(0,idx1);
-
+   
    Class<?> c1 = null;
    for ( ; ; ) {
       try {
@@ -178,7 +178,7 @@ public static Object getStaticFieldValue(String itm)
 	 break;
        }
       catch (ClassNotFoundException e) { }
-      // System.err.println("POPPY: Can't find class " + cls);
+//    System.err.println("POPPY: Can't find class " + cls);
       int idx = cls.lastIndexOf(".");
       if (idx < 0) {
          System.err.println("POPPY: Problem getting class for static field: " + itm);
@@ -194,7 +194,8 @@ public static Object getStaticFieldValue(String itm)
       f1.setAccessible(true);
       return f1.get(null);
     }
-   catch (Throwable t) { }
+   catch (Throwable t) { 
+    }
    
    System.err.println("POPPY: Problem getting static field: " + c1 + " " + fld);
    return null;

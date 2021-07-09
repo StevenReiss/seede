@@ -69,6 +69,18 @@ SesameFileManager(SesameMain sm)
 /*										*/
 /********************************************************************************/
 
+SesameFile findOpenFile(File f) 
+{
+   synchronized (known_files) {
+      SesameFile sf = known_files.get(f);
+      if (sf != null) return sf;
+    }
+   
+   return null;
+}
+
+
+
 SesameFile openFile(File f)
 {
    synchronized (known_files) {
