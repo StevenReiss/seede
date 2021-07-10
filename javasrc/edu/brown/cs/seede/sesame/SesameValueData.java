@@ -198,7 +198,7 @@ CashewValue getCashewValue()
 	    result_value = CashewValue.booleanValue(typer,val_value);
 	  }
 	 else if (typ.isNumericType()) {
-	    result_value = CashewValue.numericValue(typ,val_value);
+	    result_value = CashewValue.numericValue(typer,typ,val_value);
 	  }
 	 break;
       case STRING :
@@ -232,7 +232,7 @@ CashewValue getCashewValue()
 	    inits.put(CashewConstants.HASH_CODE_FIELD,new DeferredLookup(CashewConstants.HASH_CODE_FIELD));
 	  }
 	 else {
-	    CashewValue hvl = CashewValue.numericValue(typer.INT_TYPE,hash_code);
+	    CashewValue hvl = CashewValue.numericValue(typer,typer.INT_TYPE,hash_code);
 	    inits.put(CashewConstants.HASH_CODE_FIELD,hvl);
 	  }
 	 result_value = CashewValue.objectValue(typer,typ,inits,true);

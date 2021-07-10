@@ -87,7 +87,7 @@ CashewValueArray(JcompTyper typer,JcompType jt,int dim,Map<Integer,Object> inits
         throws CashewException
 {
    if (nm != null && nm.equals("length")) {
-      return CashewValue.numericValue(typer.INT_TYPE,dim_size);
+      return CashewValue.numericValue(typer,typer.INT_TYPE,dim_size);
     }
    return super.getFieldValue(typer,cc,nm,force);
 }

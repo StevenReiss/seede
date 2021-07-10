@@ -149,19 +149,19 @@ CashewValueString(JcompType styp,String s)
       case "hash" :
       case "java.lang.String.hash" :
 	 if (hash_field == null) {
-	    hash_field = CashewValue.numericValue(typer.INT_TYPE,string_value.hashCode());
+	    hash_field = CashewValue.numericValue(typer,typer.INT_TYPE,string_value.hashCode());
 	  }
 	 return hash_field;
       case "hash32" :
       case "java.lang.String.hash32" :
 	 if (hash32_field == null) {
-	    hash32_field = CashewValue.numericValue(typer.INT_TYPE,0);
+	    hash32_field = CashewValue.numericValue(typer,typer.INT_TYPE,0);
 	  }
 	 return hash32_field;
       case "coder" :
       case "java.lang.String.coder" :
 	 if (coder_field == null) {
-	    coder_field = CashewValue.numericValue(typer.BYTE_TYPE,0);
+	    coder_field = CashewValue.numericValue(typer,typer.BYTE_TYPE,0);
 	  }
 	 return coder_field;
       default :

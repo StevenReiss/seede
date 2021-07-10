@@ -358,7 +358,7 @@ private void setupContext(boolean top)
    CompilationUnit cu = (CompilationUnit) method_node.getRoot();
    int lno = cu.getLineNumber(method_node.getStartPosition());
    if (lno < 0) lno = 0;
-   CashewValue zv = CashewValue.numericValue(typer.INT_TYPE,lno);
+   CashewValue zv = CashewValue.numericValue(typer,typer.INT_TYPE,lno);
    ctx.define(LINE_NAME,CashewValue.createReference(zv,false));
    setLookupContext(ctx);
 }
@@ -458,7 +458,7 @@ private CuminRunStatus evalNode(ASTNode node,ASTNode afterchild)
 	    CuminRunStatus sts = checkTimeout();
 	    if (sts != null) return sts;
 	    last_line = lno;
-	    CashewValue lvl = CashewValue.numericValue(typer.INT_TYPE,lno);
+	    CashewValue lvl = CashewValue.numericValue(typer,typer.INT_TYPE,lno);
 	    lookup_context.findReference(LINE_NAME).setValueAt(execution_clock,lvl);
 	  }
        }
@@ -981,7 +981,7 @@ private CuminRunStatus visit(NumberLiteral v)
 	    lv = Long.parseLong(sv,8);
 	  }
 	 else lv = Long.parseLong(sv);
-	 execution_stack.push(CashewValue.numericValue(jt,lv));
+	 execution_stack.push(CashewValue.numericValue(getTyper(),jt,lv));
 	 break;
     }
 
@@ -1125,12 +1125,12 @@ private CuminRunStatus visit(CastExpression v,ASTNode after)
 
 
 private CuminRunStatus visit(ConditionalExpression v,ASTNode after)
-	throws CashewException
+	throws CuminRunException, CashewException
 {
    if (after == null) next_node = v.getExpression();
    else if (after == v.getExpression()) {
       CashewValue cv = execution_stack.pop();
-      if (cv.getBoolean(execution_clock)) {
+      if (getBoolean(cv)) {
 	 next_node = v.getThenExpression();
        }
       else {
@@ -1197,7 +1197,7 @@ private CuminRunStatus visit(InfixExpression v,ASTNode after)
    else if (after == v.getLeftOperand()) {
       if (v.getOperator() == InfixExpression.Operator.CONDITIONAL_AND) {
 	 CashewValue v1 = execution_stack.pop();
-	 if (v1.getBoolean(execution_clock)) {
+	 if (getBoolean(v1)) {
 	    next_node = v.getRightOperand();
 	  }
 	 else {
@@ -1206,7 +1206,7 @@ private CuminRunStatus visit(InfixExpression v,ASTNode after)
        }
       else if (v.getOperator() == InfixExpression.Operator.CONDITIONAL_OR) {
 	 CashewValue v1 = execution_stack.pop();
-	 if (v1.getBoolean(execution_clock)) {
+	 if (getBoolean(v1)) {
 	    execution_stack.push(v1);
 	  }
 	 else {
@@ -1234,7 +1234,7 @@ private CuminRunStatus visit(InfixExpression v,ASTNode after)
       if (v.getOperator() == InfixExpression.Operator.CONDITIONAL_AND) {
 	 if (nxt != null) {
 	    CashewValue v1 = execution_stack.pop();
-	    if (v1.getBoolean(execution_clock)) {
+	    if (getBoolean(v1)) {
 	       next_node = nxt;
 	     }
 	    else {
@@ -1245,7 +1245,7 @@ private CuminRunStatus visit(InfixExpression v,ASTNode after)
       else if (v.getOperator() == InfixExpression.Operator.CONDITIONAL_OR) {
 	 if (nxt != null) {
 	    CashewValue v1 = execution_stack.pop();
-	    if (v1.getBoolean(execution_clock)) {
+	    if (getBoolean(v1)) {
 	       execution_stack.push(v1);
 	     }
 	    else {
@@ -1799,7 +1799,8 @@ private CuminRunStatus visit(AssertStatement s,ASTNode after)
 {
    if (after == null) next_node = s.getExpression();
    else {
-      if (!execution_stack.pop().getBoolean(execution_clock)) {
+      CashewValue cv = execution_stack.pop();
+      if (!getBoolean(cv)) {
 	 CuminEvaluator.throwException(getTyper(),"java.lang.AssertionError");
        }
     }
@@ -1841,12 +1842,12 @@ private CuminRunStatus visit(ContinueStatement s)
 
 
 
-private CuminRunStatus visit(DoStatement s,ASTNode after) throws CashewException
+private CuminRunStatus visit(DoStatement s,ASTNode after) throws CuminRunException, CashewException
 {
    if (after == null) next_node = s.getBody();
    else if (after == s.getBody()) next_node = s.getExpression();
    else {
-      if (execution_stack.pop().getBoolean(execution_clock)) next_node = s.getBody();
+      if (getBoolean(execution_stack.pop())) next_node = s.getBody();
     }
    return null;
 }
@@ -1884,13 +1885,13 @@ private CuminRunStatus visit(ExpressionStatement s,ASTNode after)
 
 
 
-private CuminRunStatus visit(ForStatement s,ASTNode after) throws CashewException
+private CuminRunStatus visit(ForStatement s,ASTNode after) throws CuminRunException, CashewException
 {
    StructuralPropertyDescriptor spd = null;
    if (after != null) spd = after.getLocationInParent();
 
    if (after != null && after == s.getExpression()) {
-      if (execution_stack.pop().getBoolean(execution_clock)) {
+      if (getBoolean(execution_stack.pop())) {
 	 next_node = s.getBody();
        }
       return null;
@@ -1926,7 +1927,7 @@ private CuminRunStatus visit(ForStatement s,ASTNode after) throws CashewExceptio
 
 
 private CuminRunStatus visitThrow(ForStatement s,CuminRunStatus r)
-	throws CashewException
+	throws CuminRunException, CashewException
 {
    String lbl = r.getMessage();
    switch (r.getReason()) {
@@ -1998,7 +1999,7 @@ private CuminRunStatus visitThrow(EnhancedForStatement s,CuminRunStatus r)
 		  CuminRunner crun = forMethod(s,rval,ForState.HASNEXT);
 		  return CuminRunStatus.Factory.createCall(crun);
 	       case HASNEXT :
-		  if (rval.getBoolean(execution_clock)) {
+		  if (getBoolean(rval)) {
 		     CashewValue iter = execution_stack.peek(0);
 		     execution_stack.pushMarker(s,ForState.NEXT);
 		     CuminRunner nrun = forMethod(s,iter,ForState.NEXT);
@@ -2118,11 +2119,12 @@ private CuminRunStatus enhancedCheck(EnhancedForStatement s)
 
 
 
-private CuminRunStatus visit(IfStatement s,ASTNode after) throws CashewException
+private CuminRunStatus visit(IfStatement s,ASTNode after) throws CashewException,
+        CuminRunException
 {
    if (after == null) next_node = s.getExpression();
    else if (after == s.getExpression()) {
-      boolean fg = execution_stack.pop().getBoolean(execution_clock);
+      boolean fg = getBoolean(execution_stack.pop());
       if (fg) {
 	 next_node = s.getThenStatement();
        }
@@ -2477,11 +2479,11 @@ private CuminRunStatus visit(CatchClause s,ASTNode after) throws CashewException
 
 
 
-private CuminRunStatus visit(WhileStatement s,ASTNode after) throws CashewException
+private CuminRunStatus visit(WhileStatement s,ASTNode after) throws CuminRunException, CashewException
 {
    if (after == null) next_node = s.getExpression();
    else if (after == s.getExpression()) {
-      if (execution_stack.pop().getBoolean(execution_clock)) next_node = s.getBody();
+      if (getBoolean(execution_stack.pop())) next_node = s.getBody();
     }
    else if (after == s.getBody())
       next_node = s.getExpression();
@@ -3005,6 +3007,22 @@ private CuminRunStatus visitThrow(ASTNode n,CuminRunStatus cause)
 }
 
 
+private boolean getBoolean(CashewValue cv) throws CashewException, CuminRunException
+{
+   JcompType jt = cv.getDataType(execution_clock,getTyper());
+   if (jt.isPrimitiveType()) {
+      return cv.getBoolean(execution_clock);
+    }
+   else if (jt.getName().equals("java.lang.Boolean")) {
+       CashewValue ncv = CuminEvaluator.unboxValue(getTyper(),execution_clock,cv); 
+       return ncv.getBoolean(execution_clock);
+    }
+   else {
+      CuminEvaluator.throwException(getTyper(),"java.lang.ClassCastException");
+    }
+   
+   return false;
+}
 
 
 

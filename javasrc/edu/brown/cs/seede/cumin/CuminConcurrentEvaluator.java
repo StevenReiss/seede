@@ -25,6 +25,7 @@
 package edu.brown.cs.seede.cumin;
 
 import edu.brown.cs.ivy.jcomp.JcompType;
+import edu.brown.cs.ivy.jcomp.JcompTyper;
 import edu.brown.cs.seede.cashew.CashewException;
 import edu.brown.cs.seede.cashew.CashewValue;
 
@@ -66,14 +67,15 @@ CuminRunStatus checkAtomicIntMethods() throws CashewException
    CashewValue thisarg = getValue(0);
    String clsnm = thisarg.getDataType(getClock(),null).getName();
    String valfld = clsnm + ".value";
+   JcompTyper typer = getTyper();
 
    synchronized (thisarg) {
-      CashewValue value = thisarg.getFieldValue(getTyper(),getClock(),valfld);
+      CashewValue value = thisarg.getFieldValue(typer,getClock(),valfld);
       long lval = value.getNumber(getClock()).longValue();
-      JcompType dtyp = getTyper().LONG_TYPE;
+      JcompType dtyp = typer.LONG_TYPE;
       int secondarg = 3;
       if (clsnm.contains("Integer")){
-	 dtyp = getTyper().INT_TYPE;
+	 dtyp = typer.INT_TYPE;
 	 secondarg = 2;
        }
 
@@ -83,50 +85,50 @@ CuminRunStatus checkAtomicIntMethods() throws CashewException
 	    break;
 	 case "set" :
 	 case "lazySet" :
-	    thisarg.setFieldValue(getTyper(),getClock(),valfld,getValue(1));
+	    thisarg.setFieldValue(typer,getClock(),valfld,getValue(1));
 	    break;
 	 case "getAndSet" :
 	    rslt = value.getActualValue(getClock());
-	    thisarg.setFieldValue(getTyper(),getClock(),valfld,getValue(1));
+	    thisarg.setFieldValue(typer,getClock(),valfld,getValue(1));
 	    break;
 	 case "getAndAdd" :
 	    rslt = value.getActualValue(getClock());
 	    lval += getLong(1);
-	    thisarg.setFieldValue(getTyper(),getClock(),valfld,CashewValue.numericValue(dtyp,lval));
+	    thisarg.setFieldValue(typer,getClock(),valfld,CashewValue.numericValue(typer,dtyp,lval));
 	    break;
 	 case "getAndDecrement" :
 	    rslt = value.getActualValue(getClock());
 	    lval -= 1;
-	    thisarg.setFieldValue(getTyper(),getClock(),valfld,CashewValue.numericValue(dtyp,lval));
+	    thisarg.setFieldValue(typer,getClock(),valfld,CashewValue.numericValue(typer,dtyp,lval));
 	    break;
 	 case "getAndIncrement" :
 	    rslt = value.getActualValue(getClock());
 	    lval += 1;
-	    thisarg.setFieldValue(getTyper(),getClock(),valfld,CashewValue.numericValue(dtyp,lval));
+	    thisarg.setFieldValue(typer,getClock(),valfld,CashewValue.numericValue(typer,dtyp,lval));
 	    break;
 	 case "decrementAndGet" :
 	    lval -= 1;
-	    rslt = CashewValue.numericValue(dtyp,lval);
-	    thisarg.setFieldValue(getTyper(),getClock(),valfld,rslt);
+	    rslt = CashewValue.numericValue(typer,dtyp,lval);
+	    thisarg.setFieldValue(typer,getClock(),valfld,rslt);
 	    break;
 	 case "incrementAndGet" :
 	    lval += 1;
-	    rslt = CashewValue.numericValue(dtyp,lval);
-	    thisarg.setFieldValue(getTyper(),getClock(),valfld,rslt);
+	    rslt = CashewValue.numericValue(typer,dtyp,lval);
+	    thisarg.setFieldValue(typer,getClock(),valfld,rslt);
 	    break;
 	 case "addAndGet" :
 	    lval += getLong(1);
-	    rslt = CashewValue.numericValue(dtyp,lval);
-	    thisarg.setFieldValue(getTyper(),getClock(),valfld,rslt);
+	    rslt = CashewValue.numericValue(typer,dtyp,lval);
+	    thisarg.setFieldValue(typer,getClock(),valfld,rslt);
 	    break;
 	 case "weakCompareAndSet" :
 	 case "compareAndSet" :
 	    if (lval == getLong(1)) {
-	       thisarg.setFieldValue(getTyper(),getClock(),valfld,getValue(secondarg));
-	       rslt = CashewValue.booleanValue(getTyper(),true);
+	       thisarg.setFieldValue(typer,getClock(),valfld,getValue(secondarg));
+	       rslt = CashewValue.booleanValue(typer,true);
 	     }
 	    else {
-	       rslt = CashewValue.booleanValue(getTyper(),false);
+	       rslt = CashewValue.booleanValue(typer,false);
 	     }
 	    break;
 	 default :

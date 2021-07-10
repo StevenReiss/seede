@@ -57,7 +57,7 @@ public static CashewValue createValue(JcompTyper typer,Element xml) throws Cashe
    if (jtype.isIntType() || jtype.isShortType() ||
 	 jtype.isByteType() || jtype.isLongType()) {
       long v = IvyXml.getAttrLong(xml,"VALUE");
-      return numericValue(jtype,v);
+      return numericValue(typer,jtype,v);
     }
    else if (jtype.isBooleanType()) {
       boolean v = IvyXml.getAttrBool(xml,"VALUE");
@@ -217,7 +217,7 @@ public static CashewValue numericValue(JcompType t,double v)
 }
 
 
-public static CashewValue numericValue(JcompType t,String v)
+public static CashewValue numericValue(JcompTyper typer,JcompType t,String v)
 {
    if (t.isFloatingType()) {
       double dv = Double.parseDouble(v);
@@ -236,7 +236,7 @@ public static CashewValue numericValue(JcompType t,String v)
     }
    else {
       long lv = Long.parseLong(v);
-      return numericValue(t,lv);
+      return numericValue(typer,t,lv);
     }
 }
 
@@ -347,7 +347,7 @@ public static CashewValue arrayValue(JcompTyper typer,byte [] arr)
 {
    Map<Integer,Object> inits = new HashMap<Integer,Object>();
    for (int i = 0; i < arr.length; ++i) {
-      inits.put(i,CashewValue.numericValue(typer.BYTE_TYPE,arr[i]));
+      inits.put(i,CashewValue.numericValue(typer,typer.BYTE_TYPE,arr[i]));
     }
 
    JcompType jty = JcompType.createArrayType(typer.BYTE_TYPE);
@@ -360,7 +360,7 @@ public static CashewValue arrayValue(JcompTyper typer,String [] arr)
 {
    Map<Integer,Object> inits = new HashMap<Integer,Object>();
    for (int i = 0; i < arr.length; ++i) {
-      inits.put(i,CashewValue.numericValue(typer.STRING_TYPE,arr[i]));
+      inits.put(i,CashewValue.stringValue(typer.STRING_TYPE,arr[i]));
     }
 
    JcompType jty = JcompType.createArrayType(typer.STRING_TYPE);
@@ -839,6 +839,11 @@ private static class ValueNull extends CashewValue
     }
 
 }	// end of inner class ValueNull
+
+
+
+
+
 
 
 

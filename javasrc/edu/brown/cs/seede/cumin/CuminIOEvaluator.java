@@ -28,6 +28,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import edu.brown.cs.ivy.jcomp.JcompTyper;
 import edu.brown.cs.seede.acorn.AcornLog;
 import edu.brown.cs.seede.cashew.CashewConstants;
 import edu.brown.cs.seede.cashew.CashewException;
@@ -74,6 +75,7 @@ CuminRunStatus checkFileMethods() throws CashewException
 {
    CashewValue rslt = null;
    File rfile = null;
+   JcompTyper typer = getTyper();
 
    if (getMethod().isStatic()) {
       switch (getMethod().getName()) {
@@ -87,13 +89,13 @@ CuminRunStatus checkFileMethods() throws CashewException
     }
    else if (getMethod().isConstructor()) {
       if (getNumArgs() == 2) {
-	 if (getDataType(1) == getTyper().STRING_TYPE) {
+	 if (getDataType(1) == typer.STRING_TYPE) {
 	    rfile = new File(getString(1));
 	  }
 	 // handle URI arg
        }
       else {
-	 if (getDataType(1) == getTyper().STRING_TYPE) {
+	 if (getDataType(1) == typer.STRING_TYPE) {
 	    rfile = new File(getString(1),getString(2));
 	  }
 	 else {
@@ -112,133 +114,133 @@ CuminRunStatus checkFileMethods() throws CashewException
 
       switch (getMethod().getName()) {
 	 case "canExecute" :
-	    rslt = CashewValue.booleanValue(getTyper(),iomdl.canExecute(thisfile));
+	    rslt = CashewValue.booleanValue(typer,iomdl.canExecute(thisfile));
 	    break;
 	 case "canRead" :
-	    rslt = CashewValue.booleanValue(getTyper(),iomdl.canRead(thisfile));
+	    rslt = CashewValue.booleanValue(typer,iomdl.canRead(thisfile));
 	    break;
 	 case "canWrite" :
-	    rslt = CashewValue.booleanValue(getTyper(),iomdl.canWrite(thisfile));
+	    rslt = CashewValue.booleanValue(typer,iomdl.canWrite(thisfile));
 	    break;
 	 case "compareTo" :
-	    rslt = CashewValue.numericValue(getTyper().INT_TYPE,thisfile.compareTo(getFile(1)));
+	    rslt = CashewValue.numericValue(typer,typer.INT_TYPE,thisfile.compareTo(getFile(1)));
 	    break;
 	 case "delete" :
-	    rslt = CashewValue.booleanValue(getTyper(),iomdl.delete(thisfile));
+	    rslt = CashewValue.booleanValue(typer,iomdl.delete(thisfile));
 	    break;
 	 case "deleteOnExit" :
 	    break;
 	 case "equals" :
 	    CashewValue cv = getValue(1);
 	    if (cv instanceof CashewValueFile) {
-	       rslt = CashewValue.booleanValue(getTyper(),thisfile.equals(getFile(1)));
+	       rslt = CashewValue.booleanValue(typer,thisfile.equals(getFile(1)));
 	     }
-	    else rslt = CashewValue.booleanValue(getTyper(),false);
+	    else rslt = CashewValue.booleanValue(typer,false);
 	    break;
 	 case "exists" :
-	    rslt = CashewValue.booleanValue(getTyper(),iomdl.exists(thisfile));
+	    rslt = CashewValue.booleanValue(typer,iomdl.exists(thisfile));
 	    break;
 	 case "getAbsoluteFile" :
 	    rfile = thisfile.getAbsoluteFile();
 	    if (rfile == thisfile) rslt = thisarg;
 	    break;
 	 case "getAbsolutePath" :
-	    rslt = CashewValue.stringValue(getTyper().STRING_TYPE,thisfile.getAbsolutePath());
+	    rslt = CashewValue.stringValue(typer.STRING_TYPE,thisfile.getAbsolutePath());
 	    break;
 	 case "getCanonicalFile" :
 	    try {
 	       rfile = thisfile.getCanonicalFile();
 	     }
 	    catch (IOException e) {
-	       return CuminEvaluator.returnException(getTyper(),"java.io.IOException");
+	       return CuminEvaluator.returnException(typer,"java.io.IOException");
 	     }
 	    if (rfile == thisfile) rslt = thisarg;
 	    break;
 	 case "getCanonicalPath" :
 	    try {
-	       rslt = CashewValue.stringValue(getTyper().STRING_TYPE,thisfile.getCanonicalPath());
+	       rslt = CashewValue.stringValue(typer.STRING_TYPE,thisfile.getCanonicalPath());
 	     }
 	    catch (IOException e) {
-               return CuminEvaluator.returnException(getTyper(),"java.io.IOException");
+               return CuminEvaluator.returnException(typer,"java.io.IOException");
 	     }
 	    break;
 	 case "getFreeSpace" :
-	    rslt = CashewValue.numericValue(getTyper().LONG_TYPE,thisfile.getFreeSpace());
+	    rslt = CashewValue.numericValue(typer,typer.LONG_TYPE,thisfile.getFreeSpace());
 	    break;
 	 case "getName" :
-	    rslt = CashewValue.stringValue(getTyper().STRING_TYPE,thisfile.getName());
+	    rslt = CashewValue.stringValue(typer.STRING_TYPE,thisfile.getName());
 	    break;
 	 case "getParent" :
-	    rslt = CashewValue.stringValue(getTyper().STRING_TYPE,thisfile.getParent());
+	    rslt = CashewValue.stringValue(typer.STRING_TYPE,thisfile.getParent());
 	    break;
 	 case "getParentFile" :
 	    rfile = thisfile.getParentFile();
 	    break;
 	 case "getPath" :
-	    rslt = CashewValue.stringValue(getTyper().STRING_TYPE,thisfile.getPath());
+	    rslt = CashewValue.stringValue(typer.STRING_TYPE,thisfile.getPath());
 	    break;
 	 case "getTotalSpace" :
-	    rslt = CashewValue.numericValue(getTyper().LONG_TYPE,thisfile.getTotalSpace());
+	    rslt = CashewValue.numericValue(typer,typer.LONG_TYPE,thisfile.getTotalSpace());
 	    break;
 	 case "getUsableSpace" :
-	    rslt = CashewValue.numericValue(getTyper().LONG_TYPE,thisfile.getUsableSpace());
+	    rslt = CashewValue.numericValue(typer,typer.LONG_TYPE,thisfile.getUsableSpace());
 	    break;
 	 case "hashCode" :
-	    rslt = CashewValue.numericValue(getTyper().INT_TYPE,thisfile.hashCode());
+	    rslt = CashewValue.numericValue(typer,typer.INT_TYPE,thisfile.hashCode());
 	    break;
 	 case "isAbsolute" :
-	    rslt = CashewValue.booleanValue(getTyper(),thisfile.isAbsolute());
+	    rslt = CashewValue.booleanValue(typer,thisfile.isAbsolute());
 	    break;
 	 case "isDirectory" :
-	    rslt = CashewValue.booleanValue(getTyper(),iomdl.isDirectory(thisfile));
+	    rslt = CashewValue.booleanValue(typer,iomdl.isDirectory(thisfile));
 	    break;
 	 case "isFile" :
-	    rslt = CashewValue.booleanValue(getTyper(),iomdl.isFile(thisfile));
+	    rslt = CashewValue.booleanValue(typer,iomdl.isFile(thisfile));
 	    break;
 	 case "isHidden" :
-	    rslt = CashewValue.booleanValue(getTyper(),thisfile.isHidden());
+	    rslt = CashewValue.booleanValue(typer,thisfile.isHidden());
 	    break;
 	 case "lastModified" :
-	    rslt = CashewValue.numericValue(getTyper().LONG_TYPE,thisfile.lastModified());
+	    rslt = CashewValue.numericValue(typer,typer.LONG_TYPE,thisfile.lastModified());
 	    break;
 	 case "length" :
-	    rslt = CashewValue.numericValue(getTyper().LONG_TYPE,thisfile.length());
+	    rslt = CashewValue.numericValue(typer,typer.LONG_TYPE,thisfile.length());
 	    break;
 	 case "list" :
 	    return null;
 	 case "listFiles" :
 	    return null;
 	 case "mkdir"  :
-	    rslt = CashewValue.booleanValue(getTyper(),iomdl.mkdir(thisfile));
+	    rslt = CashewValue.booleanValue(typer,iomdl.mkdir(thisfile));
 	    break;
 	 case "mkdirs"  :
-	    rslt = CashewValue.booleanValue(getTyper(),iomdl.mkdirs(thisfile));
+	    rslt = CashewValue.booleanValue(typer,iomdl.mkdirs(thisfile));
 	    break;
 	 case "renameTo" :
 	    return null;
 	 case "setExecutable" :
 	    iomdl.setExecutable(thisfile);
-	    rslt = CashewValue.booleanValue(getTyper(),true);
+	    rslt = CashewValue.booleanValue(typer,true);
 	    break;
 	 case "setLastModified" :
-	    rslt = CashewValue.booleanValue(getTyper(),false);
+	    rslt = CashewValue.booleanValue(typer,false);
 	    break;
 	 case "setReadable" :
 	    iomdl.setReadable(thisfile);
-	    rslt = CashewValue.booleanValue(getTyper(),true);
+	    rslt = CashewValue.booleanValue(typer,true);
 	    break;
 	 case "setReadOnly" :
 	    iomdl.setReadOnly(thisfile);
-	    rslt = CashewValue.booleanValue(getTyper(),true);
+	    rslt = CashewValue.booleanValue(typer,true);
 	    break;
 	 case "setWritable" :
 	    iomdl.setWritable(thisfile);
-	    rslt = CashewValue.booleanValue(getTyper(),true);
+	    rslt = CashewValue.booleanValue(typer,true);
 	    break;
 	 case "toPath" :
 	    return null;
 	 case "toString" :
-	    rslt = CashewValue.stringValue(getTyper().STRING_TYPE,thisfile.toString());
+	    rslt = CashewValue.stringValue(typer.STRING_TYPE,thisfile.toString());
 	    break;
 	 case "toURI" :
 	    return null;
@@ -248,7 +250,7 @@ CuminRunStatus checkFileMethods() throws CashewException
 	    // private methods	
 	 case "isInvalid" :
 	    // access to java.io.File.PathStatus.CHECKED fails for now
-	    rslt = CashewValue.booleanValue(getTyper(),false);
+	    rslt = CashewValue.booleanValue(typer,false);
 	    break;
 	
 	 default :
@@ -259,7 +261,7 @@ CuminRunStatus checkFileMethods() throws CashewException
     }
 
    if (rslt == null && rfile != null) {
-      rslt = new CashewValueFile(getTyper(),rfile);
+      rslt = new CashewValueFile(typer,rfile);
     }
 
    return new CuminRunValue(Reason.RETURN,rslt);
@@ -307,7 +309,7 @@ CuminRunStatus checkOutputStreamMethods() throws CashewException
 	 if (fdv < 0) {
 	    fdv = file_counter.incrementAndGet();
 	    fdval.setFieldValue(getTyper(),getClock(),"java.io.FileDescriptor.fd",
-		  CashewValue.numericValue(getTyper().INT_TYPE,fdv));
+		  CashewValue.numericValue(getTyper(),getTyper().INT_TYPE,fdv));
 	  }
 	 break;
       case "write" :
@@ -341,15 +343,16 @@ CuminRunStatus checkOutputStreamMethods() throws CashewException
 
 CuminRunStatus checkInputStreamMethods() throws CashewException 
 {
+   JcompTyper typer = getTyper();
    CashewValue thisarg = getValue(0);
-   CashewValue fdval = thisarg.getFieldValue(getTyper(),getClock(),"java.io.FileInputStream.fd");
+   CashewValue fdval = thisarg.getFieldValue(typer,getClock(),"java.io.FileInputStream.fd");
    if (fdval.isNull(getClock())) return null;
-   CashewValue fd = fdval.getFieldValue(getTyper(),getClock(),"java.io.FileDescriptor.fd");
+   CashewValue fd = fdval.getFieldValue(typer,getClock(),"java.io.FileDescriptor.fd");
    int fdv = fd.getNumber(getClock()).intValue();
    String path = null;
    try {
-      CashewValue pathv = thisarg.getFieldValue(getTyper(),getClock(),"java.io.FileInputStream.path");
-      if (!pathv.isNull(getClock())) path = pathv.getString(getTyper(),getClock());
+      CashewValue pathv = thisarg.getFieldValue(typer,getClock(),"java.io.FileInputStream.path");
+      if (!pathv.isNull(getClock())) path = pathv.getString(typer,getClock());
     }
    catch (Throwable t) {
       // path is not defined before jdk 1.8
@@ -366,40 +369,40 @@ CuminRunStatus checkInputStreamMethods() throws CashewException
 	    if (path != null && fdv < 0) {
 	       File f = new File(path);
 	       if (!f.canRead()) {
-                  return CuminEvaluator.returnException(getTyper(),"java.io.IOException");
+                  return CuminEvaluator.returnException(typer,"java.io.IOException");
 		}
 	     }
 	    if (fdv < 0) {
 	       fdv = file_counter.incrementAndGet();
-	       fdval.setFieldValue(getTyper(),getClock(),"java.io.FileDescriptor.fd",
-		     CashewValue.numericValue(getTyper().INT_TYPE,fdv));
-	       mdl.checkInputFile(getTyper(),getContext(),getClock(),thisarg,fdv,path,false);
+	       fdval.setFieldValue(typer,getClock(),"java.io.FileDescriptor.fd",
+		     CashewValue.numericValue(typer,typer.INT_TYPE,fdv));
+	       mdl.checkInputFile(typer,getContext(),getClock(),thisarg,fdv,path,false);
 	     }
 	    break;
 	 case "read0" :
-	    mdl.checkInputFile(getTyper(),getContext(),getClock(),thisarg,fdv,path,true);
+	    mdl.checkInputFile(typer,getContext(),getClock(),thisarg,fdv,path,true);
 	    wbuf = new byte[1];
 	    wbuf[0] = (byte) getInt(1);
 	    long lenread = mdl.fileRead(getClock(),fdv,wbuf,0,1);
-	    rslt = CashewValue.numericValue(getTyper().INT_TYPE,lenread);
+	    rslt = CashewValue.numericValue(typer,typer.INT_TYPE,lenread);
 	    break;
 	 case "readBytes" :
-	    mdl.checkInputFile(getTyper(),getContext(),getClock(),thisarg,fdv,path,true);
+	    mdl.checkInputFile(typer,getContext(),getClock(),thisarg,fdv,path,true);
 	    int len = getInt(3);
 	    wbuf = new byte[len];
 	    lenread = mdl.fileRead(getClock(),fdv,wbuf,0,len);
 	    // copy wbuf into byteArray(1), offset getInt(2), for lenread
-	    rslt = CashewValue.numericValue(getTyper().INT_TYPE,lenread);
+	    rslt = CashewValue.numericValue(typer,typer.INT_TYPE,lenread);
 	    break;
 	 case "skip" :
-	    mdl.checkInputFile(getTyper(),getContext(),getClock(),thisarg,fdv,path,true);
+	    mdl.checkInputFile(typer,getContext(),getClock(),thisarg,fdv,path,true);
 	    lenread = mdl.fileRead(getClock(),fdv,null,0,getLong(1));
-	    rslt = CashewValue.numericValue(getTyper().LONG_TYPE,lenread);
+	    rslt = CashewValue.numericValue(typer,typer.LONG_TYPE,lenread);
 	    break;
 	 case "available" :
-	    mdl.checkInputFile(getTyper(),getContext(),getClock(),thisarg,fdv,path,true);
+	    mdl.checkInputFile(typer,getContext(),getClock(),thisarg,fdv,path,true);
 	    lenread = mdl.fileAvailable(getClock(),fdv);
-	    rslt = CashewValue.numericValue(getTyper().INT_TYPE,lenread);
+	    rslt = CashewValue.numericValue(typer,typer.INT_TYPE,lenread);
 	    break;
 	 case "close" :
 	    mdl.closeFile(fdv);
@@ -411,7 +414,7 @@ CuminRunStatus checkInputStreamMethods() throws CashewException
        }
     }
    catch (IOException e) {
-      return CuminEvaluator.returnException(getTyper(),"java.io.IOException");
+      return CuminEvaluator.returnException(typer,"java.io.IOException");
     }
 
    return new CuminRunValue(Reason.RETURN,rslt);
@@ -597,6 +600,7 @@ CuminRunStatus checkPrintMethods(String cls) throws CashewException
 CuminRunStatus checkObjectStreamMethods() throws CashewException
 {
    CashewValue rslt = null;
+   JcompTyper typer = getTyper();
    
    if (getMethod().isStatic()) {
       switch (getMethod().getName()) {
@@ -612,7 +616,7 @@ CuminRunStatus checkObjectStreamMethods() throws CashewException
                   ((src[srcpos+i*4+2] & 0xff) << 8) + 
                   ((src[srcpos+i*4+3] & 0xff) << 0) ;
                float fv = Float.intBitsToFloat(v);
-               CashewValue rv = CashewValue.numericValue(getTyper().FLOAT_TYPE,fv);
+               CashewValue rv = CashewValue.numericValue(typer.FLOAT_TYPE,fv);
                dst.setIndexValue(getClock(),dstpos+i,rv);
              }
             break;
@@ -632,7 +636,7 @@ CuminRunStatus checkObjectStreamMethods() throws CashewException
                ((src[srcpos+i*8+6] & 0xff) << 8) + 
                ((src[srcpos+i*8+7] & 0xff) << 0) ;
                double fv = Double.longBitsToDouble(v);
-               CashewValue rv = CashewValue.numericValue(getTyper().FLOAT_TYPE,fv);
+               CashewValue rv = CashewValue.numericValue(typer.FLOAT_TYPE,fv);
                dst.setIndexValue(getClock(),dstpos+i,rv);
              }
             break;
@@ -645,7 +649,7 @@ CuminRunStatus checkObjectStreamMethods() throws CashewException
             for (int i = 0; i < nfloats; ++i) {
                int v = Float.floatToIntBits(fsrc[srcpos+i]);
                for (int j = 0; j < 4; ++j) {
-                  CashewValue cv = CashewValue.numericValue(getTyper().BYTE_TYPE,(v&0xff));
+                  CashewValue cv = CashewValue.numericValue(typer,typer.BYTE_TYPE,(v&0xff));
                   dst.setIndexValue(getClock(),dstpos+i*4+(3-j),cv);
                   v = v>>8;
                 }
@@ -660,7 +664,7 @@ CuminRunStatus checkObjectStreamMethods() throws CashewException
             for (int i = 0; i < nfloats; ++i) {
                long v = Double.doubleToLongBits(dsrc[srcpos+i]);
                for (int j = 0; j < 8; ++j) {
-                  CashewValue cv = CashewValue.numericValue(getTyper().BYTE_TYPE,(v&0xff));
+                  CashewValue cv = CashewValue.numericValue(typer,typer.BYTE_TYPE,(v&0xff));
                   dst.setIndexValue(getClock(),dstpos+i*8+(7-j),cv);
                   v = v>>8;
                 }

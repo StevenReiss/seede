@@ -173,7 +173,7 @@ private CashewRef findFieldForName(JcompTyper typer,String nm,boolean force)
     }
 
    if (ov == null && nm.equals(HASH_CODE_FIELD)) {
-      CashewValue hashv = CashewValue.numericValue(typer.INT_TYPE,hashCode());
+      CashewValue hashv = CashewValue.numericValue(typer,typer.INT_TYPE,hashCode());
       ov = new CashewRef(hashv,false);
       field_values.put(HASH_CODE_FIELD,ov);
     }

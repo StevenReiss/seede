@@ -261,7 +261,7 @@ private void setupContext(List<CashewValue> args)
    JcodeInstruction jins = jcode_method.getInstruction(0);
    if (jins != null) lno = jins.getLineNumber();
    if (lno < 0) lno = 0;
-   CashewValue zv = CashewValue.numericValue(typer.INT_TYPE,lno);
+   CashewValue zv = CashewValue.numericValue(typer,typer.INT_TYPE,lno);
    ctx.define(LINE_NAME,CashewValue.createReference(zv,false));
 
    setLookupContext(ctx);
@@ -293,7 +293,7 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException, CashewExc
       CuminRunStatus tsts = checkTimeout();
       if (tsts != null) return tsts;
       last_line = lno;
-      CashewValue lvl = CashewValue.numericValue(typer.INT_TYPE,lno);
+      CashewValue lvl = CashewValue.numericValue(typer,typer.INT_TYPE,lno);
       lookup_context.findReference(LINE_NAME).setValueAt(execution_clock,lvl);
       if (Thread.currentThread().isInterrupted()) {
 	 return CuminRunStatus.Factory.createStopped();
@@ -425,11 +425,11 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException, CashewExc
       case ICONST_4 :
       case ICONST_5 :
       case ICONST_M1 :
-	 vstack = CashewValue.numericValue(typer.INT_TYPE,jins.getIntValue());
+	 vstack = CashewValue.numericValue(typer,typer.INT_TYPE,jins.getIntValue());
 	 break;
       case LCONST_0 :
       case LCONST_1 :
-	 vstack = CashewValue.numericValue(typer.LONG_TYPE,jins.getIntValue());
+	 vstack = CashewValue.numericValue(typer,typer.LONG_TYPE,jins.getIntValue());
 	 break;
       case LDC :
 	 Object o = jins.getObjectValue();
@@ -437,10 +437,10 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException, CashewExc
 	    vstack = CashewValue.stringValue(typer.STRING_TYPE,(String) o);
 	  }
 	 else if (o instanceof Integer) {
-	    vstack = CashewValue.numericValue(typer.INT_TYPE,((Number) o).intValue());
+	    vstack = CashewValue.numericValue(typer,typer.INT_TYPE,((Number) o).intValue());
 	  }
 	 else if (o instanceof Long) {
-	    vstack = CashewValue.numericValue(typer.LONG_TYPE,((Number) o).longValue());
+	    vstack = CashewValue.numericValue(typer,typer.LONG_TYPE,((Number) o).longValue());
 	  }
 	 else if (o instanceof Float) {
 	    vstack = CashewValue.numericValue(typer.FLOAT_TYPE,((Number) o).floatValue());
@@ -456,7 +456,7 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException, CashewExc
 	 break;
       case BIPUSH :
       case SIPUSH :
-	 vstack = CashewValue.numericValue(typer.INT_TYPE,jins.getIntValue());
+	 vstack = CashewValue.numericValue(typer,typer.INT_TYPE,jins.getIntValue());
 	 break;
 
 // CONVERSION OPERATORS
@@ -883,12 +883,12 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException, CashewExc
 
       case ARRAYLENGTH :
 	 v0 = execution_stack.pop();
-	 vstack = CashewValue.numericValue(typer.INT_TYPE,v0.getDimension(execution_clock));
+	 vstack = CashewValue.numericValue(typer,typer.INT_TYPE,v0.getDimension(execution_clock));
 	 break;
       case IINC :
 	 vidx = jins.getLocalVariable();
 	 v0 = lookup_context.findReference(vidx);
-	 v1 = CashewValue.numericValue(typer.INT_TYPE,v0.getNumber(execution_clock).intValue() +
+	 v1 = CashewValue.numericValue(typer,typer.INT_TYPE,v0.getNumber(execution_clock).intValue() +
 	       jins.getIntValue());
 	 v0.setValueAt(execution_clock,v1);
 	 break;

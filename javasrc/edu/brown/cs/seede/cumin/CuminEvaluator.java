@@ -155,7 +155,7 @@ static CashewValue evaluateUnchecked(CuminRunner runner,JcompTyper typer,CashewC
       case AND :
 	 if (islng) {
 	    long v0 = v1.getNumber(cc).longValue() & v2.getNumber(cc).longValue();
-	    rslt = CashewValue.numericValue(typer.LONG_TYPE,v0);
+	    rslt = CashewValue.numericValue(typer,typer.LONG_TYPE,v0);
 	  }
 	 else {
 	    int v0 = v1.getNumber(cc).intValue() & v2.getNumber(cc).intValue();
@@ -258,11 +258,11 @@ static CashewValue evaluateUnchecked(CuminRunner runner,JcompTyper typer,CashewC
       case LSH :
 	 if (islng) {
 	    long v0 = v1.getNumber(cc).longValue() << v2.getNumber(cc).intValue();
-	    rslt = CashewValue.numericValue(typer.LONG_TYPE,v0);
+	    rslt = CashewValue.numericValue(typer,typer.LONG_TYPE,v0);
 	  }
 	 else {
 	    int v0 = v1.getNumber(cc).intValue() << v2.getNumber(cc).intValue();
-	    rslt = CashewValue.numericValue(typer.INT_TYPE,v0);
+	    rslt = CashewValue.numericValue(typer,typer.INT_TYPE,v0);
 	  }
 	 break;
       case LSS :
@@ -628,6 +628,9 @@ static private CashewValue boxValue(CuminRunner cr,CashewValue cv)
    else if (typ == typer.CHAR_TYPE) {
       cv = invokeEvalConverter(cr,"java.lang.Character","valueOf","(C)Ljava/lang/Character;",cv);
     }
+   else if (typ == typer.LONG_TYPE) {
+      cv = invokeEvalConverter(cr,"java.lang.Long","valueOf","(J)Ljava/lang/Long;",cv);
+    }
    else if (typ == typer.FLOAT_TYPE) {
       cv = invokeEvalConverter(cr,"java.lang.Float","valueOf","(F)Ljava/lang/Float;",cv);
     }
@@ -885,7 +888,7 @@ static CashewValue evaluate(JcompTyper typer,CashewClock cc,CuminOperator op,Cas
 
 
 /********************************************************************************/
-/*									c	*/
+/*									        */
 /*	Throw exception 							*/
 /*										*/
 /********************************************************************************/

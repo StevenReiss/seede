@@ -129,13 +129,13 @@ public File getFile()                   { return user_file; }
          return CashewValue.stringValue(typer.STRING_TYPE,File.separator);
       case "java.io.File.separatorChar" :
       case "separatorChar" :
-         return CashewValue.numericValue(typer.CHAR_TYPE,File.separatorChar);
+         return CashewValue.numericValue(typer,typer.CHAR_TYPE,File.separatorChar);
       case "java.io.File.pathSeparator" :
       case "pathSeparator" :
          return CashewValue.stringValue(typer.STRING_TYPE,File.pathSeparator);     
       case "java.io.File.pathSeparatorChar" :
       case "pathSeparatorChar" :
-         return CashewValue.numericValue(typer.CHAR_TYPE,File.pathSeparatorChar);
+         return CashewValue.numericValue(typer,typer.CHAR_TYPE,File.pathSeparatorChar);
       default :
          AcornLog.logE("Unknown File field: " + nm);
          break;
