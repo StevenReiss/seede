@@ -896,10 +896,15 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException, CashewExc
       case INSTANCEOF :
 	 JcompType jty = convertType(jins.getTypeReference());
 	 v0 = execution_stack.pop();
-	 if (v0.getDataType(execution_clock,type_converter).isCompatibleWith(jty))
+         if (v0.isNull(execution_clock)) {
+            vstack = CashewValue.booleanValue(typer,false);
+          }
+	 else if (v0.getDataType(execution_clock,type_converter).isCompatibleWith(jty)) {
 	    vstack = CashewValue.booleanValue(typer,true);
-	 else
+          }
+	 else {
 	    vstack = CashewValue.booleanValue(typer,false);
+          }
 	 break;
       case CHECKCAST :
 	 v0 = execution_stack.peek(0);

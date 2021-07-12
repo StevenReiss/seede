@@ -1274,7 +1274,10 @@ private CuminRunStatus visit(InstanceofExpression v,ASTNode after) throws CuminR
    else {
       JcompType rt = JcompAst.getJavaType(v.getRightOperand());
       CashewValue nv = execution_stack.pop();
-      boolean fg = nv.getDataType(execution_clock,type_converter).isCompatibleWith(rt);
+      boolean fg = false;
+      if (!nv.isNull(execution_clock)) {
+         fg = nv.getDataType(execution_clock,type_converter).isCompatibleWith(rt);
+       }
       CashewValue rv = CashewValue.booleanValue(getTyper(),fg);
       execution_stack.push(rv);
     }
