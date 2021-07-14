@@ -28,6 +28,7 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.WeakHashMap;
 
 import org.w3c.dom.Element;
 
@@ -174,7 +175,7 @@ public static CashewValue numericValue(JcompTyper typer,JcompType t,long v)
 	 vn = short_values.get(sv);
 	 if (vn == null) {
 	    vn = new ValueNumeric(t,v);
-	    short_values.put(sv,vn);
+	    if (v > -1024 && v < 1024) short_values.put(sv,vn);
 	  }
        }
     }
@@ -418,7 +419,7 @@ static {
    byte_values = new HashMap<>();
    char_values = new HashMap<>();
    string_values = new HashMap<>();
-   class_values = new HashMap<>();
+   class_values = new WeakHashMap<>();
    // true_value = new ValueNumeric(BOOLEAN_TYPE,1);
    // false_value = new ValueNumeric(BOOLEAN_TYPE,0);
 }

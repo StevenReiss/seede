@@ -1084,6 +1084,22 @@ CuminRunStatus checkClassMethods() throws CashewException, CuminRunException
 	    fg = v0.getDataType(getClock(),typer).isCompatibleWith(thistype);
 	    rslt = CashewValue.booleanValue(typer,fg);
 	    break;
+         case "getSimpleName" :
+            rslt = CashewValue.stringValue(typer.STRING_TYPE,getSimpleClassName(thistype));
+	    break;
+         case "isLocalClass" :
+            rslt = CashewValue.booleanValue(typer,thistype.getOuterType() != null);
+            break;
+         case "isMemberClass" :
+            rslt = CashewValue.booleanValue(typer,thistype.isFunctionRef());
+            break;
+         case "isAnnotation" :
+            rslt = CashewValue.booleanValue(typer,thistype.isAnnotationType());
+            break;
+         case "isAnonymousClass" :
+            rslt = CashewValue.booleanValue(typer,thistype.getName().contains("$00"));
+            break;
+            
 	 default :
 	    AcornLog.logE("Unknown call to java.lang.Class." + getMethod());
 	    return null;
@@ -1094,6 +1110,13 @@ CuminRunStatus checkClassMethods() throws CashewException, CuminRunException
     }
 
    return CuminRunStatus.Factory.createReturn(rslt);
+}
+
+
+
+private static String getSimpleClassName(JcompType jt)
+{
+   return null;
 }
 
 
@@ -1771,6 +1794,68 @@ private void copyMatcherFields(CashewValue from,CashewValue to) throws CashewExc
 
 
 
+/********************************************************************************/
+/*                                                                              */
+/*      Handle Array comparisons which are effectively native                   */
+/*                                                                              */
+/********************************************************************************/
+
+CuminRunStatus checkArraysMethods() throws CuminRunException
+{
+   if (!getMethod().isStatic()) return null;
+   
+   CashewValue rslt = null;
+   JcompTyper typer = getTyper();
+   
+   try {
+      switch (getMethod().getName()) {
+         case "equals" :
+            int fidxa = 0;
+            int fidxb = 0;
+            int tidxa = 0;
+            int tidxb = 0;
+            CashewValue arra = getArrayValue(0);
+            if (!arra.getDataType(getClock(),typer).getBaseType().isPrimitiveType()) {
+               return null;
+             }
+            CashewValue arrb = null;
+            if (getNumArgs() == 2) {
+               tidxa = arra.getDimension(getClock());
+               arrb = getArrayValue(1);
+               tidxb = arrb.getDimension(getClock());
+             }
+            else if (getNumArgs() == 6) {
+               fidxa = getInt(1);
+               tidxa = getInt(2);
+               arrb = getArrayValue(3);
+               fidxb = getInt(4);
+               tidxb = getInt(5);
+             }
+            boolean match = true;
+            if (tidxa - fidxa != tidxb-fidxb) match = false;
+            else {
+               for (int i = fidxa; i < tidxa && match; ++i) {
+                  int j = i - fidxa + fidxb;
+                  CashewValue v0 = arra.getIndexValue(getClock(),i);
+                  CashewValue v1 = arrb.getIndexValue(getClock(),j);
+                  Number n0 = v0.getNumber(getClock());
+                  Number n1 = v1.getNumber(getClock());
+                  if (!n0.equals(n1)) match = false;
+                }
+             }
+            rslt = CashewValue.booleanValue(typer,match);
+            break;
+            
+         default :
+            return null;
+       }
+    }
+   catch (CashewException e) { }
+   
+   return CuminRunStatus.Factory.createReturn(rslt);
+}
+   
+   
 }	// end of class CuminDirectEvaluation
 
 

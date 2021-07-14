@@ -1410,6 +1410,10 @@ private CuminRunStatus checkSpecial() throws CuminRunException
             cde = new CuminDirectEvaluation(this);
             sts = cde.checkMatcherMethods();
             break;
+         case "java.util.Arrays" :
+            cde = new CuminDirectEvaluation(this);
+            sts = cde.checkArraysMethods();
+            break;
        }
     }
    catch (CuminRunException e) {
