@@ -79,12 +79,15 @@ CuminRunStatus checkStringMethods() throws CuminRunException, CashewException
    catch (IndexOutOfBoundsException e) {
       CuminEvaluator.throwException(getTyper(),e.getClass().getName());
     }
+   catch (UnsupportedEncodingException e) {
+      CuminEvaluator.throwException(getTyper(),e.getClass().getName());
+    }
    
    return null;
 }
 
 
-private CuminRunStatus checkStringMethodsLocal() throws CuminRunException, CashewException
+private CuminRunStatus checkStringMethodsLocal() throws CuminRunException, CashewException, UnsupportedEncodingException
 {
    CashewValue rslt = null;
    JcompTyper typer = getTyper();
@@ -143,22 +146,55 @@ private CuminRunStatus checkStringMethodsLocal() throws CuminRunException, Cashe
     }
    else if (getMethod().isConstructor()) {
       CashewValueString cvs = (CashewValueString) getContext().findReference(0).getActualValue(getClock());
-      if (getNumArgs() == 1) ;
-      else if (getNumArgs() == 2 && getDataType(1).isStringType()) {
+      if (getNumArgs() == 1) ;                                                  // new String()
+      else if (getNumArgs() == 2 && getDataType(1).isStringType()) {            // new String(String)
 	 cvs.setInitialValue(getString(1));
        }
-      else if (getNumArgs() == 2 && getDataType(1).getBaseType() != null) {
-	 if (getNumArgs() == 2 && getDataType(1).getBaseType().isCharType()) {
-	    String temp = new String(getCharArray(1));
-	    cvs.setInitialValue(temp);
-	  }
-	 else if (getNumArgs() == 3 && getDataType(1).getBaseType().isCharType()) {	   // char[],boolean
-	    String temp = new String(getCharArray(1));
-	    cvs.setInitialValue(temp);
-	  }
+      else if (getNumArgs() == 2 && getDataType(1).getBaseType().isCharType()) {        // new String(char[])
+         String temp = new String(getCharArray(1));
+         cvs.setInitialValue(temp);
        }
-      // handle various constructors
-      else return null;
+      else if (getNumArgs() == 4 && getDataType(1).getBaseType().isCharType()) {	// new String(char[],int,int)   
+         String temp = new String(getCharArray(1),getInt(2),getInt(3));
+         cvs.setInitialValue(temp);
+       }
+      else if (getNumArgs() == 2 && getDataType(1).getBaseType().isByteType()) {        // new String(byte[])
+         String temp = new String(getByteArray(1));
+         cvs.setInitialValue(temp);
+       }
+      else if (getNumArgs() == 3 && getDataType(1).getBaseType().isByteType()) {	// new String(byte[],charset)  
+         String temp = null;
+         String enc = null;
+         if (getDataType(2).isByteType()) {
+            int v = getInt(2);
+               if (v == 0) enc = "LATIN";
+               else if (v == 1) enc = "UTF16";
+          }
+         else if (getDataType(2).isStringType()) {
+            enc = getString(2);
+          }
+         if (enc != null) temp = new String(getByteArray(1),enc);
+         else temp = new String(getByteArray(1));
+         cvs.setInitialValue(temp);
+       }
+      else if (getNumArgs() == 4 && getDataType(1).getBaseType().isByteType()) {	// new String(byte[],int,int)   
+         String temp = new String(getCharArray(1),getInt(2),getInt(3));
+         cvs.setInitialValue(temp);
+       }
+      else if (getNumArgs() == 5 && getDataType(1).getBaseType().isByteType()) {	
+         String temp = null;
+         if (getDataType(4).isStringType()) {                                           // new String(byte[],int,int,String)
+            temp = new String(getByteArray(1),getInt(2),getInt(3),getString(4));
+          }
+         else {
+            temp = new String(getCharArray(1),getInt(2),getInt(3));                     // new String(byte[],int,int,charset)
+          }
+         cvs.setInitialValue(temp);
+       }
+      else {
+         AcornLog.logE("CUMIN","Missing String constructor for " + getMethod());
+         return null;
+       }   
     }
    else { 
       CashewValue thisarg = getValue(0);
@@ -360,7 +396,13 @@ private CuminRunStatus checkStringMethodsLocal() throws CuminRunException, Cashe
 	    int srcend = getInt(2);
 	    CashewValue carr = getArrayValue(3);
 	    int dstbegin = getInt(4);
+            int dimsize = carr.getDimension(getClock());
 	    getClock().freezeTime();
+            if (srcbegin < 0 || srcend < 0 || srcbegin >= thisstr.length() ||
+                  srcend > thisstr.length() || srcbegin > srcend || 
+                  dstbegin < 0 || dstbegin >= dimsize || 
+                  dstbegin + (srcend-srcbegin) > dimsize)
+               throw new StringIndexOutOfBoundsException();
 	    try {
 	       for (int i = srcbegin; i < srcend; ++i) {
 		  CashewValue charv = CashewValue.characterValue(typer.CHAR_TYPE,thisstr.charAt(i));

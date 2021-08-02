@@ -432,7 +432,7 @@ CuminRunner handleCall(CashewClock cc,JcompSymbol method,List<CashewValue> args,
       ASTNode an = cmethod.getDefinitionNode();
       if (an == null) {
 	 if (type.isEnumType() && cmethod.getName().equals("values")) ;
-	 else AcornLog.logE("Missing AST for method declaration " + cmethod);
+	 else AcornLog.logD("Missing AST for method declaration " + cmethod);
        }
       else if (an instanceof MethodDeclaration) {
 	 MethodDeclaration md = (MethodDeclaration) an;

@@ -784,7 +784,7 @@ private static class ValueNumeric extends CashewValue {
              v = v.byteValue();
              break;
           case "char" :
-             v = v.shortValue();
+             v = v.shortValue() & 0xffff;
              break;
           case "float" :
              v = v.floatValue();

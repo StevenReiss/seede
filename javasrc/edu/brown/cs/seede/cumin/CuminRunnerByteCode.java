@@ -240,12 +240,21 @@ private void setupContext(List<CashewValue> args)
 
    int nlcl = jcode_method.getLocalSize();
    int vct = 0;
+   int act = -1;
+   if (jcode_method.isStatic()) act = 0;
    for (CashewValue cv : args) {
       // AcornLog.logD("ARG " + vct + " " + cv);
       CashewValue ref = CashewValue.createReference(cv,false);
       ctx.define(Integer.valueOf(vct),ref);
       ++vct;
-      if (cv != null && cv.isCategory2(execution_clock)) {
+      boolean cat2 = false;
+      if (act < 0) ++act;
+      else {
+         JcodeDataType jdt = jcode_method.getArgType(act++);
+         if (jdt != null) cat2 = jdt.isCategory2();
+       }
+      
+      if (cv != null  && cat2)  { // && cv.isCategory2(execution_clock))
 	 ref = CashewValue.createReference(CashewValue.nullValue(typer),false);
 	 ctx.define(Integer.valueOf(vct),ref);
 	 ++vct;
@@ -1006,6 +1015,7 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException, CashewExc
 	 int [] bnds = new int[mnact];
 	 for (int i = 0; i < mnact; ++i) {
 	    bnds[i] = execution_stack.pop().getNumber(execution_clock).intValue();
+            arrtyp = arrtyp.getBaseType();
 	  }
 	 vstack = CuminEvaluator.buildArray(this,0,bnds,arrtyp);
 	 break;
@@ -1353,6 +1363,10 @@ private CuminRunStatus checkSpecial() throws CuminRunException
 	    cde = new CuminDirectEvaluation(this);
 	    sts = cde.checkSunReflectionMethods();
 	    break;
+         case "jdk.internal.reflect.Reflection" :
+            cde = new CuminDirectEvaluation(this);
+            sts = cde.checkSunReflectionMethods();
+            break;
 	 case "java.lang.Class$Atomic" :
 	    cde = new CuminDirectEvaluation(this);
 	    sts = cde.checkClassAtomicMethods();

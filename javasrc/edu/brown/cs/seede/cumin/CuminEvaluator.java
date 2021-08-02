@@ -609,7 +609,7 @@ static CashewValue unboxValue(JcompTyper typer,CashewClock cc,CashewValue cv)
 
 
 
-static private CashewValue boxValue(CuminRunner cr,CashewValue cv)
+static CashewValue boxValue(CuminRunner cr,CashewValue cv)
 	throws CuminRunException, CashewException
 {
    CashewClock cc = cr.getClock();

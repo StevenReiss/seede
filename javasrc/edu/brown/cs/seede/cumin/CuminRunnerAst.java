@@ -804,6 +804,9 @@ private CuminRunStatus evalThrow(ASTNode node,CuminRunStatus cause)
       case ASTNode.FOR_STATEMENT :
 	 sts = visitThrow((ForStatement) node,cause);
 	 break;
+      case ASTNode.LABELED_STATEMENT :
+         sts = visitThrow((LabeledStatement) node,cause);
+         break;
       case ASTNode.METHOD_INVOCATION :
 	 sts = visitThrow((MethodInvocation) node,cause);
 	 break;
@@ -1487,6 +1490,12 @@ private CuminRunStatus visit(ClassInstanceCreation v, ASTNode after)
        }
       argv.add(ncv);
     }
+   if (args.size() < atyps.size() && ctyp.isVarArgs()) {
+      JcompType argtyp = atyps.get(atyps.size()-1);
+      CashewValue arrv = CashewValue.arrayValue(getTyper(),argtyp,0);
+      argv.add(arrv);
+    }
+   
    if (rty.needsOuterClass()) {
       CashewValue outerv = handleThisAccess(rty.getOuterType());
       argv.add(outerv);
@@ -2149,6 +2158,22 @@ private CuminRunStatus visit(LabeledStatement s,ASTNode after)
 }
 
 
+private CuminRunStatus visitThrow(LabeledStatement s,CuminRunStatus r)
+{
+   switch (r.getReason()) {
+      case BREAK :
+         String lbl = r.getMessage();
+         if (lbl == null) return r;
+         if (lbl.equals(s.getLabel().getIdentifier())) return null;
+         return r;
+      default :
+         break;
+    }
+   
+   return r;
+}
+
+
 private CuminRunStatus visit(ReturnStatement s,ASTNode after)
 {
    if (after == null && s.getExpression() != null) {
@@ -2523,7 +2548,8 @@ private CuminRunStatus visitThrow(WhileStatement s,CuminRunStatus r)
 /*										*/
 /********************************************************************************/
 
-private CuminRunStatus visit(ArrayInitializer n,ASTNode after) throws CashewException
+private CuminRunStatus visit(ArrayInitializer n,ASTNode after)
+        throws CashewException, CuminRunException
 {
    int idx = 0;
    List<?> exprs = n.expressions();
@@ -2537,6 +2563,7 @@ private CuminRunStatus visit(ArrayInitializer n,ASTNode after) throws CashewExce
       CashewValue arrval = CashewValue.arrayValue(getTyper(),typ,dim);
       for (int i = dim-1; i >= 0; --i) {
 	 CashewValue cv = execution_stack.pop();
+         cv = CuminEvaluator.boxValue(this,cv);
 	 arrval.setIndexValue(execution_clock,i,cv);
        }
       execution_stack.push(arrval);
