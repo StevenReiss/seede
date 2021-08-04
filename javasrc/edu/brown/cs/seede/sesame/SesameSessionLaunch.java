@@ -60,7 +60,7 @@ class SesameSessionLaunch extends SesameSession
 
 private String		launch_id;
 private Set<String>	thread_ids;
-private Set<String>     frame_ids;
+private Set<String>	frame_ids;
 private String		method_name;
 private SesameFile	source_file;
 private int		line_number;
@@ -97,10 +97,10 @@ SesameSessionLaunch(SesameMain sm,String sid,Element xml)
    if (s1 != null) {
       frame_ids = new HashSet<>();
       for (StringTokenizer tok = new StringTokenizer(s1," ,;\t\n"); tok.hasMoreTokens(); ) {
-         frame_ids.add(tok.nextToken());
+	 frame_ids.add(tok.nextToken());
        }
     }
-   
+
    thread_values = new HashMap<>();
    unique_values = new HashMap<>();
    accessible_types = new HashSet<>();
@@ -109,7 +109,7 @@ SesameSessionLaunch(SesameMain sm,String sid,Element xml)
    session_ready = false;
 }
 
-protected SesameSessionLaunch(SesameSessionLaunch ssl) 
+protected SesameSessionLaunch(SesameSessionLaunch ssl)
 {
    super(ssl);
    launch_id = ssl.launch_id;
@@ -119,9 +119,9 @@ protected SesameSessionLaunch(SesameSessionLaunch ssl)
    thread_values = new HashMap<>(ssl.thread_values);
    unique_values = ssl.unique_values;
    accessible_types = ssl.accessible_types;
-   value_cache = new SesameSessionCache();      // Want to copy from original cache to new
-                                                // at least for initial values.
-   
+   value_cache = new SesameSessionCache();	// Want to copy from original cache to new
+						// at least for initial values.
+
    session_ready = true;
 }
 
@@ -155,7 +155,7 @@ protected SesameSessionLaunch(SesameSessionLaunch ssl)
 @Override void removeSession()
 {
    super.removeSession();
-   
+
    thread_values = null;
    unique_values = null;
    thread_frame = null;
@@ -189,15 +189,15 @@ String getAnyThread()
 
    MethodDeclaration md = getCallMethod(loc);
    if (md == null) return null;
-   
+
    List<CashewValue> args = new ArrayList<>();
    JcompSymbol msym = JcompAst.getDefinition(md.getName());
    if (msym == null) {
       getProject().getTyper();
       msym = JcompAst.getDefinition(md.getName());
       if (msym == null) {
-         AcornLog.logE("Can't find method symbol for args " + md + " " + loc);
-         return null;
+	 AcornLog.logE("Can't find method symbol for args " + md + " " + loc);
+	 return null;
        }
     }
 
@@ -216,7 +216,7 @@ String getAnyThread()
       val = getUniqueValue(val);
       if (val != null) {
 	 CashewValue argval = val.getCashewValue();
-         JcompTyper typer = getProject().getTyper();
+	 JcompTyper typer = getProject().getTyper();
 	 JcompType jtyp = argval.getDataType(null,typer);
 	 // need to check if 'this' is  compatible with COMPONENT
 	 JcompType g2dtype = typer.findSystemType("java.awt.Graphics2D");
@@ -281,7 +281,7 @@ String getAnyThread()
       if (!thread_ids.contains(thread)) return;
     }
 
-   value_cache.clearCache();
+   if (value_cache != null) value_cache.clearCache();
 }
 
 
@@ -313,7 +313,10 @@ String getAnyThread()
 	 "FRAME",frame,"BREAK",false,"EXPR",expr,"IMPLICIT",true,
 	 "LEVEL",3,"ARRAY",-1,"REPLYID",eid,"ALLFRAMES",allframes);
    args.put("SAVEID",eid);
-   Element xml = getControl().getXmlReply("EVALUATE",getProject(),args,null,0);
+   Element xml = null;
+   synchronized (launch_id) {
+      xml = getControl().getXmlReply("EVALUATE",getProject(),args,null,0);
+    }
    if (IvyXml.isElement(xml,"RESULT")) {
       Element root = getControl().waitForEvaluation(eid);
       Element v = IvyXml.getChild(root,"EVAL");
@@ -340,7 +343,10 @@ String getAnyThread()
    CommandArgs args = new CommandArgs("THREAD",getAnyThread(),
 	 "FRAME",frame,"BREAK",false,"EXPR",expr,"IMPLICIT",true,
 	 "LEVEL",4,"REPLYID",eid,"ALLFRAMES",allframes);
-   Element xml = getControl().getXmlReply("EVALUATE",getProject(),args,null,0);
+   Element xml = null;
+   synchronized (launch_id) {
+      xml = getControl().getXmlReply("EVALUATE",getProject(),args,null,0);
+    }
    if (IvyXml.isElement(xml,"RESULT")) {
       Element rslt = getControl().waitForEvaluation(eid);
       Element v = IvyXml.getChild(rslt,"EVAL");
@@ -460,14 +466,14 @@ private void loadInitialValues()
 private Element getFrameForThread(Element telt)
 {
    if (frame_ids == null) return IvyXml.getChild(telt,"STACKFRAME");
-   
+
    Element dflt = null;
    for (Element felt : IvyXml.children(telt,"STACKFRAME")) {
       if (dflt == null) dflt = felt;
       String fid = IvyXml.getAttrString(felt,"ID");
       if (frame_ids.contains(fid)) return felt;
     }
-   
+
    return dflt;
 }
 

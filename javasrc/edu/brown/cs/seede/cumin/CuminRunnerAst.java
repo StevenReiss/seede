@@ -1967,6 +1967,10 @@ private CuminRunStatus visit(EnhancedForStatement s,ASTNode after)
     }
 
    if (after == s.getExpression()) {
+      JcompType ety = JcompAst.getExprType(s.getExpression());
+      if (ety == null || ety.isVoidType()) {
+         throw CuminRunStatus.Factory.createCompilerError();
+       }
       CashewValue cv = execution_stack.peek(0).getActualValue(execution_clock);
       JcompType jt = cv.getDataType(execution_clock,type_converter);
       if (jt.isArrayType()) {

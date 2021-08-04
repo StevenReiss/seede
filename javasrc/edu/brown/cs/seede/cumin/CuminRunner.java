@@ -527,8 +527,8 @@ CuminRunner handleCall(CashewClock cc,JcodeMethod method,List<CashewValue> args,
 	  }
        }
       buf.append(")");
-      AcornLog.logE("Couldn't find bc method to call " + buf.toString());
-      throw new CuminRunException(Reason.ERROR,"Missing method " + buf.toString());
+      AcornLog.logI("Couldn't find bc method to call " + buf.toString());
+      throw CuminRunStatus.Factory.createCompilerError("Missing method " + buf.toString());
     }
 
    String cmcname = cmethod.getDeclaringClass().getName();

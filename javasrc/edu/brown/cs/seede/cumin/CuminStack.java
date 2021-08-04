@@ -85,7 +85,8 @@ CashewValue pop()
 CashewValue peek(int idx)
 {
    int itm = execution_stack.size() - idx - 1;
-   if (itm < 0) throw new Error("Attempt to peek too far down the stack");
+   if (itm < 0) 
+      throw new Error("Attempt to peek too far down the stack");
    return (CashewValue) execution_stack.get(itm);
 }
 
