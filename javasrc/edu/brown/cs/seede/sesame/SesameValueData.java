@@ -202,7 +202,7 @@ CashewValue getCashewValue()
 	  }
 	 break;
       case STRING :
-	 result_value = CashewValue.stringValue(typer.STRING_TYPE,val_value);
+	 result_value = CashewValue.stringValue(typer,typer.STRING_TYPE,val_value);
 	 break;
       case OBJECT :
 	 Map<String,Object> inits = new HashMap<String,Object>();

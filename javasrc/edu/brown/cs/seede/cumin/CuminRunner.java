@@ -755,7 +755,7 @@ CashewValue handleNew(JcompType nty)
    CashewValue rslt = null;
 
    if (nty == type_converter.STRING_TYPE) {
-      rslt = CashewValue.stringValue(type_converter.STRING_TYPE,null);
+      rslt = CashewValue.stringValue(type_converter,type_converter.STRING_TYPE,null);
     }
    else if (nty.getName().equals("java.io.File")) {
       rslt = CashewValue.fileValue(getTyper());

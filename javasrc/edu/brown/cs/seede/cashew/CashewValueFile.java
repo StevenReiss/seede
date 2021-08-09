@@ -110,7 +110,7 @@ public File getFile()                   { return user_file; }
       case "java.io.File.path" :
       case "path" :
          if (user_file == null) return CashewValue.nullValue(typer);
-         return CashewValue.stringValue(typer.STRING_TYPE,user_file.getPath());
+         return CashewValue.stringValue(typer,typer.STRING_TYPE,user_file.getPath());
       case "java.io.File.status" :
       case "status" :
          // return PathStatus.CHECKED
@@ -126,13 +126,13 @@ public File getFile()                   { return user_file; }
          break;
       case "java.io.File.separator" :
       case "separator" :
-         return CashewValue.stringValue(typer.STRING_TYPE,File.separator);
+         return CashewValue.stringValue(typer,typer.STRING_TYPE,File.separator);
       case "java.io.File.separatorChar" :
       case "separatorChar" :
          return CashewValue.numericValue(typer,typer.CHAR_TYPE,File.separatorChar);
       case "java.io.File.pathSeparator" :
       case "pathSeparator" :
-         return CashewValue.stringValue(typer.STRING_TYPE,File.pathSeparator);     
+         return CashewValue.stringValue(typer,typer.STRING_TYPE,File.pathSeparator);     
       case "java.io.File.pathSeparatorChar" :
       case "pathSeparatorChar" :
          return CashewValue.numericValue(typer,typer.CHAR_TYPE,File.pathSeparatorChar);

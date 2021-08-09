@@ -133,7 +133,7 @@ static CashewValue evaluateUnchecked(CuminRunner runner,JcompTyper typer,CashewC
 	    // TODO: Need to call toString here to get accurate results
 //	    String s0 = getStringValue(v1,typer,cc) + getStringValue(v2,typer,cc);
 	    String s0 = computeString(runner,typer,cc,v1) + computeString(runner,typer,cc,v2);
-	    rslt = CashewValue.stringValue(typer.STRING_TYPE,s0);
+	    rslt = CashewValue.stringValue(typer,typer.STRING_TYPE,s0);
 	  }
 	 else if (isdbl) {
 	    double v0 = v1.getNumber(cc).doubleValue() + v2.getNumber(cc).doubleValue();

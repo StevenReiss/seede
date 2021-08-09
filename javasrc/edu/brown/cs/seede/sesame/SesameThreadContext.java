@@ -95,7 +95,7 @@ public CashewValue findStaticFieldReference(JcompTyper typer,String name,String 
        }
     }
    else if (name.equals(CURRENT_THREAD_NAME_FIELD)) {
-      return CashewValue.stringValue(typer.STRING_TYPE,thread_name);
+      return CashewValue.stringValue(typer,typer.STRING_TYPE,thread_name);
     }
    
    return super.findStaticFieldReference(typer,name,type);

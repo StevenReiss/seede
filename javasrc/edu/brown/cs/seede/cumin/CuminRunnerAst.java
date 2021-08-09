@@ -795,6 +795,16 @@ private CuminRunStatus evalThrow(ASTNode node,CuminRunStatus cause)
       case ASTNode.VARIABLE_DECLARATION_STATEMENT :
 	 return cause;
 
+      case ASTNode.CLASS_INSTANCE_CREATION :
+         sts = visitThrow((ClassInstanceCreation) node,cause);
+         break;
+      case ASTNode.SUPER_CONSTRUCTOR_INVOCATION :
+         sts = visitThrow((SuperConstructorInvocation) node,cause);
+         break;
+      case ASTNode.SYNCHRONIZED_STATEMENT :
+         sts = visitThrow((SynchronizedStatement) node,cause);
+         break;
+         
       case ASTNode.DO_STATEMENT :
 	 sts = visitThrow((DoStatement) node,cause);
 	 break;
@@ -810,17 +820,11 @@ private CuminRunStatus evalThrow(ASTNode node,CuminRunStatus cause)
       case ASTNode.METHOD_INVOCATION :
 	 sts = visitThrow((MethodInvocation) node,cause);
 	 break;
-      case ASTNode.CLASS_INSTANCE_CREATION :
-	 break;
-      case ASTNode.SUPER_CONSTRUCTOR_INVOCATION :
-	 break;
       case ASTNode.SUPER_METHOD_INVOCATION :
 	 sts = visitThrow((SuperMethodInvocation) node,cause);
 	 break;
       case ASTNode.SWITCH_STATEMENT :
 	 sts = visitThrow((SwitchStatement) node,cause);
-	 break;
-      case ASTNode.SYNCHRONIZED_STATEMENT :
 	 break;
       case ASTNode.TRY_STATEMENT :
 	 sts = visitThrow((TryStatement) node,cause);
@@ -996,7 +1000,8 @@ private CuminRunStatus visit(NumberLiteral v)
 private CuminRunStatus visit(StringLiteral v)
 {
    try {
-      execution_stack.push(CashewValue.stringValue(getTyper().STRING_TYPE,v.getLiteralValue()));
+      JcompTyper typer = getTyper();
+      execution_stack.push(CashewValue.stringValue(typer,typer.STRING_TYPE,v.getLiteralValue()));
     }
    catch (IllegalArgumentException e) {
       return CuminRunStatus.Factory.createCompilerError();
@@ -1510,6 +1515,19 @@ private CuminRunStatus visit(ClassInstanceCreation v, ASTNode after)
 
 
 
+private CuminRunStatus visitThrow(ClassInstanceCreation n,CuminRunStatus cause)
+{
+   if (cause.getReason() == Reason.RETURN) {
+      CashewValue cv = cause.getValue();
+      if (cv != null) execution_stack.push(cv);
+    }
+   else return cause;
+   
+   return null;
+}
+
+
+
 private CuminRunStatus visit(ConstructorInvocation v,ASTNode after)
 	throws CuminRunException, CashewException
 {
@@ -1693,6 +1711,19 @@ private CuminRunStatus visit(SuperConstructorInvocation v,ASTNode after) throws 
    Collections.reverse(argv);
    CuminRunner crun = handleCall(execution_clock,csym,argv,CallType.SPECIAL);
    return CuminRunStatus.Factory.createCall(crun);
+}
+
+
+
+private CuminRunStatus visitThrow(SuperConstructorInvocation n,CuminRunStatus cause)
+{
+   if (cause.getReason() == Reason.RETURN) {
+      CashewValue cv = cause.getValue();
+      if (cv != null) execution_stack.push(cv);
+    }
+   else return cause;
+   
+   return null;
 }
 
 
@@ -2377,6 +2408,13 @@ private CuminRunStatus visit(SynchronizedStatement s,ASTNode after)
     }
 
    return null;
+}
+
+
+private CuminRunStatus visitThrow(SynchronizedStatement s,CuminRunStatus cause)
+{
+   // need to release the lock if its held
+   return cause;
 }
 
 

@@ -93,10 +93,21 @@ protected TestBase(String id,String workspace,String project)
    bedrock_id = null;
    stopped_thread = null; 
    
-   setupBedrock(workspace,project);
-   startSeede();
+   if (workspace != null) {
+      setupBedrock(workspace,project);
+      startSeede();
+    }
    
    Runtime.getRuntime().addShutdownHook(new ShutdownAll());
+}
+
+
+
+protected void setup(String workspace,String project)
+{
+   project_name = project;
+   setupBedrock(workspace,project);
+   startSeede();
 }
 
 

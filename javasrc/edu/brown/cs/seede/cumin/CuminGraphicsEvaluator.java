@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import edu.brown.cs.ivy.jcomp.JcompType;
+import edu.brown.cs.ivy.jcomp.JcompTyper;
 import edu.brown.cs.ivy.xml.IvyXmlWriter;
 import edu.brown.cs.seede.acorn.AcornLog;
 import edu.brown.cs.seede.cashew.CashewConstants;
@@ -276,7 +277,8 @@ CuminRunStatus checkPoppyGraphics() throws CashewException
 	 return null;
 
       case "getReport" :
-	 rslt = CashewValue.stringValue(getTyper().STRING_TYPE,graphics.getResult());
+         JcompTyper typer = getTyper();
+	 rslt = CashewValue.stringValue(typer,typer.STRING_TYPE,graphics.getResult());
 	 output_map.remove(thisarg);
 	 break;
     }

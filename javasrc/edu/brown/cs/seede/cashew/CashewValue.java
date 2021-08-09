@@ -76,7 +76,7 @@ public static CashewValue createValue(JcompTyper typer,Element xml) throws Cashe
     }
    else if (jtype.isStringType()) {
       String s = IvyXml.getTextElement(xml,"VALUE");
-      return stringValue(typer.STRING_TYPE,s);
+      return stringValue(typer,typer.STRING_TYPE,s);
     }
    else if (jtype.getName().equals("java.lang.Class")) {
       String s = IvyXml.getTextElement(xml,"VALUE");
@@ -272,17 +272,17 @@ public static CashewValue characterValue(JcompType t,char v)
 }
 
 
-public static CashewValue stringValue(JcompType styp,String s)
+public static CashewValue stringValue(JcompTyper typer,JcompType styp,String s)
 {
    if (s == null) {
-      CashewValueString vs = new CashewValueString(styp,"");
+      CashewValueString vs = new CashewValueString(typer,styp,"");
       return vs;
     }
 
    synchronized (string_values) {
       CashewValueString vs = string_values.get(s);
       if (vs == null) {
-	 vs = new CashewValueString(styp,s);
+	 vs = new CashewValueString(typer,styp,s);
 	 string_values.put(s,vs);
        }
       return vs;
@@ -361,7 +361,7 @@ public static CashewValue arrayValue(JcompTyper typer,String [] arr)
 {
    Map<Integer,Object> inits = new HashMap<Integer,Object>();
    for (int i = 0; i < arr.length; ++i) {
-      inits.put(i,CashewValue.stringValue(typer.STRING_TYPE,arr[i]));
+      inits.put(i,CashewValue.stringValue(typer,typer.STRING_TYPE,arr[i]));
     }
 
    JcompType jty = JcompType.createArrayType(typer.STRING_TYPE);

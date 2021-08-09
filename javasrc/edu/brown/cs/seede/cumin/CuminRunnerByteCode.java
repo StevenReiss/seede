@@ -443,7 +443,7 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException, CashewExc
       case LDC :
 	 Object o = jins.getObjectValue();
 	 if (o instanceof String) {
-	    vstack = CashewValue.stringValue(typer.STRING_TYPE,(String) o);
+	    vstack = CashewValue.stringValue(typer,typer.STRING_TYPE,(String) o);
 	  }
 	 else if (o instanceof Integer) {
 	    vstack = CashewValue.numericValue(typer,typer.INT_TYPE,((Number) o).intValue());
@@ -953,6 +953,7 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException, CashewExc
 	 if (v1.isNull(execution_clock))
 	    return CuminEvaluator.returnException(typer,"java.lang.NullPointerException");
 	 v1.setFieldValue(typer,execution_clock,nm,v0);
+         if (AcornLog.isTracing()) AcornLog.logT("RESULT IS " + v0);
 	 break;
       case PUTSTATIC :
 	 v0 = execution_stack.pop();
@@ -1013,7 +1014,7 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException, CashewExc
 	 arrtyp = convertType(dty);
 	 int mnact = jins.getIntValue();
 	 int [] bnds = new int[mnact];
-	 for (int i = 0; i < mnact; ++i) {
+         for (int i = mnact-1; i >= 0; --i) {
 	    bnds[i] = execution_stack.pop().getNumber(execution_clock).intValue();
             arrtyp = arrtyp.getBaseType();
 	  }
@@ -1078,6 +1079,7 @@ private void handleDynamicCall(JcodeInstruction ins)
 {
    CashewValue cv = null;
    String [] args = ins.getDynamicReference();
+   JcompTyper typer = getTyper();
 
    if (args[2].startsWith("java/lang/invoke/LambdaMetafactory.metafactory")) {
       JcompType t1 = buildMethodType1(args[5]);
@@ -1094,7 +1096,7 @@ private void handleDynamicCall(JcodeInstruction ins)
        }
       JcompType rt1 = JcompType.createFunctionRefType(t1,null,null);
 
-      cv = new CashewValueFunctionRef(getTyper(),rt1,args[4],bind);
+      cv = new CashewValueFunctionRef(typer,rt1,args[4],bind);
     }
    else if (args[2].startsWith("java/lang/invoke/StringConcatFactory.makeConcatWithConstants")) {
       StringBuffer buf = new StringBuffer();
@@ -1104,7 +1106,7 @@ private void handleDynamicCall(JcodeInstruction ins)
 	    CashewValue v0 = execution_stack.pop();
 	    if (v0.isNull(getClock())) buf.append("null");
 	    try {
-	       String v1 = CuminEvaluator.getStringValue(v0,getTyper(),getClock());
+	       String v1 = CuminEvaluator.getStringValue(v0,typer,getClock());
 	       buf.append(v1);
 	     }
 	    catch (CashewException e) {
@@ -1113,7 +1115,7 @@ private void handleDynamicCall(JcodeInstruction ins)
 	  }
 	 else buf.append(c);
        }
-      cv = CashewValue.stringValue(getTyper().STRING_TYPE,buf.toString());
+      cv = CashewValue.stringValue(typer,typer.STRING_TYPE,buf.toString());
     }
    else if (args[2].startsWith("java/lang/invoke/StringConcatFactory.makeConcat")) {
       StringBuffer buf = new StringBuffer();
@@ -1122,14 +1124,14 @@ private void handleDynamicCall(JcodeInstruction ins)
       for (int i = 0; i < argtyps.length; ++i) {
 	 CashewValue v0 = execution_stack.pop();
 	 try {
-	    String v1 = CuminEvaluator.getStringValue(v0,getTyper(),getClock());
+	    String v1 = CuminEvaluator.getStringValue(v0,typer,getClock());
 	    buf.append(v1);
 	  }
 	 catch (CashewException e) {
 	    buf.append("???");
 	  }
        }
-      cv = CashewValue.stringValue(getTyper().STRING_TYPE,buf.toString());
+      cv = CashewValue.stringValue(typer,typer.STRING_TYPE,buf.toString());
     }
    else {
       AcornLog.logE("Unknown dynamic call user: " + args[2]);
@@ -1138,7 +1140,7 @@ private void handleDynamicCall(JcodeInstruction ins)
 
    try {
       if (AcornLog.isTracing()) {
-	 AcornLog.logT("RESULT: " + cv.getString(getTyper(),execution_clock,0,true));
+	 AcornLog.logT("RESULT: " + cv.getString(typer,execution_clock,0,true));
        }
     }
    catch (CashewException e) { }
@@ -1148,12 +1150,12 @@ private void handleDynamicCall(JcodeInstruction ins)
    /***** this doesn't work
    if (args[2].startsWith("java/lang/invoke/LambdaMetafactory.metafactory")) {
       JcodeMethod m1 = ins.getMethodReference();
-      JcompType typ = getTyper().findSystemType("java.lang.invoke.MethodHandles.Lookup");
+      JcompType typ = typer.findSystemType("java.lang.invoke.MethodHandles.Lookup");
       CashewValue lookup = handleNew(typ);
       String initer = "java/lang/invoke/MethodHandles$Lookup.<init>(Ljava/lang/Class;I)V";
       String clsnm = getCodeMethod().getDeclaringClass().getName();
       lookup_context.enableAccess(clsnm);
-      JcompType t1 = getTyper().findSystemType(clsnm);
+      JcompType t1 = typer.findSystemType(clsnm);
       CashewValue cv = CashewValue.classValue(t1);
       int mod = Modifier.PUBLIC|Modifier.PRIVATE|Modifier.PROTECTED|Modifier.STATIC;
       CashewValue cv1 = CashewValue.numericValue(INT_TYPE,mod);
@@ -1167,7 +1169,7 @@ private void handleDynamicCall(JcodeInstruction ins)
       idx = mn1.indexOf(".");
       String clsnm1 = mn1.substring(0,idx);
       CashewValue mth1 = CashewValue.stringValue(mn1.substring(idx+1));
-      JcompType cls1v = getTyper().findSystemType(clsnm1);
+      JcompType cls1v = typer.findSystemType(clsnm1);
       CashewValue cls1 = CashewValue.classValue(cls1v);
       String lupname = "java/lang/invoke/MethodHandles$Lookup.findStatic";
       CashewValue mh = executeCall(lupname,lookup,cls1,mth1,mt1);

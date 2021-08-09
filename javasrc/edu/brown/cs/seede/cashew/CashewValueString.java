@@ -56,14 +56,11 @@ private CashewValue coder_field;
 /*										*/
 /********************************************************************************/
 
-CashewValueString(JcompType styp,String s)
+CashewValueString(JcompTyper typer,JcompType styp,String s)
 {
    super(styp);
-   string_value = s;
-   value_field = null;
-   hash_field = null;
-   hash32_field = null;
-   coder_field = null;
+   setInitialValue(typer,s,-1);
+  
 }
 
 
@@ -139,11 +136,11 @@ CashewValueString(JcompType styp,String s)
       case "java.lang.String.value" :
 	 if (value_field == null) {
 	    Map<Integer,Object> inits = new HashMap<Integer,Object>();
-	    for (int i = 0; i < string_value.length(); ++i) {
-	       char c = string_value.charAt(i);
-	       inits.put(i,CashewValue.characterValue(typer.CHAR_TYPE,c));
+            byte [] bytes = string_value.getBytes();
+	    for (int i = 0; i < bytes.length; ++i) {
+	       inits.put(i,CashewValue.numericValue(typer,typer.BYTE_TYPE,bytes[i]));
 	     }
-	    value_field = CashewValue.arrayValue(typer,typer.CHAR_TYPE,string_value.length(),inits);
+	    value_field = CashewValue.arrayValue(typer,typer.BYTE_TYPE,bytes.length,inits);
 	  }
 	 return value_field;
       case "hash" :
@@ -215,13 +212,17 @@ CashewValueString(JcompType styp,String s)
 
 
 
-public void setInitialValue(String s)
+public void setInitialValue(JcompTyper typer,String s,int coder)
 {
    string_value = s;
    value_field = null;
    hash_field = null;
    hash32_field = null;
    coder_field = null;
+   if (coder < 0 && s != null && s.getBytes().length != s.length()) coder = 1;
+   if (coder >= 0) {
+      coder_field = CashewValue.numericValue(typer,typer.BYTE_TYPE,coder);
+    }
 }
 
 

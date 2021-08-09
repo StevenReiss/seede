@@ -145,7 +145,7 @@ CuminRunStatus checkFileMethods() throws CashewException
 	    if (rfile == thisfile) rslt = thisarg;
 	    break;
 	 case "getAbsolutePath" :
-	    rslt = CashewValue.stringValue(typer.STRING_TYPE,thisfile.getAbsolutePath());
+	    rslt = CashewValue.stringValue(typer,typer.STRING_TYPE,thisfile.getAbsolutePath());
 	    break;
 	 case "getCanonicalFile" :
 	    try {
@@ -158,7 +158,7 @@ CuminRunStatus checkFileMethods() throws CashewException
 	    break;
 	 case "getCanonicalPath" :
 	    try {
-	       rslt = CashewValue.stringValue(typer.STRING_TYPE,thisfile.getCanonicalPath());
+	       rslt = CashewValue.stringValue(typer,typer.STRING_TYPE,thisfile.getCanonicalPath());
 	     }
 	    catch (IOException e) {
                return CuminEvaluator.returnException(typer,"java.io.IOException");
@@ -168,16 +168,16 @@ CuminRunStatus checkFileMethods() throws CashewException
 	    rslt = CashewValue.numericValue(typer,typer.LONG_TYPE,thisfile.getFreeSpace());
 	    break;
 	 case "getName" :
-	    rslt = CashewValue.stringValue(typer.STRING_TYPE,thisfile.getName());
+	    rslt = CashewValue.stringValue(typer,typer.STRING_TYPE,thisfile.getName());
 	    break;
 	 case "getParent" :
-	    rslt = CashewValue.stringValue(typer.STRING_TYPE,thisfile.getParent());
+	    rslt = CashewValue.stringValue(typer,typer.STRING_TYPE,thisfile.getParent());
 	    break;
 	 case "getParentFile" :
 	    rfile = thisfile.getParentFile();
 	    break;
 	 case "getPath" :
-	    rslt = CashewValue.stringValue(typer.STRING_TYPE,thisfile.getPath());
+	    rslt = CashewValue.stringValue(typer,typer.STRING_TYPE,thisfile.getPath());
 	    break;
 	 case "getTotalSpace" :
 	    rslt = CashewValue.numericValue(typer,typer.LONG_TYPE,thisfile.getTotalSpace());
@@ -240,7 +240,7 @@ CuminRunStatus checkFileMethods() throws CashewException
 	 case "toPath" :
 	    return null;
 	 case "toString" :
-	    rslt = CashewValue.stringValue(typer.STRING_TYPE,thisfile.toString());
+	    rslt = CashewValue.stringValue(typer,typer.STRING_TYPE,thisfile.toString());
 	    break;
 	 case "toURI" :
 	    return null;
