@@ -159,7 +159,7 @@ synchronized public long fileAvailable(CashewClock clk,int fd)
 
 
 
-synchronized public void checkInputFile(JcompTyper typer,CashewContext ctx,CashewClock cc,CashewValue cv,int fd,String path,
+synchronized public void checkInputFile(CashewValueSession sess,JcompTyper typer,CashewContext ctx,CashewClock cc,CashewValue cv,int fd,String path,
       boolean prior) throws IOException
 {
    InputData id = input_files.get(fd);
@@ -179,7 +179,7 @@ synchronized public void checkInputFile(JcompTyper typer,CashewContext ctx,Cashe
 	    CashewValue rv = ctx.evaluate(expr);
 	    if (rv != null && rv.getDataType(null).isStringType()) {
                try {
-                  String finfo = rv.getString(typer,cc);
+                  String finfo = rv.getString(sess,typer,cc);
                   if (finfo.equals("*")) {
                      throw new IOException("File not open");
                    }

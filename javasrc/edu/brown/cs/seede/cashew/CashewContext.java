@@ -280,7 +280,8 @@ public String findReferencedVariableName(String name)
 
 
 
-public CashewValue findReferencedVariableValue(JcompTyper typer,String name,long when)
+public CashewValue findReferencedVariableValue(CashewValueSession sess,
+      JcompTyper typer,String name,long when)
         throws CashewException
 {
    int idx = name.indexOf("?");
@@ -291,26 +292,27 @@ public CashewValue findReferencedVariableValue(JcompTyper typer,String name,long
       if (idx1 > 0) {
          String ctxname = outname.substring(0,idx1);
          if (getName().equals(ctxname)) {
-            return lookupVariableValue(typer,name,when);
+            return lookupVariableValue(sess,typer,name,when);
           }
          for (CashewContext ictx : nested_contexts) {
             if (ictx.getName().equals(ctxname)) {
-               return ictx.findReferencedVariableValue(typer,name,when);
+               return ictx.findReferencedVariableValue(sess,typer,name,when);
              }
           }
          return null;
        }
       else {
-         return lookupVariableValue(typer,outname,when);
+         return lookupVariableValue(sess,typer,outname,when);
        }
     }
    else {
-      return lookupVariableValue(typer,name,when);
+      return lookupVariableValue(sess,typer,name,when);
     }
 }
 
 
-private CashewValue lookupVariableValue(JcompTyper typer,String name,long when) throws CashewException
+private CashewValue lookupVariableValue(CashewValueSession sess,
+      JcompTyper typer,String name,long when) throws CashewException
 {
    int idx = name.indexOf("?");
    String lookup = name;
@@ -349,7 +351,7 @@ private CashewValue lookupVariableValue(JcompTyper typer,String name,long when) 
     }  
    
    if (bestvalue != null && next != null) {
-      bestvalue = bestvalue.lookupVariableName(typer,next,when);
+      bestvalue = bestvalue.lookupVariableName(sess,typer,next,when);
     }
    
    return bestvalue;
@@ -534,18 +536,18 @@ public void checkChanged(CashewOutputContext outctx)
 
 
 
-public void checkToString(CashewOutputContext outctx)
+public void checkToString(CashewValueSession sess,CashewOutputContext outctx)
 {
    if (!isOutput()) return;
    
    for (CashewValue cv : context_map.values()) {
-      if (cv != null) cv.checkToString(outctx);
+      if (cv != null) cv.checkToString(sess,outctx);
     }
 
    Set<CashewContext> ctxs = new HashSet<>(nested_contexts);
    // internal executions can add new contexts
    for (CashewContext ctx : ctxs) {
-      ctx.checkToString(outctx);
+      ctx.checkToString(sess,outctx);
     }
    
    for (CashewContext ctx : nested_contexts) {

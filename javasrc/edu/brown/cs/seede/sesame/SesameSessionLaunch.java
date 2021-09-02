@@ -47,8 +47,9 @@ import edu.brown.cs.ivy.mint.MintConstants.CommandArgs;
 import edu.brown.cs.seede.acorn.AcornLog;
 import edu.brown.cs.seede.cashew.CashewException;
 import edu.brown.cs.seede.cashew.CashewValue;
+import edu.brown.cs.seede.cashew.CashewConstants.CashewValueSession;
 
-class SesameSessionLaunch extends SesameSession
+class SesameSessionLaunch extends SesameSession implements CashewValueSession 
 {
 
 
@@ -119,8 +120,9 @@ protected SesameSessionLaunch(SesameSessionLaunch ssl)
    thread_values = new HashMap<>(ssl.thread_values);
    unique_values = ssl.unique_values;
    accessible_types = ssl.accessible_types;
-   value_cache = new SesameSessionCache();	// Want to copy from original cache to new
-						// at least for initial values.
+   
+   value_cache = ssl.value_cache;            // reuse value cache as execution doesn't change
+// value_cache = new SesameSessionCache();
 
    session_ready = true;
 }
@@ -205,7 +207,7 @@ String getAnyThread()
    if (!msym.isStatic()) {
       SesameValueData svd = valmap.get("this");
       svd = getUniqueValue(svd);
-      CashewValue cv = svd.getCashewValue();
+      CashewValue cv = svd.getCashewValue(this);
       args.add(cv);
     }
    for (Object o : md.parameters()) {
@@ -215,12 +217,12 @@ String getAnyThread()
       if (val == null) val = valmap.get(psym.getName());
       val = getUniqueValue(val);
       if (val != null) {
-	 CashewValue argval = val.getCashewValue();
+	 CashewValue argval = val.getCashewValue(this);
 	 JcompTyper typer = getProject().getTyper();
-	 JcompType jtyp = argval.getDataType(null,typer);
+	 JcompType jtyp = argval.getDataType(this,null,typer);
 	 // need to check if 'this' is  compatible with COMPONENT
 	 JcompType g2dtype = typer.findSystemType("java.awt.Graphics2D");
-	 if (jtyp.isCompatibleWith(g2dtype) && !argval.isNull(null)) {
+	 if (jtyp.isCompatibleWith(g2dtype) && !argval.isNull(this,null)) {
 	    if (!jtyp.getName().contains("PoppyGraphics")) {
 	       String gname = "MAIN_" + loc.getThreadName();
 	       getProject().getJcodeFactory().findClass("edu.brown.cs.seede.poppy.PoppyGraphics");
@@ -230,7 +232,7 @@ String getAnyThread()
 	       SesameValueData nval = evaluateData(expr,loc.getThread(),true);
 	       if (nval != null) {
 		  nval = getUniqueValue(nval);
-		  argval = nval.getCashewValue();
+		  argval = nval.getCashewValue(this);
 		}
 	     }
 	  }
@@ -248,7 +250,7 @@ String getAnyThread()
 {
    JcompTyper typer = getProject().getTyper();
    try {
-      CashewValue cv = CashewValue.createValue(typer,val);
+      CashewValue cv = CashewValue.createValue(this,typer,val);
       value_cache.setInitialValue(what,cv);
     }
    catch (CashewException e) {
@@ -298,6 +300,16 @@ String getAnyThread()
 }
 
 
+@Override CashewValue evaluate(String expr,String thread,boolean allframes)
+{
+   SesameValueData svd = evaluateData(expr,thread,allframes);
+   
+   if (svd == null) return null;
+   
+   return svd.getCashewValue(this);
+}
+
+
 @Override SesameValueData evaluateData(String expr,String thread0,boolean allframes)
 {
    String eid = "E_" + eval_counter.incrementAndGet();
@@ -307,18 +319,25 @@ String getAnyThread()
    if (svd0 != null) return svd0;
 
    String thread = thread0;
-   if (thread0 == null) thread0 = getAnyThread();
+   if (thread0 == null) {
+      thread = getAnyThread();
+      svd0 = value_cache.lookup(thread,expr);
+      if (svd0 != null) return svd0;
+    }
+   
    String frame = thread_frame.get(thread);
    CommandArgs args = new CommandArgs("THREAD",thread,
 	 "FRAME",frame,"BREAK",false,"EXPR",expr,"IMPLICIT",true,
 	 "LEVEL",3,"ARRAY",-1,"REPLYID",eid,"ALLFRAMES",allframes);
    args.put("SAVEID",eid);
-   Element xml = null;
+   Element root = null;
    synchronized (launch_id) {
-      xml = getControl().getXmlReply("EVALUATE",getProject(),args,null,0);
+      Element xml = getControl().getXmlReply("EVALUATE",getProject(),args,null,0);
+      if (IvyXml.isElement(xml,"RESULT")) {
+         root = getControl().waitForEvaluation(eid);
+       }
     }
-   if (IvyXml.isElement(xml,"RESULT")) {
-      Element root = getControl().waitForEvaluation(eid);
+   if (root != null) {
       Element v = IvyXml.getChild(root,"EVAL");
       Element v1 = IvyXml.getChild(v,"VALUE");
       String assoc = expr;
@@ -328,8 +347,10 @@ String getAnyThread()
       SesameValueData svd = new SesameValueData(this,thread,v1,assoc);
       svd = getUniqueValue(svd);
       value_cache.cacheValue(thread0,expr,svd);
+      if (thread != thread0) value_cache.cacheValue(thread,expr,svd);
       return svd;
     }
+   
    return null;
 }
 
@@ -337,18 +358,28 @@ String getAnyThread()
 
 @Override void evaluateVoid(String expr,boolean allframes) throws CashewException
 {
+   SesameValueData svd0 = value_cache.lookup("*",expr);
+   if (svd0 != null) return;                            // already done
+   
    String eid = "E_" + eval_counter.incrementAndGet();
    String thread = getAnyThread();
    String frame = thread_frame.get(thread);
    CommandArgs args = new CommandArgs("THREAD",getAnyThread(),
 	 "FRAME",frame,"BREAK",false,"EXPR",expr,"IMPLICIT",true,
 	 "LEVEL",4,"REPLYID",eid,"ALLFRAMES",allframes);
-   Element xml = null;
+   Element rslt = null;
    synchronized (launch_id) {
-      xml = getControl().getXmlReply("EVALUATE",getProject(),args,null,0);
+      Element xml = getControl().getXmlReply("EVALUATE",getProject(),args,null,0);
+      if (IvyXml.isElement(xml,"RESULT")) {
+         rslt = getControl().waitForEvaluation(eid);
+       }
     }
-   if (IvyXml.isElement(xml,"RESULT")) {
-      Element rslt = getControl().waitForEvaluation(eid);
+   if (rslt != null) {
+
+
+
+
+
       Element v = IvyXml.getChild(rslt,"EVAL");
       String sts = IvyXml.getAttrString(v,"STATUS");
       if (sts.equals("EXCEPTION")) {
@@ -357,6 +388,8 @@ String getAnyThread()
 	    throw new CashewException("Process continued");
 	  }
        }
+      svd0 = new SesameValueData(null);
+      value_cache.cacheValue("*",expr,svd0);
       return;
     }
 }

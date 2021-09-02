@@ -351,8 +351,8 @@ private void outputResult(IvyXmlWriter xw,CuminRunner cr,CuminRunStatus sts,bool
    CashewValue rval = sts.getValue();
 
    if (for_session.getComputeToString()) {
-      if (rval != null) rval.checkToString(outctx);
-      ctx.checkToString(outctx);
+      if (rval != null) rval.checkToString(for_session,outctx);
+      ctx.checkToString(for_session,outctx);
       outctx.resetValues();
     }
 
@@ -619,30 +619,30 @@ private class MasterThread extends Thread implements LoggerThread {
       AcornLog.logD("MASTER: Start swing thread run");
       run_state = RunState.SWING;
       for (String cvname : swing_components) {
-	 if (stop_state != StopState.RUN) return;
-	 for (CuminRunner cr : cumin_runners) {
-	    String cvn = cr.findReferencedVariableName(cvname);
-	    try {
-	       CashewValue cv = cr.findReferencedVariableValue(cr.getTyper(),cvname,cr.getClock().getTimeValue());
-	       if (cvn != null) {
-		  CashewValue rv = null;
-		  cr.ensureLoaded("edu.brown.cs.seede.poppy.PoppyGraphics");
-		  String expr =  "edu.brown.cs.seede.poppy.PoppyGraphics.computeGraphics(";
-		  expr += cvn + "," + "\"" + cvname + "\"" + ")";
-		  CashewValue cv1 = cr.getLookupContext().evaluate(expr);
-		  rv = cr.executeCall("edu.brown.cs.seede.poppy.PoppyGraphics.computeDrawingG",cv,cv1);
-		  if (rv != null) {
-		     String rpt = rv.getString(cr.getTyper(),cr.getClock());
-		     AcornLog.logI("SWING REPORT: " + rpt);
-		     if (rpt != null) graphics_outputs.add(rpt);
-		   }
-		  break;
-		}
-	     }
-	    catch (CashewException e) {
-	       AcornLog.logE("Unexpected error starting swing thread",e);
-	     }
-	  }
+         if (stop_state != StopState.RUN) return;
+         for (CuminRunner cr : cumin_runners) {
+            String cvn = cr.findReferencedVariableName(cvname);
+            try {
+               CashewValue cv = cr.findReferencedVariableValue(cr.getTyper(),cvname,cr.getClock().getTimeValue());
+               if (cvn != null) {
+                  CashewValue rv = null;
+                  cr.ensureLoaded("edu.brown.cs.seede.poppy.PoppyGraphics");
+                  String expr =  "edu.brown.cs.seede.poppy.PoppyGraphics.computeGraphics(";
+                  expr += cvn + "," + "\"" + cvname + "\"" + ")";
+                  CashewValue cv1 = cr.getLookupContext().evaluate(expr);
+                  rv = cr.executeCall("edu.brown.cs.seede.poppy.PoppyGraphics.computeDrawingG",cv,cv1);
+                  if (rv != null) {
+                     String rpt = rv.getString(cr.getSession(),cr.getTyper(),cr.getClock());
+                     AcornLog.logI("SWING REPORT: " + rpt);
+                     if (rpt != null) graphics_outputs.add(rpt);
+                   }
+                  break;
+                }
+             }
+            catch (CashewException e) {
+               AcornLog.logE("Unexpected error starting swing thread",e);
+             }
+          }
        }
    }
 
@@ -650,16 +650,16 @@ private class MasterThread extends Thread implements LoggerThread {
    private void addSwingGraphics(CuminRunner cr) {
       for (CashewValue cv : cr.getCallArgs()) {
          if (cv == null) return;
-         if (cv.getDataType(cr.getClock(),cr.getTyper()).getName().equals("edu.brown.cs.seede.poppy.PoppyGraphics")) {
+         if (cv.getDataType(cr.getSession(),cr.getClock(),cr.getTyper()).getName().equals("edu.brown.cs.seede.poppy.PoppyGraphics")) {
             CashewValue rv = cr.executeCall("edu.brown.cs.seede.poppy.PoppyGraphics.finalReport",cv);
             if (rv != null) {
                try  {
-        	  String rslt = rv.getString(cr.getTyper(),cr.getClock());
-        	  if (rslt != null) graphics_outputs.add(rslt);
-        	}
+                  String rslt = rv.getString(cr.getSession(),cr.getTyper(),cr.getClock());
+                  if (rslt != null) graphics_outputs.add(rslt);
+                }
                catch (CashewException e) {
-        	  AcornLog.logE("Unexpected error getting graphics result",e);
-        	}
+                  AcornLog.logE("Unexpected error getting graphics result",e);
+                }
              }
           }
        }

@@ -73,7 +73,10 @@ SesameValueData lookup(String thread,String expr)
    if (thread == null || thread.equals("")) thread = "*";
    
    if (thread.equals("*")) {
-      CashewValue cv = initial_map.get(expr);
+      CashewValue cv = null;
+      synchronized (initial_map) {
+         cv = initial_map.get(expr);
+       }
       if (cv != null) {
          return new SesameValueData(cv);
        }

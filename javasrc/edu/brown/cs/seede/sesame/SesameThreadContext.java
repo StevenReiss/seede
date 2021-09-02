@@ -87,7 +87,8 @@ public CashewValue findStaticFieldReference(JcompTyper typer,String name,String 
       if (cv != null) return cv;
       SesameValueData svd = for_session.evaluateData("java.lang.Thread.currentThread()",thread_id,false);
       if (svd != null) {
-         cv = svd.getCashewValue();
+         SesameSessionLaunch ssl = (SesameSessionLaunch) for_session;
+         cv = svd.getCashewValue(ssl);
          if (cv != null) {
             define(name,cv);
             return cv;

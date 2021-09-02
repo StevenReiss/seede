@@ -437,7 +437,8 @@ private void handleRunEvent(Element event,long when)
    String kind = IvyXml.getAttrString(event,"KIND");
    String detail = IvyXml.getAttrString(event,"DETAIL");
    if (detail != null && detail.equals("EVALUATION")) return;
-
+   if (detail != null && detail.equals("EVALUATION_IMPLICIT")) return;
+   
    switch (kind) {
       case "RESUME" :
 	 Element thrd = IvyXml.getChild(event,"THREAD");

@@ -56,7 +56,8 @@ private ASTNode 		eval_node;
 /*										*/
 /********************************************************************************/
 
-public CashewValueFunctionRef(JcompTyper typer,JcompType typ,ASTNode nx,List<JcompSymbol> px,
+public CashewValueFunctionRef(JcompTyper typer,JcompType typ,
+      ASTNode nx,List<JcompSymbol> px,
       Map<Object,CashewValue> bind)
 {
    super(typer,typ,null,false);
@@ -95,7 +96,10 @@ public ASTNode getEvalNode()
    return eval_node;
 }
 
-@Override public boolean isFunctionRef(CashewClock cc)	{ return true; }
+@Override public boolean isFunctionRef(CashewValueSession sess,CashewClock cc)	
+{ 
+   return true; 
+}
 
 
 }	// end of class CashewValueFunctionRef

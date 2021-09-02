@@ -71,17 +71,18 @@ CashewValueString(JcompTyper typer,JcompType styp,String s)
 /*										*/
 /********************************************************************************/
 
-@Override public String getString(JcompTyper typer,CashewClock cc,int lvl,boolean dbg)
+@Override public String getString(CashewValueSession sess,
+      JcompTyper typer,CashewClock cc,int lvl,boolean dbg)
 {
    return string_value;
 }
 
 
 
-@Override public String getInternalRepresentation(CashewClock cc)
+@Override public String getInternalRepresentation(CashewValueSession sess,CashewClock cc)
 {
    if (string_value == null) return "null";
-   String rslt = super.getInternalRepresentation(cc);
+   String rslt = super.getInternalRepresentation(sess,cc);
    if (rslt != null) return rslt;
 
    StringBuffer buf = new StringBuffer();
@@ -129,7 +130,8 @@ CashewValueString(JcompTyper typer,JcompType styp,String s)
 
 
 
-@Override synchronized public CashewValue getFieldValue(JcompTyper typer,CashewClock cc,String name,boolean force)
+@Override synchronized public CashewValue getFieldValue(CashewValueSession sess,
+      JcompTyper typer,CashewClock cc,String name,boolean force)
 {
    switch (name) {
       case "value" :
@@ -177,17 +179,18 @@ CashewValueString(JcompTyper typer,JcompType styp,String s)
 /*										*/
 /********************************************************************************/
 
-@Override public CashewValue setFieldValue(JcompTyper typer,CashewClock cc,String name,CashewValue v)
+@Override public CashewValue setFieldValue(CashewValueSession sess,
+      JcompTyper typer,CashewClock cc,String name,CashewValue v)
 	throws CashewException
 {
    switch (name) {
       case "value" :
       case "java.lang.String.value" :
 	 value_field = v;
-	 int dim = v.getDimension(cc);
+	 int dim = v.getDimension(sess,cc);
 	 char [] rslt = new char[dim];
 	 for (int i = 0; i < dim; ++i) {
-	    rslt[i] = v.getIndexValue(cc,i).getChar(cc);
+	    rslt[i] = v.getIndexValue(sess,cc,i).getChar(sess,cc);
 	  }
 	 string_value = new String(rslt);
 	 break;

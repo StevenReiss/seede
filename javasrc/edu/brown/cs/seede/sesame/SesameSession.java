@@ -45,9 +45,10 @@ import edu.brown.cs.seede.cashew.CashewContext;
 import edu.brown.cs.seede.cashew.CashewException;
 import edu.brown.cs.seede.cashew.CashewInputOutputModel;
 import edu.brown.cs.seede.cashew.CashewValue;
+import edu.brown.cs.seede.cashew.CashewConstants.CashewValueSession;
 import edu.brown.cs.seede.cumin.CuminRunner;
 
-public abstract class SesameSession implements SesameConstants
+public abstract class SesameSession implements SesameConstants, CashewValueSession
 {
 
 
@@ -395,7 +396,7 @@ CuminRunner createRunner(SesameLocation loc,SesameContext gblctx)
    if (args == null) return null;
    SesameThreadContext tctx = new SesameThreadContext(loc.getThread(),
 	 loc.getThreadName(),this,gblctx);
-   CuminRunner cr = CuminRunner.createRunner(getProject(),tctx,mthd,args,true);
+   CuminRunner cr = CuminRunner.createRunner(this,getProject(),tctx,mthd,args,true);
    runner_location.put(cr,loc);
 
    return cr;
@@ -503,11 +504,7 @@ CashewValue lookupValue(String name,String type)
 
 CashewValue evaluate(String expr,String thread,boolean allframes)
 {
-   SesameValueData svd = evaluateData(expr,thread,allframes);
-
-   if (svd == null) return null;
-
-   return svd.getCashewValue();
+   return null;
 }
 
 

@@ -59,6 +59,7 @@ private boolean can_initialize;
 
 
 
+
 /********************************************************************************/
 /*										*/
 /*	Constructors								*/
@@ -70,6 +71,7 @@ CashewRef(CashewValue v,boolean caninit)
    last_update = 0;
    last_value = v;
    can_initialize = caninit;
+   deferred_value = null;
 }
 
 CashewRef(CashewDeferredValue deferred)
@@ -89,45 +91,46 @@ CashewRef(CashewDeferredValue deferred)
 /*										*/
 /********************************************************************************/
 
-@Override public Number getNumber(CashewClock cc) throws CashewException
+@Override public Number getNumber(CashewValueSession sess,CashewClock cc) throws CashewException
 {
-   CashewValue cv = getValueAt(cc);
+   CashewValue cv = getValueAt(sess,cc);
    if (cv == null) return null;
-   return cv.getNumber(cc);
+   return cv.getNumber(sess,cc);
 }
 
 
-@Override public Character getChar(CashewClock cc) throws CashewException
+@Override public Character getChar(CashewValueSession sess,CashewClock cc) throws CashewException
 {
-   CashewValue cv = getValueAt(cc);
+   CashewValue cv = getValueAt(sess,cc);
    if (cv == null) return null;
-   return cv.getChar(cc);
+   return cv.getChar(sess,cc);
 }
 
 
 
-@Override public String getString(JcompTyper typer,CashewClock cc,int lvl,boolean dbg)
+@Override public String getString(CashewValueSession sess,
+      JcompTyper typer,CashewClock cc,int lvl,boolean dbg)
         throws CashewException
 {
    if (dbg && deferred_value != null) return "<???>";
 
-   CashewValue cv = getValueAt(cc);
+   CashewValue cv = getValueAt(sess,cc);
    if (cv == null) return null;
-   return cv.getString(typer,cc,lvl,dbg);
+   return cv.getString(sess,typer,cc,lvl,dbg);
 }
 
 
 
-@Override public CashewValue getActualValue(CashewClock cc)
+@Override public CashewValue getActualValue(CashewValueSession sess,CashewClock cc)
 {
-   return getValueAt(cc);
+   return getValueAt(sess,cc);
 }
 
 
-@Override public CashewValue setValueAt(CashewClock cc,CashewValue cv)
+@Override public CashewValue setValueAt(CashewValueSession sess,CashewClock cc,CashewValue cv)
 {
    if (cv == null) return this;
-   cv = cv.getActualValue(cc);
+   cv = cv.getActualValue(sess,cc);
    if (cv == null) return this;
 
    long tv = 0;
@@ -142,7 +145,7 @@ CashewRef(CashewDeferredValue deferred)
     }
 
    if (value_map == null) {
-      value_map = new TreeMap<Long,CashewValue>();
+      value_map = new TreeMap<>();
       if (last_value != null) value_map.put(last_update,last_value);
     }
 
@@ -188,61 +191,63 @@ CashewRef(CashewDeferredValue deferred)
 
 
 
-@Override public CashewValue getFieldValue(JcompTyper typer,CashewClock cc,String name,boolean force)
+@Override public CashewValue getFieldValue(CashewValueSession sess,
+      JcompTyper typer,CashewClock cc,String name,boolean force)
         throws CashewException
 {
-   CashewValue cv = getValueAt(cc);
+   CashewValue cv = getValueAt(sess,cc);
    if (cv == null) return null;
-   return cv.getFieldValue(typer,cc,name,force);
+   return cv.getFieldValue(sess,typer,cc,name,force);
 }
 
 
 
-@Override public CashewValue setFieldValue(JcompTyper typer,CashewClock cc,String name,CashewValue v)
+@Override public CashewValue setFieldValue(CashewValueSession sess,JcompTyper typer,
+      CashewClock cc,String name,CashewValue v)
         throws CashewException
 {
-   CashewValue cv = getValueAt(cc);
+   CashewValue cv = getValueAt(sess,cc);
    if (cv == null) return null;
-   CashewValue ncv = cv.setFieldValue(typer,cc,name,v);
-   setValueAt(cc,ncv);
+   CashewValue ncv = cv.setFieldValue(sess,typer,cc,name,v);
+   setValueAt(sess,cc,ncv);
    return this;
 }
 
 
-@Override public CashewValue getIndexValue(CashewClock cc,int idx)
+@Override public CashewValue getIndexValue(CashewValueSession sess,CashewClock cc,int idx)
         throws CashewException
 {
-   CashewValue cv = getValueAt(cc);
+   CashewValue cv = getValueAt(sess,cc);
    if (cv == null) return null;
-   return cv.getIndexValue(cc,idx);
+   return cv.getIndexValue(sess,cc,idx);
 }
 
-@Override public int getDimension(CashewClock cc) throws CashewException
+@Override public int getDimension(CashewValueSession sess,CashewClock cc) throws CashewException
 {
-   CashewValue cv = getValueAt(cc);
+   CashewValue cv = getValueAt(sess,cc);
    if (cv == null) 
       throw new Error("Value is not an array");
-   return cv.getDimension(cc);
+   return cv.getDimension(sess,cc);
 }
 
 
-@Override public CashewValue setIndexValue(CashewClock cc,int idx,CashewValue v)
+@Override public CashewValue setIndexValue(CashewValueSession sess,CashewClock cc,int idx,CashewValue v)
         throws CashewException
 {
-   CashewValue cv = getValueAt(cc);
+   CashewValue cv = getValueAt(sess,cc);
    if (cv == null) return null;
-   CashewValue ncv = cv.setIndexValue(cc,idx,v);
-   setValueAt(cc,ncv);
+   CashewValue ncv = cv.setIndexValue(sess,cc,idx,v);
+   setValueAt(sess,cc,ncv);
    return this;
 }
 
 
 
-@Override public boolean isNull(CashewClock cc)
+@Override public boolean isNull(CashewValueSession sess,CashewClock cc)
 {
-   CashewValue cv = getValueAt(cc);
+   CashewValue cv = getValueAt(sess,cc);
    if (cv == null) return true;
-   return cv.isNull(cc);
+   return cv.isNull(sess,cc);
 }
 
 
@@ -254,38 +259,38 @@ CashewRef(CashewDeferredValue deferred)
 
 
 
-@Override public boolean isCategory2(CashewClock cc)
+@Override public boolean isCategory2(CashewValueSession sess,CashewClock cc)
 {
-   CashewValue cv = getValueAt(cc);
+   CashewValue cv = getValueAt(sess,cc);
    if (cv == null) return false;
-   return cv.isCategory2(cc);
+   return cv.isCategory2(sess,cc);
 }
 
 
-@Override public boolean isFunctionRef(CashewClock cc)
+@Override public boolean isFunctionRef(CashewValueSession sess,CashewClock cc)
 {
-   CashewValue cv = getValueAt(cc);
+   CashewValue cv = getValueAt(sess,cc);
    if (cv == null) return false;
-   return cv.isFunctionRef(cc);
+   return cv.isFunctionRef(sess,cc);
 }
 
 
-@Override public JcompType getDataType(CashewClock cc,JcompTyper typer)
+@Override public JcompType getDataType(CashewValueSession sess,CashewClock cc,JcompTyper typer)
 {
-   CashewValue cv = getValueAt(cc);
+   CashewValue cv = getValueAt(sess,cc);
    if (cv == null) return null;
-   return cv.getDataType(cc,typer);
+   return cv.getDataType(sess,cc,typer);
 }
 
 
 
 
 
-@Override public String getInternalRepresentation(CashewClock cc)
+@Override public String getInternalRepresentation(CashewValueSession sess,CashewClock cc)
 {
-   CashewValue cv = getValueAt(cc);
+   CashewValue cv = getValueAt(sess,cc);
    if (cv == null) return null;
-   return cv.getInternalRepresentation(cc);
+   return cv.getInternalRepresentation(sess,cc);
 }
 
 
@@ -297,7 +302,7 @@ CashewRef(CashewDeferredValue deferred)
 /*										*/
 /********************************************************************************/
 
-private CashewValue getValueAt(CashewClock cc)
+private CashewValue getValueAt(CashewValueSession sess,CashewClock cc)
 {
    long tv = 0;
    if (cc == null) {
@@ -311,7 +316,7 @@ private CashewValue getValueAt(CashewClock cc)
 
    if (value_map == null) {
       if (deferred_value != null) {
-	 CashewValue cv = deferred_value.getValue();
+	 CashewValue cv = deferred_value.getValue(sess);
 	 if (cv != null) {
 	    last_update = 0;
 	    last_value = cv;
@@ -329,6 +334,7 @@ private CashewValue getValueAt(CashewClock cc)
 }
 
 
+
 @Override boolean sameValue(CashewValue cv)
 {
    if (value_map == null && last_value != null)
@@ -336,7 +342,6 @@ private CashewValue getValueAt(CashewClock cc)
 
    return false;
 }
-
 
 
 
@@ -362,18 +367,18 @@ private CashewValue getValueAt(CashewClock cc)
 
 
 
-@Override public void checkToString(CashewOutputContext outctx)
+@Override public void checkToString(CashewValueSession sess,CashewOutputContext outctx)
 {
    if (value_map == null && last_value == null) return;
    if (value_map == null && last_value != null) {
-      last_value.checkToString(outctx);
+      last_value.checkToString(sess,outctx);
       return;
     }
    // here we need to compute all relevant times and then
    // do the checkToString at a particular time
    
    for (CashewValue cv : value_map.values()) {
-      if (cv != null) cv.checkToString(outctx);
+      if (cv != null) cv.checkToString(sess,outctx);
     }
 }
 
@@ -402,7 +407,7 @@ void getChangeTimes(Set<Long> times,Set<CashewValue> done)
    IvyXmlWriter xw = outctx.getXmlWriter();
    if (outctx.expand(name)) {
       if (deferred_value != null && value_map == null) {
-         getValueAt(null);
+         getValueAt(outctx.getSession(),null);
        }
     }
    if (value_map == null) {

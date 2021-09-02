@@ -103,6 +103,7 @@ public String getContents()
 
 public JcompTyper getTyper()			{ return type_context; }
 public CashewClock getClock()			{ return for_runner.getClock(); }
+public CashewValueSession getSession()          { return for_runner.getSession(); }
 
 void setContext(CashewContext ctx)
 {
@@ -153,7 +154,7 @@ public void resetValues()
 /*										*/
 /********************************************************************************/
 
-public String getToString(CashewValue cv)
+public String getToString(CashewValueSession sess,CashewValue cv)
 {
    JcompType typ = cv.getDataType(getTyper());
    if (typ.isPrimitiveType()) return null;
@@ -171,11 +172,11 @@ public String getToString(CashewValue cv)
    for_runner.ensureLoaded("edu.brown.cs.seede.poppy.PoppyValue");
    String rtn = "edu.brown.cs.seede.poppy.PoppyValue.getToString";
    CashewValue rslt = for_runner.executeCall(rtn,cv);
-   if (rslt == null || rslt.isNull(for_runner.getClock())) return null;
+   if (rslt == null || rslt.isNull(sess,for_runner.getClock())) return null;
 
    try {
       CashewClock clk = for_runner.getClock();
-      return rslt.getString(type_context,clk);
+      return rslt.getString(sess,type_context,clk);
     }
    catch (CashewException e) {
       AcornLog.logE("Problem getting toString",e);

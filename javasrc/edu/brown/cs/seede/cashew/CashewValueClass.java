@@ -67,7 +67,8 @@ public JcompType getJcompType()                         { return class_value; }
 
 
 
-@Override public String getString(JcompTyper typer,CashewClock cc,int idx,boolean dbg) 
+@Override public String getString(CashewValueSession sess,
+      JcompTyper typer,CashewClock cc,int idx,boolean dbg) 
 {
    return class_value.toString();
 }

@@ -68,9 +68,14 @@ String CURRENT_THREAD_NAME_FIELD = "@currentThreadName";
 /*                                                                              */
 /********************************************************************************/
 
+interface CashewValueSession {
+   
+}
+
+
 interface CashewDeferredValue {
    
-   CashewValue getValue();
+   CashewValue getValue(CashewValueSession sess);
    
 }
 
@@ -79,6 +84,7 @@ interface CashewRunner {
    CashewClock getClock();
    CashewValue executeCall(String method,CashewValue ... args);
    JcompTyper getTyper();
+   CashewValueSession getSession();
 }
 
 

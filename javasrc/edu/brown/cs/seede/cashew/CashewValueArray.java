@@ -55,7 +55,8 @@ private int old_ref;
 /*										*/
 /********************************************************************************/
 
-CashewValueArray(JcompTyper typer,JcompType jt,int dim,Map<Integer,Object> inits,boolean caninit) 
+CashewValueArray(JcompTyper typer,JcompType jt,int dim,
+      Map<Integer,Object> inits,boolean caninit) 
 {
    super(jt);
    dim_size = dim;
@@ -83,35 +84,38 @@ CashewValueArray(JcompTyper typer,JcompType jt,int dim,Map<Integer,Object> inits
 /*										*/
 /********************************************************************************/
 
-@Override public CashewValue getFieldValue(JcompTyper typer,CashewClock cc,String nm,boolean force) 
+@Override public CashewValue getFieldValue(CashewValueSession sess,
+      JcompTyper typer,CashewClock cc,String nm,boolean force) 
         throws CashewException
 {
    if (nm != null && nm.equals("length")) {
       return CashewValue.numericValue(typer,typer.INT_TYPE,dim_size);
     }
-   return super.getFieldValue(typer,cc,nm,force);
+   return super.getFieldValue(sess,typer,cc,nm,force);
 }
 
-@Override public int getDimension(CashewClock cc)
+@Override public int getDimension(CashewValueSession s,CashewClock cc)
 {
    return dim_size;
 }
 
-@Override public CashewValue getIndexValue(CashewClock cc,int idx) 
+@Override public CashewValue getIndexValue(CashewValueSession sess,
+      CashewClock cc,int idx) 
 {
    if (idx < 0 || idx >= dim_size)
       throw new Error("IndexOutOfBounds");
    return array_values[idx];
 }
 
-@Override public CashewValue setIndexValue(CashewClock cc,int idx,CashewValue v) 
+@Override public CashewValue setIndexValue(CashewValueSession sess,CashewClock cc,int idx,CashewValue v) 
 {
    if (idx < 0 || idx >= dim_size) throw new Error("IndexOutOfBounds");
-   array_values[idx].setValueAt(cc,v);
+   array_values[idx].setValueAt(sess,cc,v);
    return this;
 }
 
-@Override public String getString(JcompTyper typer,CashewClock cc,int lvl,boolean dbg)
+@Override public String getString(CashewValueSession sess,
+      JcompTyper typer,CashewClock cc,int lvl,boolean dbg)
         throws CashewException
 {
    StringBuffer buf = new StringBuffer();
@@ -121,7 +125,7 @@ CashewValueArray(JcompTyper typer,JcompType jt,int dim,Map<Integer,Object> inits
       if (dbg) sz = Math.min(sz,10);
       for (int i = 0; i < sz; ++i) {
 	 if (i != 0) buf.append(",");
-	 buf.append(getIndexValue(cc,i).getString(typer,cc,lvl,dbg));
+	 buf.append(getIndexValue(sess,cc,i).getString(sess,typer,cc,lvl,dbg));
        }
       if (sz < dim_size) buf.append("...");
     }
@@ -131,16 +135,16 @@ CashewValueArray(JcompTyper typer,JcompType jt,int dim,Map<Integer,Object> inits
 }
 
 
-@Override public String getInternalRepresentation(CashewClock cc)
+@Override public String getInternalRepresentation(CashewValueSession sess,CashewClock cc)
 {
-   String rslt = super.getInternalRepresentation(cc);
+   String rslt = super.getInternalRepresentation(sess,cc);
    if (rslt != null) return rslt;
 
    StringBuffer buf = new StringBuffer();
-   buf.append("new " + getDataType(cc,null).getBaseType().getName() + "[" + dim_size + "|");
+   buf.append("new " + getDataType(sess,cc,null).getBaseType().getName() + "[" + dim_size + "|");
    buf.append("{");
    for (int i = 0; i < dim_size; ++i) {
-      String r = getIndexValue(cc,i).getInternalRepresentation(cc);
+      String r = getIndexValue(sess,cc,i).getInternalRepresentation(sess,cc);
       if (i > 0) buf.append(",");
       buf.append(r);
     }
@@ -180,7 +184,7 @@ CashewValueArray(JcompTyper typer,JcompType jt,int dim,Map<Integer,Object> inits
 /*										*/
 /********************************************************************************/
 
-public CashewValueArray cloneObject(JcompTyper typer,CashewClock cc,long when)
+public CashewValueArray cloneObject(CashewValueSession sess,JcompTyper typer,CashewClock cc,long when)
 {
    CashewClock ncc = cc;
    if (when > 0) ncc = new CashewClock(when);
@@ -188,7 +192,7 @@ public CashewValueArray cloneObject(JcompTyper typer,CashewClock cc,long when)
    Map<Integer,Object> inits = new HashMap<>();
    for (int i = 0; i < array_values.length; ++i) {
       if (array_values[i] != null) {
-	 inits.put(i,array_values[i].getActualValue(ncc));
+	 inits.put(i,array_values[i].getActualValue(sess,ncc));
        }
     }
    return new CashewValueArray(typer,getDataType(typer),dim_size,inits,false);

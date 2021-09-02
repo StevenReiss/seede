@@ -75,46 +75,52 @@ protected CashewClock getClock()	{ return exec_runner.getClock(); }
 protected int getNumArgs()		{ return exec_runner.getNumArg(); }
 protected CashewContext getContext()	{ return exec_runner.getLookupContext(); }
 protected JcompTyper getTyper() 	{ return exec_runner.getTyper(); }
+protected CashewValueSession getSession() 
+{
+   return exec_runner.getSession();
+}
 
 
 protected String getString(int idx) throws CashewException
 {
-   return getContext().findReference(idx).getString(getTyper(),getClock());
+   return getContext().findReference(idx).getString(getSession(),getTyper(),getClock());
 }
 
 protected int getInt(int idx) throws CashewException 
 {
-   return getContext().findReference(idx).getNumber(getClock()).intValue();
+   return getContext().findReference(idx).getNumber(getSession(),getClock()).intValue();
 }
 
 protected double getDouble(int idx) throws CashewException
 {
-   return getContext().findReference(idx).getNumber(getClock()).doubleValue();
+   return getContext().findReference(idx).getNumber(getSession(),getClock()).doubleValue();
 }
 
 protected float getFloat(int idx) throws CashewException
 {
-   return getContext().findReference(idx).getNumber(getClock()).floatValue();
+   return getContext().findReference(idx).getNumber(getSession(),getClock()).floatValue();
 }
 
 protected long getLong(int idx) throws CashewException
 {
-   return getContext().findReference(idx).getNumber(getClock()).longValue();
+   return getContext().findReference(idx).getNumber(getSession(),getClock()).longValue();
 }
 
 
 protected char getChar(int idx) throws CashewException
 {
-   return getContext().findReference(idx).getChar(getClock());
+   return getContext().findReference(idx).getChar(getSession(),getClock());
 }
 
 protected char [] getCharArray(int idx) throws CashewException
 {
-   CashewValue cv = getContext().findReference(idx).getActualValue(getClock());
-   int dim = cv.getDimension(getClock());
+   CashewValueSession sess = getSession();
+   CashewClock cc = getClock();
+   CashewValue cv = getContext().findReference(idx).getActualValue(sess,cc);
+   int dim = cv.getDimension(sess,cc);
    char [] rslt = new char[dim];
    for (int i = 0; i < dim; ++i) {
-      rslt[i] = cv.getIndexValue(getClock(),i).getChar(getClock());
+      rslt[i] = cv.getIndexValue(sess,cc,i).getChar(sess,cc);
     }
    return rslt;
 }
@@ -122,11 +128,13 @@ protected char [] getCharArray(int idx) throws CashewException
 
 protected byte [] getByteArray(int idx) throws CashewException
 {
-   CashewValue cv = getContext().findReference(idx).getActualValue(getClock());
-   int dim = cv.getDimension(getClock());
+   CashewValueSession sess = getSession();
+   CashewClock cc = getClock();
+   CashewValue cv = getContext().findReference(idx).getActualValue(sess,cc);
+   int dim = cv.getDimension(sess,cc);
    byte [] rslt = new byte[dim];
    for (int i = 0; i < dim; ++i) {
-      rslt[i] = cv.getIndexValue(getClock(),i).getNumber(getClock()).byteValue();
+      rslt[i] = cv.getIndexValue(sess,cc,i).getNumber(sess,getClock()).byteValue();
     }
    return rslt;
 }
@@ -134,11 +142,13 @@ protected byte [] getByteArray(int idx) throws CashewException
 
 protected int [] getIntArray(int idx) throws CashewException
 {
-   CashewValue cv = getContext().findReference(idx).getActualValue(getClock());
-   int dim = cv.getDimension(getClock());
+   CashewValueSession sess = getSession();
+   CashewClock cc = getClock();
+   CashewValue cv = getContext().findReference(idx).getActualValue(sess,cc);
+   int dim = cv.getDimension(sess,cc);
    int [] rslt = new int[dim];
    for (int i = 0; i < dim; ++i) {
-      rslt[i] = cv.getIndexValue(getClock(),i).getNumber(getClock()).intValue();
+      rslt[i] = cv.getIndexValue(sess,cc,i).getNumber(sess,cc).intValue();
     }
    return rslt;
 }
@@ -146,11 +156,13 @@ protected int [] getIntArray(int idx) throws CashewException
 
 protected float [] getFloatArray(int idx) throws CashewException
 {
-   CashewValue cv = getContext().findReference(idx).getActualValue(getClock());
-   int dim = cv.getDimension(getClock());
+   CashewValueSession sess = getSession();
+   CashewClock cc = getClock();
+   CashewValue cv = getContext().findReference(idx).getActualValue(sess,cc);
+   int dim = cv.getDimension(sess,cc);
    float [] rslt = new float[dim];
    for (int i = 0; i < dim; ++i) {
-      rslt[i] = cv.getIndexValue(getClock(),i).getNumber(getClock()).floatValue();
+      rslt[i] = cv.getIndexValue(sess,cc,i).getNumber(sess,cc).floatValue();
     }
    return rslt;
 }
@@ -159,11 +171,13 @@ protected float [] getFloatArray(int idx) throws CashewException
 
 protected double [] getDoubleArray(int idx) throws CashewException
 {
-   CashewValue cv = getContext().findReference(idx).getActualValue(getClock());
-   int dim = cv.getDimension(getClock());
+   CashewValueSession sess = getSession();
+   CashewClock cc = getClock();
+   CashewValue cv = getContext().findReference(idx).getActualValue(sess,cc);
+   int dim = cv.getDimension(sess,cc);
    double [] rslt = new double[dim];
    for (int i = 0; i < dim; ++i) {
-      rslt[i] = cv.getIndexValue(getClock(),i).getNumber(getClock()).doubleValue();
+      rslt[i] = cv.getIndexValue(sess,cc,i).getNumber(sess,cc).doubleValue();
     }
    return rslt;
 }
@@ -171,7 +185,7 @@ protected double [] getDoubleArray(int idx) throws CashewException
 
 protected boolean getBoolean(int idx) throws CashewException 
 {
-   return getContext().findReference(idx).getBoolean(getClock());
+   return getContext().findReference(idx).getBoolean(getSession(),getClock());
 }
 
 
@@ -183,25 +197,27 @@ protected File getFile(int idx)
 
 protected JcompType getDataType(int idx)
 {
-   return getContext().findReference(idx).getDataType(getClock(),getTyper());
+   return getContext().findReference(idx).getDataType(getSession(),getClock(),getTyper());
 }
 
 protected CashewValue getValue(int idx)
 {
-   return getContext().findReference(idx).getActualValue(getClock());
+   return getContext().findReference(idx).getActualValue(getSession(),getClock());
 }
 
 
 
 protected CashewValue getArrayValue(int idx) throws CuminRunException
 {
+   CashewValueSession sess = getSession();
+   CashewClock cc = getClock();
    CashewValue array = getValue(idx);
    String exc = null;
-   if (array.isNull(getClock()))
+   if (array.isNull(sess,cc))
       exc = "java.lang.NullPointerException";
-   if (!array.getDataType(getClock(),getTyper()).isArrayType())
+   if (!array.getDataType(sess,cc,getTyper()).isArrayType())
       exc = "java.lang.IllegalArgumentException";
-   if (exc != null) CuminEvaluator.throwException(getTyper(),exc);
+   if (exc != null) CuminEvaluator.throwException(sess,getTyper(),exc);
    return array;
 }
 
@@ -215,23 +231,23 @@ protected CashewValueClass getTypeValue(int idx)
 
 protected String getStringFieldValue(CashewValue obj,String fld) throws CashewException
 {
-   CashewValue cv = obj.getFieldValue(getTyper(),getClock(),fld);
-   return cv.getString(getTyper(),getClock());
+   CashewValue cv = obj.getFieldValue(getSession(),getTyper(),getClock(),fld);
+   return cv.getString(getSession(),getTyper(),getClock());
 }
 
 
 protected int getIntFieldValue(CashewValue obj,String fld) throws CashewException
 {
-   CashewValue cv = obj.getFieldValue(getTyper(),getClock(),fld);
-   return cv.getNumber(getClock()).intValue();
+   CashewValue cv = obj.getFieldValue(getSession(),getTyper(),getClock(),fld);
+   return cv.getNumber(getSession(),getClock()).intValue();
 }  
 
 
 
 protected void copyField(CashewValue from,CashewValue to,String fld) throws CashewException
 {
-   CashewValue v0 = from.getFieldValue(getTyper(),getClock(),fld);
-   to.setFieldValue(getTyper(),getClock(),fld,v0);
+   CashewValue v0 = from.getFieldValue(getSession(),getTyper(),getClock(),fld);
+   to.setFieldValue(getSession(),getTyper(),getClock(),fld,v0);
 }
 
 

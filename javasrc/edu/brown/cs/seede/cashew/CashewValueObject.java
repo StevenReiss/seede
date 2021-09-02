@@ -36,6 +36,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class CashewValueObject extends CashewValue implements CashewConstants
 {
@@ -55,7 +56,7 @@ private Map<Long,String> string_values;
 private static Map<String,CashewRef> static_values;
 
 static {
-   static_values = new HashMap<String,CashewRef>();
+   static_values = new ConcurrentHashMap<String,CashewRef>();
 }
 
 
@@ -135,7 +136,8 @@ CashewValueObject(JcompTyper typer,JcompType jt,Map<String,Object> inits,boolean
 /*										*/
 /********************************************************************************/
 
-@Override public CashewValue getFieldValue(JcompTyper typer,CashewClock cc,String nm,boolean force)
+@Override public CashewValue getFieldValue(CashewValueSession sess,
+      JcompTyper typer,CashewClock cc,String nm,boolean force)
 {
    CashewValue cv = findFieldForName(typer,nm,force);
    if (cv == null && force) {
@@ -144,10 +146,11 @@ CashewValueObject(JcompTyper typer,JcompType jt,Map<String,Object> inits,boolean
    return cv;
 }
 
-@Override public CashewValue setFieldValue(JcompTyper typer,CashewClock cc,String nm,CashewValue cv)
+@Override public CashewValue setFieldValue(CashewValueSession sess,
+      JcompTyper typer,CashewClock cc,String nm,CashewValue cv)
 {
    CashewRef ov = findFieldForName(typer,nm,true);
-   ov.setValueAt(cc,cv);
+   ov.setValueAt(sess,cc,cv);
    if (cc == null && new_fields != null) {
       new_fields.remove(nm);
       if (new_fields.isEmpty()) new_fields = null;
@@ -202,7 +205,8 @@ private CashewRef findFieldForName(JcompTyper typer,String nm,boolean force)
 
 
 
-@Override CashewValue lookupVariableName(JcompTyper typer,String name,long when)
+@Override CashewValue lookupVariableName(CashewValueSession sess,
+      JcompTyper typer,String name,long when)
 	throws CashewException
 {
    String rest = null;
@@ -217,19 +221,19 @@ private CashewRef findFieldForName(JcompTyper typer,String nm,boolean force)
    if (ov == null) {
       ov = static_values.get(look);
     }
-   if (ov != null) return super.lookupVariableName(typer,name,when);
+   if (ov != null) return super.lookupVariableName(sess,typer,name,when);
 
    String match = "." + name;
    for (String fnm : field_values.keySet()) {
       if (fnm.endsWith(match)) {
 	 if (rest != null) fnm = fnm + "?" + rest;
-	 return super.lookupVariableName(typer,fnm,when);
+	 return super.lookupVariableName(sess,typer,fnm,when);
        }
     }
    for (String fnm : static_values.keySet()) {
       if (fnm.endsWith(match)) {
 	 if (rest != null) fnm = fnm + "?" + rest;
-	 return super.lookupVariableName(typer,fnm,when);
+	 return super.lookupVariableName(sess,typer,fnm,when);
        }
     }
 
@@ -242,11 +246,12 @@ private CashewRef findFieldForName(JcompTyper typer,String nm,boolean force)
 
 
 
-@Override public String getString(JcompTyper typer,CashewClock cc,int lvl,boolean dbg)
+@Override public String getString(CashewValueSession sess,
+      JcompTyper typer,CashewClock cc,int lvl,boolean dbg)
 	throws CashewException
 {
    StringBuffer buf = new StringBuffer();
-   buf.append(getDataType(cc,typer));
+   buf.append(getDataType(sess,cc,typer));
    if (lvl > 0 && field_values != null) {
       buf.append("{");
       int ctr = 0;
@@ -254,8 +259,8 @@ private CashewRef findFieldForName(JcompTyper typer,String nm,boolean force)
 	 if (ctr++ != 0) buf.append(",");
 	 buf.append(fldname);
 	 buf.append(":");
-	 CashewValue cv = getFieldValue(typer,cc,fldname);
-	 buf.append(cv.getString(typer,cc,lvl-1,dbg));
+	 CashewValue cv = getFieldValue(sess,typer,cc,fldname);
+	 buf.append(cv.getString(sess,typer,cc,lvl-1,dbg));
 	 if ((ctr % 10) == 0 && Thread.currentThread().isInterrupted()) break;
        }
       buf.append("}");
@@ -271,7 +276,8 @@ private CashewRef findFieldForName(JcompTyper typer,String nm,boolean force)
 /*										*/
 /********************************************************************************/
 
-public CashewValueObject cloneObject(JcompTyper typer,CashewClock cc,long when)
+public CashewValueObject cloneObject(CashewValueSession sess,JcompTyper typer,
+      CashewClock cc,long when)
 {
    CashewClock ncc = cc;
    if (when > 0) ncc = new CashewClock(when);
@@ -280,7 +286,7 @@ public CashewValueObject cloneObject(JcompTyper typer,CashewClock cc,long when)
    for (Map.Entry<String,CashewRef> ent : field_values.entrySet()) {
       String key = ent.getKey();
       if (key.startsWith("@")) continue;
-      CashewValue cv = ent.getValue().getActualValue(ncc);
+      CashewValue cv = ent.getValue().getActualValue(sess,ncc);
       inits.put(key,cv);
     }
    return new CashewValueObject(typer,getDataType(typer),inits,false);
@@ -337,7 +343,7 @@ public CashewValueObject cloneObject(JcompTyper typer,CashewClock cc,long when)
 
 
 
-@Override public void checkToString(CashewOutputContext outctx)
+@Override public void checkToString(CashewValueSession sess,CashewOutputContext outctx)
 {
    if (old_ref != 0) return;			// done before => don't recompute
 
@@ -352,18 +358,18 @@ public CashewValueObject cloneObject(JcompTyper typer,CashewClock cc,long when)
    getChangeTimes(times,done);
 
    if (times.isEmpty()) {
-      String s = outctx.getToString(this);
+      String s = outctx.getToString(sess,this);
       if (s != null) {
 	 string_values = new HashMap<>();
-	 string_values.put(0L,outctx.getToString(this));
+	 string_values.put(0L,outctx.getToString(sess,this));
        }
     }
    else {
       CashewClock cc = outctx.getClock();
       String last = null;
       for (Long t : times) {
-	 CashewValue crv = cloneObject(outctx.getTyper(),cc,t+1);
-	 String s = outctx.getToString(crv);
+	 CashewValue crv = cloneObject(sess,outctx.getTyper(),cc,t+1);
+	 String s = outctx.getToString(sess,crv);
 	 if (s == null && string_values == null) continue;
 	 if (string_values == null) {
 	    string_values = new HashMap<>();
@@ -488,7 +494,7 @@ public static void outputStatics(IvyXmlWriter xw,CashewOutputContext outctx)
 
 @Override public String toString()
 {
-   return getDebugString(null,null);
+   return getDebugString(null,null,null);
 }
 
 

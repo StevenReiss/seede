@@ -31,6 +31,7 @@ import edu.brown.cs.ivy.jcomp.JcompType;
 import edu.brown.cs.ivy.jcomp.JcompTyper;
 import edu.brown.cs.ivy.xml.IvyXmlWriter;
 import edu.brown.cs.seede.acorn.AcornLog;
+import edu.brown.cs.seede.cashew.CashewClock;
 import edu.brown.cs.seede.cashew.CashewConstants;
 import edu.brown.cs.seede.cashew.CashewException;
 import edu.brown.cs.seede.cashew.CashewValue;
@@ -315,6 +316,9 @@ CuminRunStatus checkGraphicsCallback() throws CashewException
 
 private void constrainGraphics(GraphicsOutput g,CashewValue rect) throws CashewException
 {
+   JcompTyper typer = getTyper();
+   CashewValueSession sess = getSession();
+   
    g.addFields();
 
    IvyXmlWriter xw = g.getCommandList();
@@ -322,10 +326,10 @@ private void constrainGraphics(GraphicsOutput g,CashewValue rect) throws CashewE
    xw.field("TYPE",CommandType.CONSTRAIN);
    xw.field("NUMARGS",4);
    xw.field("TIME",getClock().getTimeValue());
-   outputArg(xw,rect.getFieldValue(getTyper(),getClock(),"java.awt.Rectangle.x"));
-   outputArg(xw,rect.getFieldValue(getTyper(),getClock(),"java.awt.Rectangle.y"));
-   outputArg(xw,rect.getFieldValue(getTyper(),getClock(),"java.awt.Rectangle.width"));
-   outputArg(xw,rect.getFieldValue(getTyper(),getClock(),"java.awt.Rectangle.height"));
+   outputArg(xw,rect.getFieldValue(sess,typer,getClock(),"java.awt.Rectangle.x"));
+   outputArg(xw,rect.getFieldValue(sess,typer,getClock(),"java.awt.Rectangle.y"));
+   outputArg(xw,rect.getFieldValue(sess,typer,getClock(),"java.awt.Rectangle.width"));
+   outputArg(xw,rect.getFieldValue(sess,typer,getClock(),"java.awt.Rectangle.height"));
    xw.end("DRAW");
 }
 
@@ -340,7 +344,7 @@ private void outputArg(IvyXmlWriter xw,CashewValue cv) throws CashewException
 {
    xw.begin("ARG");
    xw.field("TYPE","int");
-   xw.field("VALUE",cv.getNumber(getClock()).intValue());
+   xw.field("VALUE",cv.getNumber(getSession(),getClock()).intValue());
    xw.end("ARG");
 }
 
@@ -366,41 +370,43 @@ private void createCommand(GraphicsOutput g,CommandType typ,int ign) throws Cash
    AcornLog.logD("Begin command " + typ);
 
    g.addFields();
-
+   CashewValueSession sess = getSession();
+   CashewClock cc = getClock();
+   
    IvyXmlWriter xw = g.getCommandList();
    xw.begin("DRAW");
    xw.field("TYPE",typ);
    xw.field("NUMARGS",act);
-   xw.field("TIME",getClock().getTimeValue());
+   xw.field("TIME",cc.getTimeValue());
 
    for (int i = 1; i < act; ++i) {
       xw.begin("ARG");
       CashewValue cv = getValue(i);
-      JcompType dtyp = cv.getDataType(getClock(),getTyper());
+      JcompType dtyp = cv.getDataType(sess,cc,getTyper());
       xw.field("TYPE",dtyp.getName());
-      if (cv.getDataType(getClock(),getTyper()).isPrimitiveType()) {
+      if (cv.getDataType(sess,cc,getTyper()).isPrimitiveType()) {
 	 switch (dtyp.getName()) {
 	    case "int" :
 	    case "short" :
 	    case "byte" :
 	    case "char" :
 	    case "long" :
-	       xw.field("VALUE",cv.getNumber(getClock()).longValue());
+	       xw.field("VALUE",cv.getNumber(sess,cc).longValue());
 	       break;
 	    case "float" :
 	    case "double" :
-	       xw.field("VALUE",cv.getNumber(getClock()).doubleValue());
+	       xw.field("VALUE",cv.getNumber(sess,cc).doubleValue());
 	       break;
 	    case "boolean" :
-	       xw.field("VALUE",cv.getBoolean(getClock()));
+	       xw.field("VALUE",cv.getBoolean(sess,cc));
 	       break;
 	  }
        }
-      else if (cv.isNull(getClock())) {
+      else if (cv.isNull(sess,cc)) {
 	 xw.field("NULL",true);
        }
       else if (dtyp == getTyper().STRING_TYPE) {
-	 xw.textElement("VALUE",cv.getString(getTyper(),getClock()));
+	 xw.textElement("VALUE",cv.getString(getSession(),getTyper(),cc));
        }
       else if (dtyp.getName().equals("java.awt.geom.AffineTransform")) {
 	 int trty = getIntField(cv,"java.awt.geom.AffineTransform.type");
@@ -436,7 +442,7 @@ private void createCommand(GraphicsOutput g,CommandType typ,int ign) throws Cash
 	  }
        }
       else {
-	 xw.textElement("VALUE",cv.getString(getTyper(),getClock()));
+	 xw.textElement("VALUE",cv.getString(getSession(),getTyper(),cc));
        }
       xw.end("ARG");
     }
@@ -455,9 +461,12 @@ private void createCommand(GraphicsOutput g,CommandType typ,int ign) throws Cash
 
 private String encodeField(CashewValue cv) throws CashewException
 {
-   if (cv == null || cv.isNull(getClock())) return null;
-
-   switch (cv.getDataType(getClock(),null).getName()) {
+   JcompTyper typer = getTyper();
+   CashewValueSession sess = getSession();
+   
+   if (cv == null || cv.isNull(sess,getClock())) return null;
+   
+   switch (cv.getDataType(sess,getClock(),null).getName()) {
       case "java.awt.Color" :
       case "sun.swing.PrintColorUIResource" :
       case "javax.swing.plaf.ColorUIResource" :
@@ -501,14 +510,14 @@ private String encodeField(CashewValue cv) throws CashewException
 		"M10='" + m10 + "' M11='" + m11 + "' M12='" + m12 + "' />";
          
       case "java.awt.GradientPaint" :
-          CashewValue col1 = cv.getFieldValue(getTyper(),getClock(),"java.awt.GradientPaint.color1");
+          CashewValue col1 = cv.getFieldValue(sess,typer,getClock(),"java.awt.GradientPaint.color1");
           int cval1 = getIntField(col1,"java.awt.Color.value");
-          CashewValue col2 = cv.getFieldValue(getTyper(),getClock(),"java.awt.GradientPaint.color2");
+          CashewValue col2 = cv.getFieldValue(sess,typer,getClock(),"java.awt.GradientPaint.color2");
           int cval2 = getIntField(col2,"java.awt.Color.value");
-          CashewValue pt1 = cv.getFieldValue(getTyper(),getClock(),"java.awt.GradientPaint.p1");
+          CashewValue pt1 = cv.getFieldValue(sess,typer,getClock(),"java.awt.GradientPaint.p1");
           float f1x = getFloatField(pt1,"java.awt.geom.Point2D.Float,x");
           float f1y = getFloatField(pt1,"java.awt.geom.Point2D.Float.y");
-          CashewValue pt2 = cv.getFieldValue(getTyper(),getClock(),"java.awt.GradientPaint.p2");
+          CashewValue pt2 = cv.getFieldValue(sess,typer,getClock(),"java.awt.GradientPaint.p2");
           float f2x = getFloatField(pt2,"java.awt.geom.Point2D.Float,x");
           float f2y = getFloatField(pt2,"java.awt.geom.Point2D.Float.y");
           boolean cyc = getBooleanField(cv,"java.awt.GradientPaint.cyclic");
@@ -519,56 +528,56 @@ private String encodeField(CashewValue cv) throws CashewException
 	 break;
     }
 
-   return "<VALUE TYPE='" + cv.getDataType(getClock(),null) + "' >" + 
-        cv.getString(getTyper(),getClock()) + "</VALUE>";
+   return "<VALUE TYPE='" + cv.getDataType(sess,getClock(),null) + "' >" + 
+        cv.getString(sess,typer,getClock()) + "</VALUE>";
 }
 
 
 private int getIntField(CashewValue cv,String name) throws CashewException
 {
-   CashewValue fval = cv.getFieldValue(getTyper(),getClock(),name);
+   CashewValue fval = cv.getFieldValue(getSession(),getTyper(),getClock(),name);
    if (fval == null) return 0;
-   return fval.getNumber(getClock()).intValue();
+   return fval.getNumber(getSession(),getClock()).intValue();
 }
 
 
 private CashewValue getOptionalField(CashewValue cv,String name) throws CashewException
 {
    if (cv == null) return null;
-   CashewValue fval = cv.getFieldValue(getTyper(),getClock(),name,false);
+   CashewValue fval = cv.getFieldValue(getSession(),getTyper(),getClock(),name,false);
    return fval;
 }
 
 
 private double getDoubleField(CashewValue cv,String name) throws CashewException 
 {
-   CashewValue fval = cv.getFieldValue(getTyper(),getClock(),name);
+   CashewValue fval = cv.getFieldValue(getSession(),getTyper(),getClock(),name);
    if (fval == null) return 0;
-   return fval.getNumber(getClock()).doubleValue();
+   return fval.getNumber(getSession(),getClock()).doubleValue();
 }
 
 
 private float getFloatField(CashewValue cv,String name) throws CashewException 
 {
-   CashewValue fval = cv.getFieldValue(getTyper(),getClock(),name);
+   CashewValue fval = cv.getFieldValue(getSession(),getTyper(),getClock(),name);
    if (fval == null) return 0;
-   return fval.getNumber(getClock()).floatValue();
+   return fval.getNumber(getSession(),getClock()).floatValue();
 }
 
 
 private boolean getBooleanField(CashewValue cv,String name) throws CashewException 
 {
-   CashewValue fval = cv.getFieldValue(getTyper(),getClock(),name);
+   CashewValue fval = cv.getFieldValue(getSession(),getTyper(),getClock(),name);
    if (fval == null) return false;
-   return fval.getBoolean(getClock());
+   return fval.getBoolean(getSession(),getClock());
 }
 
 
 private String getStringField(CashewValue cv,String name) throws CashewException
 {
-   CashewValue fval = cv.getFieldValue(getTyper(),getClock(),name);
+   CashewValue fval = cv.getFieldValue(getSession(),getTyper(),getClock(),name);
    if (fval == null) return null;;
-   return fval.getString(getTyper(),getClock());
+   return fval.getString(getSession(),getTyper(),getClock());
 }
 
 
@@ -600,14 +609,14 @@ private class GraphicsOutput {
    GraphicsOutput(CashewValue cv) throws CashewException {
       poppy_graphics = cv;
       parent_graphics = this;
-      poppy_id = cv.getFieldValue(getTyper(),getClock(),
-            "edu.brown.cs.seede.poppy.PoppyGraphics.poppy_id").getString(getTyper(),getClock());
-      CashewValue dimv = cv.getFieldValue(getTyper(),getClock(),
+      poppy_id = cv.getFieldValue(getSession(),getTyper(),getClock(),
+            "edu.brown.cs.seede.poppy.PoppyGraphics.poppy_id").getString(getSession(),getTyper(),getClock());
+      CashewValue dimv = cv.getFieldValue(getSession(),getTyper(),getClock(),
             "edu.brown.cs.seede.poppy.PoppyGraphics.poppy_width");
-      int wid = dimv.getNumber(getClock()).intValue();
-      dimv = cv.getFieldValue(getTyper(),getClock(),
+      int wid = dimv.getNumber(getSession(),getClock()).intValue();
+      dimv = cv.getFieldValue(getSession(),getTyper(),getClock(),
             "edu.brown.cs.seede.poppy.PoppyGraphics.poppy_height");
-      int ht = dimv.getNumber(getClock()).intValue();
+      int ht = dimv.getNumber(getSession(),getClock()).intValue();
    
       current_index = 0;
       clearCurrents();
@@ -690,7 +699,7 @@ private class GraphicsOutput {
 
    private String updateField(String cur,String fld,FieldType typ) throws CashewException {
       String fld1 = "edu.brown.cs.seede.poppy.PoppyGraphics." + fld;
-      CashewValue fval = poppy_graphics.getFieldValue(getTyper(),getClock(),fld1);
+      CashewValue fval = poppy_graphics.getFieldValue(getSession(),getTyper(),getClock(),fld1);
       String nval = encodeField(fval);
       // AcornLog.logD("Update Field " + fld + " " + cur + " " + nval);
       if (nval == null && cur == null) return cur;
@@ -707,11 +716,11 @@ private class GraphicsOutput {
    private boolean updateIndex() throws CashewException
    {
       String fld1 = "edu.brown.cs.seede.poppy.PoppyGraphics.poppy_index";
-      CashewValue fval = poppy_graphics.getFieldValue(getTyper(),getClock(),fld1);
+      CashewValue fval = poppy_graphics.getFieldValue(getSession(),getTyper(),getClock(),fld1);
       String fld2 = "edu.brown.cs.seede.poppy.PoppyGraphics.parent_index";
-      CashewValue fval2 = poppy_graphics.getFieldValue(getTyper(),getClock(),fld2);
-      int nidx = fval.getNumber(getClock()).intValue();
-      int pidx = fval2.getNumber(getClock()).intValue();
+      CashewValue fval2 = poppy_graphics.getFieldValue(getSession(),getTyper(),getClock(),fld2);
+      int nidx = fval.getNumber(getSession(),getClock()).intValue();
+      int pidx = fval2.getNumber(getSession(),getClock()).intValue();
       if (nidx == current_index) return false;
       IvyXmlWriter xw = getCommandList();
       xw.begin("INDEX");
@@ -733,9 +742,6 @@ private class GraphicsOutput {
     }
 
 }	// end of inner class GraphicsOutput
-
-
-
 
 
 

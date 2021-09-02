@@ -69,11 +69,11 @@ SesameSessionTest(SesameMain sm,String sid,Element xml) throws SesameException
    test_args = new ArrayList<CashewValue>();
    try {
       for (Element axml : IvyXml.children(txml,"ARG")) {
-	 test_args.add(CashewValue.createValue(typer,axml));
+	 test_args.add(CashewValue.createValue(this,typer,axml));
        }
       for (Element gxml : IvyXml.children(txml,"GLOBAL")) {
 	 String nm = IvyXml.getAttrString(gxml,"NAME");
-	 CashewValue cv = CashewValue.createValue(typer,gxml);
+	 CashewValue cv = CashewValue.createValue(this,typer,gxml);
 	 global_vars.put(nm,cv);
        }
     }
@@ -119,7 +119,7 @@ SesameSessionTest(SesameMain sm,String sid,Element xml) throws SesameException
 {
    JcompTyper typer = getProject().getTyper();
    try {
-      CashewValue cv = CashewValue.createValue(typer,val);
+      CashewValue cv = CashewValue.createValue(this,typer,val);
       global_vars.put(what,cv);
     }
    catch (CashewException e) {

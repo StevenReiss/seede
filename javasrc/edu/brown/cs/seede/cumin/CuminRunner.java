@@ -67,10 +67,10 @@ public abstract class CuminRunner implements CuminConstants, CashewConstants, Ca
 /*										*/
 /********************************************************************************/
 
-public static CuminRunner createRunner(CuminProject cp,CashewContext glblctx,
+public static CuminRunner createRunner(CashewValueSession sess,CuminProject cp,CashewContext glblctx,
       MethodDeclaration method,List<CashewValue> args,boolean top)
 {
-   return new CuminRunnerAst(cp,glblctx,null,method,args,top,0);
+   return new CuminRunnerAst(sess,cp,glblctx,null,method,args,top,0);
 }
 
 
@@ -123,6 +123,8 @@ public static void resetGraphics()
 /*										*/
 /********************************************************************************/
 
+protected CashewValueSession runner_session;
+
 private CuminProject	base_project;
 private CuminRunner	nested_call;
 private CuminRunner	outer_call;
@@ -149,8 +151,10 @@ protected int		max_depth;
 /*										*/
 /********************************************************************************/
 
-protected CuminRunner(CuminProject cp,CashewContext gblctx,CashewClock cc,List<CashewValue> args,int depth)
+protected CuminRunner(CashewValueSession sess,CuminProject cp,CashewContext gblctx,
+      CashewClock cc,List<CashewValue> args,int depth)
 {
+   runner_session = sess;
    base_project = cp;
    nested_call = null;
    outer_call = null;
@@ -204,6 +208,8 @@ JcompProject getCompProject()		{ return base_project.getJcompProject(); }
 public CashewClock getClock()		{ return execution_clock; }
 
 CuminStack getStack()			{ return execution_stack; }
+
+public CashewValueSession getSession()         { return runner_session; }
 
 public CashewContext getLookupContext() { return lookup_context; }
 public List<CashewValue> getCallArgs()	{ return call_args; }
@@ -268,7 +274,7 @@ public CashewValue findReferencedVariableValue(JcompTyper typer,String name,long
    int idx1 = ctxname.indexOf("#");
    if (idx1 > 0) ctxname = ctxname.substring(0,idx1);
    if (!ctxname.equals(lookup_context.getName())) return null;
-   return lookup_context.findReferencedVariableValue(typer,varname,when);
+   return lookup_context.findReferencedVariableValue(runner_session,typer,varname,when);
 }
 
 
@@ -370,7 +376,7 @@ protected CuminRunStatus checkTimeout()
    if (max_time <= 0) return null;
    if (execution_clock.getTimeValue() > max_time) {
       AcornLog.logI("Timeout " + max_time);
-      return CuminRunStatus.Factory.createTimeout(getTyper());
+      return CuminRunStatus.Factory.createTimeout(getSession(),getTyper());
     }
 
    return null;
@@ -384,7 +390,7 @@ protected void checkStackOverflow() throws CuminRunException
 
    if (depth > max_depth) {
       AcornLog.logI("Stack overflow " + max_depth);
-      CuminEvaluator.throwException(getTyper(),"java.lang.StackOverflowError");
+      CuminEvaluator.throwException(getSession(),getTyper(),"java.lang.StackOverflowError");
 //    throw CuminRunStatus.Factory.createStackOverflow();
     }
 
@@ -411,8 +417,8 @@ CuminRunner handleCall(CashewClock cc,JcompSymbol method,List<CashewValue> args,
     }
 
    if (!method.isStatic() && ctyp != CallType.STATIC && ctyp != CallType.SPECIAL) {
-      if (thisarg == null || thisarg.isNull(cc)) {
-	 CuminEvaluator.throwException(getTyper(),"java.lang.NullPointerException");
+      if (thisarg == null || thisarg.isNull(getSession(),cc)) {
+	 CuminEvaluator.throwException(getSession(),getTyper(),"java.lang.NullPointerException");
        }
     }
 
@@ -420,7 +426,7 @@ CuminRunner handleCall(CashewClock cc,JcompSymbol method,List<CashewValue> args,
    if (cmethod == null) {
       AcornLog.logE("Couldn't find method to call " + method);
       for (CashewValue cv : args) {
-	 AcornLog.logE("ARG: " + cv.getDebugString(getTyper(),cc));
+	 AcornLog.logE("ARG: " + cv.getDebugString(getSession(),getTyper(),cc));
        }
       throw CuminRunStatus.Factory.createError("Missing method " + method);
     }
@@ -481,7 +487,7 @@ CuminRunner handleCall(CashewClock cc,JcodeMethod method,List<CashewValue> args,
     }
 
    JcodeMethod cmethod = findTargetMethod(cc,method,thisarg,ctyp);
-   if (thisarg != null && thisarg.isFunctionRef(cc)) {
+   if (thisarg != null && thisarg.isFunctionRef(getSession(),cc)) {
       CashewValueFunctionRef fref = (CashewValueFunctionRef) thisarg;
       List<CashewValue> nargs = new ArrayList<>(args);
       nargs.remove(0);
@@ -511,8 +517,8 @@ CuminRunner handleCall(CashewClock cc,JcodeMethod method,List<CashewValue> args,
       args = nargs;
     }
 
-   if (cmethod == null && !method.isStatic() && thisarg.isNull(cc)) {
-      CuminEvaluator.throwException(type_converter,"java.lang.NullPointerException");
+   if (cmethod == null && !method.isStatic() && thisarg.isNull(getSession(),cc)) {
+      CuminEvaluator.throwException(getSession(),type_converter,"java.lang.NullPointerException");
     }
 
    if (cmethod == null) {
@@ -523,7 +529,7 @@ CuminRunner handleCall(CashewClock cc,JcodeMethod method,List<CashewValue> args,
       if (args != null) {
 	 for (CashewValue cv : args) {
 	    if (ctr++ > 0) buf.append(",");
-	    buf.append(cv.getDebugString(getTyper(),cc));
+	    buf.append(cv.getDebugString(getSession(),getTyper(),cc));
 	  }
        }
       buf.append(")");
@@ -565,7 +571,8 @@ CuminRunner handleCall(CashewClock cc,JcodeMethod method,List<CashewValue> args,
 
 private CuminRunner doCall(CashewClock cc,ASTNode ast,List<CashewValue> args)
 {
-   CuminRunnerAst rast = new CuminRunnerAst(base_project,global_context,cc,ast,args,false,cur_depth+1);
+   CuminRunnerAst rast = new CuminRunnerAst(getSession(),base_project,global_context,
+         cc,ast,args,false,cur_depth+1);
    rast.setMaxTime(max_time);
    rast.setMaxDepth(max_depth);
    CashewContext ctx = rast.getLookupContext();
@@ -580,7 +587,8 @@ private CuminRunner doCall(CashewClock cc,ASTNode ast,List<CashewValue> args)
 
 CuminRunner doCall(CashewClock cc,JcodeMethod mthd,List<CashewValue> args)
 {
-   CuminRunnerByteCode rbyt = new CuminRunnerByteCode(base_project,global_context,cc,mthd,args,cur_depth+1);
+   CuminRunnerByteCode rbyt = new CuminRunnerByteCode(getSession(),base_project,global_context,
+         cc,mthd,args,cur_depth+1);
    lookup_context.addNestedContext(rbyt.getLookupContext());
    rbyt.setMaxTime(max_time);
    rbyt.setMaxDepth(max_depth);
@@ -604,7 +612,7 @@ private JcompSymbol findTargetMethod(CashewClock cc,JcompSymbol method,
     }
 
    JcompType base = null;
-   if (arg0 != null) base = arg0.getDataType(cc,type_converter);
+   if (arg0 != null) base = arg0.getDataType(getSession(),cc,type_converter);
    if (base == null) return null;
 
    JcompSymbol nmethod = base.lookupMethod(getTyper(),method.getName(),method.getType());
@@ -627,7 +635,7 @@ private JcodeMethod findTargetMethod(CashewClock cc,JcodeMethod method,
       CashewValue arg0,CallType ctyp)
 {
    JcompType base = null;
-   if (arg0 != null) base = arg0.getDataType(cc,type_converter);
+   if (arg0 != null) base = arg0.getDataType(getSession(),cc,type_converter);
    if (method.isStatic() || ctyp == CallType.STATIC || ctyp == CallType.SPECIAL) {
       return method;
     }
@@ -699,7 +707,7 @@ private void beginSynch()
 {
    CashewValue cv = synchronizeOn();
    if (cv != null){
-      cv = cv.getActualValue(execution_clock);
+      cv = cv.getActualValue(getSession(),execution_clock);
       CashewSynchronizationModel csm = lookup_context.getSynchronizationModel();
       if (csm != null) csm.synchEnter(cv);
     }
@@ -710,7 +718,7 @@ private void endSynch()
 {
    CashewValue cv = synchronizeOn();
    if (cv != null) {
-      cv = cv.getActualValue(execution_clock);
+      cv = cv.getActualValue(getSession(),execution_clock);
       CashewSynchronizationModel csm = lookup_context.getSynchronizationModel();
       if (csm != null) csm.synchExit(cv);
     }
@@ -762,7 +770,7 @@ CashewValue handleNew(JcompType nty)
     }
    else {
       nty.defineAll(getTyper());
-      rslt = CashewValue.objectValue(getTyper(),nty);
+      rslt = CashewValue.objectValue(getSession(),getTyper(),nty);
     }
 
    return rslt;

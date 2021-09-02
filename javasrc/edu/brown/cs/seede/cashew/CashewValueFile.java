@@ -64,14 +64,15 @@ public CashewValueFile(JcompTyper typer,File path)
 }
 
 
-CashewValueFile(JcompTyper typer,JcompType jt,Map<String,Object> inits,boolean caninit)
+CashewValueFile(CashewValueSession sess,JcompTyper typer,
+      JcompType jt,Map<String,Object> inits,boolean caninit)
 {
    super(typer,jt,inits,caninit);
    user_file = null;
-   CashewValue cv = getFieldValue(typer,null,"java.io.File.path",true);
-   if (!cv.isNull(null)) {
+   CashewValue cv = getFieldValue(sess,typer,null,"java.io.File.path",true);
+   if (!cv.isNull(sess,null)) {
       try { 
-         String path = cv.getString(typer,null);
+         String path = cv.getString(sess,typer,null);
          user_file = new File(path);
        }
       catch (CashewException e) { }
@@ -92,7 +93,8 @@ public void setInitialValue(File f)
 }
 
 
-@Override public String getString(JcompTyper typer,CashewClock cc,int idx,boolean dbg)
+@Override public String getString(CashewValueSession sess,
+      JcompTyper typer,CashewClock cc,int idx,boolean dbg)
 {
    if (user_file == null) return "File(null)";
    return user_file.toString();
@@ -104,7 +106,8 @@ public File getFile()                   { return user_file; }
 
 
 
-@Override public CashewValue getFieldValue(JcompTyper typer,CashewClock cc,String nm,boolean force)
+@Override public CashewValue getFieldValue(CashewValueSession sess,
+      JcompTyper typer,CashewClock cc,String nm,boolean force)
 {
    switch (nm) {
       case "java.io.File.path" :
@@ -146,7 +149,8 @@ public File getFile()                   { return user_file; }
 
 
 
-@Override public CashewValue setFieldValue(JcompTyper typer,CashewClock cc,String nm,CashewValue cv)
+@Override public CashewValue setFieldValue(CashewValueSession sess,JcompTyper typer,
+      CashewClock cc,String nm,CashewValue cv)
 {
    return this;
 }
