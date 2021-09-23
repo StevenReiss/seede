@@ -424,6 +424,23 @@ CuminRunStatus checkInputStreamMethods() throws CashewException
    return new CuminRunValue(Reason.RETURN,rslt);
 }
 
+CuminRunStatus checkFileCleanableMethods()
+{
+   CashewValue rslt = null;
+   
+   switch (getMethod().getName()) {
+      case "register" :
+      case "unregister" :
+      case "performCleanup" :
+         return new CuminRunValue(Reason.RETURN,rslt);
+      default : 
+         break;
+    }
+   
+   return null;
+}
+
+
 
 
 /********************************************************************************/

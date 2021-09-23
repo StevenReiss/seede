@@ -1349,6 +1349,10 @@ private CuminRunStatus checkSpecial() throws CuminRunException
 	    cie = new CuminIOEvaluator(this);
 	    sts = cie.checkObjectStreamMethods();
 	    break;
+         case "java.io.FileCleanable" :
+            cie = new CuminIOEvaluator(this);
+            sts = cie.checkFileCleanableMethods();
+            break;
 	
 	 case "sun.misc.FloatingDecimal" :
 	    cde = new CuminDirectEvaluation(this);
