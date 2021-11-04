@@ -118,9 +118,11 @@ boolean isActive()              { return is_active; }
 void setActive(boolean a)       { is_active = a; }
 String getMethodName()          { return method_name;} 
 int getLineNumber()             { return line_number; }
-Position getStartPosition()    { return start_position; }
+Position getStartPosition()     { return start_position; }
 String getThread()              { return thread_id; }
 String getThreadName()          { return thread_name; }
+
+void setThread(String id)       { thread_id = id; }
 
 
 
@@ -165,6 +167,7 @@ private class FindPositionVisitor extends ASTVisitor {
       int startln = comp_unit.getLineNumber(n.getStartPosition());
       int endln = comp_unit.getLineNumber(n.getStartPosition() + n.getLength() + 1);
       if (endln < 0) endln = line_number+1;
+      
       if (line_number < startln || line_number > endln) return false;
       switch (n.getNodeType()) {
          case ASTNode.METHOD_DECLARATION :

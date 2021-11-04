@@ -297,8 +297,7 @@ private void handleLocalEdit(String sid,Element xml,IvyXmlWriter xw)
    
    boolean fg = true;
    for (Element eelt : IvyXml.children(xml)) {
-      if (IvyXml.isElement(eelt,"EDIT") ||
-	    IvyXml.isElement(eelt,"REPAIREDIT")) {
+      if (IvyXml.isElement(eelt,"EDIT") || IvyXml.isElement(eelt,"REPAIREDIT")) {
 	 String sfile = IvyXml.getAttrString(eelt,"FILE");
 	 if (sfile == null) continue;
 	 File file = new File(sfile);
@@ -306,7 +305,6 @@ private void handleLocalEdit(String sid,Element xml,IvyXmlWriter xw)
 	 for (Element edit : IvyXml.children(eelt,"EDIT")) {
 	    if (use_text_edits) {
 	       TextEdit te = buildTextEdit(edit);
-	       AcornLog.logD("SESAME","LOCAL EDIT: " + te);
 	       if (sss.editLocalFile(file,te) == null) fg = false;
 	     }
 	    else {
@@ -607,7 +605,8 @@ private void handleAddFile(String sid,Element xml)
 
    for (Element e : IvyXml.children(xml,"FILE")) {
       String file = IvyXml.getAttrString(e,"NAME");
-      SesameFile sf = sesame_control.getFileManager().openFile(new File(file));
+      String cnts = IvyXml.getTextElement(e,"CONTENTS");
+      SesameFile sf = sesame_control.getFileManager().openFile(new File(file),cnts);
       if (sf != null) sp.addFile(sf);
     }
 

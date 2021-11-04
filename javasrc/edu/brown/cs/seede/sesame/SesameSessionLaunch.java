@@ -190,8 +190,11 @@ String getAnyThread()
    waitForReady();
 
    MethodDeclaration md = getCallMethod(loc);
-   if (md == null) return null;
-
+   if (md == null) {
+      AcornLog.logE("SESAME","Can't find method for " + loc.getMethodName());
+      return null;
+    }
+   
    List<CashewValue> args = new ArrayList<>();
    JcompSymbol msym = JcompAst.getDefinition(md.getName());
    if (msym == null) {
@@ -202,7 +205,7 @@ String getAnyThread()
 	 return null;
        }
     }
-
+   
    Map<String,SesameValueData> valmap = thread_values.get(loc.getThread());
    if (!msym.isStatic()) {
       SesameValueData svd = valmap.get("this");

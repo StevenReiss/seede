@@ -62,6 +62,7 @@ class SesameSubsession extends SesameSessionLaunch
 private SesameSubproject   local_project; 
 private SesameSessionLaunch base_session;
 private Map<Position,Position> position_map;
+private SesameLocation      call_location;
 
 
 
@@ -79,6 +80,13 @@ SesameSubsession(SesameSessionLaunch base,Element xml)
    if (IvyXml.getAttrBool(xml,"SHOWALL")) setShowAll(true);
    position_map = new HashMap<>();
    AcornLog.logD("Create subsession for " + base_session.getSessionId());
+   call_location = null;
+   Element locxml = IvyXml.getChild(xml,"LOCATION");
+   if (locxml != null) {
+      call_location = new SesameLocation(sesame_control,locxml);
+      call_location.setThread(base.getAnyThread());
+      call_location.setActive(true);
+    }
 }
 
 
@@ -148,11 +156,16 @@ SesameFile editLocalFile(File f,int len,int off,String txt)
 
 SesameFile editLocalFile(File f,TextEdit te)
 {
-   if (te == null) return null;
+   if (te == null) {
+      AcornLog.logE("SESAME","No edit given");
+      return null;
+    }
    
    SesameFile editfile = getLocalFile(f);
-   if (editfile == null) return null;
-   
+   if (editfile == null) {
+      AcornLog.logE("SESAME","Can't find local file " + f);
+      return null;
+    }   
    editFileSetup(editfile);
    editfile.editFile(te);
    editFileFixup(editfile);
@@ -314,8 +327,14 @@ private boolean isInitBlock(Block b)
 {
    List<SesameLocation> rslt = super.getActiveLocations();
    List<SesameLocation> nrslt = new ArrayList<>();
+   
+   if (call_location != null) {
+      rslt.clear();
+      rslt.add(call_location);
+    }
+   
    AcornLog.logD("START LOCATIONS " + rslt.size());
-
+   
    for (SesameLocation loc : rslt) {
       AcornLog.logD("WORK ON LOCATION " + loc);
       SesameFile sf = local_project.findLocalFile(loc.getFile().getFile());
@@ -325,8 +344,6 @@ private boolean isInitBlock(Block b)
          Position pos1 = position_map.get(pos0);
          int olno = loc.getFile().getLineOfPosition(pos0);
          int nlno = sf.getLineOfPosition(pos1);
-         AcornLog.logD("FILES " + sf + " " + loc.getFile() + " " + (sf == loc.getFile()) + " " + 
-               lno + " " + nlno + " " + olno + " " + ((lno + (nlno-olno))));
          if (nlno == 0) nlno = olno;
          SesameLocation nloc = new SesameLocation(sf,loc.getMethodName(),
                lno + (nlno-olno),loc.getThread(),loc.getThreadName());

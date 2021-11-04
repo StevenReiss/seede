@@ -41,6 +41,7 @@ import edu.brown.cs.ivy.jcomp.JcompAst;
 import edu.brown.cs.ivy.mint.MintDefaultReply;
 import edu.brown.cs.ivy.mint.MintConstants.CommandArgs;
 import edu.brown.cs.ivy.xml.IvyXml;
+import edu.brown.cs.seede.acorn.AcornLog;
 import edu.brown.cs.seede.cashew.CashewContext;
 import edu.brown.cs.seede.cashew.CashewException;
 import edu.brown.cs.seede.cashew.CashewInputOutputModel;
@@ -203,7 +204,11 @@ public SesameProject getProject()
 
 public MethodDeclaration getCallMethod(SesameLocation loc)
 {
-   if (!loc.isActive() || loc.getStartPosition() == null) return null;
+   if (!loc.isActive() || loc.getStartPosition() == null) {
+      AcornLog.logE("Bad call method " + loc.getMethodName() + " " +
+            loc.isActive() + " " + loc.getStartPosition());
+      return null;
+    }
 
    SesameFile sf = loc.getFile();
    ASTNode root = sf.getResolvedAst(getProject());

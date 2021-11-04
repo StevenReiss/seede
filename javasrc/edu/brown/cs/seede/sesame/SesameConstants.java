@@ -46,6 +46,10 @@ enum ValueKind {
 }
 
 
+String LOCAL_FILE_DIR_PREFIX = "SEEDE_LOCAL_FILE";
+String LOCAL_FILE_NAME_PREFIX = "SEEDE_";
+
+
 
 
 

@@ -962,7 +962,7 @@ private CuminRunStatus visit(NumberLiteral v)
 	 if (ds.endsWith("f") || ds.endsWith("F")) {
 	    ds = ds.substring(0,ds.length()-1);
 	  }
-	 double dv = Double.parseDouble(v.getToken());
+	 double dv = Double.parseDouble(ds);
 	 execution_stack.push(CashewValue.numericValue(jt,dv));
 	 break;
       default :

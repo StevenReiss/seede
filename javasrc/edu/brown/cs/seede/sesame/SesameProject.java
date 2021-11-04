@@ -233,7 +233,21 @@ protected SesameFile localizeFile(File f)
    if (f == null) return null;
    
    SesameFile sf = findFile(f);
-   if (sf == null || sf.isLocal() || local_files == null) return sf;
+   
+   if (sf == null) {
+      AcornLog.logD("SESAME","File " + f + " not found");
+    }
+   
+   if (sf != null && sf.isLocal() && local_files != null) {
+      local_files.put(f,sf);
+      active_files.add(sf);
+      sf.addUse();
+      return sf;
+    }
+   
+   if (sf == null || sf.isLocal() || local_files == null) {
+      return sf;
+    }
    
    SesameFile newfile = null;
    
