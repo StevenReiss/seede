@@ -100,6 +100,7 @@ import org.eclipse.jdt.core.dom.WhileStatement;
 import edu.brown.cs.seede.acorn.AcornLog;
 
 import org.eclipse.jdt.core.dom.TypeDeclaration;
+import org.eclipse.jdt.core.dom.TypeDeclarationStatement;
 import org.eclipse.jdt.core.dom.TypeLiteral;
 import org.eclipse.jdt.core.dom.TypeMethodReference;
 import org.eclipse.jdt.core.dom.VariableDeclarationExpression;
@@ -107,6 +108,7 @@ import org.eclipse.jdt.core.dom.VariableDeclarationExpression;
 import edu.brown.cs.ivy.jcomp.JcompAst;
 import edu.brown.cs.ivy.jcomp.JcompSource;
 import edu.brown.cs.ivy.jcomp.JcompSymbol;
+import edu.brown.cs.ivy.jcomp.JcompSymbolKind;
 import edu.brown.cs.ivy.jcomp.JcompType;
 import edu.brown.cs.ivy.jcomp.JcompTyper;
 import edu.brown.cs.seede.cashew.CashewClock;
@@ -523,7 +525,6 @@ private CuminRunStatus evalNode(ASTNode node,ASTNode afterchild)
       case ASTNode.TAG_ELEMENT :
       case ASTNode.TEXT_ELEMENT :
       case ASTNode.TYPE_DECLARATION :
-      case ASTNode.TYPE_DECLARATION_STATEMENT :
       case ASTNode.TYPE_PARAMETER :
       case ASTNode.UNION_TYPE :
       case ASTNode.WILDCARD_TYPE :
@@ -680,6 +681,9 @@ private CuminRunStatus evalNode(ASTNode node,ASTNode afterchild)
       case ASTNode.TRY_STATEMENT :
 	 sts = visit((TryStatement) node,afterchild);
 	 break;
+      case ASTNode.TYPE_DECLARATION_STATEMENT :
+         sts = visit((TypeDeclarationStatement) node,afterchild);
+         break;
       case ASTNode.TYPE_LITERAL :
 	 sts = visit((TypeLiteral) node);
 	 break;
@@ -1445,10 +1449,20 @@ private CuminRunStatus visit(ClassInstanceCreation v, ASTNode after)
     }
 
    JcompType rty = JcompAst.getJavaType(v.getType());
+   Map<JcompSymbol,JcompSymbol> inits = null;
    if (v.getAnonymousClassDeclaration() != null) {
+      inits = fixMethodClass(v.getAnonymousClassDeclaration());
       rty = JcompAst.getJavaType(v.getAnonymousClassDeclaration());
     }
-
+   else {
+      JcompSymbol js1 = rty.getDefinition();
+      if (js1 != null) {
+         ASTNode defn = js1.getDefinitionNode();
+         if (defn != null) inits = getMethodClassData(defn);
+         
+       }
+    }
+   
    JcompSymbol csym = JcompAst.getReference(v);
    if (csym == null) {
       JcompType ctyp = type_converter.createMethodType(null,null,false,null);
@@ -1463,6 +1477,10 @@ private CuminRunStatus visit(ClassInstanceCreation v, ASTNode after)
     }
 
    CashewValue rval = handleNew(rty);
+   if (inits != null) {
+      fixMethodInits(rval,inits);
+    }
+   
    if (csym == null) {
       execution_stack.push(rval);
       return null;
@@ -1517,6 +1535,14 @@ private CuminRunStatus visit(ClassInstanceCreation v, ASTNode after)
    return CuminRunStatus.Factory.createCall(crun);
 }
 
+
+private CuminRunStatus visit(TypeDeclarationStatement v, ASTNode after)
+        throws CuminRunException, CashewException
+{
+   fixMethodClass(v.getDeclaration());
+   
+   return null;
+} 
 
 
 private CuminRunStatus visitThrow(ClassInstanceCreation n,CuminRunStatus cause)
@@ -3115,6 +3141,119 @@ private boolean getBoolean(CashewValue cv) throws CashewException, CuminRunExcep
    return false;
 }
 
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Code to handle anonymous classes                                        */
+/*                                                                              */
+/********************************************************************************/
+
+private Map<JcompSymbol,JcompSymbol> fixMethodClass(ASTNode classdef)
+{
+   Map<JcompSymbol,JcompSymbol> rslt = getMethodClassData(classdef);
+   if (rslt != null) return rslt;
+   
+   rslt = new HashMap<>();
+   
+   OuterVariableFinder ovf = new OuterVariableFinder(classdef);
+   classdef.accept(ovf);
+   Set<JcompSymbol> syms = ovf.getUsedLocals();
+   
+   if (!syms.isEmpty()) {
+      JcompType ctyp = JcompAst.getJavaType(classdef);
+      for (JcompSymbol js : syms) {
+         JcompSymbol newsym = JcompSymbol.createDummyField(js,ctyp);
+         rslt.put(js,newsym);
+       }
+      OuterVariableReplacer ovr = new OuterVariableReplacer(rslt);
+      classdef.accept(ovr);
+    }
+   
+   classdef.setProperty(PROP_ANON_MAP,rslt);
+   
+   return rslt;
+}
+
+
+@SuppressWarnings("unchecked") 
+private Map<JcompSymbol,JcompSymbol> getMethodClassData(ASTNode def)
+{
+   Map<JcompSymbol,JcompSymbol> rslt =(Map<JcompSymbol,JcompSymbol>) def.getProperty(PROP_ANON_MAP);
+   
+   return rslt;
+}
+
+
+private void fixMethodInits(CashewValue oval,Map<JcompSymbol,JcompSymbol> inits)
+{
+   if (inits == null || inits.isEmpty()) return;
+   
+   for (Map.Entry<JcompSymbol,JcompSymbol> ent : inits.entrySet()) {
+      try {
+         JcompSymbol orig = ent.getKey();
+         CashewValue origrval = lookup_context.findReference(type_converter,orig);
+         CashewValue origval = origrval.getActualValue(runner_session,execution_clock);
+         JcompSymbol tgt = ent.getValue();
+         CashewValue tgtrval = oval.getFieldValue(runner_session,type_converter,
+               execution_clock,tgt.getFullName());
+         CuminEvaluator.assignValue(this,tgtrval,origval,tgt.getType());
+       }
+      catch (Exception e) { 
+         AcornLog.logE("CUMIN","Problem with method class initialization",e);
+       }
+    }
+}
+
+
+private static class OuterVariableFinder extends ASTVisitor {
+   
+   private Set<JcompSymbol> outer_syms;
+   ASTNode base_node;
+   
+   OuterVariableFinder(ASTNode base) {
+      outer_syms = new HashSet<>();
+      base_node = base;
+    }
+   
+   Set<JcompSymbol> getUsedLocals()                     { return outer_syms; }
+   
+   @Override public void preVisit(ASTNode n) {
+      JcompSymbol js = JcompAst.getReference(n);
+      if (js != null && js.getSymbolKind() == JcompSymbolKind.LOCAL) {
+         ASTNode p = js.getDefinitionNode();
+         boolean fnd = false;
+         while (p != null && !fnd) {
+            if (p == base_node) {
+               fnd = true;
+             }
+            p = p.getParent();
+          }
+         if (!fnd) outer_syms.add(js);
+       }
+    }
+   
+}       // end of inner class OuterVariableFinder
+
+
+private static class OuterVariableReplacer extends ASTVisitor {
+   
+   private Map<JcompSymbol,JcompSymbol> replace_map;
+   
+   OuterVariableReplacer(Map<JcompSymbol,JcompSymbol> rmap) {
+      replace_map = rmap;
+    }
+   
+   @Override public void preVisit(ASTNode n) {
+      JcompSymbol js = JcompAst.getReference(n);
+      if (js != null) {
+         JcompSymbol njs = replace_map.get(js);
+         if (njs != null) JcompAst.setReference(n,njs);
+       }
+    }
+   
+}       // end of inner class OuterVariableReplacer
 
 
 }	// end of class CuminRunnerAst

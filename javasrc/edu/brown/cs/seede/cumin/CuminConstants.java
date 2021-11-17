@@ -98,6 +98,17 @@ String THIS_NAME = "this";
 String OUTER_NAME = "this$0";
 
 
+
+/********************************************************************************/
+/*                                                                              */
+/*      AST Property names                                                      */
+/*                                                                              */
+/********************************************************************************/
+
+String PROP_ANON_MAP = "CUMIN$AnonMap";
+
+
+
 }	// end of interface CuminConstants
 
 
