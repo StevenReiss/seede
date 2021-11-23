@@ -24,6 +24,7 @@
 
 package edu.brown.cs.seede.poppy;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -281,6 +282,20 @@ public static String getToString(Object o)
    String rslt = o.toString();
    
    return rslt;
+}
+
+
+public static Object [] getToArray(Object o)
+{
+   if (o instanceof Collection) {
+      Collection<?> c = (Collection<?>) o;
+      return c.toArray();
+    }
+   else if (o instanceof Map) {
+      Map<?,?> m = (Map<?,?>) o;
+      return m.entrySet().toArray();
+    }
+   return null;
 }
 
 

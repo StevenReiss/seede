@@ -52,6 +52,7 @@ private Map<String,CashewRef> field_values;
 private Set<String> new_fields;
 private int old_ref;
 private Map<Long,String> string_values;
+private Map<Long,CashewValue> array_values;
 
 private static Map<String,CashewRef> static_values;
 
@@ -74,6 +75,7 @@ CashewValueObject(JcompTyper typer,JcompType jt,Map<String,Object> inits,boolean
    new_fields = null;
    old_ref = 0;
    string_values = null;
+   array_values = null;
 
    for (JcompType jt0 = jt; jt0 != null; jt0 = jt0.getSuperType()) {
       JcompScope tscp = jt0.getScope();
@@ -361,7 +363,7 @@ public CashewValueObject cloneObject(CashewValueSession sess,JcompTyper typer,
       String s = outctx.getToString(sess,this);
       if (s != null) {
 	 string_values = new HashMap<>();
-	 string_values.put(0L,outctx.getToString(sess,this));
+	 string_values.put(0L,s);
        }
     }
    else {
@@ -381,11 +383,42 @@ public CashewValueObject cloneObject(CashewValueSession sess,JcompTyper typer,
 	 last = s;
        }
     }
-      // string_value should be a map <time -> value>
-   // here we should compute all the times where this might change
-   // and recompute at those times.
 }
 
+
+@Override public void checkToArray(CashewValueSession sess,CashewOutputContext outctx)
+{
+   if (old_ref != 0) return;			// done before => don't recompute
+   
+   int rvl = outctx.noteValue(this);
+   if (rvl >= 0) {
+      return;
+    }
+   
+   Set<Long> times = new TreeSet<>();
+   
+   AcornLog.logD("CASHEW","CHECKARRAY " + times.size() + " " + this);
+   
+   CashewValue cv = outctx.getToArray(sess,this);
+   if (cv != null) {
+      array_values = new HashMap<>();
+      array_values.put(0L,cv);
+    }
+   
+   CashewClock cc = outctx.getClock();
+   for (Map.Entry<String,CashewRef> ent : field_values.entrySet()) {
+      CashewRef cr = ent.getValue();
+      String nm = ent.getKey();
+      if (nm.startsWith("java.")) continue;
+      if (nm.startsWith("@")) continue;
+      AcornLog.logD("CASHEW","CHECKARRAY FIELD " + nm + " " + cr.isEmpty());
+      if (cr.isEmpty()) continue;
+      CashewValue cv1 = cr.getActualValue(sess,cc);
+      if (cv1 == null || cv1.isEmpty()) continue;
+      cv1.checkToArray(sess,outctx);
+    }
+}
+   
 
 
 void getChangeTimes(Set<Long> times,Set<CashewValue> done)
@@ -405,6 +438,7 @@ void getChangeTimes(Set<Long> times,Set<CashewValue> done)
    if (getDataType(outctx.getTyper()).isCompatibleWith(ctyp)) {
       xw.field("COMPONENT",true);
     }
+   if (ctyp.isEnumType()) xw.field("ENUM",true);
    int rvl = outctx.noteValue(this);
    if (outctx.expand(name)) {
       for (Map.Entry<String,CashewRef> ent : field_values.entrySet()) {
@@ -469,6 +503,21 @@ void getChangeTimes(Set<Long> times,Set<CashewValue> done)
 	       xw.end("VALUE");
 	     }
 	  }
+	 xw.end("FIELD");
+       }
+      if (array_values != null) {
+         AcornLog.logD("CASHEW","HAVE ARRAY VALUES " + array_values.size());
+	 xw.begin("FIELD");
+	 xw.field("NAME",TO_ARRAY_FIELD);
+         for (Map.Entry<Long,CashewValue> ent : array_values.entrySet()) {
+            if (ent.getValue() != null) {
+               ent.getValue().outputXml(outctx,"toArray()");
+             }
+            else {
+               xw.field("NO_TOARRAY",true);
+               xw.field("NULL",true);
+             }
+          }
 	 xw.end("FIELD");
        }
     }

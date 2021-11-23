@@ -55,6 +55,7 @@ enum CashewValueKind {
 
 String HASH_CODE_FIELD = "@hashCode";
 String TO_STRING_FIELD = "@toString";
+String TO_ARRAY_FIELD = "@toArray";
 String CURRENT_THREAD_FIELD = "@currentThread";
 String CURRENT_THREAD_NAME_FIELD = "@currentThreadName";
 

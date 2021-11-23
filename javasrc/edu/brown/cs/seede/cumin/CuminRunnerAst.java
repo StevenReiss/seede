@@ -1459,7 +1459,6 @@ private CuminRunStatus visit(ClassInstanceCreation v, ASTNode after)
       if (js1 != null) {
          ASTNode defn = js1.getDefinitionNode();
          if (defn != null) inits = getMethodClassData(defn);
-         
        }
     }
    

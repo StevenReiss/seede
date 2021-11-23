@@ -95,6 +95,7 @@ private Set<SesameExecRunner> exec_runners;
 private CashewInputOutputModel	cashew_iomodel;
 private Set<String>	expand_names;
 private boolean 	compute_tostring;
+private boolean         compute_toarray;
 private boolean         show_all;
 
 
@@ -133,6 +134,7 @@ SesameSession(SesameSession parent)
       expand_names = new HashSet<>(parent.expand_names);
     }
    compute_tostring = parent.compute_tostring;
+   compute_toarray = parent.compute_toarray;
    show_all = parent.show_all;
 }
 
@@ -152,7 +154,10 @@ private void initialize(String sid,Element xml)
    cashew_iomodel = new CashewInputOutputModel();
    expand_names = null;
    compute_tostring = sesame_control.getComputeToString();
+   compute_toarray = sesame_control.getComputeToArray();
    show_all = IvyXml.getAttrBool(xml,"SHOWALL");
+   compute_tostring = IvyXml.getAttrBool(xml,"TOSTRING",compute_tostring);
+   compute_toarray = IvyXml.getAttrBool(xml,"TOARRAY",compute_toarray);
 }
 
 
@@ -282,9 +287,21 @@ boolean getComputeToString()
 }
 
 
+boolean getComputeToArray()
+{
+   return compute_toarray;
+}
+
+
 void setComputeToString(boolean fg)
 {
    compute_tostring = fg;
+}
+
+
+void setComputeToArray(boolean fg)
+{
+   compute_toarray = fg;
 }
 
 boolean getShowAll()

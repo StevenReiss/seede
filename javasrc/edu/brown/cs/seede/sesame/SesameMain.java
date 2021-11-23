@@ -69,6 +69,7 @@ private SesameFileManager	file_manager;
 private SesameMonitor		message_monitor;
 private Map<String,SesameProject> project_map;
 private boolean                 compute_tostring;
+private boolean                 compute_toarray;
 
 private static JcompControl	jcomp_base;
 
@@ -88,6 +89,7 @@ private SesameMain(String [] args)
    project_map = new HashMap<String,SesameProject>();
    jcomp_base = new JcompControl();
    compute_tostring = false;
+   compute_toarray = false;
 
    scanArgs(args);
 
@@ -125,6 +127,9 @@ private void scanArgs(String [] args)
          else if (args[i].startsWith("-s")) {
             compute_tostring = !compute_tostring;
           }
+         else if (args[i].startsWith("-a")) {
+            compute_toarray = !compute_toarray;
+          }
 	 else badArgs();
        }
       else badArgs();
@@ -159,6 +164,8 @@ static JcompControl getJcompBase()		{ return jcomp_base; }
 SesameFileManager getFileManager()		{ return file_manager; }
 
 boolean getComputeToString()                    { return compute_tostring; }
+
+boolean getComputeToArray()                     { return compute_toarray; }
 
 
 

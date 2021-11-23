@@ -557,6 +557,32 @@ public void checkToString(CashewValueSession sess,CashewOutputContext outctx)
 }
 
 
+public void checkToArray(CashewValueSession sess,CashewOutputContext outctx)
+{
+   AcornLog.logD("CONTEXT TOARRAY " + getId() + " " + getName() + " " + isOutput());
+   
+   if (!isOutput()) return;
+   
+   for (CashewValue cv : context_map.values()) {
+      if (cv != null) {
+         AcornLog.logD("CONTEXT VALUE " + cv.isEmpty() + " " + cv);
+         cv.checkToArray(sess,outctx);
+       }
+    }
+   
+   Set<CashewContext> ctxs = new HashSet<>(nested_contexts);
+   // internal executions can add new contexts
+   for (CashewContext ctx : ctxs) {
+      ctx.checkToArray(sess,outctx);
+    }
+   
+   for (CashewContext ctx : nested_contexts) {
+      if (ctxs.contains(ctx)) continue;
+      ctx.is_output = false;    // don't output toArray calls
+    }
+}
+
+
 
 public void outputXml(CashewOutputContext outctx)
 {

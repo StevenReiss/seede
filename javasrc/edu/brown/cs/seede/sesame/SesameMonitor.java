@@ -732,6 +732,52 @@ private void handleToString(String sid,Element xml,IvyXmlWriter xw) throws Sesam
 }
 
 
+private void handleToArray(String sid,Element xml,IvyXmlWriter xw) throws SesameException
+{
+   SesameSession ss = session_map.get(sid);
+   if (ss == null) return;
+   boolean fg = IvyXml.getAttrBool(xml,"VALUE");
+   
+   int ct = 0;
+// IvyXmlWriter xxw = null;
+// for (Element vxml : IvyXml.children(xml,"VARIABLE")) {
+//    if (ct++ == 0) {
+//       xxw = new IvyXmlWriter();
+//       CashewOutputContext outctx = new CashewOutputContext(;
+//     }    
+//    String cnts = IvyXml.getAttrString(vxml,"NAME");
+//    String expr = cnts + ".toArray()";
+//    CashewValue cv = ss.evaluate(expr,thrd,true); 
+//  }
+   
+   if (ct == 0) {
+      ss.setComputeToArray(fg);
+      ss.resetRunners();
+    }
+}
+
+
+
+private void handleSetShow(String sid,Element xml,IvyXmlWriter xw) throws SesameException
+{
+   SesameSession ss = session_map.get(sid);
+   if (ss == null) return;
+   if (IvyXml.getAttrPresent(xml,"SHOWALL")) {
+      boolean fg = IvyXml.getAttrBool(xml,"SHOWALL");
+      ss.setShowAll(fg);
+    }
+   if (IvyXml.getAttrPresent(xml,"TOSTRING")) {
+      boolean fg = IvyXml.getAttrBool(xml,"TOSTRING");
+      ss.setComputeToString(fg);
+    } 
+   if (IvyXml.getAttrPresent(xml,"TOARRAY")) {
+      boolean fg = IvyXml.getAttrBool(xml,"TOARRAY");
+      ss.setComputeToArray(fg);
+    } 
+   ss.resetRunners();
+}
+
+
 private void handleExpand(String sid,Element xml,IvyXmlWriter xw) throws SesameException
 {
    SesameSession ss = session_map.get(sid);
@@ -905,6 +951,12 @@ private String processCommand(String cmd,String sid,Element e) throws SesameExce
       case "TOSTRING" :
 	 handleToString(sid,e,xw);
 	 break;
+      case "TOARRAY" :
+	 handleToArray(sid,e,xw);
+	 break;
+      case "SHOW" :
+         handleSetShow(sid,e,xw);
+         break;
       case "EXPAND" :
 	 handleExpand(sid,e,xw);
 	 break;

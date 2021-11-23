@@ -349,16 +349,23 @@ private void outputResult(IvyXmlWriter xw,CuminRunner cr,CuminRunStatus sts,bool
          for_session.getShowAll());
    CashewContext ctx = cr.getLookupContext();
    CashewValue rval = sts.getValue();
+   
+   AcornLog.logD("SESAME","OUTPUT RESULT " + for_session.getComputeToString() + " " +
+         for_session.getComputeToArray() + " " + for_session.getShowAll());
 
    if (for_session.getComputeToString()) {
       if (rval != null) rval.checkToString(for_session,outctx);
       ctx.checkToString(for_session,outctx);
       outctx.resetValues();
     }
-
+   if (for_session.getComputeToArray()) {
+      if (rval != null) rval.checkToArray(for_session,outctx);
+      ctx.checkToArray(for_session,outctx);
+      outctx.resetValues();
+    }
+   
    if (rval != null) rval.checkChanged(outctx);
    ctx.checkChanged(outctx);
-   // ctx.checkToString(outctx);
 
    xw.begin("RUNNER");
    SesameLocation loc = for_session.getLocation(cr);

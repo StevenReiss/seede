@@ -716,6 +716,10 @@ public void checkToString(CashewValueSession sess,CashewOutputContext outctx)
 { }
 
 
+public void checkToArray(CashewValueSession sess,CashewOutputContext outctx)
+{ }
+
+
 
 public void outputXml(CashewOutputContext ctx,String name)
 {
