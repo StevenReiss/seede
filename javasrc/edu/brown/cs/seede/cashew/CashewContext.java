@@ -559,13 +559,17 @@ public void checkToString(CashewValueSession sess,CashewOutputContext outctx)
 
 public void checkToArray(CashewValueSession sess,CashewOutputContext outctx)
 {
-   AcornLog.logD("CONTEXT TOARRAY " + getId() + " " + getName() + " " + isOutput());
+   AcornLog.logD("CASHEW","CONTEXT TOARRAY " + getId() + " " + getName() + " " + isOutput());
    
    if (!isOutput()) return;
    
-   for (CashewValue cv : context_map.values()) {
+   for (Map.Entry<Object,CashewValue> ent : context_map.entrySet()) {
+      String key = ent.getKey().toString();
+      if (key.startsWith("*")) continue;
+      CashewValue cv = ent.getValue();
       if (cv != null) {
-         AcornLog.logD("CONTEXT VALUE " + cv.isEmpty() + " " + cv);
+         AcornLog.logD("CONTEXT VALUE " + key + " "  + cv.isEmpty() +
+               " " + cv);
          cv.checkToArray(sess,outctx);
        }
     }

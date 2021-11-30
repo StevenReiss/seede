@@ -383,6 +383,22 @@ private CashewValue getValueAt(CashewValueSession sess,CashewClock cc)
 }
 
 
+@Override public void checkToArray(CashewValueSession sess,CashewOutputContext outctx)
+{
+   if (value_map == null && last_value == null) return;
+   if (value_map == null && last_value != null) {
+      last_value.checkToArray(sess,outctx);
+      return;
+    }
+   // here we need to compute all relevant times and then
+   // do the checkToArray at a particular time
+   
+   for (CashewValue cv : value_map.values()) {
+      if (cv != null) cv.checkToArray(sess,outctx);
+    }
+}
+
+
 void getChangeTimes(Set<Long> times,Set<CashewValue> done)
 {
    if (!done.add(this)) return;

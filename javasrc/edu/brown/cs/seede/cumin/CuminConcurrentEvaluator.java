@@ -24,8 +24,12 @@
 
 package edu.brown.cs.seede.cumin;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import edu.brown.cs.ivy.jcomp.JcompType;
 import edu.brown.cs.ivy.jcomp.JcompTyper;
+import edu.brown.cs.seede.acorn.AcornLog;
 import edu.brown.cs.seede.cashew.CashewException;
 import edu.brown.cs.seede.cashew.CashewValue;
 
@@ -256,12 +260,7 @@ synchronized CuminRunStatus checkUnsafeMethods() throws CuminRunException, Cashe
 	 int v1 = getInt(4);
 	 CashewValue v2 = getValue(5);
 	 JcompType typ = cv1.getDataType(sess,getClock(),typer);
-	 String fld = null;
-	 if (typ.getName().equals("java.util.concurrent.ConcurrentHashMap")) {
-	    if (off == 20) {
-	       fld = "java.util.concurrent.ConcurrentHashMap.sizeCtl";
-	     }
-	  }
+	 String fld = getFieldAtOffset(typ,(int) off);
 	 if (fld == null) return null;
 	 CashewValue oldv = cv1.getFieldValue(getSession(),getTyper(),getClock(),fld);
 	 int oldint = oldv.getNumber(sess,getClock()).intValue();
@@ -278,12 +277,7 @@ synchronized CuminRunStatus checkUnsafeMethods() throws CuminRunException, Cashe
 	 long lv1 = getLong(4);
 	 v2 = getValue(6);
 	 typ = cv1.getDataType(sess,getClock(),typer);
-	 fld = null;
-	 if (typ.getName().equals("java.util.concurrent.ConcurrentHashMap")) {
-	    if (off == 24) {
-	       fld = "java.util.concurrent.ConcurrentHashMap.baseCount";
-	     }
-	  }
+	 fld = getFieldAtOffset(typ,(int) off);
 	 if (fld == null) return null;
 	 oldv = cv1.getFieldValue(sess,typer,getClock(),fld);
 	 long oldlong = oldv.getNumber(sess,getClock()).longValue();
@@ -327,6 +321,133 @@ synchronized CuminRunStatus checkSunToolkitMethods() throws CuminRunException, C
    
    return CuminRunStatus.Factory.createReturn(rslt);
 }
+
+
+synchronized CuminRunStatus checkVarHandleMethods() throws CuminRunException, CashewException
+{
+   CashewValue rslt = null;
+   
+   switch (getMethod().getName()) {
+      case "set" :
+      case "setRelease" :
+      case "setVolatile" :
+         CashewValue thisarg = getValue(0);
+         CashewValue tgtval = getValue(1);
+         CashewValue setval = getValue(2);
+         CashewValue fldoffset = thisarg.getFieldValue(getSession(),getTyper(),getClock(),
+               "java.lang.invoke.VarHandleObjects.FieldInstanceReadOnly.fieldOffset");
+         int fldoff = fldoffset.getNumber(getSession(),getClock()).intValue();
+         JcompType typ = tgtval.getDataType(getSession(),getClock(),getTyper());
+         String js = getFieldAtOffset(typ,fldoff);
+         if (js != null) {
+            tgtval.setFieldValue(getSession(),getTyper(),getClock(),js,setval);
+          }
+         break;
+      case "compareAndSet" :
+      case "weakCompareAndSet" :
+      case "weakCompareAndSetAcquire" :
+      case "weakCompareAndSetPlain" :
+      case "weakCompareAndSetRelease" :
+         thisarg = getValue(0);
+         tgtval = getValue(1);
+         setval = getValue(3);
+         fldoffset = thisarg.getFieldValue(getSession(),getTyper(),getClock(),
+               "java.lang.invoke.VarHandleObjects.FieldInstanceReadOnly.fieldOffset");
+         fldoff = fldoffset.getNumber(getSession(),getClock()).intValue();
+         typ = tgtval.getDataType(getSession(),getClock(),getTyper());
+         js = getFieldAtOffset(typ,fldoff);
+         if (js != null) {
+            tgtval.setFieldValue(getSession(),getTyper(),getClock(),js,setval);
+          }
+         rslt = CashewValue.booleanValue(getTyper(),true);
+         break;
+      case "get" :
+      case "getAcquire" :
+         thisarg = getValue(0);
+         tgtval = getValue(1);
+         fldoffset = thisarg.getFieldValue(getSession(),getTyper(),getClock(),
+               "java.lang.invoke.VarHandleObjects.FieldInstanceReadOnly.fieldOffset");
+         fldoff = fldoffset.getNumber(getSession(),getClock()).intValue();
+         typ = tgtval.getDataType(getSession(),getClock(),getTyper());
+         js = getFieldAtOffset(typ,fldoff);
+         if (js != null) {
+            rslt = tgtval.getFieldValue(getSession(),getTyper(),getClock(),js);
+          }
+         break; 
+      default :
+         AcornLog.logE("Unknown VarHandle operation " + getMethod().getName());
+         return null;
+    }
+    
+   return CuminRunStatus.Factory.createReturn(rslt);
+}
+
+
+
+private static Map<String,Map<Integer,String>> field_offset_map;
+
+static {
+   field_offset_map = new HashMap<>();
+   addFields("java.util.concurrent.ConcurrentHashMap",20,"sizeCtl",24,"baseCount",32,"transferIndex",36,"cellsBusy");
+   addFields("java.util.concurrent.ConcurrentHashMap.CounterCell",144,"value");
+   addFields("java.util.concurrent.ConcurrentLinkedQueue",12,"head",16,"tail");
+   addFields("java.util.concurrent.ConcurrentLinkedQueue.Node",12,"item",16,"next");
+   addFields("java.util.concurrent.CompletableFuture",12,"result",16,"stack");
+   addFields("java.util.concurrent.CompletableFuture.Completion",16,"next");
+   addFields("java.util.concurrent.ConcurrentLinkedDeque",12,"head",16,"tail");
+   addFields("java.util.concurrent.ConcurrentLinkedDeque.Node",12,"prev",20,"next",16,"item");
+   addFields("java.util.concurrent.ConcurrentSkipListMap",24,"head",28,"adder");
+   addFields("java.util.concurrent.ConcurrentSkipListMap.Node",20,"next",16,"val");
+   addFields("java.util.concurrent.ConcurrentSkipListMap.Index",20,"right");
+   addFields("java.util.concurrent.CountedCompleter",16,"pending");
+   addFields("java.util.concurrent.Exchanger",12,"bound",24,"slot");
+   addFields("java.util.concurrent.Exchanger.Node",160,"match");
+   addFields("java.util.concurrent.ForkJoinPool",192,"ctl",36,"mode");
+   addFields("java.util.concurrent.ForkJoinPool.WorkQueue",12,"phase",32,"base",36,"top");
+   addFields("java.util.concurrent.ForkJoinTask",12,"status");
+   addFields("java.util.concurrent.FutureTask",12,"state",24,"runner",28,"waiters");
+   addFields("java.util.concurrent.LinkedTransferQueue",16,"head",20,"tail",12,"sweepVotes");
+   addFields("java.util.concurrent.LinkedTransferQueue.Node",16,"item",20,"next",24,"waiter");
+   addFields("java.util.concurrent.Phaser",16,"state");
+   addFields("java.util.concurrent.PriorityBlockingQueue",16,"allocationSpinLock");
+   addFields("java.util.concurrent.SubmissionPublisher.BufferedSubscription",32,"ctl",92,"demand");
+   addFields("java.util.concurrent.SynchronousQueue.TransferStack.Snode",12,"next",20,"match");
+   addFields("java.util.concurrent.SynchronousQueue.TransferStack",12,"head");
+   addFields("java.util.concurrent.SynchronousQueue.TransferQueue.Qnode",12,"next",20,"item");
+   addFields("java.util.concurrent.SynchronousQueue.TransferQueue",28,"cleanMe");
+   addFields("java.util.concurrent.Thread",232,"threadLocalRandomSeed",240,"threadLocalRandomProbe",
+         244,"threadLocalRandomSecondardSeed",80,"threadLocals",84,"inheritableThreadLocals",
+         76,"inheritedAccessControlContext");
+}
+
+
+private static void addFields(String cls,Object ... args)
+{
+   Map<Integer,String> fmap = new HashMap<>();
+   field_offset_map.put(cls,fmap);
+   for (int i = 0; i < args.length; i += 2) {
+      Integer off = (Integer) args[i];
+      String nm = (String) args[i+1];
+      fmap.put(off,cls + "." + nm);
+    }
+}
+
+
+
+private String getFieldAtOffset(JcompType typ,int off)
+{
+   Map<Integer,String> flds = field_offset_map.get(typ.getName());
+   if (flds != null) {
+      String fld = flds.get(off);
+      if (fld != null) return fld;
+    }
+   
+   AcornLog.logE("CUMIN","Unknown field offset " + typ.getName() + " " + off);
+   
+   return null;
+}
+
+
 
 }	// end of class CuminConcurrentEvaluator
 

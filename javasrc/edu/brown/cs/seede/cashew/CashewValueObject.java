@@ -395,9 +395,11 @@ public CashewValueObject cloneObject(CashewValueSession sess,JcompTyper typer,
       return;
     }
    
-   Set<Long> times = new TreeSet<>();
+   // For now, just do this at the end time, not anytime else.
+   // Eventually we want to do it so we can update when it changes, but
+   // that gets tricky
    
-   AcornLog.logD("CASHEW","CHECKARRAY " + times.size() + " " + this);
+   AcornLog.logD("CASHEW","CHECKARRAY " + this);
    
    CashewValue cv = outctx.getToArray(sess,this);
    if (cv != null) {
@@ -405,7 +407,6 @@ public CashewValueObject cloneObject(CashewValueSession sess,JcompTyper typer,
       array_values.put(0L,cv);
     }
    
-   CashewClock cc = outctx.getClock();
    for (Map.Entry<String,CashewRef> ent : field_values.entrySet()) {
       CashewRef cr = ent.getValue();
       String nm = ent.getKey();
@@ -413,7 +414,7 @@ public CashewValueObject cloneObject(CashewValueSession sess,JcompTyper typer,
       if (nm.startsWith("@")) continue;
       AcornLog.logD("CASHEW","CHECKARRAY FIELD " + nm + " " + cr.isEmpty());
       if (cr.isEmpty()) continue;
-      CashewValue cv1 = cr.getActualValue(sess,cc);
+      CashewValue cv1 = cr.getActualValue(sess,outctx.getClock());
       if (cv1 == null || cv1.isEmpty()) continue;
       cv1.checkToArray(sess,outctx);
     }
@@ -435,10 +436,18 @@ void getChangeTimes(Set<Long> times,Set<CashewValue> done)
 {
    xw.field("OBJECT",true);
    JcompType ctyp = outctx.getTyper().findSystemType("java.awt.Component");
-   if (getDataType(outctx.getTyper()).isCompatibleWith(ctyp)) {
+   JcompType otyp = getDataType(outctx.getTyper());
+   if (otyp.isCompatibleWith(ctyp)) {
       xw.field("COMPONENT",true);
     }
-   if (ctyp.isEnumType()) xw.field("ENUM",true);
+   if (otyp.isEnumType()) {
+      try {
+         CashewValue evl = getFieldValue(outctx.getSession(),outctx.getTyper(),outctx.getClock(),"java.lang.Enum.name");
+         String enm = evl.getString(outctx.getSession(),outctx.getTyper(),outctx.getClock());
+         xw.field("ENUM",enm);
+       }
+      catch (CashewException e) { }
+    }
    int rvl = outctx.noteValue(this);
    if (outctx.expand(name)) {
       for (Map.Entry<String,CashewRef> ent : field_values.entrySet()) {

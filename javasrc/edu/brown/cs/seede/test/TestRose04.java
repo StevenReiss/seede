@@ -1,8 +1,8 @@
 /********************************************************************************/
 /*                                                                              */
-/*              TestRose.java                                                   */
+/*              TestRose04.java                                                 */
 /*                                                                              */
-/*      Test cases for ROSE                                                     */
+/*      Another rose test -- use test04 launch                                  */
 /*                                                                              */
 /********************************************************************************/
 /*      Copyright 2011 Brown University -- Steven P. Reiss                    */
@@ -28,7 +28,7 @@ import org.junit.Test;
 
 import edu.brown.cs.seede.acorn.AcornLog;
 
-public class TestRose extends TestBase
+public class TestRose04 extends TestBase
 {
 
 
@@ -38,12 +38,11 @@ public class TestRose extends TestBase
 /*                                                                              */
 /********************************************************************************/
 
-private static final String             TEST1_SID = "SEED_23333";
-private static final String             TEST8_SID = "SEED_23338";
+private static final String             TEST4_SID = "SEED_23344";
 private static final String             ROSETEST_WORKSPACE = "rosetest";
 private static final String             ROSETEST_PROJECT = "rosetest";
-private static final String             LAUNCH1_NAME = "test01";
-private static final String             LAUNCH8_NAME = "test08";
+private static final String             LAUNCH4_NAME = "test04";
+
 
 
 
@@ -53,10 +52,12 @@ private static final String             LAUNCH8_NAME = "test08";
 /*                                                                              */
 /********************************************************************************/
 
-public TestRose()
+public TestRose04()
 {
    super("ROSETEST",ROSETEST_WORKSPACE,ROSETEST_PROJECT);
 }
+
+
 
 
 /********************************************************************************/
@@ -66,54 +67,26 @@ public TestRose()
 /********************************************************************************/
 
 @Test
-public void testRose01()
+public void testRose04()
 {
    AcornLog.logI("TEST: Start ROSETEST");
-   LaunchData ld = startLaunch(LAUNCH1_NAME,0);
-   setupSeedeSession(TEST1_SID,ld,2);
-   addSeedeFiles(TEST1_SID,"src/edu/brown/cs/rosetest/RoseTestExamples.java",
+   LaunchData ld = startLaunch(LAUNCH4_NAME,0);
+   setupSeedeSession(TEST4_SID,ld,1);
+   addSeedeFiles(TEST4_SID,"src/edu/brown/cs/rosetest/RoseTestExamples.java",
          "src/edu/brown/cs/rosetest/RoseTestTests.java");
-   runSeede(TEST1_SID);
+   runSeede(TEST4_SID);
    
-   String ssid = startSeedeSubsession(TEST1_SID);
-   String ssid1 = startSeedeSubsession(TEST1_SID);
-   editSeede(ssid,"src/edu/brown/cs/rosetest/RoseTestExamples.java",4,2979,"baby");
-   editSeede(ssid1,"src/edu/brown/cs/rosetest/RoseTestExamples.java",3,2993,"baby");
+   String ssid = startSeedeSubsession(TEST4_SID);
+   editSeede(ssid,"src/edu/brown/cs/rosetest/RoseTestExamples.java",13,2928,"getBabyName");
    runSeede(ssid);
    removeSeede(ssid);
-   runSeede(ssid1);
-   removeSeede(ssid1);
-   
-   for (int i = 0; i < 100; ++i) {
-      AcornLog.logI("TEST: Start subsession " + i);
-      System.err.println("TEST: Start subsession " + i);
-      String ssid2 = startSeedeSubsession(TEST1_SID);
-      editSeede(ssid2,"src/edu/brown/cs/rosetest/RoseTestExamples.java",4,3054,"type");
-      runSeede(ssid2);
-      removeSeede(ssid2); 
-    }
 }
 
 
-
-@Test
-public void testRose08()
-{
-   AcornLog.logI("TEST: Start ROSETEST");
-   LaunchData ld = startLaunch(LAUNCH8_NAME,0);
-   setupSeedeSession(TEST8_SID,ld,0);
-   addSeedeFiles(TEST8_SID,"src/edu/brown/cs/rosetest/RoseTestExamples.java",
-         "src/edu/brown/cs/rosetest/RoseTestTests.java");
-   runSeede(TEST8_SID);
-}
+}       // end of class TestRose04
 
 
 
 
-}       // end of class TestRose
-
-
-
-
-/* end of TestRose.java */
+/* end of TestRose04.java */
 

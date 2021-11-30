@@ -981,13 +981,14 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException, CashewExc
 	 break;
 
       case INVOKEINTERFACE :
-	 return handleCall(jins.getMethodReference(),CallType.INTERFACE);
+	 return handleCall(jins.getMethodReference(),CallType.INTERFACE,-1);
       case INVOKESPECIAL :
-	 return handleCall(jins.getMethodReference(),CallType.SPECIAL);
+	 return handleCall(jins.getMethodReference(),CallType.SPECIAL,-1);
       case INVOKESTATIC :
-	 return handleCall(jins.getMethodReference(),CallType.STATIC);
+	 return handleCall(jins.getMethodReference(),CallType.STATIC,-1);
       case INVOKEVIRTUAL :
-	 return handleCall(jins.getMethodReference(),CallType.VIRTUAL);
+         int act0 = jins.getDescriptionArgCount();
+	 return handleCall(jins.getMethodReference(),CallType.VIRTUAL,act0);
 
       case JSR :
 	 execution_stack.pushMarker(jins,next);
@@ -1060,10 +1061,17 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException, CashewExc
 /*										*/
 /********************************************************************************/
 
-private CuminRunStatus handleCall(JcodeMethod method,CallType cty)
+private CuminRunStatus handleCall(JcodeMethod method,CallType cty,int act0)
 	throws CuminRunException
 {
   int act = method.getNumArguments();
+  if (act0 >= 0) {
+     if (act != act0) {
+        AcornLog.logD("CUMIN","Argument counts differ " + act + " " + act0);
+        act = act0;
+      }
+   }
+   
   if (!method.isStatic()) ++act;
   List<CashewValue> args = new ArrayList<CashewValue>();
   for (int i = 0; i < act; ++i) {
@@ -1417,6 +1425,10 @@ private CuminRunStatus checkSpecial() throws CuminRunException
             cce = new CuminConcurrentEvaluator(this);
             sts = cce.checkSunToolkitMethods();
             break;
+         case "java.lang.invoke.VarHandle" :
+            cce = new CuminConcurrentEvaluator(this);
+            sts = cce.checkVarHandleMethods();
+            break;
             
          // need to handle java.util.concurrent.locks.ReentrantLock   
          // need to handle java.lang.VarHandle methods
@@ -1473,8 +1485,6 @@ private CuminRunStatus checkSpecialReturn(CuminRunStatus r)
     }
    return r;
 }
-
-
 
 
 }	// end of class CuminRunnerByteCode
