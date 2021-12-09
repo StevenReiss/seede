@@ -102,6 +102,8 @@ public void testRose08()
    AcornLog.logI("TEST: Start ROSETEST");
    LaunchData ld = startLaunch(LAUNCH8_NAME,0);
    setupSeedeSession(TEST8_SID,ld,0);
+   CommandArgs args = new CommandArgs("VALUE",true);
+   sendSeedeMessage("TOARRAY",TEST8_SID,args,null,null);
    addSeedeFiles(TEST8_SID,"src/edu/brown/cs/rosetest/RoseTestExamples.java",
          "src/edu/brown/cs/rosetest/RoseTestTests.java");
    runSeede(TEST8_SID);

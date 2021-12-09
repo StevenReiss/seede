@@ -197,10 +197,10 @@ public CashewValue getToArray(CashewValueSession sess,CashewValue cv)
    JcompType typ = cv.getDataType(getTyper());
    if (typ.isPrimitiveType()) return null;
    if (typ.isArrayType()) return null;
-   JcompType atyp = type_context.createMethodType(null,new ArrayList<>(),false,null);
-   JcompSymbol toarr = typ.lookupMethod(type_context,"toArray",atyp);
-   AcornLog.logD("CASHEW","TOARRAY " + typ + " " + toarr);
-   if (toarr == null) return null;
+// JcompType atyp = type_context.createMethodType(null,new ArrayList<>(),false,null);
+// JcompSymbol toarr = typ.lookupMethod(type_context,"toArray",atyp);
+// AcornLog.logD("CASHEW","TOARRAY " + typ + " " + toarr);
+// if (toarr == null) return null;
    
    for_runner.ensureLoaded("edu.brown.cs.seede.poppy.PoppyValue");
    String rtn = "edu.brown.cs.seede.poppy.PoppyValue.getToArray";

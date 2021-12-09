@@ -293,7 +293,15 @@ public static Object [] getToArray(Object o)
     }
    else if (o instanceof Map) {
       Map<?,?> m = (Map<?,?>) o;
-      return m.entrySet().toArray();
+      int sz = m.size();
+      Object [][] rslt = new Object[sz][2];
+      int ct = 0;
+      for (Map.Entry<?,?> ent : m.entrySet()) {
+         rslt[ct][0] = ent.getKey();
+         rslt[ct][1] = ent.getValue();
+         ++ct;
+       }
+      return rslt;
     }
    return null;
 }
