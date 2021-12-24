@@ -398,9 +398,13 @@ private void outputResult(IvyXmlWriter xw,CuminRunner cr,CuminRunStatus sts,bool
     }
    
    xw.end("RUNNER");
-
+   
+   xw.begin("GLOBALS");
+   ctx.outputStatics(outctx);
+   xw.end("GLOBALS");
+   
    if (stats) {
-      CashewValueObject.outputStatics(xw,outctx);
+      CashewValueObject.outputStatics(outctx);
     }
 }
 

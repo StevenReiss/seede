@@ -534,8 +534,9 @@ void getChangeTimes(Set<Long> times,Set<CashewValue> done)
 
 
 
-public static void outputStatics(IvyXmlWriter xw,CashewOutputContext outctx)
+public static void outputStatics(CashewOutputContext outctx)
 {
+   IvyXmlWriter xw = outctx.getXmlWriter();
    xw.begin("STATICS");
    for (Map.Entry<String,CashewRef> ent : static_values.entrySet()) {
       if (!ent.getValue().isEmpty()) {

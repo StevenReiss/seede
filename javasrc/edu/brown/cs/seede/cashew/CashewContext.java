@@ -605,22 +605,8 @@ public void outputXml(CashewOutputContext outctx)
       xw.field("END",end_time);
       if (parent_context != null) xw.field("PARENT",parent_context.context_id);
       
-      for (Map.Entry<Object,CashewValue> ent : context_map.entrySet()) {
-         Object var = ent.getKey();
-         String name = var.toString();
-         xw.begin("VARIABLE");
-         xw.field("NAME",name);
-         if (var instanceof JcompSymbol) {
-            JcompSymbol js = (JcompSymbol) var;
-            ASTNode defn = js.getDefinitionNode();
-            CompilationUnit cu = (CompilationUnit) defn.getRoot();
-            int lno = cu.getLineNumber(defn.getStartPosition());
-            xw.field("LINE",lno);
-          }
-         CashewValue cv = ent.getValue();
-         if (cv != null) cv.outputXml(outctx,name);
-         xw.end("VARIABLE");
-       }
+      outputVariables(outctx);
+      
       for (CashewContext ctx : nested_contexts) {
          ctx.outputXml(outctx);
        }
@@ -632,6 +618,42 @@ public void outputXml(CashewOutputContext outctx)
        } 
     }
    outctx.setContext(null);
+}
+
+
+
+private void outputVariables(CashewOutputContext outctx)
+{
+   IvyXmlWriter xw = outctx.getXmlWriter();
+   
+   for (Map.Entry<Object,CashewValue> ent : context_map.entrySet()) {
+      Object var = ent.getKey();
+      String name = var.toString();
+      xw.begin("VARIABLE");
+      xw.field("NAME",name);
+      if (var instanceof JcompSymbol) {
+         JcompSymbol js = (JcompSymbol) var;
+         ASTNode defn = js.getDefinitionNode();
+         CompilationUnit cu = (CompilationUnit) defn.getRoot();
+         int lno = cu.getLineNumber(defn.getStartPosition());
+         xw.field("LINE",lno);
+       }
+      CashewValue cv = ent.getValue();
+      if (cv != null) cv.outputXml(outctx,name);
+      xw.end("VARIABLE");
+    }
+}
+
+
+
+public void outputStatics(CashewOutputContext outctx)
+{
+   if (parent_context != null) {
+      parent_context.outputStatics(outctx);
+    }
+   else {
+      outputVariables(outctx);
+    }
 }
 
 
