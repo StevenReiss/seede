@@ -453,7 +453,7 @@ void getChangeTimes(Set<Long> times,Set<CashewValue> done)
       for (Map.Entry<String,CashewRef> ent : field_values.entrySet()) {
 	 CashewRef cr = ent.getValue();
 	 cr.getDataType(null);
-	 System.err.println("EXPANDED " + ent.getKey() + " " + cr);
+	 AcornLog.logD("CASHEW","EXPANDED " + ent.getKey() + " " + cr);
        }
       if (rvl > 0) rvl = -rvl;
       old_ref = 0;
@@ -473,7 +473,6 @@ void getChangeTimes(Set<Long> times,Set<CashewValue> done)
       xw.field("OREF",oref);
     }
    else {
-      if (oref != 0) xw.field("OREF",oref);
       for (Map.Entry<String,CashewRef> ent : field_values.entrySet()) {
 	 if (!ent.getValue().isEmpty()) {
 	    xw.begin("FIELD");

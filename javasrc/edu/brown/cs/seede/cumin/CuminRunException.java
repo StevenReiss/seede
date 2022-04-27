@@ -37,8 +37,8 @@ public class CuminRunException extends Exception implements CuminRunStatus
 /********************************************************************************/
 
 private Reason		throw_reason;
-private CashewValue	associated_value;
-private CuminRunner	call_value;
+private transient CashewValue associated_value;
+private transient CuminRunner call_value;
 
 private final static long serialVersionUID = 1;
 
