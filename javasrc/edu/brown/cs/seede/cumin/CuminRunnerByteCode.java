@@ -96,6 +96,8 @@ CuminRunnerByteCode(CashewValueSession sess,CuminProject sp,
 /********************************************************************************/
 
 JcodeMethod getCodeMethod()		{ return jcode_method; }
+
+@Override String getMethodName()        { return getCodeMethod().getFullName(); }
 int getNumArg() 			{ return num_arg; }
 String getCallingClass()
 {
@@ -162,6 +164,9 @@ String getCallingClass()
       CuminRunStatus sts = handleException(r);
       if (sts != null) return sts;
     }
+   else if (r.getReason() == Reason.TIMEOUT) {
+      return r;
+    }
 
    try {
       while (current_instruction >= 0) {
@@ -198,6 +203,10 @@ String getCallingClass()
 
 private CuminRunStatus handleException(CuminRunStatus cr)
 {
+   AcornLog.logD("CUMIN","Handle exception " + cr.getMessage() + " " + cr.getValue());
+   
+   if (cr.getMessage() != null && cr.getMessage().equals("SEEDE_TIMEOUT")) return cr;
+   
    CashewValue ev = cr.getValue();
    JcodeTryCatchBlock tcb = null;
    int len = 0;
@@ -1028,12 +1037,12 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException, CashewExc
       case MONITORENTER :
 	 v0 = execution_stack.pop();
 	 CashewSynchronizationModel csm = lookup_context.getSynchronizationModel();
-	 if (csm != null) csm.synchEnter(v0);
+	 if (csm != null) csm.synchEnter(getCurrentThread(),v0);
 	 break;
       case MONITOREXIT :
 	 v0 = execution_stack.pop();
 	 csm = lookup_context.getSynchronizationModel();
-	 if (csm != null) csm.synchExit(v0);
+	 if (csm != null) csm.synchExit(getCurrentThread(),v0);
 	 break;
 
       default :
@@ -1067,7 +1076,8 @@ private CuminRunStatus handleCall(JcodeMethod method,CallType cty,int act0)
   int act = method.getNumArguments();
   if (act0 >= 0) {
      if (act != act0) {
-        AcornLog.logD("CUMIN","Argument counts differ " + act + " " + act0);
+        AcornLog.logD("CUMIN","Argument counts differ " + act + " " + act0 + " " +
+              method.isVarArgs());
         act = act0;
       }
    }

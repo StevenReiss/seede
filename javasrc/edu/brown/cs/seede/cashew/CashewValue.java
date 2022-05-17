@@ -126,6 +126,8 @@ public static CashewValue createDefaultValue(JcompTyper typer,JcompType type)
 
 public static CashewValue createReference(CashewValue base,boolean caninit)
 {
+   if (base instanceof CashewRef) return base;
+   
    CashewRef cr = new CashewRef(base,caninit);
    return cr;
 }
@@ -473,7 +475,8 @@ public JcompType getDataType(CashewValueSession sess,CashewClock cc,JcompTyper t
 
 protected JcompType getDataType(JcompTyper typer)
 {
-   if (decl_type == null) AcornLog.logX("Illegal use of getDataType without clock");
+   if (decl_type == null) 
+      AcornLog.logX("Illegal use of getDataType without clock");
 
    // null --> only the name is relevant
    

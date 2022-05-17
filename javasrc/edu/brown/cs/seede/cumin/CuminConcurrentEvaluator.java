@@ -418,6 +418,7 @@ static {
    addFields("java.util.concurrent.Thread",232,"threadLocalRandomSeed",240,"threadLocalRandomProbe",
          244,"threadLocalRandomSecondardSeed",80,"threadLocals",84,"inheritableThreadLocals",
          76,"inheritedAccessControlContext");
+   addFields("java.util.concurrent.locks.AbstractQueuedSynchronizer",16,"state",8,"tail",0,"head");
 }
 
 
@@ -428,7 +429,8 @@ private static void addFields(String cls,Object ... args)
    for (int i = 0; i < args.length; i += 2) {
       Integer off = (Integer) args[i];
       String nm = (String) args[i+1];
-      fmap.put(off,cls + "." + nm);
+      if (nm.contains(".")) fmap.put(off,nm);
+      else fmap.put(off,cls + "." + nm);
     }
 }
 
@@ -436,10 +438,12 @@ private static void addFields(String cls,Object ... args)
 
 private String getFieldAtOffset(JcompType typ,int off)
 {
-   Map<Integer,String> flds = field_offset_map.get(typ.getName());
-   if (flds != null) {
-      String fld = flds.get(off);
-      if (fld != null) return fld;
+   for (JcompType st = typ; st != null; st = st.getSuperType()) { 
+      Map<Integer,String> flds = field_offset_map.get(st.getName());
+      if (flds != null) {
+         String fld = flds.get(off);
+         if (fld != null) return fld;
+       }
     }
    
    AcornLog.logE("CUMIN","Unknown field offset " + typ.getName() + " " + off);

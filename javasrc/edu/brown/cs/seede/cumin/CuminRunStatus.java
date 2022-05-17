@@ -100,7 +100,7 @@ public class Factory {
    public static CuminRunStatus createTimeout(CashewValueSession sess,JcompTyper typer) {
       JcompType etyp = typer.findSystemType("java.lang.Error");
       CashewValue cv = CashewValue.objectValue(sess,typer,etyp);
-      return new CuminRunException(Reason.EXCEPTION,"SEEDE TIMOEOUT",null,cv);  
+      return new CuminRunException(Reason.EXCEPTION,"SEEDE_TIMEOUT",null,cv);  
    // return new CuminRunValue(Reason.TIMEOUT);
     }
 

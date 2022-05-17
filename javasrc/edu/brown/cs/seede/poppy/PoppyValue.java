@@ -190,15 +190,17 @@ public static Object getStaticFieldValue(String itm)
    if (fld.equals("ENUM$VALUES")) {
       return c1.getEnumConstants();
     }
+   Throwable err = null;
    try {
       Field f1 = c1.getDeclaredField(fld);
       f1.setAccessible(true);
       return f1.get(null);
     }
    catch (Throwable t) { 
+      err = t;
     }
    
-   System.err.println("POPPY: Problem getting static field: " + c1 + " " + fld);
+   System.err.println("POPPY: Problem getting static field: " + c1 + " " + fld + " " + err);
    return null;
 }
 

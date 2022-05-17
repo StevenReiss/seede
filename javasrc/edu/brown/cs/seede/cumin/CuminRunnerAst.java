@@ -226,6 +226,16 @@ String getCallingClass()
 }
 
 
+String getMethodName()
+{
+   if (method_node instanceof MethodDeclaration) {
+      MethodDeclaration md = (MethodDeclaration) method_node;
+      return getCallingClass() + "." + md.getName().getIdentifier();
+    }
+   else {
+      return method_node.getClass().getName();
+    }
+}
 
 /********************************************************************************/
 /*										*/
@@ -2437,7 +2447,7 @@ private CuminRunStatus visit(SynchronizedStatement s,ASTNode after)
       CashewValue cv = execution_stack.peek(0).getActualValue(runner_session,execution_clock);
       CashewSynchronizationModel csm = lookup_context.getSynchronizationModel();
       if (csm != null) {
-	 csm.synchEnter(cv);
+	 csm.synchEnter(getCurrentThread(),cv);
        }
       next_node = s.getBody();
     }
@@ -2445,7 +2455,7 @@ private CuminRunStatus visit(SynchronizedStatement s,ASTNode after)
       CashewValue cv = execution_stack.pop().getActualValue(runner_session,execution_clock);
       CashewSynchronizationModel csm = lookup_context.getSynchronizationModel();
       if (csm != null) {
-	 csm.synchExit(cv);
+	 csm.synchExit(getCurrentThread(),cv);
        }
     }
 

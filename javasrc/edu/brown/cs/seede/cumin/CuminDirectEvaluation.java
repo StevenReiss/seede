@@ -955,7 +955,7 @@ CuminRunStatus checkObjectMethods() throws CuminRunException, CashewException
 	    long time = 0;
 	    if (getNumArgs() > 1) time = getLong(1);
 	    try {
-	       scm.synchWait(getValue(0),time);
+	       scm.synchWait(exec_runner.getCurrentThread(),getValue(0),time);
 	     }
 	    catch (InterruptedException ex) {
 	       CuminEvaluator.throwException(sess,typer,"java.lang.InterruptedException");
@@ -1351,9 +1351,23 @@ CuminRunStatus checkThreadMethods()
    if (getMethod().isStatic()) {
       switch (getMethod().getName()) {
 	 case "currentThread" :
-	    rslt = exec_runner.getLookupContext().findStaticFieldReference(
-		  getTyper(),CURRENT_THREAD_FIELD,"java.lang.Thread");
+	    rslt = exec_runner.getCurrentThread();
 	    break;
+         case "holdsLock" :
+            CashewSynchronizationModel csm = exec_runner.getLookupContext().getSynchronizationModel();
+            // assume we hold all needed locks
+            boolean fg = csm.holdsLock(exec_runner.getCurrentThread(),getValue(0));
+            rslt = CashewValue.booleanValue(getTyper(),fg);
+            break;
+         case "yield" :
+         case "sleep" :
+            break;
+         case "dumpThreads" :
+            // need to implement
+            break;
+         case "getThreads" :
+            // need to implement
+            break;
 	 default :
 	    return null;
        }
@@ -1361,9 +1375,6 @@ CuminRunStatus checkThreadMethods()
    else {
       // CashewValue thisarg = getContext().findReference(0).getActualValue(getClock());
       switch (getMethod().getName()) {
-	 case "yield" :
-	 case "sleep" :
-	    break;
 	 case "start0" :
 	    // start a thread here
 	    break;
@@ -1371,19 +1382,29 @@ CuminRunStatus checkThreadMethods()
 	 case "getAllStackTraces" :
 	    // These should be handled by calling code
 	    break;
-	 case "holdsLock" :
-	    // TODO: interact with locking here
-	    rslt = CashewValue.booleanValue(getTyper(),false);
-	    break;
 	 case "isInterrupted" :
 	    rslt = CashewValue.booleanValue(getTyper(),false);
 	    break;
 	 case "isAlive" :
-	    rslt = CashewValue.booleanValue(getTyper(),true);
+            CashewValue curthd = exec_runner.getCurrentThread();
+            boolean iscur = curthd.equals(getValue(0));
+            AcornLog.logD("CUMIN","Thread is alive " + curthd + " " + getValue(0) + " " + iscur);
+	    rslt = CashewValue.booleanValue(getTyper(),iscur);
 	    break;
 	 case "countStackFrames" :
 	    rslt = CashewValue.numericValue(getTyper(),getTyper().INT_TYPE,1);
 	    break;
+         case "setPriority0" :
+         case "stop0" :
+         case "suspend0" :
+         case "resume0" :
+         case "interrupt0" :
+         case "clearInterruptEvent" :
+         case "setNativeName" :
+            break;
+            
+         default :
+            return null;
        }
     }
 

@@ -135,6 +135,7 @@ protected CashewContext lookup_context;
 protected CashewContext global_context;
 protected List<CashewValue> call_args;
 protected JcompTyper	type_converter;
+private CashewValue     current_thread;
 
 private int		cur_depth;
 
@@ -171,6 +172,7 @@ protected CuminRunner(CashewValueSession sess,CuminProject cp,CashewContext gblc
    max_depth = 0;
    cur_depth = depth;
    type_converter = cp.getTyper();
+   current_thread = null;
 }
 
 
@@ -278,6 +280,21 @@ public CashewValue findReferencedVariableValue(JcompTyper typer,String name,long
 }
 
 
+
+public CashewValue getCurrentThread()
+{
+   if (current_thread == null) {
+     current_thread = getLookupContext().findStaticFieldReference(
+            getTyper(),CURRENT_THREAD_FIELD,"java.lang.Thread");
+    }
+   return current_thread;
+}
+
+
+abstract String getMethodName();
+
+
+
 /********************************************************************************/
 /*										*/
 /*	Evaluation methods							*/
@@ -337,6 +354,9 @@ public CuminRunStatus interpret(EvalType et) throws CuminRunException
 	       lookup_context.setEndTime(execution_clock);
 	       return rsts;
 	     }
+            if (AcornLog.isTracing()) {
+               AcornLog.logT("Continue executing method " + getMethodName());
+             }
 	  }
 
 	 CuminRunStatus nsts = null;
@@ -668,6 +688,12 @@ private JcodeMethod findTargetMethod(CashewClock cc,JcodeMethod method,
     }
    if (cls == null) cls = getCodeFactory().findClass("java.lang.Object");
    JcodeMethod cmethod = cls.findInheritedMethod(method.getName(),method.getDescription());
+   
+   if (cmethod == null && method.isVarArgs()) {                 // handle polymorphic methods
+      if (method.getNumArguments() == 1) {
+         cmethod = method;
+       }
+    }
 
    return cmethod;
 }
@@ -709,7 +735,7 @@ private void beginSynch()
    if (cv != null){
       cv = cv.getActualValue(getSession(),execution_clock);
       CashewSynchronizationModel csm = lookup_context.getSynchronizationModel();
-      if (csm != null) csm.synchEnter(cv);
+      if (csm != null) csm.synchEnter(getCurrentThread(),cv);
     }
 }
 
@@ -720,7 +746,7 @@ private void endSynch()
    if (cv != null) {
       cv = cv.getActualValue(getSession(),execution_clock);
       CashewSynchronizationModel csm = lookup_context.getSynchronizationModel();
-      if (csm != null) csm.synchExit(cv);
+      if (csm != null) csm.synchExit(getCurrentThread(),cv);
     }
 }
 

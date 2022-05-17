@@ -29,6 +29,7 @@ import edu.brown.cs.seede.acorn.AcornLog;
 import edu.brown.cs.seede.cashew.CashewContext;
 import edu.brown.cs.seede.cashew.CashewException;
 import edu.brown.cs.seede.cashew.CashewInputOutputModel;
+import edu.brown.cs.seede.cashew.CashewSynchronizationModel;
 import edu.brown.cs.seede.cashew.CashewValue;
 
 public class SesameContext extends CashewContext implements SesameConstants
@@ -93,6 +94,9 @@ SesameContext(SesameSession ss)
 
    cv = for_session.lookupValue(name,type);
    if (cv == null) {
+      cv = getKnownStaticField(typer,name,type);
+    }
+   if (cv == null) {
       String suffix = "";
       if (type == null) type = "java.lang.Object";
       switch (type) {
@@ -130,6 +134,21 @@ SesameContext(SesameSession ss)
 }
 
 
+
+private CashewValue getKnownStaticField(JcompTyper typer,String name,String type) 
+{
+   CashewValue rslt = null;
+   
+   switch (name) {
+      case "jdk.internal.logger.SurrogateLogger.JUL_DEFAULT_LEVEL" :
+         rslt = findStaticFieldReference(typer,"sun.util.logging.PlatformLogger.Level.INFO",type);
+         break;
+    }
+   
+   return rslt;
+}
+
+
 @Override public CashewValue evaluate(String expr)
 {
    return for_session.evaluate(expr,null,true);
@@ -149,6 +168,11 @@ SesameContext(SesameSession ss)
    return null;
 }
 
+
+@Override public CashewSynchronizationModel getSynchronizationModel()
+{
+   return for_session.getSynchronizationModel();
+}
 
 
 

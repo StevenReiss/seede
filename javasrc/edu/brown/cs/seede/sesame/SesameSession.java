@@ -45,6 +45,7 @@ import edu.brown.cs.seede.acorn.AcornLog;
 import edu.brown.cs.seede.cashew.CashewContext;
 import edu.brown.cs.seede.cashew.CashewException;
 import edu.brown.cs.seede.cashew.CashewInputOutputModel;
+import edu.brown.cs.seede.cashew.CashewSynchronizationModel;
 import edu.brown.cs.seede.cashew.CashewValue;
 import edu.brown.cs.seede.cashew.CashewConstants.CashewValueSession;
 import edu.brown.cs.seede.cumin.CuminRunner;
@@ -93,6 +94,7 @@ private Map<String,SesameLocation> location_map;
 private Map<CuminRunner,SesameLocation> runner_location;
 private Set<SesameExecRunner> exec_runners;
 private CashewInputOutputModel	cashew_iomodel;
+private CashewSynchronizationModel cashew_syncmodel;
 private Set<String>	expand_names;
 private boolean 	compute_tostring;
 private boolean         compute_toarray;
@@ -152,6 +154,7 @@ private void initialize(String sid,Element xml)
    exec_runners = new HashSet<SesameExecRunner>();
    runner_location = new WeakHashMap<CuminRunner,SesameLocation>();
    cashew_iomodel = new CashewInputOutputModel();
+   cashew_syncmodel = new CashewSynchronizationModel();
    expand_names = null;
    compute_tostring = sesame_control.getComputeToString();
    compute_toarray = sesame_control.getComputeToArray();
@@ -547,7 +550,7 @@ void enableAccess(String type)		{ }
 
 /********************************************************************************/
 /*										*/
-/*	File management methods 						*/
+/*	Model management methods 						*/
 /*										*/
 /********************************************************************************/
 
@@ -556,6 +559,11 @@ CashewInputOutputModel getIOModel()
    return cashew_iomodel;
 }
 
+
+CashewSynchronizationModel getSynchronizationModel()
+{
+   return cashew_syncmodel;
+}
 
 
 

@@ -236,6 +236,19 @@ public void setInitialValue(JcompTyper typer,String s,int coder)
 }
 
 
+/********************************************************************************/
+/*                                                                              */
+/*      Output methods                                                          */
+/*                                                                              */
+/********************************************************************************/
+
+@Override public String toString()
+{
+   return "[[" + string_value + "]]";
+}
+
+
+
 }	// end of class CashewValueString
 
 

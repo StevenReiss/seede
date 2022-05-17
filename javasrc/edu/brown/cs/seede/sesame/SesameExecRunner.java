@@ -335,6 +335,7 @@ private void report(long time)
     }
 
    for_session.getIOModel().reset();
+   for_session.getSynchronizationModel().reset();
 
    run_status.clear();
 
