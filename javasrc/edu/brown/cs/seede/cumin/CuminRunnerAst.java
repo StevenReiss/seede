@@ -90,6 +90,7 @@ import org.eclipse.jdt.core.dom.SuperMethodReference;
 import org.eclipse.jdt.core.dom.SwitchCase;
 import org.eclipse.jdt.core.dom.SwitchStatement;
 import org.eclipse.jdt.core.dom.SynchronizedStatement;
+import org.eclipse.jdt.core.dom.TextBlock;
 import org.eclipse.jdt.core.dom.ThisExpression;
 import org.eclipse.jdt.core.dom.ThrowStatement;
 import org.eclipse.jdt.core.dom.TryStatement;
@@ -682,6 +683,9 @@ private CuminRunStatus evalNode(ASTNode node,ASTNode afterchild)
       case ASTNode.SYNCHRONIZED_STATEMENT :
 	 sts = visit((SynchronizedStatement) node,afterchild);
 	 break;
+      case ASTNode.TEXT_BLOCK :
+	 sts = visit((TextBlock) node);
+	 break;
       case ASTNode.THIS_EXPRESSION :
 	 sts = visit((ThisExpression) node);
 	 break;
@@ -1026,6 +1030,24 @@ private CuminRunStatus visit(StringLiteral v)
       return CuminRunStatus.Factory.createCompilerError();
     }
 
+   return null;
+}
+
+
+
+private CuminRunStatus visit(TextBlock v)
+{
+   try {
+      JcompTyper typer = type_converter;
+      execution_stack.push(CashewValue.stringValue(typer,typer.STRING_TYPE,v.getLiteralValue()));
+    }
+   catch (IllegalArgumentException e) {
+      return CuminRunStatus.Factory.createCompilerError();
+    }
+   catch (StringIndexOutOfBoundsException e) {
+      return CuminRunStatus.Factory.createCompilerError();
+    }
+   
    return null;
 }
 
