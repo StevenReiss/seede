@@ -806,6 +806,7 @@ private CuminRunStatus evalThrow(ASTNode node,CuminRunStatus cause)
       case ASTNode.STRING_LITERAL :
       case ASTNode.SUPER_FIELD_ACCESS :
       case ASTNode.SWITCH_CASE :
+      case ASTNode.TEXT_BLOCK :
       case ASTNode.THIS_EXPRESSION :
       case ASTNode.THROW_STATEMENT :
       case ASTNode.TYPE_LITERAL :
