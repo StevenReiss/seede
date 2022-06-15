@@ -65,7 +65,7 @@ private int context_id;
 private long start_time;
 private long end_time;
 private boolean is_output;
-
+ 
 private static AtomicInteger id_counter = new AtomicInteger();
 
 
@@ -492,14 +492,14 @@ public String getNextInputLine(String file)
 /*                                                                              */
 /********************************************************************************/
 
-public void resetValues(Set<CashewValue> done) 
+public void resetValues(CashewValueSession sess,Set<CashewValue> done) 
 {
    for (CashewValue cv : context_map.values()) {
-      if (cv != null) cv.resetValues(done);
+      if (cv != null) cv.resetValues(sess,done);
     }
    if (nested_contexts != null) {
       for (CashewContext nctx : nested_contexts) {
-         nctx.resetValues(done);
+         nctx.resetValues(sess,done);
        }
     }
 }
@@ -568,7 +568,7 @@ public void checkToArray(CashewValueSession sess,CashewOutputContext outctx)
       if (key.startsWith("*")) continue;
       CashewValue cv = ent.getValue();
       if (cv != null) {
-         AcornLog.logD("CONTEXT VALUE " + key + " "  + cv.isEmpty() +
+         AcornLog.logD("CONTEXT VALUE " + key + " "  + cv.isEmpty(sess) +
                " " + cv);
          cv.checkToArray(sess,outctx);
        }

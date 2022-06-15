@@ -407,6 +407,7 @@ synchronized void removeProject()
    // ct = 1;			// for debugging only
    JcodeFactory jf = new JcodeFactory(ct);
    for (String s : class_paths) {
+      AcornLog.logD("SESAME","Add to class path " + s);
       jf.addToClassPath(s);
     }
    jf.load();

@@ -27,6 +27,7 @@ package edu.brown.cs.seede.cashew;
 import edu.brown.cs.ivy.jcomp.JcompType;
 import edu.brown.cs.ivy.jcomp.JcompTyper;
 import edu.brown.cs.ivy.xml.IvyXmlWriter;
+import edu.brown.cs.seede.acorn.AcornLog;
 
 public class CashewValueClass extends CashewValueObject implements CashewConstants
 {
@@ -71,6 +72,25 @@ public JcompType getJcompType()                         { return class_value; }
       JcompTyper typer,CashewClock cc,int idx,boolean dbg) 
 {
    return class_value.toString();
+}
+
+
+@Override public CashewValue getFieldValue(CashewValueSession sess,
+      JcompTyper typer,CashewClock cc,String nm,boolean force)
+{
+   switch (nm) {
+      case "java.lang.Class.packageName" :
+      case "packageName" :
+         return CashewValue.stringValue(typer,typer.STRING_TYPE,class_value.getPackageName());
+      case "java.lang.Class.name" :
+      case "name" :
+         return CashewValue.stringValue(typer,typer.STRING_TYPE,class_value.getName());
+      default :
+         AcornLog.logE("CASHEW","Unknown Class field: " + nm);
+         break;
+    }
+   
+   return null;
 }
 
 

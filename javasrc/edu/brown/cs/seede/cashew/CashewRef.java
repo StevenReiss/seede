@@ -35,10 +35,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 import edu.brown.cs.ivy.jcomp.JcompType;
 import edu.brown.cs.ivy.jcomp.JcompTyper;
 import edu.brown.cs.ivy.xml.IvyXmlWriter;
+import edu.brown.cs.seede.acorn.AcornLog;
 
 class CashewRef extends CashewValue implements CashewConstants
 {
@@ -50,13 +52,13 @@ class CashewRef extends CashewValue implements CashewConstants
 /*										*/
 /********************************************************************************/
 
-private SortedMap<Long,CashewValue>	value_map;
-private long	last_update;
-private CashewValue last_value;
+private Map<CashewValueSession,SortedMap<Long,CashewValue>> value_maps;
+private Map<CashewValueSession,Long> last_updates;
+private Map<CashewValueSession,CashewValue> last_values;
+private CashewValue initial_value;
 private CashewDeferredValue deferred_value;
 private boolean can_initialize;
-
-
+private CashewValueSession last_session;
 
 
 
@@ -68,21 +70,34 @@ private boolean can_initialize;
 
 CashewRef(CashewValue v,boolean caninit)
 {
-   last_update = 0;
-   last_value = v;
-   can_initialize = caninit;
-   deferred_value = null;
+   initialize(caninit,v);
 }
 
 CashewRef(CashewDeferredValue deferred)
 {
-   last_update = -1;
-   last_value = null;
-   deferred_value = deferred;
-   can_initialize = true;
+   initialize(true,deferred);
 }
 
 
+private void initialize(boolean init,Object cv)
+{
+   last_updates = null;
+   last_values = null;
+   can_initialize = init;
+   value_maps = null;
+   last_session = null;
+   if (cv != null && cv instanceof CashewDeferredValue) {
+      deferred_value = (CashewDeferredValue) cv;
+      initial_value = null;
+    }
+   else if (cv != null && cv instanceof CashewValue) {
+      deferred_value = null;
+      initial_value = (CashewValue) cv;
+    }
+   else {
+      AcornLog.logX("CASHEW","Creating empty reference");
+    }
+}
 
 
 /********************************************************************************/
@@ -112,7 +127,7 @@ CashewRef(CashewDeferredValue deferred)
       JcompTyper typer,CashewClock cc,int lvl,boolean dbg)
         throws CashewException
 {
-   if (dbg && deferred_value != null) return "<???>";
+   if (dbg && deferred_value != null) return "<DEFER>";
 
    CashewValue cv = getValueAt(sess,cc);
    if (cv == null) return null;
@@ -132,29 +147,28 @@ CashewRef(CashewDeferredValue deferred)
    if (cv == null) return this;
    cv = cv.getActualValue(sess,cc);
    if (cv == null) return this;
+   
+   last_session = sess;
 
    long tv = 0;
    if (cc != null) tv = cc.getTimeValue();
-
-   if (last_update < 0 || (tv == 0 && last_update == 0)) {
+   
+   long upd = getLastUpdate(sess);
+   if (upd < 0 || (tv == 0 && upd == 0)) {
       // first time -- just record value
-      last_update = tv;
-      last_value = cv;
+      initial_value = cv;
+      setLastUpdate(sess,tv,cv);
       if (cc != null) cc.tick();
       return this;
     }
 
-   if (value_map == null) {
-      value_map = new TreeMap<>();
-      if (last_value != null) value_map.put(last_update,last_value);
+   SortedMap<Long,CashewValue> map = createValueMap(sess);
+   map.put(tv,cv);
+   
+   if (tv >= upd) {
+      setLastUpdate(sess,tv,cv);
     }
 
-   if (tv >= last_update) {
-      last_update = tv;
-      last_value = cv;
-    }
-
-   value_map.put(tv,cv);
    if (cc != null) cc.tick();
 
    return this;
@@ -162,29 +176,29 @@ CashewRef(CashewDeferredValue deferred)
 
 
 
-@Override protected void localResetValue(Set<CashewValue> done)
+@Override protected void localResetValue(CashewValueSession sess,Set<CashewValue> done)
 {
-   if (value_map != null) {
-      long v0 = value_map.firstKey();
-      last_update = v0;
-      last_value = value_map.get(v0);
-      value_map = null;
+   SortedMap<Long,CashewValue> map = getValueMap(sess);
+   if (map != null) {
+      long v0 = map.firstKey();
+      setLastUpdate(sess,v0,map.get(v0));
+      clearValueMap(sess);
     }
-   if (last_update > 0) {
-      last_update = 0;
-      last_value = null;
-    }
+   CashewValue cv = getLastValue(sess);
+   clearLastUpdate(sess);
 
-   if (last_value != null) last_value.resetValues(done);
+   if (cv != null) cv.resetValues(sess,done);
 }
 
 
-@Override protected void localResetType(JcompTyper typer,Set<CashewValue> done)
+@Override protected void localResetType(CashewValueSession sess,JcompTyper typer,Set<CashewValue> done)
 {
-   if (last_value != null) last_value.resetType(typer,done);
-   if (value_map != null) {
-      for (CashewValue cv : value_map.values()) {
-	 cv.resetType(typer,done);
+   CashewValue lv = getLastValue(sess);
+   if (lv != null) lv.resetType(sess,typer,done);
+   SortedMap<Long,CashewValue> map = getValueMap(sess);
+   if (map != null) {
+      for (CashewValue cv : map.values()) {
+	 cv.resetType(sess,typer,done);
        }
     }
 }
@@ -214,6 +228,7 @@ CashewRef(CashewDeferredValue deferred)
 }
 
 
+
 @Override public CashewValue getIndexValue(CashewValueSession sess,CashewClock cc,int idx)
         throws CashewException
 {
@@ -221,6 +236,8 @@ CashewRef(CashewDeferredValue deferred)
    if (cv == null) return null;
    return cv.getIndexValue(sess,cc,idx);
 }
+
+
 
 @Override public int getDimension(CashewValueSession sess,CashewClock cc) throws CashewException
 {
@@ -251,11 +268,10 @@ CashewRef(CashewDeferredValue deferred)
 }
 
 
-@Override public boolean isEmpty()
+@Override public boolean isEmpty(CashewValueSession sess)
 {
-   return value_map == null && last_value == null;
+   return getValueMap(sess) == null && getLastValue(sess) == null;
 }
-
 
 
 
@@ -284,15 +300,12 @@ CashewRef(CashewDeferredValue deferred)
 
 
 
-
-
 @Override public String getInternalRepresentation(CashewValueSession sess,CashewClock cc)
 {
    CashewValue cv = getValueAt(sess,cc);
    if (cv == null) return null;
    return cv.getInternalRepresentation(sess,cc);
 }
-
 
 
 
@@ -305,42 +318,140 @@ CashewRef(CashewDeferredValue deferred)
 private CashewValue getValueAt(CashewValueSession sess,CashewClock cc)
 {
    long tv = 0;
+   long upd = getLastUpdate(sess);
    if (cc == null) {
-      if (last_update >= 0) tv = last_update+1;
+      if (upd >= 0) tv = upd+1;
     }
    else tv = cc.getTimeValue();
+   last_session = sess;
 
-   if (last_update >= 0) {
-      if (tv > last_update || tv == 0) return last_value;
+   if (upd >= 0) {
+      CashewValue lvl = getLastValue(sess);
+      if (lvl == null) {
+         AcornLog.logD("CASHEW","Update with no value " + upd + " " + tv);
+       }
+      
+      else if (tv > upd || tv == 0) return lvl;
     }
 
-   if (value_map == null) {
+   SortedMap<Long,CashewValue> map = getValueMap(sess);
+   if (map == null) {
       if (deferred_value != null) {
 	 CashewValue cv = deferred_value.getValue(sess);
+         if (cv == null) cv = deferred_value.getValue(sess.getParent());
 	 if (cv != null) {
-	    last_update = 0;
-	    last_value = cv;
+            setLastUpdate(sess,0,cv);
 	    deferred_value = null;
+            initial_value = cv;
 	    return cv;
 	  }
+         else AcornLog.logE("CASHEW","No value computed for deferred value");
        }
       return null;
     }
 
-   SortedMap<Long,CashewValue> head = value_map.headMap(tv);
+   SortedMap<Long,CashewValue> head = map.headMap(tv);
    if (head.isEmpty()) return null;
 
-   return value_map.get(head.lastKey());
+   return map.get(head.lastKey());
 }
 
 
 
-@Override boolean sameValue(CashewValue cv)
+@Override boolean sameValue(CashewValueSession sess,CashewValue cv)
 {
-   if (value_map == null && last_value != null)
-      return last_value.sameValue(cv);
+   if (getValueMap(sess) == null && getLastValue(sess) != null)
+      return getLastValue(sess).sameValue(sess,cv);
 
    return false;
+}
+ 
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Handle multiple sessions                                                */
+/*                                                                              */
+/********************************************************************************/
+
+private long getLastUpdate(CashewValueSession sess)
+{
+   Long lng = null;
+   if (last_updates != null && sess != null) lng = last_updates.get(sess);
+   else if (sess != null) {
+      getLastUpdate(sess.getParent());
+    }
+   if (lng == null) {
+      if (deferred_value != null) return -1;
+      return 0;
+    }
+   
+   return lng;
+}
+ 
+
+private CashewValue getLastValue(CashewValueSession sess)
+{
+   if (last_values == null || sess == null) return initial_value;
+   CashewValue cv = last_values.get(sess);
+   if (cv != null) return cv;
+   if (sess.getParent() == null) return initial_value;
+   return getLastValue(sess.getParent());
+}
+
+
+private void setLastUpdate(CashewValueSession sess,long v,CashewValue cv)
+{
+   if (last_updates == null || last_values == null) {
+      synchronized (this) {
+         if (last_updates == null) last_updates = new ConcurrentHashMap<>();
+         if (last_values == null) last_values = new ConcurrentHashMap<>();
+       }
+    }
+   last_updates.put(sess,v);
+   last_values.put(sess,cv);
+}
+
+private void clearLastUpdate(CashewValueSession sess)
+{
+   if (last_updates != null) last_updates.remove(sess);
+   if (last_values != null) last_values.remove(sess);
+}
+
+
+private SortedMap<Long,CashewValue> getValueMap(CashewValueSession sess)
+{
+   if (value_maps == null || sess == null) return null;
+   SortedMap<Long,CashewValue> map = value_maps.get(sess);
+   if (map == null) {
+      return getValueMap(sess.getParent());
+    }
+   return map;
+}
+
+
+private SortedMap<Long,CashewValue> createValueMap(CashewValueSession sess)
+{
+   if (value_maps == null) {
+      synchronized (this) {
+         if (value_maps == null) value_maps = new ConcurrentHashMap<>();
+       }
+    }
+   SortedMap<Long,CashewValue> nmap = new TreeMap<>();
+   SortedMap<Long,CashewValue> map = value_maps.putIfAbsent(sess,nmap);
+   if (map != null) nmap = map;
+   else {
+      CashewValue cv = getLastValue(sess);
+      if (cv != null) nmap.put(getLastUpdate(sess),cv);
+    }
+   return nmap;
+}
+
+
+private void clearValueMap(CashewValueSession sess)
+{
+   if (value_maps == null) return;
+   value_maps.remove(sess);
 }
 
 
@@ -353,13 +464,14 @@ private CashewValue getValueAt(CashewValueSession sess,CashewClock cc)
 
 @Override public boolean checkChanged(CashewOutputContext outctx)
 {
-   if (value_map == null && last_value == null) return false;
-   if (value_map == null && last_value != null) {
-      boolean fg = last_value.checkChanged(outctx);
-      if (last_update == 0) return fg;
+   CashewValueSession sess = outctx.getSession();
+   if (getValueMap(sess) == null && getLastValue(sess) == null) return false;
+   if (getValueMap(sess) == null && getLastValue(sess) != null) {
+      boolean fg = getLastValue(sess).checkChanged(outctx);
+      if (getLastUpdate(sess) == 0) return fg;
       return true;
     }
-   for (CashewValue cv : value_map.values()) {
+   for (CashewValue cv : getValueMap(sess).values()) {
       if (cv != null) cv.checkChanged(outctx);
     }
    return true;
@@ -369,15 +481,15 @@ private CashewValue getValueAt(CashewValueSession sess,CashewClock cc)
 
 @Override public void checkToString(CashewValueSession sess,CashewOutputContext outctx)
 {
-   if (value_map == null && last_value == null) return;
-   if (value_map == null && last_value != null) {
-      last_value.checkToString(sess,outctx);
+   if (getValueMap(sess) == null && getLastValue(sess) == null) return;
+   if (getValueMap(sess) == null && getLastValue(sess) != null) {
+      getLastValue(sess).checkToString(sess,outctx);
       return;
     }
    // here we need to compute all relevant times and then
    // do the checkToString at a particular time
    
-   for (CashewValue cv : value_map.values()) {
+   for (CashewValue cv : getValueMap(sess).values()) {
       if (cv != null) cv.checkToString(sess,outctx);
     }
 }
@@ -385,34 +497,34 @@ private CashewValue getValueAt(CashewValueSession sess,CashewClock cc)
 
 @Override public void checkToArray(CashewValueSession sess,CashewOutputContext outctx)
 {
-   if (value_map == null && last_value == null) return;
-   if (value_map == null && last_value != null) {
-      last_value.checkToArray(sess,outctx);
+   if (getValueMap(sess) == null && getLastValue(sess) == null) return;
+   if (getValueMap(sess) == null && getLastValue(sess) != null) {
+      getLastValue(sess).checkToArray(sess,outctx);
       return;
     }
    // here we need to compute all relevant times and then
    // do the checkToArray at a particular time
    
-   for (CashewValue cv : value_map.values()) {
+   for (CashewValue cv : getValueMap(sess).values()) {
       if (cv != null) cv.checkToArray(sess,outctx);
     }
 }
 
 
-void getChangeTimes(Set<Long> times,Set<CashewValue> done)
+void getChangeTimes(CashewValueSession sess,Set<Long> times,Set<CashewValue> done)
 {
    if (!done.add(this)) return;
    
-   if (value_map != null) times.addAll(value_map.keySet());
-   else if (last_update > 0) times.add(last_update);
+   if (getValueMap(sess) != null) times.addAll(getValueMap(sess).keySet());
+   else if (getLastUpdate(sess) > 0) times.add(getLastUpdate(sess));
    
-   if (value_map != null) {
-      for (CashewValue cv : value_map.values()) {
+   if (getValueMap(sess) != null) {
+      for (CashewValue cv : getValueMap(sess).values()) {
          cv.getChangeTimes(times,done);
        }
     }
-   else if (last_value != null) {
-      last_value.getChangeTimes(times,done);
+   else if (getLastValue(sess) != null) {
+      getLastValue(sess).getChangeTimes(times,done);
     }
 }
 
@@ -420,23 +532,24 @@ void getChangeTimes(Set<Long> times,Set<CashewValue> done)
 
 @Override public void outputXml(CashewOutputContext outctx,String name)
 {
+   CashewValueSession sess = outctx.getSession();
    IvyXmlWriter xw = outctx.getXmlWriter();
    if (outctx.expand(name)) {
-      if (deferred_value != null && value_map == null) {
+      if (deferred_value != null && getValueMap(sess) == null) {
          getValueAt(outctx.getSession(),null);
        }
     }
-   if (value_map == null) {
-      if (last_value != null) {
+   if (getValueMap(sess) == null) {
+      if (getLastValue(sess) != null) {
 	 xw.begin("VALUE");
 	 if (can_initialize) xw.field("CANINIT",true);
-	 xw.field("TYPE",last_value.getDataType(null));
-	 last_value.outputLocalXml(xw,outctx,name);
+	 xw.field("TYPE",getLastValue(sess).getDataType(null));
+	 getLastValue(sess).outputLocalXml(xw,outctx,name);
 	 xw.end("VALUE");
        }
     }
    else {
-      for (Map.Entry<Long,CashewValue> ent : value_map.entrySet()) {
+      for (Map.Entry<Long,CashewValue> ent : getValueMap(sess).entrySet()) {
 	 long when = ent.getKey();
 	 xw.begin("VALUE");
 	 xw.field("TIME",when);
@@ -460,11 +573,18 @@ void getChangeTimes(Set<Long> times,Set<CashewValue> done)
 
 @Override public String toString()
 {
-   if (value_map != null) {
+   return toString(last_session);
+}
+
+
+ 
+@Override public String toString(CashewValueSession sess)
+{
+   if (getValueMap(sess) != null) {
       StringBuffer buf = new StringBuffer();
       buf.append("[");
       int idx = 0;
-      for (Map.Entry<Long,CashewValue> ent : value_map.entrySet()) {
+      for (Map.Entry<Long,CashewValue> ent : getValueMap(sess).entrySet()) {
 	 if (idx++ > 0) buf.append(",");
 	 buf.append(ent.getValue());
 	 buf.append("@");
@@ -474,7 +594,7 @@ void getChangeTimes(Set<Long> times,Set<CashewValue> done)
       return buf.toString();
     }
    else if (deferred_value != null) return "[***]";
-   else return "[" + last_value + "]";
+   else return "[" + getLastValue(sess) + "]";
 }
 
 

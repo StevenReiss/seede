@@ -418,10 +418,10 @@ private static class OutputData {
    OutputData(int fd,String path) {
       file_fd = fd;
       if (path == null) {
-	 if (fd == 0) path = "*STDIN*";
-	 else if (fd == 1) path = "*STDOUT*";
-	 else if (fd == 2) path = "*STDERR*";
-	 else path = "???";
+         if (fd == 0) path = "*STDIN*";
+         else if (fd == 1) path = "*STDOUT*";
+         else if (fd == 2) path = "*STDERR*";
+         else path = "???";
        }
       file_path = path;
       write_data = new ArrayList<WriteData>();

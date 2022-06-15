@@ -50,7 +50,7 @@ import edu.brown.cs.seede.cashew.CashewValue;
 import edu.brown.cs.seede.cashew.CashewConstants.CashewValueSession;
 
 class SesameSessionLaunch extends SesameSession implements CashewValueSession 
-{
+{ 
 
 
 /********************************************************************************/
@@ -194,6 +194,7 @@ String getAnyThread()
       AcornLog.logE("SESAME","Can't find method for " + loc.getMethodName());
       return null;
     }
+   AcornLog.logD("SESAME","Work on arguments for " + md);
    
    List<CashewValue> args = new ArrayList<>();
    JcompSymbol msym = JcompAst.getDefinition(md.getName());
@@ -201,7 +202,7 @@ String getAnyThread()
       getProject().getTyper();
       msym = JcompAst.getDefinition(md.getName());
       if (msym == null) {
-	 AcornLog.logE("Can't find method symbol for args " + md + " " + loc);
+	 AcornLog.logE("SESAME","Can't find method symbol for args " + md + " " + loc);
 	 return null;
        }
     }
@@ -211,6 +212,9 @@ String getAnyThread()
       SesameValueData svd = valmap.get("this");
       svd = getUniqueValue(svd);
       CashewValue cv = svd.getCashewValue(this);
+      AcornLog.logD("SESAME","ARG VALUE0 " + cv.toString(this) + " " +
+            cv.toString(getParent()) + " " +
+            cv.getClass() + " " + svd); 
       args.add(cv);
     }
    for (Object o : md.parameters()) {
@@ -239,10 +243,15 @@ String getAnyThread()
 		}
 	     }
 	  }
-
+         AcornLog.logD("SESAME","ARG VALUE " + argval.toString(this) + " " +
+               argval.toString(getParent()) + " " +
+               argval.getClass() + " " + val);
+         
 	 args.add(argval);
        }
     }
+   
+   AcornLog.logD("SESAME","Call args: " + args.size());
 
    return args;
 }
@@ -444,7 +453,7 @@ String getAnyThread()
 @Override void resetCache()
 {
    JcompTyper typer = getProject().getTyper();
-   value_cache.updateCache(typer);
+   value_cache.updateCache(this,typer);
 }
 
 

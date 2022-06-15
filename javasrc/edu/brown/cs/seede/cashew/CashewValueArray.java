@@ -161,19 +161,19 @@ CashewValueArray(JcompTyper typer,JcompType jt,int dim,
 /*										*/
 /********************************************************************************/
 
-@Override protected void localResetValue(Set<CashewValue> done)
+@Override protected void localResetValue(CashewValueSession sess,Set<CashewValue> done)
 {
    for (CashewRef cr : array_values) {
-      cr.resetValues(done);
+      cr.resetValues(sess,done);
     }
 }
 
 
 
-@Override protected void localResetType(JcompTyper typer,Set<CashewValue> done)
+@Override protected void localResetType(CashewValueSession sess,JcompTyper typer,Set<CashewValue> done)
 {
    for (CashewRef cr : array_values) {
-      cr.resetType(typer,done);
+      cr.resetType(sess,typer,done);
     }
 }
 
@@ -271,7 +271,7 @@ void getChangeTimes(Set<Long> times,Set<CashewValue> done)
             getDataType(outctx.getTyper()).getBaseType());
       int numdflt = 0;
       for (int i = 0; i < array_values.length; ++i) {
-	 if (array_values[i].sameValue(dfltval)) {
+	 if (array_values[i].sameValue(outctx.getSession(),dfltval)) {
 	    ++numdflt;
 	    continue;
 	  }

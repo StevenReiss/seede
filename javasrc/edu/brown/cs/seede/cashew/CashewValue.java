@@ -393,10 +393,6 @@ public static CashewValue objectValue(CashewValueSession sess,JcompTyper typer,J
 
 
 
-
-
-
-
 /********************************************************************************/
 /*										*/
 /*	Private Static Sotrage for creation methods				*/
@@ -586,7 +582,7 @@ public boolean isNull(CashewValueSession sess,CashewClock cc)
    return false;
 }
 
-public boolean isEmpty()			{ return false; }
+public boolean isEmpty(CashewValueSession sess)         { return false; }
 
 
 public boolean isCategory2(CashewValueSession sess,CashewClock cc)	
@@ -648,7 +644,7 @@ CashewValue lookupVariableName(CashewValueSession sess,
 }
 
 
-boolean sameValue(CashewValue cv)
+boolean sameValue(CashewValueSession sess,CashewValue cv)
 {
    return cv == this;
 }
@@ -661,19 +657,19 @@ boolean sameValue(CashewValue cv)
 /*										*/
 /********************************************************************************/
 
-public void resetValues(Set<CashewValue> done)
+public void resetValues(CashewValueSession sess,Set<CashewValue> done)
 {
    if (done.contains(this)) return;
    done.add(this);
-   localResetValue(done);
+   localResetValue(sess,done);
 }
 
 
-protected void localResetValue(Set<CashewValue> done)		{ }
+protected void localResetValue(CashewValueSession sess,Set<CashewValue> done)   { }
 
 
 
-public void resetType(JcompTyper typer,Set<CashewValue> done)
+public void resetType(CashewValueSession sess,JcompTyper typer,Set<CashewValue> done)
 {
    if (done.contains(this)) return;
    done.add(this);
@@ -683,12 +679,12 @@ public void resetType(JcompTyper typer,Set<CashewValue> done)
 	 decl_type = ntyp;
        }
     }
-   localResetType(typer,done);
+   localResetType(sess,typer,done);
 }
 
 
 
-protected void localResetType(JcompTyper typer,Set<CashewValue> done)		 { }
+protected void localResetType(CashewValueSession sess,JcompTyper typer,Set<CashewValue> done)		 { }
 
 
 
@@ -722,6 +718,11 @@ public void checkToString(CashewValueSession sess,CashewOutputContext outctx)
 public void checkToArray(CashewValueSession sess,CashewOutputContext outctx)
 { }
 
+
+public String toString(CashewValueSession sess) 
+{
+   return toString();
+}
 
 
 public void outputXml(CashewOutputContext ctx,String name)
@@ -787,7 +788,7 @@ private static class ValueNumeric extends CashewValue {
        }
       return "((" + getDataType(null).getName() + ") " + num_value.toString() + ")";
     }
-
+ 
    private Number fixValue(Number v) {
        if (getDataType(null) == null) return v;
        switch (getDataType(null).getName()) {
@@ -864,7 +865,7 @@ private static class ValueNull extends CashewValue
       xw.field("NULL",true);
     }
 
-}	// end of inner class ValueNull
+}	// end of inner class ValueNull 
 
 
 

@@ -521,6 +521,8 @@ static void assignValue(CuminRunner cr,CashewValue vr,CashewValue cv,JcompType t
 static CashewValue castValue(CuminRunner cr,CashewValue cv,JcompType target)
 	throws CuminRunException, CashewException
 {
+   if (cv == null) return null;
+   
    CashewClock cc = cr.getClock();
    JcompTyper typer = cr.getTyper();
    CashewValueSession sess = cr.getSession();

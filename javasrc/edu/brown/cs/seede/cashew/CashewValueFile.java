@@ -140,7 +140,7 @@ public File getFile()                   { return user_file; }
       case "pathSeparatorChar" :
          return CashewValue.numericValue(typer,typer.CHAR_TYPE,File.pathSeparatorChar);
       default :
-         AcornLog.logE("Unknown File field: " + nm);
+         AcornLog.logE("CASHEW","Unknown File field: " + nm);
          break;
     }
    

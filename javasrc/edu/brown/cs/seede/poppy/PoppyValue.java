@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.lang.invoke.CallSite;
@@ -193,11 +194,15 @@ public static Object getStaticFieldValue(String itm)
    Throwable err = null;
    try {
       Field f1 = c1.getDeclaredField(fld);
-      f1.setAccessible(true);
+      try {
+         f1.setAccessible(true);
+       }
+      catch (Throwable t) { err = t; }
+      
       return f1.get(null);
     }
    catch (Throwable t) { 
-      err = t;
+      if (err == null) err = t;
     }
    
    System.err.println("POPPY: Problem getting static field: " + c1 + " " + fld + " " + err);

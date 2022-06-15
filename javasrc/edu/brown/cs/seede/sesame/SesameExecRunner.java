@@ -66,6 +66,7 @@ private SesameSession	for_session;
 private List<CuminRunner> cumin_runners;
 private List<String>	graphics_outputs;
 private String		reply_id;
+private int             rid_counter;
 private Map<CuminRunner,RunnerThread> runner_threads;
 private Map<CuminRunner,CuminRunStatus> run_status;
 private MasterThread	master_thread;
@@ -79,6 +80,9 @@ private int		max_depth;
 
 private AtomicInteger	report_counter = new AtomicInteger(1);
 private AtomicInteger   thread_counter = new AtomicInteger(1);
+
+private static Map<String,Integer>  all_ids = new HashMap<>();
+
 
 
 enum RunState { INIT, RUNNING, SWING, STOPPED, WAITING, EXIT };
@@ -117,6 +121,18 @@ SesameExecRunner(SesameSession ss,String rid,SesameContext ctx,
    master_thread = null;
    run_again = false;
    stopper_thread = null;
+   
+   rid_counter = 0;
+   synchronized (all_ids) {
+      if (all_ids.containsKey(rid)) {
+         rid_counter = all_ids.get(rid);
+       }
+      else {
+         rid_counter = all_ids.size();
+         all_ids.put(rid,rid_counter);
+         AcornLog.logD("SESAME","Use allid counter " + rid_counter + " for " + rid);
+       }
+    }
 }
 
 
@@ -578,7 +594,7 @@ private class MasterThread extends Thread implements LoggerThread {
                // cumin_runners.add(cr);
                // }
              }
-            int ctr = thread_id+1;
+            int ctr = thread_id+1 + rid_counter*10;
             for (CuminRunner cr : cumin_runners) {
                if (!firsttime) {
                   MethodDeclaration mthd = for_session.getRunnerMethod(cr);
@@ -708,17 +724,17 @@ private static class RunnerThread extends Thread implements LoggerThread {
    @Override public void run() {
       CuminRunStatus sts = null;
       try {
-	 sts = cumin_runner.interpret(CuminConstants.EvalType.RUN);
+         sts = cumin_runner.interpret(CuminConstants.EvalType.RUN);
        }
       catch (CuminRunException r) {
-	 sts = r;
+         sts = r;
        }
       catch (Throwable t) {
-	 cumin_runner.getLookupContext().setEndTime(cumin_runner.getClock());
-	 AcornLog.logE("Problem running thread",t);
-	 sts = new CuminRunException(t);
+         cumin_runner.getLookupContext().setEndTime(cumin_runner.getClock());
+         AcornLog.logE("Problem running thread",t);
+         sts = new CuminRunException(t);
        }
-
+   
       exec_runner.setStatus(cumin_runner,sts);
     }
 

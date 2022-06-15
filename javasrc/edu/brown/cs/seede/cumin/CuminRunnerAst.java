@@ -256,7 +256,7 @@ String getMethodName()
     }
    Set<CashewValue> done = new HashSet<CashewValue>();
    for (CashewValue cv : call_args) {
-      if (cv != null) cv.resetType(typer,done);
+      if (cv != null) cv.resetType(runner_session,typer,done);
     }
 
    if (md != null) method_node = md;
@@ -1686,8 +1686,8 @@ private CuminRunStatus visit(MethodInvocation v,ASTNode after)
       JcompType argtyp = atyps.get(narg-1-i);
       CashewValue ncv = CuminEvaluator.castValue(this,cv,argtyp);
       if (ncv == null) {
-	 AcornLog.logD("Conversion problem " + cv + " " + argtyp + " " +
-			  cv.getDataType(runner_session,execution_clock,null) );
+	 AcornLog.logD("Conversion problem " + cv + " " + argtyp);
+         ncv = cv;
        }
       argv.add(ncv);
     }

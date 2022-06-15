@@ -96,6 +96,7 @@ private Set<SesameExecRunner> exec_runners;
 private CashewInputOutputModel	cashew_iomodel;
 private CashewSynchronizationModel cashew_syncmodel;
 private Set<String>	expand_names;
+private SesameSession   parent_session;
 private boolean 	compute_tostring;
 private boolean         compute_toarray;
 private boolean         show_all;
@@ -114,7 +115,6 @@ protected SesameSession(SesameMain sm,String sid,Element xml)
 
    String proj = IvyXml.getAttrString(xml,"PROJECT");
    for_project = sm.getProject(proj);
-
    initialize(sid,xml);
 
    for (Element locxml : IvyXml.children(xml,"LOCATION")) {
@@ -130,6 +130,8 @@ SesameSession(SesameSession parent)
    for_project = parent.for_project;
 
    initialize(null,null);
+   
+   parent_session = parent;
    
    location_map.putAll(parent.location_map);
    if (parent.expand_names != null) {
@@ -161,6 +163,7 @@ private void initialize(String sid,Element xml)
    show_all = IvyXml.getAttrBool(xml,"SHOWALL");
    compute_tostring = IvyXml.getAttrBool(xml,"TOSTRING",compute_tostring);
    compute_toarray = IvyXml.getAttrBool(xml,"TOARRAY",compute_toarray);
+   parent_session = null;
 }
 
 
@@ -204,6 +207,8 @@ SesameSubsession getSubsession()		{ return null; }
 /********************************************************************************/
 
 public String getSessionId()			{ return session_id; }
+
+@Override public CashewValueSession getParent() { return parent_session; }
 
 public SesameProject getProject()
 {

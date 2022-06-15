@@ -31,6 +31,7 @@ import java.util.Set;
 
 import edu.brown.cs.ivy.jcomp.JcompTyper;
 import edu.brown.cs.seede.cashew.CashewValue;
+import edu.brown.cs.seede.cashew.CashewConstants.CashewValueSession;
 
 class SesameSessionCache implements SesameConstants
 {
@@ -123,12 +124,12 @@ void clearCache()
 
 
 
-void updateCache(JcompTyper typer)
+void updateCache(CashewValueSession sess,JcompTyper typer)
 {
    Set<CashewValue> done = new HashSet<>();
    
    for (CashewValue cv : initial_map.values()) {
-      cv.resetType(typer,done);
+      cv.resetType(sess,typer,done);
     }
    for (Map<String,SesameValueData> mp1 : thread_map.values()) {
       for (SesameValueData svd : mp1.values()) {

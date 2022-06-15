@@ -97,7 +97,7 @@ CuminRunnerByteCode(CashewValueSession sess,CuminProject sp,
 
 JcodeMethod getCodeMethod()		{ return jcode_method; }
 
-@Override String getMethodName()        { return getCodeMethod().getFullName(); }
+@Override String getMethodName()	{ return getCodeMethod().getFullName(); }
 int getNumArg() 			{ return num_arg; }
 String getCallingClass()
 {
@@ -204,9 +204,9 @@ String getCallingClass()
 private CuminRunStatus handleException(CuminRunStatus cr)
 {
    AcornLog.logD("CUMIN","Handle exception " + cr.getMessage() + " " + cr.getValue());
-   
+
    if (cr.getMessage() != null && cr.getMessage().equals("SEEDE_TIMEOUT")) return cr;
-   
+
    CashewValue ev = cr.getValue();
    JcodeTryCatchBlock tcb = null;
    int len = 0;
@@ -214,8 +214,8 @@ private CuminRunStatus handleException(CuminRunStatus cr)
       JcodeDataType jdt = jtcb.getException();
       JcompType cdt = null;
       if (jdt != null) cdt = convertType(jdt);
-      if (cdt == null || 
-            cdt.isCompatibleWith(ev.getDataType(runner_session,execution_clock,type_converter))) {
+      if (cdt == null ||
+	    cdt.isCompatibleWith(ev.getDataType(runner_session,execution_clock,type_converter))) {
 	 int sidx = jtcb.getStart().getIndex();
 	 int eidx = jtcb.getEnd().getIndex();
 	 if (current_instruction >= sidx &&  current_instruction <= eidx) {
@@ -261,11 +261,11 @@ private void setupContext(List<CashewValue> args)
       boolean cat2 = false;
       if (act < 0) ++act;
       else {
-         JcodeDataType jdt = jcode_method.getArgType(act++);
-         if (jdt != null) cat2 = jdt.isCategory2();
+	 JcodeDataType jdt = jcode_method.getArgType(act++);
+	 if (jdt != null) cat2 = jdt.isCategory2();
        }
-      
-      if (cv != null  && cat2)  { // && cv.isCategory2(execution_clock))
+
+      if (cv != null  && cat2)	{ // && cv.isCategory2(execution_clock))
 	 ref = CashewValue.createReference(CashewValue.nullValue(typer),false);
 	 ctx.define(Integer.valueOf(vct),ref);
 	 ++vct;
@@ -321,7 +321,7 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException, CashewExc
        }
     }
 
-   if (AcornLog.isTracing()) AcornLog.logT(jins);
+   if (AcornLog.isTracing()) AcornLog.logT(jins + " @ " + execution_clock.getTimeValue());
 
    switch (jins.getOpcode()) {
 
@@ -917,15 +917,15 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException, CashewExc
       case INSTANCEOF :
 	 JcompType jty = convertType(jins.getTypeReference());
 	 v0 = execution_stack.pop();
-         if (v0.isNull(sess,execution_clock)) {
-            vstack = CashewValue.booleanValue(typer,false);
-          }
+	 if (v0.isNull(sess,execution_clock)) {
+	    vstack = CashewValue.booleanValue(typer,false);
+	  }
 	 else if (v0.getDataType(sess,execution_clock,type_converter).isCompatibleWith(jty)) {
 	    vstack = CashewValue.booleanValue(typer,true);
-          }
+	  }
 	 else {
 	    vstack = CashewValue.booleanValue(typer,false);
-          }
+	  }
 	 break;
       case CHECKCAST :
 	 v0 = execution_stack.peek(0);
@@ -944,8 +944,11 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException, CashewExc
 	  }
 	 if (v0.isNull(sess,execution_clock))
 	    return CuminEvaluator.returnException(sess,typer,"java.lang.NullPointerException");
+         AcornLog.logD("CUMIN","Field lookup for " + v0.toString(runner_session) + " " + execution_clock.getTimeValue());
 	 vstack = v0.getFieldValue(sess,typer,execution_clock,nm);
+         AcornLog.logD("CUMIN","RESULT: " + nm + " = " +  vstack.toString(runner_session));
 	 vstack = vstack.getActualValue(sess,execution_clock);
+         AcornLog.logD("CUMIN","ACTUAL RESULT: " + vstack.toString(runner_session));
 	 break;
       case GETSTATIC :
 	 fld = jins.getFieldReference();
@@ -965,7 +968,7 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException, CashewExc
 	 if (v1.isNull(sess,execution_clock))
 	    return CuminEvaluator.returnException(sess,typer,"java.lang.NullPointerException");
 	 v1.setFieldValue(sess,typer,execution_clock,nm,v0);
-         if (AcornLog.isTracing()) AcornLog.logT("RESULT IS " + v0);
+	 if (AcornLog.isTracing()) AcornLog.logT("RESULT IS " + v0.toString(runner_session));
 	 break;
       case PUTSTATIC :
 	 v0 = execution_stack.pop();
@@ -996,7 +999,7 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException, CashewExc
       case INVOKESTATIC :
 	 return handleCall(jins.getMethodReference(),CallType.STATIC,-1);
       case INVOKEVIRTUAL :
-         int act0 = jins.getDescriptionArgCount();
+	 int act0 = jins.getDescriptionArgCount();
 	 return handleCall(jins.getMethodReference(),CallType.VIRTUAL,act0);
 
       case JSR :
@@ -1027,9 +1030,9 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException, CashewExc
 	 arrtyp = convertType(dty);
 	 int mnact = jins.getIntValue();
 	 int [] bnds = new int[mnact];
-         for (int i = mnact-1; i >= 0; --i) {
+	 for (int i = mnact-1; i >= 0; --i) {
 	    bnds[i] = execution_stack.pop().getNumber(sess,execution_clock).intValue();
-            arrtyp = arrtyp.getBaseType();
+	    arrtyp = arrtyp.getBaseType();
 	  }
 	 vstack = CuminEvaluator.buildArray(this,0,bnds,arrtyp);
 	 break;
@@ -1051,8 +1054,8 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException, CashewExc
     }
 
    if (vstack != null) {
-      if (AcornLog.isTracing()) AcornLog.logT("RESULT: " + 
-            vstack.getString(sess,typer,execution_clock,0,true));
+      if (AcornLog.isTracing()) AcornLog.logT("RESULT: " +
+	    vstack.getString(sess,typer,execution_clock,0,true));
       execution_stack.push(vstack);
     }
    if (nextins != null) next = nextins.getIndex();
@@ -1076,12 +1079,12 @@ private CuminRunStatus handleCall(JcodeMethod method,CallType cty,int act0)
   int act = method.getNumArguments();
   if (act0 >= 0) {
      if (act != act0) {
-        AcornLog.logD("CUMIN","Argument counts differ " + act + " " + act0 + " " +
-              method.isVarArgs());
-        act = act0;
+	AcornLog.logD("CUMIN","Argument counts differ " + act + " " + act0 + " " +
+	      method.isVarArgs());
+	act = act0;
       }
    }
-   
+
   if (!method.isStatic()) ++act;
   List<CashewValue> args = new ArrayList<CashewValue>();
   for (int i = 0; i < act; ++i) {
@@ -1283,6 +1286,10 @@ private CuminRunStatus checkSpecial() throws CuminRunException
 	    CuminDirectEvaluation cde = new CuminDirectEvaluation(this);
 	    sts = cde.checkStringMethods();
 	    break;
+	 case "java.lang.Character" :
+	    cde = new CuminDirectEvaluation(this);
+	    sts = cde.checkCharacterMethods();
+	    break;
 	 case "java.lang.StrictMath" :
 	 case "java.lang.Math" :
 	    cde = new CuminDirectEvaluation(this);
@@ -1299,6 +1306,10 @@ private CuminRunStatus checkSpecial() throws CuminRunException
 	 case "java.lang.Double" :
 	    cde = new CuminDirectEvaluation(this);
 	    sts = cde.checkDoubleMethods();
+	    break;
+         case "java.lang.Integer" :
+	    cde = new CuminDirectEvaluation(this);
+	    sts = cde.checkIntegerMethods();
 	    break;
 	 case "java.lang.ClassLoader" :
 	    // handle class loader methods
@@ -1327,7 +1338,7 @@ private CuminRunStatus checkSpecial() throws CuminRunException
 	    cde = new CuminDirectEvaluation(this);
 	    sts = cde.checkRandomMethods();
 	    break;
-	
+
 	 case "java.io.FileDescriptor" :
 	 case "java.io.RandomAccessFile" :
 	 case "java.nio.file.FileSystem" :
@@ -1336,7 +1347,7 @@ private CuminRunStatus checkSpecial() throws CuminRunException
 	 case "sun.nio.cs.FastCharsetProvider" :
 	    // TODO: handle other IO methods
 	    break;
-	
+
 	 case "java.io.File" :
 	    CuminIOEvaluator cie = new CuminIOEvaluator(this);
 	    sts = cie.checkFileMethods();
@@ -1361,17 +1372,17 @@ private CuminRunStatus checkSpecial() throws CuminRunException
 	    cie = new CuminIOEvaluator(this);
 	    sts  = cie.checkPrintMethods("java.io.PrintWriter");
 	    break;
-	
+
 	 case "java.io.ObjectOutputStream" :
 	 case "java.io.ObjectInputStream" :
 	    cie = new CuminIOEvaluator(this);
 	    sts = cie.checkObjectStreamMethods();
 	    break;
-         case "java.io.FileCleanable" :
-            cie = new CuminIOEvaluator(this);
-            sts = cie.checkFileCleanableMethods();
-            break;
-	
+	 case "java.io.FileCleanable" :
+	    cie = new CuminIOEvaluator(this);
+	    sts = cie.checkFileCleanableMethods();
+	    break;
+
 	 case "sun.misc.FloatingDecimal" :
 	    cde = new CuminDirectEvaluation(this);
 	    sts = cde.checkFloatingDecimalMehtods();
@@ -1392,10 +1403,11 @@ private CuminRunStatus checkSpecial() throws CuminRunException
 	    cde = new CuminDirectEvaluation(this);
 	    sts = cde.checkSunReflectionMethods();
 	    break;
+         case "sun.invoke.util.VerifyAccess" :
          case "jdk.internal.reflect.Reflection" :
-            cde = new CuminDirectEvaluation(this);
-            sts = cde.checkSunReflectionMethods();
-            break;
+	    cde = new CuminDirectEvaluation(this);
+	    sts = cde.checkSunReflectionMethods();
+	    break;
 	 case "java.lang.Class$Atomic" :
 	    cde = new CuminDirectEvaluation(this);
 	    sts = cde.checkClassAtomicMethods();
@@ -1416,7 +1428,7 @@ private CuminRunStatus checkSpecial() throws CuminRunException
 	    cge = new CuminGraphicsEvaluator(this);
 	    sts = cge.checkGraphicsCallback();
 	    break;
-	
+
 	 case "java.util.concurrent.atomic.AtomicInteger" :
 	 case "java.util.concurrent.atomic.AtomicLong" :
 	    CuminConcurrentEvaluator cce = new CuminConcurrentEvaluator(this);
@@ -1430,36 +1442,40 @@ private CuminRunStatus checkSpecial() throws CuminRunException
 	    cce = new CuminConcurrentEvaluator(this);
 	    sts = cce.checkConcurrentHashMapMethods();
 	    break;
-         case "sun.awt.SunToolkit" :
-            // this can be removed once VarHandle works
-            cce = new CuminConcurrentEvaluator(this);
-            sts = cce.checkSunToolkitMethods();
-            break;
-         case "java.lang.invoke.VarHandle" :
-            cce = new CuminConcurrentEvaluator(this);
-            sts = cce.checkVarHandleMethods();
-            break;
-            
-         // need to handle java.util.concurrent.locks.ReentrantLock   
-         // need to handle java.lang.VarHandle methods
-            
+	 case "sun.awt.SunToolkit" :
+	    // this can be removed once VarHandle works
+	    cce = new CuminConcurrentEvaluator(this);
+	    sts = cce.checkSunToolkitMethods();
+	    break;
+	 case "java.lang.invoke.VarHandle" :
+	    cce = new CuminConcurrentEvaluator(this);
+	    sts = cce.checkVarHandleMethods();
+	    break;
+	
+	 // need to handle java.util.concurrent.locks.ReentrantLock
+	 // need to handle java.lang.VarHandle methods
+	
 	 case "sun.misc.Unsafe" :
 	 case "jdk.internal.misc.Unsafe" :
 	    cce = new CuminConcurrentEvaluator(this);
 	    sts = cce.checkUnsafeMethods();
 	    break;
-          
-         case "java.util.regex.Pattern" :
+	
+	 case "java.util.regex.Pattern" :
+	    cde = new CuminDirectEvaluation(this);
+	    sts = cde.checkPatternMethods();
+	    break;
+	 case "java.util.regex.Matcher" :
+	    cde = new CuminDirectEvaluation(this);
+	    sts = cde.checkMatcherMethods();
+	    break;
+	 case "java.util.Arrays" :
+	    cde = new CuminDirectEvaluation(this);
+	    sts = cde.checkArraysMethods();
+	    break;
+         case "javax.swing.text.SegmentCache" :
             cde = new CuminDirectEvaluation(this);
-            sts = cde.checkPatternMethods();
-            break;
-         case "java.util.regex.Matcher" :
-            cde = new CuminDirectEvaluation(this);
-            sts = cde.checkMatcherMethods();
-            break;
-         case "java.util.Arrays" :
-            cde = new CuminDirectEvaluation(this);
-            sts = cde.checkArraysMethods();
+            sts = cde.checkSegmentMethods();
             break;
        }
     }
@@ -1487,11 +1503,11 @@ private CuminRunStatus checkSpecialReturn(CuminRunStatus r)
       case "java.lang.Class" :
 	 CuminDirectEvaluation cde = new CuminDirectEvaluation(this);
 	 r = cde.checkClassReturn(r);
-	 break; 
+	 break;
       case "java.lang.reflect.Constructor" :
 	 cde = new CuminDirectEvaluation(this);
 	 r = cde.checkConstructorReturn(r);
-	 break; 
+	 break;
     }
    return r;
 }

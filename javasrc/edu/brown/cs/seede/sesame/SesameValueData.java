@@ -50,7 +50,7 @@ class SesameValueData implements SesameConstants
 /*										*/
 /********************************************************************************/
 
-private ValueKind val_kind;
+private ValueKind val_kind; 
 private String val_name;
 private String val_expr;
 private String val_type;
@@ -64,6 +64,7 @@ private Map<String,SesameValueData> sub_values;
 private CashewValue result_value;
 private int hash_code;
 private String decl_type;
+private CashewValueSession value_session;
 
 
 
@@ -202,9 +203,9 @@ CashewValue getCashewValue(SesameSessionLaunch sess)
 	 result_value = CashewValue.stringValue(typer,typer.STRING_TYPE,val_value);
 	 break;
       case OBJECT :
-	 Map<String,Object> inits = new HashMap<String,Object>();
+	 Map<String,Object> inits = new HashMap<>();
 	 typ.defineAll(typer);
-	 Map<String,SesameValueData> sets = new HashMap<String,SesameValueData>();
+	 Map<String,SesameValueData> sets = new HashMap<>();
 	 for (Map.Entry<String,JcompType> ent : typ.getFields().entrySet()) {
 	    String fnm = ent.getKey();
 	    String cnm = null;
@@ -226,7 +227,8 @@ CashewValue getCashewValue(SesameSessionLaunch sess)
 	     }
 	  }
 	 if (hash_code == 0) {
-	    inits.put(CashewConstants.HASH_CODE_FIELD,new DeferredLookup(CashewConstants.HASH_CODE_FIELD));
+	    inits.put(CashewConstants.HASH_CODE_FIELD,
+                  new DeferredLookup(CashewConstants.HASH_CODE_FIELD));
 	  }
 	 else {
 	    CashewValue hvl = CashewValue.numericValue(typer,typer.INT_TYPE,hash_code);
@@ -394,6 +396,7 @@ private void initialize(SesameSessionLaunch sess,Element xml,String expr)
    sub_values = null;
    hash_code = 0;
    val_expr = expr;
+   value_session = sess;
    addValues(sess,xml);
 }
 
@@ -407,12 +410,13 @@ private void addValues(SesameSessionLaunch sess,Element xml)
       String nm = vd.val_name;
       vd = sess.getUniqueValue(vd);
       sub_values.put(nm,vd);
-      // AcornLog.logD("ADD VALUE " + nm + " = " + vd);
+      AcornLog.logD("SESAME","ADD DEFERRED VALUE " + nm + " = " + vd);
     }
 }
 
 private synchronized void computeValues(SesameSessionLaunch sess)
 {
+   AcornLog.logD("SESAME","Compute deferred values " + has_values + " " +  val_expr + " " + val_name);
    if (!has_values || sub_values != null) return;
    if (val_expr == null) {
       CommandArgs args = new CommandArgs("FRAME",getFrame(sess),"THREAD",getThread(),"DEPTH",2,
@@ -434,7 +438,7 @@ private synchronized void computeValues(SesameSessionLaunch sess)
 
 void resetType(JcompTyper typer,Set<CashewValue> done)
 {
-   if (result_value != null) result_value.resetType(typer,done);
+   if (result_value != null) result_value.resetType(value_session,typer,done);
 }
 
 
@@ -454,6 +458,7 @@ private class DeferredLookup implements CashewConstants.CashewDeferredValue {
     }
 
    @Override public CashewValue getValue(CashewValueSession sessobj) {
+      AcornLog.logD("SESAME","Start deferred values for " + val_type + " " + val_name);
       SesameSessionLaunch sess = (SesameSessionLaunch) sessobj;
       computeValues(sess);
       if (field_name.equals(CashewConstants.HASH_CODE_FIELD)) {
@@ -475,8 +480,11 @@ private class DeferredLookup implements CashewConstants.CashewDeferredValue {
             if (svd != null) sub_values.put(field_name,svd);
           }
        }
-   
-      if (sub_values == null) return null;
+      
+      if (sub_values == null) {
+         AcornLog.logE("SESAME","No sub values defined for " + this);
+         return null;
+       }   
       String fnm = field_name;
       String cnm = null;
       int idx = fnm.lastIndexOf(".");
@@ -488,11 +496,11 @@ private class DeferredLookup implements CashewConstants.CashewDeferredValue {
       SesameValueData svd = sub_values.get(lookup);
       svd = sess.getUniqueValue(svd);
       if (svd == null) {
-         AcornLog.logE("Deferred Lookup of " + lookup + " not found");
+         AcornLog.logE("SESAME","Deferred Lookup of " + lookup + " not found");
          return null;
        }
       CashewValue cvr = svd.getCashewValue(sess);
-      // AcornLog.logD("Deferred Lookup of " + lookup + " = " + cvr);
+      AcornLog.logD("SESAME","Deferred Lookup of " + lookup + " = " + cvr.toString(sessobj));
       return cvr;
     }
 

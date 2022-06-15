@@ -71,6 +71,8 @@ String CURRENT_THREAD_NAME_FIELD = "@currentThreadName";
 
 interface CashewValueSession {
    
+   public default CashewValueSession getParent()        { return null; }
+   
 }
 
 

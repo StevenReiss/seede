@@ -200,7 +200,7 @@ void noteFileChanged(SesameFile sf)
 /*										*/
 /********************************************************************************/
 
-void sendMessage(String xml,MintReply rply,int fgs)
+synchronized void sendMessage(String xml,MintReply rply,int fgs)
 {
    mint_control.send(xml,rply,fgs);
 }
@@ -558,7 +558,8 @@ private void handleExec(String sid,Element xml,IvyXmlWriter xw)
        }
       ++nr;
       if (execer == null) {
-	 execer = new SesameExecRunner(ss,xid,gblctx,iscont,maxtime,maxdepth,cr);
+	 execer = new SesameExecRunner(ss,xid,gblctx,
+               iscont,maxtime,maxdepth,cr);
 	 ss.addRunner(execer);
        }
       else {

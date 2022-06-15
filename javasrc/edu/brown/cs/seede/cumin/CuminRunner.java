@@ -103,7 +103,7 @@ public CashewValue executeCall(String method,CashewValue ... args)
    return null;
 }
 
-
+ 
 public void ensureLoaded(String cls)
 {
    getCodeFactory().findClass(cls);
@@ -599,7 +599,12 @@ private CuminRunner doCall(CashewClock cc,ASTNode ast,List<CashewValue> args)
    lookup_context.addNestedContext(ctx);
 
    JcompSymbol js = JcompAst.getDefinition(ast);
-   AcornLog.logT("Start ast call to " + js.getFullName());
+   if (AcornLog.isTracing()) {
+      AcornLog.logT("Start ast call to " + js.getFullName());
+      for (CashewValue v0 : args) {
+	 AcornLog.logT("\tArg: " + v0.toString(runner_session));
+       }
+    }
 
    return rast;
 }
@@ -616,7 +621,7 @@ CuminRunner doCall(CashewClock cc,JcodeMethod mthd,List<CashewValue> args)
    if (AcornLog.isTracing()) {
       AcornLog.logT("Start binary call to " + mthd);
       for (CashewValue v0 : args) {
-	 AcornLog.logT("\tArg: " + v0);
+	 AcornLog.logT("\tArg: " + v0.toString(runner_session));
        }
     }
 
@@ -767,11 +772,11 @@ public void resetValues()
    Set<CashewValue> done = new HashSet<CashewValue>();
 
    for (CashewContext ctx = global_context; ctx != null; ctx = ctx.getParentContext()) {
-      ctx.resetValues(done);
+      ctx.resetValues(runner_session,done);
     }
-   if (lookup_context != null) lookup_context.resetValues(done);
+   if (lookup_context != null) lookup_context.resetValues(runner_session,done);
    for (CashewValue cv : call_args) {
-      if (cv != null) cv.resetValues(done);
+      if (cv != null) cv.resetValues(runner_session,done);
     }
 }
 

@@ -55,11 +55,11 @@ private Map<Long,String> string_values;
 private Map<Long,CashewValue> array_values;
 
 private static Map<String,CashewRef> static_values;
-
+ 
 static {
    static_values = new ConcurrentHashMap<String,CashewRef>();
 }
-
+ 
 
 /********************************************************************************/
 /*										*/
@@ -143,7 +143,7 @@ CashewValueObject(JcompTyper typer,JcompType jt,Map<String,Object> inits,boolean
 {
    CashewValue cv = findFieldForName(typer,nm,force);
    if (cv == null && force) {
-      AcornLog.logE("Missing field " + nm);
+      AcornLog.logE("CASHEW","Missing field " + nm);
     }
    return cv;
 }
@@ -165,10 +165,12 @@ CashewValueObject(JcompTyper typer,JcompType jt,Map<String,Object> inits,boolean
 
 private CashewRef findFieldForName(JcompTyper typer,String nm,boolean force)
 {
+// AcornLog.logD("CASHEW","Lookup field " + nm);
    CashewRef ov = field_values.get(nm);
    if (ov == null) {
       ov = static_values.get(nm);
     }
+   if (ov == null) AcornLog.logD("CASHEW","No field found for " + nm);
    String anm = nm;
    while (ov == null && anm.contains("$")) {
       int idx = anm.indexOf("$");
@@ -179,6 +181,7 @@ private CashewRef findFieldForName(JcompTyper typer,String nm,boolean force)
 
    if (ov == null && nm.equals(HASH_CODE_FIELD)) {
       CashewValue hashv = CashewValue.numericValue(typer,typer.INT_TYPE,hashCode());
+      AcornLog.logD("CASHEW","Save our hash value " + hashv);
       ov = new CashewRef(hashv,false);
       field_values.put(HASH_CODE_FIELD,ov);
     }
@@ -194,6 +197,7 @@ private CashewRef findFieldForName(JcompTyper typer,String nm,boolean force)
 	 CashewValue newv = CashewValue.createDefaultValue(typer,fty);
 	 ov = new CashewRef(newv,true);
 	 field_values.put(nm,ov);
+         AcornLog.logD("CASHEW","Create new field value " + fty + " " + newv);
        }
     }
 
@@ -244,10 +248,6 @@ private CashewRef findFieldForName(JcompTyper typer,String nm,boolean force)
 
 
 
-
-
-
-
 @Override public String getString(CashewValueSession sess,
       JcompTyper typer,CashewClock cc,int lvl,boolean dbg)
 	throws CashewException
@@ -295,28 +295,26 @@ public CashewValueObject cloneObject(CashewValueSession sess,JcompTyper typer,
 }
 
 
-
-
 /********************************************************************************/
 /*										*/
 /*	Reset methods								*/
 /*										*/
 /********************************************************************************/
 
-@Override protected void localResetValue(Set<CashewValue> done)
+@Override protected void localResetValue(CashewValueSession sess,Set<CashewValue> done)
 {
    for (CashewRef cr : field_values.values()) {
-      cr.resetValues(done);
+      cr.resetValues(sess,done);
     }
 }
 
 
-@Override protected void localResetType(JcompTyper typer,Set<CashewValue> done)
+@Override protected void localResetType(CashewValueSession sess,JcompTyper typer,Set<CashewValue> done)
 {
    //TODO: add any missing fields here
 
    for (CashewRef cr : field_values.values()) {
-      cr.resetType(typer,done);
+      cr.resetType(sess,typer,done);
     }
 }
 
@@ -412,10 +410,10 @@ public CashewValueObject cloneObject(CashewValueSession sess,JcompTyper typer,
       String nm = ent.getKey();
       if (nm.startsWith("java.")) continue;
       if (nm.startsWith("@")) continue;
-      AcornLog.logD("CASHEW","CHECKARRAY FIELD " + nm + " " + cr.isEmpty());
-      if (cr.isEmpty()) continue;
+      AcornLog.logD("CASHEW","CHECKARRAY FIELD " + nm + " " + cr.isEmpty(sess));
+      if (cr.isEmpty(sess)) continue;
       CashewValue cv1 = cr.getActualValue(sess,outctx.getClock());
-      if (cv1 == null || cv1.isEmpty()) continue;
+      if (cv1 == null || cv1.isEmpty(sess)) continue;
       cv1.checkToArray(sess,outctx);
     }
 }
@@ -434,6 +432,7 @@ void getChangeTimes(Set<Long> times,Set<CashewValue> done)
 
 @Override public void outputLocalXml(IvyXmlWriter xw,CashewOutputContext outctx,String name)
 {
+   CashewValueSession sess = outctx.getSession();
    xw.field("OBJECT",true);
    JcompType ctyp = outctx.getTyper().findSystemType("java.awt.Component");
    JcompType otyp = getDataType(outctx.getTyper());
@@ -474,7 +473,7 @@ void getChangeTimes(Set<Long> times,Set<CashewValue> done)
     }
    else {
       for (Map.Entry<String,CashewRef> ent : field_values.entrySet()) {
-	 if (!ent.getValue().isEmpty()) {
+	 if (!ent.getValue().isEmpty(sess)) {
 	    xw.begin("FIELD");
 	    xw.field("NAME",ent.getKey());
 	    if (new_fields != null && new_fields.contains(ent.getKey()))
@@ -538,7 +537,7 @@ public static void outputStatics(CashewOutputContext outctx)
    IvyXmlWriter xw = outctx.getXmlWriter();
    xw.begin("STATICS");
    for (Map.Entry<String,CashewRef> ent : static_values.entrySet()) {
-      if (!ent.getValue().isEmpty()) {
+      if (!ent.getValue().isEmpty(outctx.getSession())) {
 	 xw.begin("STATIC");
 	 xw.field("NAME",ent.getKey());
 	 ent.getValue().outputXml(outctx,ent.getKey());
@@ -548,6 +547,11 @@ public static void outputStatics(CashewOutputContext outctx)
    xw.end("STATICS");
 }
 
+
+@Override public String toString(CashewValueSession sess)
+{
+   return getDebugString(sess,null,null);
+}
 
 
 @Override public String toString()
