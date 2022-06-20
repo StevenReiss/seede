@@ -87,6 +87,8 @@ SesameSubsession(SesameSessionLaunch base,Element xml)
       call_location.setThread(base.getAnyThread());
       call_location.setActive(true);
     }
+   AcornLog.logD("SESAME","Subsession " + getSessionId() + " project " +
+         local_project.hashCode());
 }
 
 
@@ -167,10 +169,12 @@ SesameFile editLocalFile(File f,TextEdit te)
       return null;
     }   
    editFileSetup(editfile);
-   editfile.editFile(te);
+   editfile.editFile(te,getSessionId());
    editFileFixup(editfile);
    
    noteFileChanged(editfile);
+   
+   AcornLog.logD("SESAME","Done edit of " + getSessionId() + " " + editfile);
    return editfile;
 }
 

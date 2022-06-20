@@ -37,6 +37,7 @@ import org.eclipse.jface.text.Position;
 import org.w3c.dom.Element;
 
 import edu.brown.cs.ivy.xml.IvyXml;
+import edu.brown.cs.seede.acorn.AcornConstants;
 
 class SesameLocation implements SesameConstants
 {
@@ -72,7 +73,8 @@ SesameLocation(SesameMain sm,Element xml)
       location_id = "L_" + new Random().nextInt(10000000);
     }
    String fnm = IvyXml.getAttrString(xml,"FILE");
-   File f = new File(fnm);
+   File f = AcornConstants.getCanonical(fnm);
+   
    sesame_file = sm.getFileManager().openFile(f);
    line_number = IvyXml.getAttrInt(xml,"LINE");
    method_name = IvyXml.getAttrString(xml,"METHOD");

@@ -48,6 +48,7 @@ import edu.brown.cs.ivy.jcomp.JcompSource;
 import edu.brown.cs.ivy.jcomp.JcompTyper;
 import edu.brown.cs.ivy.xml.IvyXml;
 import edu.brown.cs.ivy.mint.MintConstants.CommandArgs;
+import edu.brown.cs.seede.acorn.AcornConstants;
 import edu.brown.cs.seede.acorn.AcornLog;
 import edu.brown.cs.seede.cumin.CuminConstants.CuminProject;
 
@@ -195,19 +196,28 @@ void addFile(SesameFile sf)
 }
 
 
-void removeFile(SesameFile sf)
+boolean removeFile(SesameFile sf)
 {
    if (active_files.remove(sf)) {
+      AcornLog.logD("SESAME","File removed " + sf + " " + hashCode());
       noteFileChanged(sf,true);
       if (local_files.get(sf.getFile()) == null) {
          sesame_control.getFileManager().removeFileUse(sf);
        }
+      return true;
+    }
+   else {
+      AcornLog.logD("SESAME","Failed to remove file " +
+            sf + " " + hashCode());
+      return false;
     }
 }
 
 
 protected SesameFile findFile(File f)
 {
+   f = AcornConstants.getCanonical(f);
+   
    if (local_files != null) {
       synchronized (local_files) {
          SesameFile sf = local_files.get(f);
@@ -253,13 +263,24 @@ protected SesameFile localizeFile(File f)
    
    synchronized (local_files) {
       newfile = new SesameFile(sf,true);
-      removeFile(sf);
+      if (!removeFile(sf)) {
+         for (Iterator<SesameFile> it = active_files.iterator(); it.hasNext(); ) {
+            SesameFile sf1 = it.next();
+            AcornLog.logD("SESAME","Check active file " + sf1 + " " + sf);
+            if (sf1.getFile().equals(f)) {
+               AcornLog.logD("SESAME","Remove active file " + sf1);
+               it.remove();
+             }
+          }
+       }
       local_files.put(f,newfile);
       active_files.add(newfile);
       newfile.addUse();
+      base_project = null;
       if (changed_files.remove(sf)) changed_files.add(newfile);
     }
    
+   AcornLog.logD("SESAME","Localize file " + f + "->" + newfile + " " + newfile.hashCode() + " " + hashCode());
    return newfile;
 }
 
@@ -383,14 +404,19 @@ synchronized void removeProject()
 
 @Override public synchronized JcompProject getJcompProject()
 {
-
    if (base_project != null) return base_project;
 
    JcompControl jc = SesameMain.getJcompBase();
-   Collection<JcompSource> srcs = new ArrayList<>(active_files);
+   Collection<JcompSource> srcs = new ArrayList<>(active_files); 
   //  base_project = jc.getProject(class_paths,srcs,false);
+   AcornLog.logD("SESAME","Create Jcomp project for " + hashCode() + " " +
+         srcs);
+   
    base_project = jc.getProject(getJcodeFactory(),srcs);
    base_project.setProjectKey(this);
+   
+   AcornLog.logD("SESAME","Jcomp project for " + hashCode() + " = " +
+         base_project.hashCode());
 
    return base_project;
 }

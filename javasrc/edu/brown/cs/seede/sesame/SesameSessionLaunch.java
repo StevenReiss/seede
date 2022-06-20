@@ -44,6 +44,7 @@ import edu.brown.cs.ivy.jcomp.JcompType;
 import edu.brown.cs.ivy.jcomp.JcompTyper;
 import edu.brown.cs.ivy.xml.IvyXml;
 import edu.brown.cs.ivy.mint.MintConstants.CommandArgs;
+import edu.brown.cs.seede.acorn.AcornConstants;
 import edu.brown.cs.seede.acorn.AcornLog;
 import edu.brown.cs.seede.cashew.CashewException;
 import edu.brown.cs.seede.cashew.CashewValue;
@@ -485,7 +486,7 @@ private void loadInitialValues()
       thread_frame.put(teid,feid);
       method_name = IvyXml.getAttrString(frm,"METHOD");
       String fnm = IvyXml.getAttrString(frm,"FILE");
-      File sf = new File(fnm);
+      File sf = AcornConstants.getCanonical(fnm);
       if (!sf.exists()) continue;
       source_file = sesame_control.getFileManager().openFile(sf);
       line_number = IvyXml.getAttrInt(frm,"LINENO");

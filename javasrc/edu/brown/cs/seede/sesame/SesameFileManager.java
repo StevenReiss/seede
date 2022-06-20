@@ -29,6 +29,7 @@ import java.util.Map;
 import org.w3c.dom.Element;
 
 import edu.brown.cs.ivy.xml.IvyXml;
+import edu.brown.cs.seede.acorn.AcornConstants;
 import edu.brown.cs.seede.acorn.AcornLog;
 
 
@@ -90,6 +91,8 @@ SesameFile openFile(File f)
 
 SesameFile openFile(File f,String cnts)
 {
+   f = AcornConstants.getCanonical(f);
+   
    synchronized (known_files) {
       SesameFile sf = known_files.get(f);
       if (sf != null) return sf;
@@ -104,7 +107,7 @@ SesameFile openFile(File f,String cnts)
             f.getName().startsWith(LOCAL_FILE_NAME_PREFIX)) {
           if (cnts == null) cnts = "";
 //        islcl = true;
-          AcornLog.logD("LOCAL FILE DETECTED");
+          AcornLog.logD("SESAME","LOCAL FILE DETECTED");
        }
     }
    else {
@@ -129,7 +132,7 @@ SesameFile openFile(File f,String cnts)
       return null;
     }
    
-   AcornLog.logD("File " + f + " started");
+   AcornLog.logD("File started: " + f);
 
    synchronized (known_files) {
       SesameFile sf = known_files.get(f);

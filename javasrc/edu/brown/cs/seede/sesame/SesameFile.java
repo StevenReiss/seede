@@ -149,7 +149,7 @@ void editFile(int len,int off,String txt,boolean complete)
 
 
 
-boolean editFile(TextEdit te)
+boolean editFile(TextEdit te,String id)
 {
    try {
       te.apply(edit_document);
@@ -158,7 +158,9 @@ boolean editFile(TextEdit te)
       return false;
     }
 
-   AcornLog.logD("RESULTANT FILE: " + edit_document.get());
+   if (id == null) id = "";
+   AcornLog.logD("SESAME","RESULTANT FILE: " + id + ": " + hashCode() +
+         "\n" + edit_document.get());
 
    return true;
 }
@@ -168,7 +170,7 @@ boolean editFile(TextEdit te)
 boolean editFile(ASTRewrite rw)
 {
    TextEdit edits = rw.rewriteAST(edit_document,null);
-   return editFile(edits);
+   return editFile(edits,null);
 }
 
 
@@ -220,9 +222,16 @@ boolean handleErrors(Element msgs)
       ASTNode an = null;
       synchronized (ast_roots) {
 	 an = ast_roots.get(sp);
-	 if (an != null) return an;
+	 if (an != null) {
+            AcornLog.logD("SESAME","Get previous AST root for project " + 
+                  this + " " + sp.getName() + " " + sp.isLocal() + " " + sp.hashCode());
+            return an;
+          }
        }
       an = buildAst();
+      AcornLog.logD("SESAME","Create new AST root " +
+            this + " " + hashCode() + " " + 
+            sp.getName() + " " + sp.isLocal() + " " + sp.hashCode());
       synchronized (ast_roots) {
 	 ast_roots.put(sp,an);
        }
@@ -474,6 +483,7 @@ synchronized boolean removeUse()
 
 
 
+
 /********************************************************************************/
 /*										*/
 /*	Debugging methods							*/
@@ -482,8 +492,13 @@ synchronized boolean removeUse()
 
 @Override public String toString()
 {
-   return for_file.getAbsolutePath();
+   return for_file.getAbsolutePath() + (is_local ? "*" : "");
 }
+
+
+
+
+
 
 
 

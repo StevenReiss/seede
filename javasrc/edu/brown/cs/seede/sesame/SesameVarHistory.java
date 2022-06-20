@@ -50,6 +50,7 @@ import edu.brown.cs.ivy.jcomp.JcompSymbol;
 import edu.brown.cs.ivy.jcomp.JcompType;
 import edu.brown.cs.ivy.xml.IvyXml;
 import edu.brown.cs.ivy.xml.IvyXmlWriter;
+import edu.brown.cs.seede.acorn.AcornConstants;
 import edu.brown.cs.seede.cashew.CashewContext;
 
 
@@ -110,7 +111,8 @@ SesameVarHistory(SesameSession ss,Element xml)
 
 void process(IvyXmlWriter xw)
 {
-   SesameFile sf = for_session.getControl().getFileManager().openFile(new File(file_name));
+   File ff2 = AcornConstants.getCanonical(file_name);
+   SesameFile sf = for_session.getControl().getFileManager().openFile(ff2);
    if (sf == null) {
       xw.textElement("ERROR","Couldn't find file " + file_name);
       return;
@@ -141,7 +143,8 @@ void process(IvyXmlWriter xw)
          ++idx;
        }
       
-      SesameFile csf = for_session.getControl().getFileManager().openFile(new File(call_file));
+      File ff1 = AcornConstants.getCanonical(call_file);
+      SesameFile csf = for_session.getControl().getFileManager().openFile(ff1);
       if (csf == null) {
          xw.textElement("ERROR","Couldn't find call file " + file_name);
          return;

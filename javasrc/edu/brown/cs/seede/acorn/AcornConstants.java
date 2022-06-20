@@ -24,12 +24,36 @@
 
 package edu.brown.cs.seede.acorn;
 
-
+import java.io.File;
+import java.io.IOException;
 
 public interface AcornConstants
 {
 
 
+public static File getCanonical(File f)
+{
+   if (!f.exists()) return f;
+   
+   try {
+      f = f.getCanonicalFile();
+    }
+   catch (IOException e) {
+      AcornLog.logE("ACORN","Problem getting canonical file " + f,e);
+    }
+   return f;
+}
+
+
+
+public static File getCanonical(String s)
+{
+   if (s == null) return null;
+   
+   File f = new File(s);
+   
+   return getCanonical(f);
+}
 
 
 }       // end of interface AcornConstants

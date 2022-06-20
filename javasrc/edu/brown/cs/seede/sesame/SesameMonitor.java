@@ -59,6 +59,7 @@ import edu.brown.cs.ivy.mint.MintConstants.CommandArgs;
 import edu.brown.cs.ivy.mint.MintConstants;
 import edu.brown.cs.ivy.xml.IvyXml;
 import edu.brown.cs.ivy.xml.IvyXmlWriter;
+import edu.brown.cs.seede.acorn.AcornConstants;
 import edu.brown.cs.seede.acorn.AcornLog;
 import edu.brown.cs.seede.cumin.CuminRunner;
 
@@ -300,7 +301,7 @@ private void handleLocalEdit(String sid,Element xml,IvyXmlWriter xw)
       if (IvyXml.isElement(eelt,"EDIT") || IvyXml.isElement(eelt,"REPAIREDIT")) {
 	 String sfile = IvyXml.getAttrString(eelt,"FILE");
 	 if (sfile == null) continue;
-	 File file = new File(sfile);
+	 File file = AcornConstants.getCanonical(sfile);
          edited.add(sfile);
 	 for (Element edit : IvyXml.children(eelt,"EDIT")) {
 	    if (use_text_edits) {
@@ -607,7 +608,8 @@ private void handleAddFile(String sid,Element xml)
    for (Element e : IvyXml.children(xml,"FILE")) {
       String file = IvyXml.getAttrString(e,"NAME");
       String cnts = IvyXml.getTextElement(e,"CONTENTS");
-      SesameFile sf = sesame_control.getFileManager().openFile(new File(file),cnts);
+      File ff = AcornConstants.getCanonical(file);
+      SesameFile sf = sesame_control.getFileManager().openFile(ff,cnts);
       if (sf != null) sp.addFile(sf);
     }
 
@@ -623,7 +625,8 @@ private void handleRemoveFile(String sid,Element xml)
    
    for (Element e : IvyXml.children(xml,"FILE")) {
       String file = IvyXml.getAttrString(e,"NAME");
-      SesameFile sf = sesame_control.getFileManager().findOpenFile(new File(file));
+      File ff = AcornConstants.getCanonical(file);
+      SesameFile sf = sesame_control.getFileManager().findOpenFile(ff);
       if (sf != null) {
          sp.removeFile(sf);
        }
@@ -803,78 +806,78 @@ private class EclipseHandler implements MintHandler {
    @Override public void receive(MintMessage msg,MintArguments args) {
       String cmd = args.getArgument(0);
       Element e = msg.getXml();
-
+   
       switch (cmd) {
-	 case "ELISION" :
-	    return;
+         case "ELISION" :
+            return;
        }
-
+   
       AcornLog.logD("Message from eclipse: " + cmd + " " + msg.getText());
-
+   
       switch (cmd) {
-	 case "PING" :
-	 case "PING1" :
-	 case "PING2" :
-	 case "PING3" :
-	    msg.replyTo("<PONG/>");
-	    break;
-	 case "EDITERROR" :
-	 case "FILEERROR" :
-	    handleErrors(IvyXml.getAttrString(e,"PROJECT"),
-		  new File(IvyXml.getAttrString(e,"FILE")),
-		  IvyXml.getChild(e,"MESSAGES"));
-	    break;
-	 case "EDIT" :
-	    String bid = IvyXml.getAttrString(e,"BID");
-	    if (!bid.equals(SOURCE_ID)) {
-	       msg.replyTo();
-	       break;
-	     }
-	    String txt = IvyXml.getText(e);
-	    boolean complete = IvyXml.getAttrBool(e,"COMPLETE");
-	    boolean remove = IvyXml.getAttrBool(e,"REMOVE");
-	    if (complete) {
-	       byte [] data = IvyXml.getBytesElement(e,"CONTENTS");
-	       if (data != null) txt = new String(data);
-	       else remove = true;
-	     }
-	    handleEdit(msg,bid,null,
-		  new File(IvyXml.getAttrString(e,"FILE")),
-		  IvyXml.getAttrInt(e,"LENGTH"),
-		  IvyXml.getAttrInt(e,"OFFSET"),
-		  complete,remove,txt);
-	    break;
-	 case "RUNEVENT" :
-	    long when = IvyXml.getAttrLong(e,"TIME");
-	    for (Element re : IvyXml.children(e,"RUNEVENT")) {
-	       handleRunEvent(re,when);
-	     }
-	    break;
-	 case "RESOURCE" :
-	    for (Element re : IvyXml.children(e,"DELTA")) {
-	       handleResourceChange(re);
-	     }
-	    break;
-	 case "CONSOLE" :
-	    handleConsoleEvent(e);
-	    break;
-	 case "EVALUATION" :
-	    AcornLog.logD("Eclipse Message: " + msg.getText());
-	    bid = IvyXml.getAttrString(e,"BID");
-	    String id = IvyXml.getAttrString(e,"ID");
-	    if ((bid == null || bid.equals(SOURCE_ID)) && id != null) {
-	       EvalData ed = new EvalData(e);
-	       synchronized (eval_handlers) {
-		  eval_handlers.put(id,ed);
-		  eval_handlers.notifyAll();
-		}
-	     }
-	    msg.replyTo("<OK/>");
-	    break;
-	 case "STOP" :
-	    AcornLog.logD("Eclipse Message: " + msg.getText());
-	    serverDone();
-	    break;
+         case "PING" :
+         case "PING1" :
+         case "PING2" :
+         case "PING3" :
+            msg.replyTo("<PONG/>");
+            break;
+         case "EDITERROR" :
+         case "FILEERROR" :
+            handleErrors(IvyXml.getAttrString(e,"PROJECT"),
+        	  AcornConstants.getCanonical(IvyXml.getAttrString(e,"FILE")),
+        	  IvyXml.getChild(e,"MESSAGES"));
+            break;
+         case "EDIT" :
+            String bid = IvyXml.getAttrString(e,"BID");
+            if (!bid.equals(SOURCE_ID)) {
+               msg.replyTo();
+               break;
+             }
+            String txt = IvyXml.getText(e);
+            boolean complete = IvyXml.getAttrBool(e,"COMPLETE");
+            boolean remove = IvyXml.getAttrBool(e,"REMOVE");
+            if (complete) {
+               byte [] data = IvyXml.getBytesElement(e,"CONTENTS");
+               if (data != null) txt = new String(data);
+               else remove = true;
+             }
+            handleEdit(msg,bid,null,
+        	  AcornConstants.getCanonical(IvyXml.getAttrString(e,"FILE")),
+        	  IvyXml.getAttrInt(e,"LENGTH"),
+        	  IvyXml.getAttrInt(e,"OFFSET"),
+        	  complete,remove,txt);
+            break;
+         case "RUNEVENT" :
+            long when = IvyXml.getAttrLong(e,"TIME");
+            for (Element re : IvyXml.children(e,"RUNEVENT")) {
+               handleRunEvent(re,when);
+             }
+            break;
+         case "RESOURCE" :
+            for (Element re : IvyXml.children(e,"DELTA")) {
+               handleResourceChange(re);
+             }
+            break;
+         case "CONSOLE" :
+            handleConsoleEvent(e);
+            break;
+         case "EVALUATION" :
+            AcornLog.logD("Eclipse Message: " + msg.getText());
+            bid = IvyXml.getAttrString(e,"BID");
+            String id = IvyXml.getAttrString(e,"ID");
+            if ((bid == null || bid.equals(SOURCE_ID)) && id != null) {
+               EvalData ed = new EvalData(e);
+               synchronized (eval_handlers) {
+        	  eval_handlers.put(id,ed);
+        	  eval_handlers.notifyAll();
+        	}
+             }
+            msg.replyTo("<OK/>");
+            break;
+         case "STOP" :
+            AcornLog.logD("Eclipse Message: " + msg.getText());
+            serverDone();
+            break;
        }
     }
 
@@ -894,9 +897,9 @@ private class BubblesHandler implements MintHandler {
       String cmd = args.getArgument(0);
       // Element e = msg.getXml();
       switch (cmd) {
-	 case "EXIT" :
-	    serverDone();
-	    break;
+         case "EXIT" :
+            serverDone();
+            break;
        }
       msg.replyTo();
     }

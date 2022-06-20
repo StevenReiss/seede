@@ -98,6 +98,7 @@ import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 import org.eclipse.jdt.core.dom.WhileStatement;
 
+import edu.brown.cs.seede.acorn.AcornConstants;
 import edu.brown.cs.seede.acorn.AcornLog;
 
 import org.eclipse.jdt.core.dom.TypeDeclaration;
@@ -201,6 +202,8 @@ CuminRunnerAst(CashewValueSession sess,CuminProject cp,CashewContext gblctx,Cash
    method_node = method;
    current_node = method_node;
    last_line = 0;
+   
+   AcornLog.logD("CUMIN","Setup AST runner: " + JcompAst.getSource(method) + " " +  method);
 
    setupContext(top);
 }
@@ -335,7 +338,7 @@ private void setupContext(boolean top)
    JcompTyper typer = type_converter;
 
    File file = null;
-   if (src != null) file = new File(src.getFileName());
+   if (src != null) file = AcornConstants.getCanonical(src.getFileName());
 
    CashewContext ctx = new CashewContext(js,file,global_context);
    LocalFinder lf = new LocalFinder();
@@ -1367,6 +1370,8 @@ private CuminRunStatus visit(SimpleName v) throws CashewException
       String msg = v.getIdentifier() + " is undefined";
       return CuminRunStatus.Factory.createCompilerError(msg);
     }
+   
+   if (AcornLog.isTracing()) AcornLog.logT("\tNAME: " + v);
 
    execution_stack.push(cv);
 

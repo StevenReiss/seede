@@ -26,6 +26,8 @@ package edu.brown.cs.seede.sesame;
 
 import java.io.File;
 
+import edu.brown.cs.seede.acorn.AcornLog;
+
 class SesameSubproject extends SesameProject
 {
 
@@ -47,6 +49,8 @@ class SesameSubproject extends SesameProject
 SesameSubproject(SesameProject sp)
 {
    super(sp);
+   
+   AcornLog.logD("SESAME","Create subproject " + hashCode() + " from " + sp.hashCode());
 }
 
 
