@@ -2011,6 +2011,9 @@ private CuminRunStatus visit(ForStatement s,ASTNode after) throws CuminRunExcept
       int idx = 0;
       List<?> inits = s.initializers();
       if (after != null) {
+         JcompType typ = JcompAst.getExprType(after);
+         if (after instanceof VariableDeclarationExpression) typ = null;
+         if (typ != null && !typ.isVoidType()) execution_stack.pop();
 	 idx = inits.indexOf(after)+1;
 	 if (idx == 0) idx = inits.size();
        }
