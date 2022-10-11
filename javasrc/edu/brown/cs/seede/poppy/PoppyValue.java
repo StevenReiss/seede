@@ -173,21 +173,9 @@ public static Object getStaticFieldValue(String itm)
    String fld = itm.substring(idx1+1);
    String cls = itm.substring(0,idx1);
    
-   Class<?> c1 = null;
-   for ( ; ; ) {
-      try {
-	 c1 = Class.forName(cls);
-	 break;
-       }
-      catch (ClassNotFoundException e) { }
-//    System.err.println("POPPY: Can't find class " + cls);
-      int idx = cls.lastIndexOf(".");
-      if (idx < 0) {
-         System.err.println("POPPY: Problem getting class for static field: " + itm);
-         return null;
-       }     
-      cls = cls.substring(0,idx) + "$" + cls.substring(idx+1);
-    }
+   Class<?> c1 = getClassByName(cls);
+   if (c1 == null) return null;
+  
    if (fld.equals("ENUM$VALUES")) {
       return c1.getEnumConstants();
     }
@@ -207,6 +195,30 @@ public static Object getStaticFieldValue(String itm)
    
    System.err.println("POPPY: Problem getting static field: " + c1 + " " + fld + " " + err);
    return null;
+}
+
+
+private static Class<?> getClassByName(String cls)
+{
+   String itm = cls;
+   Class<?> c1 = null;
+   
+   for ( ; ; ) {
+      try {
+	 c1 = Class.forName(cls);
+	 break;
+       }
+      catch (ClassNotFoundException e) { }
+//    System.err.println("POPPY: Can't find class " + cls);
+      int idx = cls.lastIndexOf(".");
+      if (idx < 0) {
+         System.err.println("POPPY: Problem getting class: " + itm);
+         return null;
+       }     
+      cls = cls.substring(0,idx) + "$" + cls.substring(idx+1);
+    }
+   
+   return c1;
 }
 
 
@@ -314,6 +326,24 @@ public static Object [] getToArray(Object o)
 }
 
 
+
+public static void setAccessible(String cls)
+{
+   Class<?> c1 = getClassByName(cls);
+   if (c1 == null) return;
+   for (Field f : c1.getDeclaredFields()) {
+      try {
+         f.trySetAccessible();
+       }
+      catch (Throwable t) { }
+    }
+}
+
+
+public static Object getInteger(int v)
+{
+   return Integer.valueOf(v);
+}
 
 
 /********************************************************************************/

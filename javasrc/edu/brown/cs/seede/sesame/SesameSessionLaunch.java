@@ -419,8 +419,10 @@ String getAnyThread()
 
    String type1 = type.replace('$','.');
 
-   String expr = "java.lang.reflect.AccessibleObject.setAccessible(" + type1 + ".class";
-   expr += ".getDeclaredFields(),true)";
+   String expr = "edu.brown.cs.seede.poppy.PoppyValue.setAccessible(\"" + type1 + "\")";
+// String expr = "java.lang.reflect.AccessibleObject.SetAccessible(" + type1 + ".class";
+// expr += ".getDeclaredFields(),true)";
+   
    try {
       evaluateVoid(expr,false);
     }

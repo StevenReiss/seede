@@ -960,6 +960,12 @@ CuminRunStatus checkIntegerMethods() throws CashewException
 	 case "toString" :
 	    rslt = CashewValue.stringValue(typer,typer.STRING_TYPE,Integer.toString(getInt(0)));
 	    break;
+         case "valueOf" :
+            int v = getInt(0);
+            exec_runner.ensureLoaded("edu.brown.cs.seede.poppy.PoppyValue"); 
+            String expr = "edu.brown.cs.seede.poppy.PoppyValue.getInteger(" + v + ")";
+	    rslt = exec_runner.getLookupContext().evaluate(expr);
+	    break;
 	 default :
 	    return null;
        }
