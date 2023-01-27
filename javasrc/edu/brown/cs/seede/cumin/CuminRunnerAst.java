@@ -1655,6 +1655,9 @@ private CuminRunStatus visit(MethodInvocation v,ASTNode after)
     }
 
    if (AcornLog.isTracing()) AcornLog.logT("INVOKE " + args.size() + " " + v + " " + js.getType());
+// if (v.toString().contains("props.put")) {
+//    System.err.println("CHECK HERE");
+//  }
 
    JcompType ctyp = js.getType();
    int narg = ctyp.getComponents().size();
