@@ -538,7 +538,12 @@ CuminRunner handleCall(CashewClock cc,JcodeMethod method,List<CashewValue> args,
     }
 
    if (cmethod == null && !method.isStatic() && thisarg.isNull(getSession(),cc)) {
-      CuminEvaluator.throwException(getSession(),type_converter,"java.lang.NullPointerException");
+      if (method.getDeclaringClass().getName().equals("jdk.internal.access.JavaLangAccess")) {
+         cmethod = method;
+       }
+      else {
+         CuminEvaluator.throwException(getSession(),type_converter,"java.lang.NullPointerException");
+       }
     }
 
    if (cmethod == null) {

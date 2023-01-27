@@ -66,7 +66,7 @@ private String          stopped_thread;
 private static final String BROWN_ECLIPSE = "eclipse-oxygenx/eclipse/eclipse";
 private static final String BROWN_WS = "Eclipse/";
 private static final String HOME_ECLIPSE =
-   "/vol/Developer/jee-2020-09/Eclipse.app/Contents/MacOS/eclipse";
+   "/vol/Developer/jee-2022-09/Eclipse.app/Contents/MacOS/eclipse";
 private static final String HOME_WS = "Eclipse/";
 private static final String BROWN_SEEDE_LIB = "/research/people/spr/seede/lib";
 private static final String HOME_SEEDE_LIB = "/pro/seede/lib";

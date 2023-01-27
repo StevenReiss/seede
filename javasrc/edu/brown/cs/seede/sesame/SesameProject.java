@@ -145,14 +145,14 @@ SesameProject(SesameProject par)
    base_project = null;
    class_paths = new ArrayList<>();
    binary_control = par.binary_control;
-   
+
    active_files = new HashSet<>();
    changed_files = new HashSet<>();
    project_lock = new ReentrantReadWriteLock();
    class_paths = par.class_paths;
-   
+
    local_files = new HashMap<>();
-   
+
    for (SesameFile sf : par.getActiveFiles()) {
       SesameFile nsf = new SesameFile(sf,false);
       local_files.put(sf.getFile(),nsf);
@@ -183,7 +183,7 @@ private SesameProject()
 /*										*/
 /********************************************************************************/
 
-boolean isLocal()                       { return false; }
+boolean isLocal()			{ return false; }
 
 String getName()			{ return project_name; }
 
@@ -201,14 +201,14 @@ boolean removeFile(SesameFile sf)
    if (active_files.remove(sf)) {
       AcornLog.logD("SESAME","File removed " + sf + " " + hashCode());
       noteFileChanged(sf,true);
-      if (local_files.get(sf.getFile()) == null) {
-         sesame_control.getFileManager().removeFileUse(sf);
+      if (local_files != null && local_files.get(sf.getFile()) == null) {
+	 sesame_control.getFileManager().removeFileUse(sf);
        }
       return true;
     }
    else {
       AcornLog.logD("SESAME","Failed to remove file " +
-            sf + " " + hashCode());
+	    sf + " " + hashCode());
       return false;
     }
 }
@@ -217,20 +217,20 @@ boolean removeFile(SesameFile sf)
 protected SesameFile findFile(File f)
 {
    f = AcornConstants.getCanonical(f);
-   
+
    if (local_files != null) {
       synchronized (local_files) {
-         SesameFile sf = local_files.get(f);
-         if (sf != null) return sf;
+	 SesameFile sf = local_files.get(f);
+	 if (sf != null) return sf;
        }
     }
-  
+
    return sesame_control.getFileManager().openFile(f);
 }
 
 
 
-protected SesameFile findLocalFile(File f) 
+protected SesameFile findLocalFile(File f)
 {
    if (f == null || local_files == null) return null;
    return local_files.get(f);
@@ -241,37 +241,37 @@ protected SesameFile findLocalFile(File f)
 protected SesameFile localizeFile(File f)
 {
    if (f == null) return null;
-   
+
    SesameFile sf = findFile(f);
-   
+
    if (sf == null) {
       AcornLog.logD("SESAME","File " + f + " not found");
     }
-   
+
    if (sf != null && sf.isLocal() && local_files != null) {
       local_files.put(f,sf);
       active_files.add(sf);
       sf.addUse();
       return sf;
     }
-   
+
    if (sf == null || sf.isLocal() || local_files == null) {
       return sf;
     }
-   
+
    SesameFile newfile = null;
-   
+
    synchronized (local_files) {
       newfile = new SesameFile(sf,true);
       if (!removeFile(sf)) {
-         for (Iterator<SesameFile> it = active_files.iterator(); it.hasNext(); ) {
-            SesameFile sf1 = it.next();
-            AcornLog.logD("SESAME","Check active file " + sf1 + " " + sf);
-            if (sf1.getFile().equals(f)) {
-               AcornLog.logD("SESAME","Remove active file " + sf1);
-               it.remove();
-             }
-          }
+	 for (Iterator<SesameFile> it = active_files.iterator(); it.hasNext(); ) {
+	    SesameFile sf1 = it.next();
+	    AcornLog.logD("SESAME","Check active file " + sf1 + " " + sf);
+	    if (sf1.getFile().equals(f)) {
+	       AcornLog.logD("SESAME","Remove active file " + sf1);
+	       it.remove();
+	     }
+	  }
        }
       local_files.put(f,newfile);
       active_files.add(newfile);
@@ -279,7 +279,7 @@ protected SesameFile localizeFile(File f)
       base_project = null;
       if (changed_files.remove(sf)) changed_files.add(newfile);
     }
-   
+
    AcornLog.logD("SESAME","Localize file " + f + "->" + newfile + " " + newfile.hashCode() + " " + hashCode());
    return newfile;
 }
@@ -395,7 +395,7 @@ synchronized void removeProject()
    class_paths = null;
    for (SesameFile sf : local_files.values()) {
       if (!rem.contains(sf)) {
-         removeFile(sf);
+	 removeFile(sf);
        }
     }
    local_files = null;
@@ -407,16 +407,16 @@ synchronized void removeProject()
    if (base_project != null) return base_project;
 
    JcompControl jc = SesameMain.getJcompBase();
-   Collection<JcompSource> srcs = new ArrayList<>(active_files); 
+   Collection<JcompSource> srcs = new ArrayList<>(active_files);
   //  base_project = jc.getProject(class_paths,srcs,false);
    AcornLog.logD("SESAME","Create Jcomp project for " + hashCode() + " " +
-         srcs);
-   
+	 srcs);
+
    base_project = jc.getProject(getJcodeFactory(),srcs);
    base_project.setProjectKey(this);
-   
+
    AcornLog.logD("SESAME","Jcomp project for " + hashCode() + " = " +
-         base_project.hashCode());
+	 base_project.hashCode());
 
    return base_project;
 }

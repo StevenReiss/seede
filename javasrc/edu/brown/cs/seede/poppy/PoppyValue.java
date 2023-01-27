@@ -176,10 +176,14 @@ public static Object getStaticFieldValue(String itm)
    Class<?> c1 = getClassByName(cls);
    if (c1 == null) return null;
   
-   if (fld.equals("ENUM$VALUES")) {
-      return c1.getEnumConstants();
-    }
    Throwable err = null;
+   
+   // handle special cases
+   switch (fld) {
+      case "ENUM$VALUES" :
+         return c1.getEnumConstants();
+    }
+   
    try {
       Field f1 = c1.getDeclaredField(fld);
       try {

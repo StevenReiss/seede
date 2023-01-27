@@ -151,10 +151,10 @@ private void initialize(String sid,Element xml)
     }
    session_id = sid;
 
-   location_map = new HashMap<String,SesameLocation>();
+   location_map = new HashMap<>();
 
-   exec_runners = new HashSet<SesameExecRunner>();
-   runner_location = new WeakHashMap<CuminRunner,SesameLocation>();
+   exec_runners = new HashSet<>();
+   runner_location = new WeakHashMap<>();
    cashew_iomodel = new CashewInputOutputModel();
    cashew_syncmodel = new CashewSynchronizationModel();
    expand_names = null;

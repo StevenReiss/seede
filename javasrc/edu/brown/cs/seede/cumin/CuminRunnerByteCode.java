@@ -1477,6 +1477,11 @@ private CuminRunStatus checkSpecial() throws CuminRunException
             cde = new CuminDirectEvaluation(this);
             sts = cde.checkSegmentMethods();
             break;
+            
+         case "jdk.internal.access.JavaLangAccess" :
+            cde = new CuminDirectEvaluation(this);
+            sts = cde.checkAccessMethods();
+            break;
        }
     }
    catch (CuminRunException e) {

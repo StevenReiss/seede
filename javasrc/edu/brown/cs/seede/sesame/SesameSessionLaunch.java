@@ -488,6 +488,7 @@ private void loadInitialValues()
       thread_frame.put(teid,feid);
       method_name = IvyXml.getAttrString(frm,"METHOD");
       String fnm = IvyXml.getAttrString(frm,"FILE");
+      if (fnm == null) continue;
       File sf = AcornConstants.getCanonical(fnm);
       if (!sf.exists()) continue;
       source_file = sesame_control.getFileManager().openFile(sf);

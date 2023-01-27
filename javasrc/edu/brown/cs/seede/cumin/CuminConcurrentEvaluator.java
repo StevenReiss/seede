@@ -287,6 +287,8 @@ synchronized CuminRunStatus checkUnsafeMethods() throws CuminRunException, Cashe
 	    rslt = CashewValue.booleanValue(typer,true);
 	  }
 	 break;
+      case "fullFence" :
+         break;
       default :
 	 return null;
     }
