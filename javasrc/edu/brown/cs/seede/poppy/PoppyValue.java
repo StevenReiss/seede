@@ -198,6 +198,7 @@ public static Object getStaticFieldValue(String itm)
     }
    
    System.err.println("POPPY: Problem getting static field: " + c1 + " " + fld + " " + err);
+   System.err.println("POPPY: Add module/package to Bicex.props");
    return null;
 }
 

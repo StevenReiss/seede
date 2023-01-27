@@ -71,6 +71,15 @@ private static final String HOME_WS = "Eclipse/";
 private static final String BROWN_SEEDE_LIB = "/research/people/spr/seede/lib";
 private static final String HOME_SEEDE_LIB = "/pro/seede/lib";
 
+private static final String [] OPENS;
+
+static {
+   OPENS = new String [] { "java.desktop/sun.font", "java.desktop/sun.awt", "java.desktop/sun.swing",
+         "java.desktop/javax.swing", "java.base/jdk.internal.math", "java.base/sun.nio.cs", 
+         "java.base/java.nio"
+    };
+}
+
       
 
 
@@ -539,8 +548,14 @@ private LaunchData doStartLaunch(String name)
    File lib = new File(BROWN_SEEDE_LIB);
    if (!lib.exists()) lib = new File(HOME_SEEDE_LIB);
    String dargs = null;
+   
 // File f1 = new File(lib,"poppy.jar");
 // dargs = "-javaagent:" + f1.getPath();
+   for (String s : OPENS) {
+      String arg = "--add-opens=" + s + "=ALL-UNNAMED";
+      if (dargs == null) dargs = arg;
+      else dargs += " " + arg;
+    }
    
    stopped_thread = null;
    CommandArgs args = new CommandArgs("NAME",name,"MODE","debug","BUILD","TRUE",
