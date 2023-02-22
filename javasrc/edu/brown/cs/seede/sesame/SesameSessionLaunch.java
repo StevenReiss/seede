@@ -505,6 +505,7 @@ private void loadInitialValues()
 	 valmap.put(nm,svd);
        }
       SesameLocation loc = new SesameLocation(source_file,method_name,line_number,teid,thnm);
+      AcornLog.logD("SESAME","Create location " + loc);
       getProject().addFile(source_file);
       addLocation(loc);
     }

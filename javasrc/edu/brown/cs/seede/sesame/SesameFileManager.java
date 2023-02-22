@@ -28,6 +28,7 @@ import java.util.Map;
 
 import org.w3c.dom.Element;
 
+import edu.brown.cs.ivy.file.IvyFile;
 import edu.brown.cs.ivy.xml.IvyXml;
 import edu.brown.cs.seede.acorn.AcornConstants;
 import edu.brown.cs.seede.acorn.AcornLog;
@@ -93,10 +94,8 @@ SesameFile openFile(File f,String cnts)
 {
    f = AcornConstants.getCanonical(f);
    
-   synchronized (known_files) {
-      SesameFile sf = known_files.get(f);
-      if (sf != null) return sf;
-    }
+   SesameFile sfx = findOpenFile(f);
+   if (sfx != null) return sfx;
    
    String linesep = "\n";
    boolean islcl = false;
@@ -135,13 +134,13 @@ SesameFile openFile(File f,String cnts)
    AcornLog.logD("File started: " + f);
 
    synchronized (known_files) {
-      SesameFile sf = known_files.get(f);
-      if (sf == null) {
-	 sf = new SesameFile(f,cnts,linesep);
-         if (islcl) sf = new SesameFile(sf,true);
-	 known_files.put(f,sf);
+      SesameFile sf1 = known_files.get(f);
+      if (sf1 == null) {
+	 sf1 = new SesameFile(f,cnts,linesep);
+         if (islcl) sf1 = new SesameFile(sf1,true);
+	 known_files.put(f,sf1);
        }
-      return sf;
+      return sf1;
     }
 }
 
@@ -151,9 +150,7 @@ void removeFileUse(SesameFile sf)
    if (sf.removeUse()) {
       if (!sf.isLocal()) {
 	 File f = sf.getFile();
-	 synchronized (known_files) {
-	    known_files.remove(f);
-	  }
+         closeFile(f);
 	 Map<String,Object> args = new HashMap<>();
 	 args.put("FILE",f.getPath());
 	 sesame_control.getStringReply("FINISHFILE",null,args,null,0);
@@ -168,6 +165,8 @@ void closeFile(File f)
 {
    synchronized (known_files) {
       known_files.remove(f);
+      File f1 = IvyFile.getCanonical(f);
+      known_files.remove(f1);
     }
 }
 
@@ -181,7 +180,8 @@ void closeFile(File f)
 
 SesameFile handleEdit(File f,int len,int offset,boolean complete,String txt)
 {
-   SesameFile sf = known_files.get(f);
+   f = AcornConstants.getCanonical(f);
+   SesameFile sf = findOpenFile(f);
    if (sf == null) return null;
    if (complete && txt == null) {
       closeFile(f);
@@ -203,7 +203,8 @@ SesameFile handleEdit(File f,int len,int offset,boolean complete,String txt)
 
 boolean handleErrors(File f,Element msgs)
 {
-   SesameFile sf = known_files.get(f);
+   f = AcornConstants.getCanonical(f);
+   SesameFile sf = findOpenFile(f);
    if (sf == null) return false;
    return sf.handleErrors(msgs);
 }

@@ -38,6 +38,7 @@ import org.w3c.dom.Element;
 
 import edu.brown.cs.ivy.xml.IvyXml;
 import edu.brown.cs.seede.acorn.AcornConstants;
+import edu.brown.cs.seede.acorn.AcornLog;
 
 class SesameLocation implements SesameConstants
 {
@@ -169,6 +170,13 @@ private class FindPositionVisitor extends ASTVisitor {
       int startln = comp_unit.getLineNumber(n.getStartPosition());
       int endln = comp_unit.getLineNumber(n.getStartPosition() + n.getLength() + 1);
       if (endln < 0) endln = line_number+1;
+      AcornLog.logD("SESAME","CHECK LINES " + startln + " " + endln + " " + line_number + " " +
+            n.getClass());
+      if (n.getNodeType() == ASTNode.METHOD_DECLARATION) 
+         AcornLog.logD("SESAME","METHOD " + ((MethodDeclaration) n).getName());
+      if (n.getRoot() != comp_unit) {
+         AcornLog.logD("SESAME","Bad CompUnit " + n);
+       }
       
       if (line_number < startln || line_number > endln) return false;
       switch (n.getNodeType()) {
@@ -190,6 +198,11 @@ private class FindPositionVisitor extends ASTVisitor {
    
    @Override public boolean visit(MethodDeclaration md) {
       if (comp_unit == null) return false;
+      AcornLog.logD("SESAME","CHECK METHOD LOCATION: " + md.getStartPosition() + " "
+            + comp_unit.getLineNumber(md.getStartPosition()) +
+            " " + md.getStartPosition() + md.getLength() + " " +
+            comp_unit.getLineNumber(md.getStartPosition() + md.getLength()) + " " +
+            line_number + " " +  md.getName());
       int startln = comp_unit.getLineNumber(md.getStartPosition());   
       Block b = md.getBody();
       if (b == null) return false;

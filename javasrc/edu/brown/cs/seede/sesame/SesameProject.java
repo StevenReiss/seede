@@ -90,15 +90,15 @@ SesameProject(SesameMain sm,String name)
    class_paths = new ArrayList<String>();
    local_files = null;
 
-   active_files = new HashSet<SesameFile>();
-   changed_files = new HashSet<SesameFile>();
+   active_files = new HashSet<>();
+   changed_files = new HashSet<>();
 
    project_lock = new ReentrantReadWriteLock();
 
    boolean havepoppy = false;
 
    // compute class path for project
-   CommandArgs args = new CommandArgs("PATHS",true);
+   CommandArgs args = new CommandArgs("PATHS",true,"FILES",true);
    Element xml = sm.getXmlReply("OPENPROJECT",this,args,null,0);
    if (IvyXml.isElement(xml,"RESULT")) xml = IvyXml.getChild(xml,"PROJECT");
    Element cp = IvyXml.getChild(xml,"CLASSPATH");
@@ -125,6 +125,7 @@ SesameProject(SesameMain sm,String name)
       if (IvyXml.getAttrBool(rpe,"SYSTEM")) continue;
       class_paths.add(bn);
     }
+   
    if (ignore != null) {
       for (Iterator<String> it = class_paths.iterator(); it.hasNext(); ) {
 	 String nm = it.next();
@@ -393,9 +394,11 @@ synchronized void removeProject()
    active_files = null;
    changed_files = null;
    class_paths = null;
-   for (SesameFile sf : local_files.values()) {
-      if (!rem.contains(sf)) {
-	 removeFile(sf);
+   if (local_files != null) {
+      for (SesameFile sf : local_files.values()) {
+         if (!rem.contains(sf)) {
+            removeFile(sf);
+          }
        }
     }
    local_files = null;
