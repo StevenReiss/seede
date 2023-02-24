@@ -93,6 +93,32 @@ CuminGraphicsEvaluator(CuminRunnerByteCode bc)
 }
 
 
+/********************************************************************************/
+/*                                                                              */
+/*      Entry point for getGraphics                                             */
+/*                                                                              */
+/********************************************************************************/
+
+CuminRunStatus checkJFrame() throws CashewException
+{
+   CashewValue rslt = null;
+   
+   switch (getMethod().getName()) {
+      case "getGraphics" :
+         CashewValue c = getValue(0);
+         String nm = "GETGRPAHICS";
+         rslt = exec_runner.executeCall("edu.brown.cs.poppy.PoppyGraphics.computeGraphics2",
+               c,CashewValue.stringValue(getTyper(),getTyper().STRING_TYPE,nm));
+         break;
+      default :
+         return null;
+    }
+   
+   
+   return CuminRunStatus.Factory.createReturn(rslt);
+}
+
+
 
 /********************************************************************************/
 /*										*/
@@ -310,6 +336,16 @@ CuminRunStatus checkGraphicsCallback() throws CashewException
       default :
 	 return null;
     }
+}
+
+
+CuminRunStatus checkLoops() throws CashewException 
+{
+   if (!getMethod().isNative()) return null;
+   
+   // native methods with void returns here can be ignored
+   
+   return CuminRunStatus.Factory.createReturn(null);
 }
 
 

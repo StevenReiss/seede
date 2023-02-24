@@ -50,6 +50,7 @@
 	 <fileset dir='${PRO}/seedebb/java' includes='**/*.class' />
 	 <fileset dir='./lib' includes='*.props' />
 	 <fileset dir='./lib' includes='poppy.jar' />
+	 <fileset dir='.' includes='images/*.png' />
 	 <fileset dir='${PRO}/seedebb' includes='seedebb.palette' />
       </jar>
       <copy file='seede.jar' tofile='${PRO}/bubbles/dropins/seede.jar' verbose='true' />

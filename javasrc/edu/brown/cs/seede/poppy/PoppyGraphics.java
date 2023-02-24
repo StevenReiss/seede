@@ -41,6 +41,7 @@ import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.Stroke;
+import java.awt.Toolkit;
 import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
 import java.awt.geom.AffineTransform;
@@ -60,6 +61,7 @@ import java.awt.image.renderable.RenderableImage;
 import java.text.AttributedCharacterIterator;
 import java.util.Map;
 
+
 public class PoppyGraphics extends Graphics2D implements PoppyConstants
 {
 
@@ -75,7 +77,7 @@ public class PoppyGraphics extends Graphics2D implements PoppyConstants
 public static PoppyGraphics computeGraphics(Component c,String id)
 {
    // note that this is executed in the user process, not in simulation
-   
+
    return new PoppyGraphics(c.getGraphics(),c,id);
 }
 
@@ -86,23 +88,28 @@ public static PoppyGraphics computeGraphics1(Component c,Graphics g,String id)
 }
 
 
+public static PoppyGraphics computeGraphics2(Component c,String id)
+{
+   return new PoppyGraphics(null,c,id);
+}
+
 
 public static String computeDrawingG(Component c,Graphics g)
 {
    c.paint(g);
-   
+
    PoppyGraphics pg = (PoppyGraphics) g;
-   
+
    return  pg.finalReport();
 }
 
 
 public String finalReport()
 {
-   String rslt = getReport(); 
-   
+   String rslt = getReport();
+
    dispose();
-   
+
    return rslt;
 }
 
@@ -124,13 +131,14 @@ private Composite	user_composite;
 private RenderingHints	user_hints;
 private Font		user_font;
 private Graphics	base_graphics;
-private String          poppy_id;
-private int             poppy_width;
-private int             poppy_height;
-private int             poppy_index;
-private int             parent_index;
+private String		poppy_id;
+private int		poppy_width;
+private int		poppy_height;
+private int		poppy_index;
+private int		parent_index;
+private Component       base_component;
 
-private static int      poppy_counter = 0;
+private static int	poppy_counter = 0;
 
 
 
@@ -146,14 +154,15 @@ private PoppyGraphics(Graphics g,Component c,String id)
    poppy_id = id;
    poppy_index = nextIndex();
    parent_index = 0;
-   
+   base_component = c;
+
    if (c != null) {
       poppy_width = c.getWidth();
       poppy_height = c.getHeight();
     }
-   
-   initialize(g);
-   
+
+   initialize(g,c);
+
    setupComplete(g);
 }
 
@@ -168,7 +177,7 @@ private PoppyGraphics(Graphics g,Component c,String id)
 @Override public void dispose() 		{ }
 
 
-private static synchronized int nextIndex() 
+private static synchronized int nextIndex()
 {
    return ++poppy_counter;
 }
@@ -181,17 +190,25 @@ private static synchronized int nextIndex()
 /*										*/
 /********************************************************************************/
 
-private void initialize(Graphics g)
+private void initialize(Graphics g,Component c)
 {
-   user_clip = g.getClip();
+   if (g != null) {
+      user_clip = g.getClip();
+      fg_color = g.getColor();
+      user_font = g.getFont();
+    }
+   else {
+      setClip(0,0,c.getWidth(),c.getHeight());
+      fg_color = Color.BLACK;
+      user_font = new Font(Font.SERIF,Font.PLAIN,12);
+    }
+
    user_transform = new AffineTransform();
-   fg_color = g.getColor();
    bg_color = null;
    user_paint = null;
    user_composite = null;
    user_hints = null;
    user_stroke = new BasicStroke();
-   user_font = g.getFont();
    base_graphics = g;
 
    if (g != null && g instanceof Graphics2D) {
@@ -203,7 +220,7 @@ private void initialize(Graphics g)
       user_stroke = g2.getStroke();
       user_transform = new AffineTransform(g2.getTransform());
     }
-   
+
    if (g != null && g instanceof PoppyGraphics) {
       PoppyGraphics pg = (PoppyGraphics) g;
       base_graphics = pg.base_graphics;
@@ -211,7 +228,7 @@ private void initialize(Graphics g)
     }
 }
 
-private void setupComplete(Graphics g)                  { }
+private void setupComplete(Graphics g)			{ }
 
 
 
@@ -462,7 +479,7 @@ public void constrain(int x,int y,int w,int h)
 @Override public void drawString(String s,float x,float y)
 {
    if (s == null) return;
-   
+
    // generateDrawString(s,x,y);
 }
 
@@ -536,14 +553,14 @@ private void doClip(Shape s)
       Area a1,a2;
       a1 = new Area(user_clip);
       if (s instanceof Area) {
-         a2 = (Area) s;
+	 a2 = (Area) s;
        }
       else a2 = new Area(s);
       a1.intersect(a2);
       // nmed to interset shpaes here
       user_clip = a1;
     }
-   
+
 }
 
 
@@ -564,7 +581,7 @@ private void doClip(Shape s)
 
 
 
- 
+
 
 /********************************************************************************/
 /*										*/
@@ -622,6 +639,9 @@ private void doClip(Shape s)
 
 @Override public GraphicsConfiguration getDeviceConfiguration()
 {
+   if (base_graphics == null) {
+      return base_component.getGraphicsConfiguration();
+    }
    return ((Graphics2D) base_graphics).getDeviceConfiguration();
 }
 
@@ -706,8 +726,12 @@ private void doClip(Shape s)
 }
 
 
+@SuppressWarnings("deprecation")
 @Override public FontMetrics getFontMetrics(Font f)
 {
+   if (base_graphics == null) {
+      return Toolkit.getDefaultToolkit().getFontMetrics(f);
+    }
    return base_graphics.getFontMetrics(f);
 }
 
@@ -822,11 +846,11 @@ private void doClip(Shape s)
 @Override public boolean hit(Rectangle r,Shape s,boolean onstroke)
 {
    if (s == null) return false;
-   
+
    if (onstroke) {
       s = user_stroke.createStrokedShape(s);
     }
-   
+
    if (user_transform != null && !user_transform.isIdentity()) {
       s = user_transform.createTransformedShape(s);
     }
@@ -836,16 +860,16 @@ private void doClip(Shape s)
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Output methods                                                          */
-/*                                                                              */
+/*										*/
+/*	Output methods								*/
+/*										*/
 /********************************************************************************/
 
 private String getReport()
 {
-   String rslt = "FOR " + poppy_width + " " + poppy_height + " " + " " + " " + 
+   String rslt = "FOR " + poppy_width + " " + poppy_height + " " + " " + " " +
       poppy_index + " " + parent_index + " " + poppy_id;
-   
+
    return rslt;
 }
 

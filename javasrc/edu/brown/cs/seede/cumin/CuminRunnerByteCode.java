@@ -1420,6 +1420,7 @@ private CuminRunStatus checkSpecial() throws CuminRunException
 	    cde = new CuminDirectEvaluation(this);
 	    sts = cde.checkMethodMethods();
 	    break;
+            
 	 case "edu.brown.cs.seede.poppy.PoppyGraphics" :
 	    CuminGraphicsEvaluator cge = new CuminGraphicsEvaluator(this);
 	    sts = cge.checkPoppyGraphics();
@@ -1428,6 +1429,31 @@ private CuminRunStatus checkSpecial() throws CuminRunException
 	    cge = new CuminGraphicsEvaluator(this);
 	    sts = cge.checkGraphicsCallback();
 	    break;
+         case "sun.java2d.loops.Blit" :
+         case "sun.java2d.loops.DrawGlyphList"  :
+         case "sun.java2d.loops.DrawGlyphListAA" :
+         case "sun.java2d.loops.DrawGlyphListLCD" :
+         case "sun.java2d.loops.DrawLine" :
+         case "sun.java2d.loops.DrawParallelogram" :
+         case "sun.java2d.loops.DrawPath" :
+         case "sun.java2d.loops.DrawPolygons" :
+         case "sun.java2d.loops.DrawRect" :  
+         case "sun.java2d.loops.FillParallelogram" :
+         case "sun.java2d.loops.FillPath" :
+         case "sun.java2d.loops.FillRect" :
+         case "sun.java2d.loops.FillSpans" : 
+         case "sun.java2d.loops.MaskBlit" :
+         case "sun.java2d.loops.MaskFill" :  
+         case "sun.java2d.loops.ScaledBlit" :  
+         case "sun.java2d.loops.TransformBlit" :           
+         case "sun.java2d.loops.TransformHelper" :             
+            cge = new CuminGraphicsEvaluator(this);
+            sts = cge.checkLoops();
+            break;
+         case "javax.swing.JFrame" :
+            cge = new CuminGraphicsEvaluator(this);
+            sts = cge.checkJFrame();
+            break;
 
 	 case "java.util.concurrent.atomic.AtomicInteger" :
 	 case "java.util.concurrent.atomic.AtomicLong" :
@@ -1451,7 +1477,7 @@ private CuminRunStatus checkSpecial() throws CuminRunException
 	    cce = new CuminConcurrentEvaluator(this);
 	    sts = cce.checkVarHandleMethods();
 	    break;
-	
+
 	 // need to handle java.util.concurrent.locks.ReentrantLock
 	 // need to handle java.lang.VarHandle methods
 	
