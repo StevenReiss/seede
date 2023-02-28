@@ -72,6 +72,9 @@ String CURRENT_THREAD_NAME_FIELD = "@currentThreadName";
 interface CashewValueSession {
    
    public default CashewValueSession getParent()        { return null; }
+   public default void addPoppyGraphics(CashewValue cv) {
+      if (getParent() != null) getParent().addPoppyGraphics(cv);
+    }
    
 }
 

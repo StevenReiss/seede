@@ -25,6 +25,8 @@
 package edu.brown.cs.seede.sesame;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -100,6 +102,7 @@ private SesameSession   parent_session;
 private boolean 	compute_tostring;
 private boolean         compute_toarray;
 private boolean         show_all;
+private Set<CashewValue> poppy_graphics;
 
 
 
@@ -164,6 +167,7 @@ private void initialize(String sid,Element xml)
    compute_tostring = IvyXml.getAttrBool(xml,"TOSTRING",compute_tostring);
    compute_toarray = IvyXml.getAttrBool(xml,"TOARRAY",compute_toarray);
    parent_session = null;
+   poppy_graphics = null;
 }
 
 
@@ -328,6 +332,26 @@ void setShowAll(boolean fg)
 Object getSessionKey()
 {
    return this;
+}
+
+
+@Override public void addPoppyGraphics(CashewValue cv) 
+{
+   if (parent_session != null) {
+      parent_session.addPoppyGraphics(cv);
+    }
+   else {
+      if (poppy_graphics == null) poppy_graphics = new HashSet<>();
+      poppy_graphics.add(cv);
+    }
+}
+
+
+Collection<CashewValue> getPoppyGraphics()
+{
+   if (poppy_graphics == null) return Collections.emptyList();
+   
+   return poppy_graphics;
 }
 
 

@@ -81,7 +81,10 @@ public CashewValue executeCall(String method,CashewValue ... args)
    for (CashewValue argv : args) arglist.add(argv);
 
    JcodeMethod cmethod = getCodeFactory().findMethod(method,null,null,null);
-   if (cmethod == null) return null;
+   if (cmethod == null) {
+      AcornLog.logD("CUMIN","Can't find method " + method);
+      return null;
+    }
    CuminRunStatus sts = null;
 
    try {
@@ -217,6 +220,11 @@ public CashewContext getLookupContext() { return lookup_context; }
 public List<CashewValue> getCallArgs()	{ return call_args; }
 CuminRunner getOuterCall()		{ return outer_call; }
 abstract String getCallingClass();
+
+public void addPoppyGraphics(CashewValue cv) {
+   runner_session.addPoppyGraphics(cv);
+}
+
 
 protected JcompType convertType(JcodeDataType cty)
 {

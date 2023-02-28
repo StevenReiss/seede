@@ -677,17 +677,26 @@ private class MasterThread extends Thread implements LoggerThread {
 
    private void addSwingGraphics(CuminRunner cr) {
       for (CashewValue cv : cr.getCallArgs()) {
-         if (cv == null) return;
-         if (cv.getDataType(cr.getSession(),cr.getClock(),cr.getTyper()).getName().equals("edu.brown.cs.seede.poppy.PoppyGraphics")) {
-            CashewValue rv = cr.executeCall("edu.brown.cs.seede.poppy.PoppyGraphics.finalReport",cv);
-            if (rv != null) {
-               try  {
-                  String rslt = rv.getString(cr.getSession(),cr.getTyper(),cr.getClock());
-                  if (rslt != null) graphics_outputs.add(rslt);
-                }
-               catch (CashewException e) {
-                  AcornLog.logE("Unexpected error getting graphics result",e);
-                }
+         addPoppyGraphics(cv,cr);
+       }
+     for (CashewValue cv : for_session.getPoppyGraphics()) {
+        addPoppyGraphics(cv,cr);
+      }
+   }
+   
+   
+   private void addPoppyGraphics(CashewValue cv,CuminRunner cr)
+   {
+      if (cv == null || cv.isNull(cr.getSession(),cr.getClock())) return;
+      if (cv.getDataType(cr.getSession(),cr.getClock(),cr.getTyper()).getName().equals("edu.brown.cs.seede.poppy.PoppyGraphics")) {
+         CashewValue rv = cr.executeCall("edu.brown.cs.seede.poppy.PoppyGraphics.finalReport",cv);
+         if (rv != null) {
+            try  {
+               String rslt = rv.getString(cr.getSession(),cr.getTyper(),cr.getClock());
+               if (rslt != null) graphics_outputs.add(rslt);
+             }
+            catch (CashewException e) {
+               AcornLog.logE("Unexpected error getting graphics result",e);
              }
           }
        }

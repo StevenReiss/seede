@@ -228,7 +228,7 @@ private void initialize(Graphics g,Component c)
     }
 }
 
-private void setupComplete(Graphics g)			{ }
+private void setupComplete(Graphics g)	        { }
 
 
 

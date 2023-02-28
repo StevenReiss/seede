@@ -69,9 +69,9 @@ static {
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Static methods                                                          */
-/*                                                                              */
+/*										*/
+/*	Static methods								*/
+/*										*/
 /********************************************************************************/
 
 static void resetGraphics()
@@ -94,27 +94,31 @@ CuminGraphicsEvaluator(CuminRunnerByteCode bc)
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Entry point for getGraphics                                             */
-/*                                                                              */
+/*										*/
+/*	Entry point for getGraphics						*/
+/*										*/
 /********************************************************************************/
 
 CuminRunStatus checkJFrame() throws CashewException
 {
    CashewValue rslt = null;
-   
+
    switch (getMethod().getName()) {
       case "getGraphics" :
-         CashewValue c = getValue(0);
-         String nm = "GETGRPAHICS";
-         rslt = exec_runner.executeCall("edu.brown.cs.poppy.PoppyGraphics.computeGraphics2",
-               c,CashewValue.stringValue(getTyper(),getTyper().STRING_TYPE,nm));
-         break;
+	 CashewValue c = getValue(0);
+	 AcornLog.logD("CUMIN","Start of poppy call: " + c);
+	 String nm = "GET_GRAPHICS";
+	 exec_runner.getCodeFactory().findClass("edu.brown.cs.seede.poppy.PoppyGraphics");
+	 rslt = exec_runner.executeCall("edu.brown.cs.seede.poppy.PoppyGraphics.computeGraphics2",
+	       c,CashewValue.stringValue(getTyper(),getTyper().STRING_TYPE,nm));
+	 AcornLog.logD("CUMIN","Result of poppy call: " + rslt);
+	 getSession().addPoppyGraphics(rslt);
+	 break;
       default :
-         return null;
+	 return null;
     }
-   
-   
+
+
    return CuminRunStatus.Factory.createReturn(rslt);
 }
 
@@ -150,11 +154,17 @@ CuminRunStatus checkPoppyGraphics() throws CashewException
 	 return null;
       case "setupComplete" :
 	 CashewValue ogr = getValue(1);
-	 GraphicsOutput gg = output_map.get(ogr);
-	 if (gg != null) {
-	    graphics.setNested(gg);
+	 if (ogr.isNull(getSession(),getClock())) {
+	    ogr = null;
+	    handleCreate(graphics,null);
 	  }
-	 handleCreate(graphics,gg);
+	 else {
+	    GraphicsOutput gg = output_map.get(ogr);
+	    if (gg != null) {
+	       graphics.setNested(gg);
+	     }
+	    handleCreate(graphics,gg);
+	  }
 	 break;
       case "finalReport" :
 	 return null;
@@ -214,7 +224,8 @@ CuminRunStatus checkPoppyGraphics() throws CashewException
 	 createCommand(graphics,CommandType.COPY_AREA);
 	 break;
       case "drawImage" :
-         JcompType imgtyp = getTyper().findSystemType("java.awt.Image");
+	 rslt = CashewValue.booleanValue(getTyper(),true);
+	 JcompType imgtyp = getTyper().findSystemType("java.awt.Image");
 	 if (getDataType(1).isCompatibleWith(imgtyp)) {
 	    // discard the ImageObserver argument
 	    createCommand(graphics,CommandType.DRAW_IMAGE,1);
@@ -304,7 +315,7 @@ CuminRunStatus checkPoppyGraphics() throws CashewException
 	 return null;
 
       case "getReport" :
-         JcompTyper typer = getTyper();
+	 JcompTyper typer = getTyper();
 	 rslt = CashewValue.stringValue(typer,typer.STRING_TYPE,graphics.getResult());
 	 output_map.remove(thisarg);
 	 break;
@@ -339,12 +350,12 @@ CuminRunStatus checkGraphicsCallback() throws CashewException
 }
 
 
-CuminRunStatus checkLoops() throws CashewException 
+CuminRunStatus checkLoops() throws CashewException
 {
    if (!getMethod().isNative()) return null;
-   
+
    // native methods with void returns here can be ignored
-   
+
    return CuminRunStatus.Factory.createReturn(null);
 }
 
@@ -354,7 +365,7 @@ private void constrainGraphics(GraphicsOutput g,CashewValue rect) throws CashewE
 {
    JcompTyper typer = getTyper();
    CashewValueSession sess = getSession();
-   
+
    g.addFields();
 
    IvyXmlWriter xw = g.getCommandList();
@@ -371,7 +382,7 @@ private void constrainGraphics(GraphicsOutput g,CashewValue rect) throws CashewE
 
 private void handleCreate(GraphicsOutput g,GraphicsOutput par) throws CashewException
 {
-   par.addFields();
+   if (par != null) par.addFields();
    g.addFields();
 }
 
@@ -399,7 +410,7 @@ private void createCommand(GraphicsOutput g,CommandType typ) throws CashewExcept
 }
 
 
-private void createCommand(GraphicsOutput g,CommandType typ,int ign) throws CashewException 
+private void createCommand(GraphicsOutput g,CommandType typ,int ign) throws CashewException
 {
    int act = getNumArgs() - ign;
 
@@ -408,7 +419,7 @@ private void createCommand(GraphicsOutput g,CommandType typ,int ign) throws Cash
    g.addFields();
    CashewValueSession sess = getSession();
    CashewClock cc = getClock();
-   
+
    IvyXmlWriter xw = g.getCommandList();
    xw.begin("DRAW");
    xw.field("TYPE",typ);
@@ -499,9 +510,9 @@ private String encodeField(CashewValue cv) throws CashewException
 {
    JcompTyper typer = getTyper();
    CashewValueSession sess = getSession();
-   
+
    if (cv == null || cv.isNull(sess,getClock())) return null;
-   
+
    switch (cv.getDataType(sess,getClock(),null).getName()) {
       case "java.awt.Color" :
       case "sun.swing.PrintColorUIResource" :
@@ -544,28 +555,28 @@ private String encodeField(CashewValue cv) throws CashewException
 	 int m12 = getIntField(cv,"java.awt.geom.AffineTransform.m12");
 	 return "<TRANSFORM M00='" + m00 + "' M01='" + m01 + "' M02='" + m02 + "' " +
 		"M10='" + m10 + "' M11='" + m11 + "' M12='" + m12 + "' />";
-         
+
       case "java.awt.GradientPaint" :
-          CashewValue col1 = cv.getFieldValue(sess,typer,getClock(),"java.awt.GradientPaint.color1");
-          int cval1 = getIntField(col1,"java.awt.Color.value");
-          CashewValue col2 = cv.getFieldValue(sess,typer,getClock(),"java.awt.GradientPaint.color2");
-          int cval2 = getIntField(col2,"java.awt.Color.value");
-          CashewValue pt1 = cv.getFieldValue(sess,typer,getClock(),"java.awt.GradientPaint.p1");
-          float f1x = getFloatField(pt1,"java.awt.geom.Point2D.Float,x");
-          float f1y = getFloatField(pt1,"java.awt.geom.Point2D.Float.y");
-          CashewValue pt2 = cv.getFieldValue(sess,typer,getClock(),"java.awt.GradientPaint.p2");
-          float f2x = getFloatField(pt2,"java.awt.geom.Point2D.Float,x");
-          float f2y = getFloatField(pt2,"java.awt.geom.Point2D.Float.y");
-          boolean cyc = getBooleanField(cv,"java.awt.GradientPaint.cyclic");
-          return "<GRADIENT C1='#" + Integer.toHexString(cval1) + "' C2='#" + Integer.toHexString(cval2) + "' " +
-               " X1='" + f1x + "' Y1='" + f1y + "' X2='" + f2x + "' Y2='" + f2y + "' CYC='" + cyc + "' />"; 
-          
+	  CashewValue col1 = cv.getFieldValue(sess,typer,getClock(),"java.awt.GradientPaint.color1");
+	  int cval1 = getIntField(col1,"java.awt.Color.value");
+	  CashewValue col2 = cv.getFieldValue(sess,typer,getClock(),"java.awt.GradientPaint.color2");
+	  int cval2 = getIntField(col2,"java.awt.Color.value");
+	  CashewValue pt1 = cv.getFieldValue(sess,typer,getClock(),"java.awt.GradientPaint.p1");
+	  float f1x = getFloatField(pt1,"java.awt.geom.Point2D.Float,x");
+	  float f1y = getFloatField(pt1,"java.awt.geom.Point2D.Float.y");
+	  CashewValue pt2 = cv.getFieldValue(sess,typer,getClock(),"java.awt.GradientPaint.p2");
+	  float f2x = getFloatField(pt2,"java.awt.geom.Point2D.Float,x");
+	  float f2y = getFloatField(pt2,"java.awt.geom.Point2D.Float.y");
+	  boolean cyc = getBooleanField(cv,"java.awt.GradientPaint.cyclic");
+	  return "<GRADIENT C1='#" + Integer.toHexString(cval1) + "' C2='#" + Integer.toHexString(cval2) + "' " +
+	       " X1='" + f1x + "' Y1='" + f1y + "' X2='" + f2x + "' Y2='" + f2y + "' CYC='" + cyc + "' />";
+
       default :
 	 break;
     }
 
-   return "<VALUE TYPE='" + cv.getDataType(sess,getClock(),null) + "' >" + 
-        cv.getString(sess,typer,getClock()) + "</VALUE>";
+   return "<VALUE TYPE='" + cv.getDataType(sess,getClock(),null) + "' >" +
+	cv.getString(sess,typer,getClock()) + "</VALUE>";
 }
 
 
@@ -585,7 +596,7 @@ private CashewValue getOptionalField(CashewValue cv,String name) throws CashewEx
 }
 
 
-private double getDoubleField(CashewValue cv,String name) throws CashewException 
+private double getDoubleField(CashewValue cv,String name) throws CashewException
 {
    CashewValue fval = cv.getFieldValue(getSession(),getTyper(),getClock(),name);
    if (fval == null) return 0;
@@ -593,7 +604,7 @@ private double getDoubleField(CashewValue cv,String name) throws CashewException
 }
 
 
-private float getFloatField(CashewValue cv,String name) throws CashewException 
+private float getFloatField(CashewValue cv,String name) throws CashewException
 {
    CashewValue fval = cv.getFieldValue(getSession(),getTyper(),getClock(),name);
    if (fval == null) return 0;
@@ -601,7 +612,7 @@ private float getFloatField(CashewValue cv,String name) throws CashewException
 }
 
 
-private boolean getBooleanField(CashewValue cv,String name) throws CashewException 
+private boolean getBooleanField(CashewValue cv,String name) throws CashewException
 {
    CashewValue fval = cv.getFieldValue(getSession(),getTyper(),getClock(),name);
    if (fval == null) return false;
@@ -646,17 +657,17 @@ private class GraphicsOutput {
       poppy_graphics = cv;
       parent_graphics = this;
       poppy_id = cv.getFieldValue(getSession(),getTyper(),getClock(),
-            "edu.brown.cs.seede.poppy.PoppyGraphics.poppy_id").getString(getSession(),getTyper(),getClock());
+	    "edu.brown.cs.seede.poppy.PoppyGraphics.poppy_id").getString(getSession(),getTyper(),getClock());
       CashewValue dimv = cv.getFieldValue(getSession(),getTyper(),getClock(),
-            "edu.brown.cs.seede.poppy.PoppyGraphics.poppy_width");
+	    "edu.brown.cs.seede.poppy.PoppyGraphics.poppy_width");
       int wid = dimv.getNumber(getSession(),getClock()).intValue();
       dimv = cv.getFieldValue(getSession(),getTyper(),getClock(),
-            "edu.brown.cs.seede.poppy.PoppyGraphics.poppy_height");
+	    "edu.brown.cs.seede.poppy.PoppyGraphics.poppy_height");
       int ht = dimv.getNumber(getSession(),getClock()).intValue();
-   
+
       current_index = 0;
       clearCurrents();
-   
+
       command_list = new IvyXmlWriter();
       command_list.begin("GRAPHICS");
       command_list.field("WIDTH",wid);
@@ -703,33 +714,33 @@ private class GraphicsOutput {
       current_hints = updateField(current_hints,"user_hints",FieldType.HINTS);
       current_composite = updateField(current_composite,"user_composite",FieldType.COMPOSITE);
       if (upd) {
-         addInitializations();
+	 addInitializations();
        }
    }
 
    private void addInitializations() {
       IvyXmlWriter xw = getCommandList();
       if (current_transform != null) {
-         xw.begin("DRAW");
-         xw.field("TYPE",CommandType.TRANSFORM);
-         xw.field("NUMARGS",1);
-         xw.field("TIME",getClock().getTimeValue());
-         xw.begin("ARG");
-         xw.field("TYPE","java.awt.geom.AffineTransform");
-         xw.xmlText(current_transform);
-         xw.end("ARG");
-         xw.end("DRAW");
+	 xw.begin("DRAW");
+	 xw.field("TYPE",CommandType.TRANSFORM);
+	 xw.field("NUMARGS",1);
+	 xw.field("TIME",getClock().getTimeValue());
+	 xw.begin("ARG");
+	 xw.field("TYPE","java.awt.geom.AffineTransform");
+	 xw.xmlText(current_transform);
+	 xw.end("ARG");
+	 xw.end("DRAW");
        }
       if (current_clip != null) {
-         xw.begin("DRAW");
-         xw.field("TYPE",CommandType.CLIP);
-         xw.field("NUMARGS",1);
-         xw.field("TIME",getClock().getTimeValue());
-         xw.begin("ARG");
-         xw.field("TYPE","java.awt.Rectangle");
-         xw.xmlText(current_clip);
-         xw.end("ARG");
-         xw.end("DRAW");
+	 xw.begin("DRAW");
+	 xw.field("TYPE",CommandType.CLIP);
+	 xw.field("NUMARGS",1);
+	 xw.field("TIME",getClock().getTimeValue());
+	 xw.begin("ARG");
+	 xw.field("TYPE","java.awt.Rectangle");
+	 xw.xmlText(current_clip);
+	 xw.end("ARG");
+	 xw.end("DRAW");
        }
    }
 
