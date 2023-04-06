@@ -376,9 +376,16 @@ synchronized CuminRunStatus checkVarHandleMethods() throws CuminRunException, Ca
             rslt = tgtval.getFieldValue(getSession(),getTyper(),getClock(),js);
           }
          break; 
+      case "acquireFence" :
+      case "releaseFence" :
+      case "loadLoadFence" :
+      case "storeStoreFence" :
+      case "fullFence" :
+         break;
+         
       default :
          AcornLog.logE("Unknown VarHandle operation " + getMethod().getName());
-         return null;
+         break;
     }
     
    return CuminRunStatus.Factory.createReturn(rslt);
