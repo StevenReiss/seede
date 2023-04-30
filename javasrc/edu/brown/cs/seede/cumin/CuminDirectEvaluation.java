@@ -27,6 +27,7 @@ package edu.brown.cs.seede.cumin;
 import java.io.UnsupportedEncodingException;
 
 import java.lang.reflect.Modifier;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -426,6 +427,9 @@ private CuminRunStatus checkStringMethodsLocal() throws CuminRunException, Cashe
 		}
 	     }
 	    break;
+         case "intern" :
+            rslt = CashewValue.stringValue(typer,typer.STRING_TYPE,thisstr.intern());
+            break;
 	 case "isEmpty" :
 	    rslt = CashewValue.booleanValue(typer,thisstr.isEmpty());
 	    break;
@@ -547,9 +551,6 @@ private CuminRunStatus checkStringMethodsLocal() throws CuminRunException, Cashe
 	    if (bbuf == null) return null;
 	    rslt = CashewValue.arrayValue(typer,bbuf);
 	    break;
-
-	 case "intern":
-	    return null;
 
 	 case "getChars" :
 	    int srcbegin = getInt(1);
@@ -963,6 +964,55 @@ CuminRunStatus checkDoubleMethods() throws CashewException
 }
 
 
+CuminRunStatus checkNumberFormatMethods() throws CashewException 
+{
+   CashewValue rslt = null;
+   JcompTyper typer = getTyper();
+   
+   switch (getMethod().getName()) {
+      case "getInstance" :
+         if (getNumArgs() == 0) {
+            exec_runner.ensureLoaded("edu.brown.cs.seede.poppy.PoppyValue");
+            String expr = "edu.brown.cs.seede.poppy.PoppyValue.getNumberFormatInstance()";
+            rslt = exec_runner.getLookupContext().evaluate(expr);
+            break;
+          }
+         else {
+            AcornLog.logD("CUMIN","Bad NumberFormat instance " + getNumArgs());
+            return null;
+          }
+      case "format" :
+         CashewValue thisarg = getValue(0);
+         JcompType thistyp = getDataType(0);
+         if (!thistyp.getName().contains("DecimalFormat")) return null;
+         if (getNumArgs() == 2) {
+            CashewValue pat = exec_runner.executeCall("java.text.DecimalFormat.toPattern",thisarg);
+            String patstr = pat.getString(getSession(),typer,getClock());
+            DecimalFormat df = new DecimalFormat(patstr);
+            JcompType atyp = getDataType(1);
+            String srslt = null;
+            if (atyp.isDoubleType()) {
+               double d = getDouble(1);
+               srslt = df.format(d);
+             }
+            else if (atyp.isLongType()) {
+               long l = getLong(1);
+               srslt = df.format(l);
+             }
+            AcornLog.logD("CUMIN","Decimal format " + patstr + " " + srslt);
+            rslt = CashewValue.stringValue(typer,typer.STRING_TYPE,srslt);
+          }
+         else {
+            AcornLog.logD("CUMIN","Bad decimal format call: " + getNumArgs());
+            return null;
+          }
+         break;
+      default :
+         return null;
+    }
+         
+   return CuminRunStatus.Factory.createReturn(rslt);
+}
 
 /********************************************************************************/
 /*										*/
@@ -1820,6 +1870,22 @@ CuminRunStatus checkReflectArrayMethods() throws CuminRunException, CashewExcept
 }
 
 
+CuminRunStatus checkReferenceMethods()
+{
+   CashewValue rslt = null;
+   
+   switch (getMethod().getName()) {
+      case "clear" :
+      case "clear0" :
+         break;
+      default :
+         return null;
+    }
+   
+   return CuminRunValue.Factory.createReturn(rslt);
+}
+
+
 CuminRunStatus checkSunReflectionMethods() throws CuminRunException
 {
    CashewValue rslt = null;
@@ -2044,7 +2110,8 @@ private CashewValue runMatcher(CashewValue mval,String ps,String textv,int pos,b
 	throws CashewException
 {
    int from = getIntFieldValue(mval,"java.util.regex.Matcher.from");
-   int to = getIntFieldValue(mval,"java.util.regex.Matcher.to");  String expr = "edu.brown.cs.seede.poppy.PoppyValue.matchFinder(\"" +
+   int to = getIntFieldValue(mval,"java.util.regex.Matcher.to"); 
+   String expr = "edu.brown.cs.seede.poppy.PoppyValue.matchFinder(\"" +
       IvyFormat.formatString(ps) + "\",\"" +
       IvyFormat.formatString(textv)  + "\"," + pos + "," + from + "," + to + "," + fail + ",-1)";
    CashewValue rslt = exec_runner.getLookupContext().evaluate(expr);

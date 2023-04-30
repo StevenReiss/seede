@@ -40,7 +40,6 @@ import org.w3c.dom.Element;
 
 import edu.brown.cs.ivy.jcomp.JcompAst;
 import edu.brown.cs.ivy.jcomp.JcompSymbol;
-import edu.brown.cs.ivy.jcomp.JcompType;
 import edu.brown.cs.ivy.jcomp.JcompTyper;
 import edu.brown.cs.ivy.xml.IvyXml;
 import edu.brown.cs.ivy.mint.MintConstants.CommandArgs;
@@ -50,8 +49,8 @@ import edu.brown.cs.seede.cashew.CashewException;
 import edu.brown.cs.seede.cashew.CashewValue;
 import edu.brown.cs.seede.cashew.CashewConstants.CashewValueSession;
 
-class SesameSessionLaunch extends SesameSession implements CashewValueSession 
-{ 
+class SesameSessionLaunch extends SesameSession implements CashewValueSession
+{
 
 
 /********************************************************************************/
@@ -121,8 +120,8 @@ protected SesameSessionLaunch(SesameSessionLaunch ssl)
    thread_values = new HashMap<>(ssl.thread_values);
    unique_values = ssl.unique_values;
    accessible_types = ssl.accessible_types;
-   
-   value_cache = ssl.value_cache;            // reuse value cache as execution doesn't change
+
+   value_cache = ssl.value_cache;	     // reuse value cache as execution doesn't change
 // value_cache = new SesameSessionCache();
 
    session_ready = true;
@@ -196,7 +195,7 @@ String getAnyThread()
       return null;
     }
    AcornLog.logD("SESAME","Work on arguments for " + md);
-   
+
    List<CashewValue> args = new ArrayList<>();
    JcompSymbol msym = JcompAst.getDefinition(md.getName());
    if (msym == null) {
@@ -207,15 +206,15 @@ String getAnyThread()
 	 return null;
        }
     }
-   
+
    Map<String,SesameValueData> valmap = thread_values.get(loc.getThread());
    if (!msym.isStatic()) {
       SesameValueData svd = valmap.get("this");
       svd = getUniqueValue(svd);
       CashewValue cv = svd.getCashewValue(this);
       AcornLog.logD("SESAME","ARG VALUE0 " + cv.toString(this) + " " +
-            cv.toString(getParent()) + " " +
-            cv.getClass() + " " + svd); 
+	    cv.toString(getParent()) + " " +
+	    cv.getClass() + " " + svd);
       args.add(cv);
     }
    for (Object o : md.parameters()) {
@@ -226,32 +225,35 @@ String getAnyThread()
       val = getUniqueValue(val);
       if (val != null) {
 	 CashewValue argval = val.getCashewValue(this);
-	 JcompTyper typer = getProject().getTyper();
-	 JcompType jtyp = argval.getDataType(this,null,typer);
-	 // need to check if 'this' is  compatible with COMPONENT
-	 JcompType g2dtype = typer.findSystemType("java.awt.Graphics2D");
-	 if (jtyp.isCompatibleWith(g2dtype) && !argval.isNull(this,null)) {
-	    if (!jtyp.getName().contains("PoppyGraphics")) {
-	       String gname = "MAIN_" + loc.getThreadName();
-	       getProject().getJcodeFactory().findClass("edu.brown.cs.seede.poppy.PoppyGraphics");
-	       String expr = "edu.brown.cs.seede.poppy.PoppyGraphics.computeGraphics1(";
-	       expr += "this,";
-	       expr += psym.getName() +  ",\"" + gname + "\")";
-	       SesameValueData nval = evaluateData(expr,loc.getThread(),true);
-	       if (nval != null) {
-		  nval = getUniqueValue(nval);
-		  argval = nval.getCashewValue(this);
-		}
-	     }
-	  }
-         AcornLog.logD("SESAME","ARG VALUE " + argval.toString(this) + " " +
-               argval.toString(getParent()) + " " +
-               argval.getClass() + " " + val);
-         
+         // this code doesn't work -- 'this' cant be accessed in static context and
+	 //	Type has not been loaded occured (PoppyGraphics?) when this == null
+         // need to check if 'this' is  compatible with COMPONENT
+//       JcompTyper typer = getProject().getTyper();
+//       JcompType jtyp = argval.getDataType(this,null,typer);
+//	 JcompType g2dtype = typer.findSystemType("java.awt.Graphics2D");
+// 	 if (jtyp.isCompatibleWith(g2dtype) && !argval.isNull(this,null)) {
+//          getProject().getJcodeFactory().findClass("edu.brown.cs.seede.poppy.PoppyGraphics");
+// 	    if (!jtyp.getName().contains("PoppyGraphics")) {
+// 	       String gname = "MAIN_" + loc.getThreadName();
+// 	       getProject().getJcodeFactory().findClass("edu.brown.cs.seede.poppy.PoppyGraphics");
+// 	       String expr = "edu.brown.cs.seede.poppy.PoppyGraphics.computeGraphics1(";
+// 	       expr += "this,";
+// 	       expr += psym.getName() +  ",\"" + gname + "\")";
+// 	       SesameValueData nval = evaluateData(expr,loc.getThread(),true);
+// 	       if (nval != null) {
+// 		  nval = getUniqueValue(nval);
+// 		  argval = nval.getCashewValue(this);
+// 		}
+// 	     }
+// 	  }
+	 AcornLog.logD("SESAME","ARG VALUE " + argval.toString(this) + " " +
+	       argval.toString(getParent()) + " " +
+	       argval.getClass() + " " + val);
+
 	 args.add(argval);
        }
     }
-   
+
    AcornLog.logD("SESAME","Call args: " + args.size());
 
    return args;
@@ -316,9 +318,9 @@ String getAnyThread()
 @Override CashewValue evaluate(String expr,String thread,boolean allframes)
 {
    SesameValueData svd = evaluateData(expr,thread,allframes);
-   
+
    if (svd == null) return null;
-   
+
    return svd.getCashewValue(this);
 }
 
@@ -337,7 +339,7 @@ String getAnyThread()
       svd0 = value_cache.lookup(thread,expr);
       if (svd0 != null) return svd0;
     }
-   
+
    String frame = thread_frame.get(thread);
    CommandArgs args = new CommandArgs("THREAD",thread,
 	 "FRAME",frame,"BREAK",false,"EXPR",expr,"IMPLICIT",true,
@@ -347,7 +349,7 @@ String getAnyThread()
    synchronized (launch_id) {
       Element xml = getControl().getXmlReply("EVALUATE",getProject(),args,null,0);
       if (IvyXml.isElement(xml,"RESULT")) {
-         root = getControl().waitForEvaluation(eid);
+	 root = getControl().waitForEvaluation(eid);
        }
     }
    if (root != null) {
@@ -363,7 +365,7 @@ String getAnyThread()
       if (thread != thread0) value_cache.cacheValue(thread,expr,svd);
       return svd;
     }
-   
+
    return null;
 }
 
@@ -372,8 +374,8 @@ String getAnyThread()
 @Override void evaluateVoid(String expr,boolean allframes) throws CashewException
 {
    SesameValueData svd0 = value_cache.lookup("*",expr);
-   if (svd0 != null) return;                            // already done
-   
+   if (svd0 != null) return;				// already done
+
    String eid = "E_" + eval_counter.incrementAndGet();
    String thread = getAnyThread();
    String frame = thread_frame.get(thread);
@@ -384,7 +386,7 @@ String getAnyThread()
    synchronized (launch_id) {
       Element xml = getControl().getXmlReply("EVALUATE",getProject(),args,null,0);
       if (IvyXml.isElement(xml,"RESULT")) {
-         rslt = getControl().waitForEvaluation(eid);
+	 rslt = getControl().waitForEvaluation(eid);
        }
     }
    if (rslt != null) {
@@ -422,7 +424,7 @@ String getAnyThread()
    String expr = "edu.brown.cs.seede.poppy.PoppyValue.setAccessible(\"" + type1 + "\")";
 // String expr = "java.lang.reflect.AccessibleObject.SetAccessible(" + type1 + ".class";
 // expr += ".getDeclaredFields(),true)";
-   
+
    try {
       evaluateVoid(expr,false);
     }

@@ -181,9 +181,15 @@ CashewValue getCashewValue(SesameSessionLaunch sess)
    if (typ == null) {
       typ = typer.findSystemType(vtype);
     }
-   if (typ == null && val_type.contains("$$Lambda$") && decl_type != null) {
-      String ityp = decl_type.replace("$",".");
-      typ = typer.findType(ityp);
+   int lamidx = val_type.indexOf("$$Lambda$");
+   if (typ == null && lamidx > 0 && decl_type != null) {
+      String ltyp = val_type.substring(0,lamidx);
+      ltyp = ltyp.replace("$",".");
+      typ = typer.findType(ltyp);
+      if  (typ == null) {
+         String ityp = decl_type.replace("$",".");
+         typ = typer.findType(ityp);
+       }
     }
    if (typ == null) {
       AcornLog.logE("TYPE " + val_type +  " " + vtype + " not found");

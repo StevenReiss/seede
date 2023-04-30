@@ -76,7 +76,10 @@ private static final String [] OPENS;
 static {
    OPENS = new String [] { "java.desktop/sun.font", "java.desktop/sun.awt", "java.desktop/sun.swing",
          "java.desktop/javax.swing", "java.base/jdk.internal.math", "java.base/sun.nio.cs", 
-         "java.base/java.nio"
+         "java.base/java.nio",
+         "java.base/sun.util.locale.provider",
+         "java.base/jdk.internal.math",
+         "java.base/jdk.internal.misc",
     };
 }
 
@@ -504,6 +507,7 @@ private class SeedeThread extends Thread {
    
    @Override public void run() {
       String log = getFile("seede.log").getPath();
+      System.err.println("LOG in " + log);
       SesameMain.main(new String [] { "-m", mint_control.getMintName(),
             "-T", "-D", "-L", log });
     }

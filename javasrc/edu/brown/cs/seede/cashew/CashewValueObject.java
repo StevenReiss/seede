@@ -170,7 +170,6 @@ private CashewRef findFieldForName(JcompTyper typer,String nm,boolean force)
    if (ov == null) {
       ov = static_values.get(nm);
     }
-   if (ov == null) AcornLog.logD("CASHEW","No field found for " + nm);
    String anm = nm;
    while (ov == null && anm.contains("$")) {
       int idx = anm.indexOf("$");
@@ -178,14 +177,16 @@ private CashewRef findFieldForName(JcompTyper typer,String nm,boolean force)
       ov = field_values.get(anm);
       if (ov == null) ov = static_values.get(anm);
     }
-
+   
    if (ov == null && nm.equals(HASH_CODE_FIELD)) {
       CashewValue hashv = CashewValue.numericValue(typer,typer.INT_TYPE,hashCode());
       AcornLog.logD("CASHEW","Save our hash value " + hashv);
       ov = new CashewRef(hashv,false);
       field_values.put(HASH_CODE_FIELD,ov);
     }
-
+   
+   if (ov == null) AcornLog.logD("CASHEW","No field found for " + nm);
+   
    if (ov == null) {
       // TODO: what if new field is static?
       JcompType jdt = getDataType(typer);

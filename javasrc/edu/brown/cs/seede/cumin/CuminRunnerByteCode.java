@@ -1508,6 +1508,15 @@ private CuminRunStatus checkSpecial() throws CuminRunException
             cde = new CuminDirectEvaluation(this);
             sts = cde.checkAccessMethods();
             break;
+         case "java.text.NumberFormat" :
+         case "java.text.DecimalFormat" :
+            cde = new CuminDirectEvaluation(this);
+            sts = cde.checkNumberFormatMethods();
+            break;
+         case "java.lang.ref.Reference" :
+            cde = new CuminDirectEvaluation(this);
+            sts = cde.checkReferenceMethods();
+            break;
        }
     }
    catch (CuminRunException e) {

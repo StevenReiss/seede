@@ -84,7 +84,7 @@ public TestSeede()
 @Test public void test1()
 {
    AcornLog.logD("TEST: START TEST1");
-   LaunchData ld = startLaunch(LAUNCH1_NAME,1);
+   LaunchData ld = startLaunch(LAUNCH1_NAME,0);
    setupSeedeSession(TEST1_SID,ld,0);
    runSeede(TEST1_SID);
 }

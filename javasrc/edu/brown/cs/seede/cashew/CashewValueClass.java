@@ -85,6 +85,10 @@ public JcompType getJcompType()                         { return class_value; }
       case "java.lang.Class.name" :
       case "name" :
          return CashewValue.stringValue(typer,typer.STRING_TYPE,class_value.getName());
+      case "@hashCode" :
+         return CashewValue.numericValue(typer,typer.INT_TYPE,class_value.hashCode());
+      case "module" :
+         
       default :
          AcornLog.logE("CASHEW","Unknown Class field: " + nm);
          break;

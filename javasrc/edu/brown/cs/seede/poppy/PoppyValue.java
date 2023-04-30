@@ -43,6 +43,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.channels.FileChannel;
+import java.text.NumberFormat;
 
 
 public class PoppyValue implements PoppyConstants
@@ -197,7 +198,8 @@ public static Object getStaticFieldValue(String itm)
       if (err == null) err = t;
     }
    
-   System.err.println("POPPY: Problem getting static field: " + c1 + " " + fld + " " + err);
+   System.err.println("POPPY: Problem getting static field: " + c1 + " " + fld);
+   System.err.println("POPPY: Error: " + err);
    System.err.println("POPPY: Add module/package to Bicex.props");
    return null;
 }
@@ -389,6 +391,13 @@ public static ClassLoader getClassLoaderUsingPoppy(String cls)
    catch (ClassNotFoundException e) { }
    return null;
 }
+
+
+public static NumberFormat getNumberFormatInstance()
+{
+   return NumberFormat.getInstance();
+}
+
 
 
 public static Constructor<?> getConstructorUsingPoppy(String cls, String ... args)
