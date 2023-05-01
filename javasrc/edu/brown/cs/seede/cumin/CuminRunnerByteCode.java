@@ -948,7 +948,7 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException, CashewExc
 	 vstack = v0.getFieldValue(sess,typer,execution_clock,nm);
          AcornLog.logD("CUMIN","RESULT: " + nm + " = " +  vstack.toString(runner_session));
 	 vstack = vstack.getActualValue(sess,execution_clock);
-         AcornLog.logD("CUMIN","ACTUAL RESULT: " + vstack.toString(runner_session));
+         AcornLog.logD("CUMIN","ACTUAL RESULT: " + (vstack == null ? null : vstack.toString(runner_session)));
 	 break;
       case GETSTATIC :
 	 fld = jins.getFieldReference();
