@@ -312,13 +312,25 @@ private CuminRunStatus checkStringMethodsLocal() throws CuminRunException, Cashe
 		  getDataType(1).getName().contains("StringBuffer"))) {
 	 CashewValue cv = getValue(1);
 	 CashewValue cvbytes = cv.getFieldValue(sess,getTyper(),getClock(),"java.lang.AbstractStringBuilder.value");
-	 cvbytes = cvbytes.getActualValue(sess,getClock());
-	 int cvlen = getIntFieldValue(cv,"java.lang.AbstractStringBuilder.count");
+      	 cvbytes = cvbytes.getActualValue(sess,getClock());
+         int coder = getIntFieldValue(cv,"java.lang.AbstractStringBuilder.coder");
+         int cvlen = getIntFieldValue(cv,"java.lang.AbstractStringBuilder.count");
+         if (coder == 1) cvlen *= 2;
 	 byte [] rl = new byte[cvlen];
 	 for (int i = 0; i < cvlen; ++i) {
 	    rl[i] = cvbytes.getIndexValue(sess,getClock(),i).getNumber(sess,getClock()).byteValue();
 	  }
-	 String temp = new String(rl);
+         String temp = new String(rl);
+         
+//       System.err.println("CREATION " + temp + " " + temp.length());
+//       byte [] b1 = temp.getBytes();
+//       for (int i = 0; i < b1.length; ++i) {
+//          System.err.println("CREATE " + i + " " + b1[i]);
+//        }
+//       for (int i = 0; i < rl.length; ++i) {
+//          System.err.println("CREATE " + i + " " + rl[i]);
+//        }   
+         
 	 cvs.setInitialValue(typer,temp,-1);
        }
       else if (getNumArgs() == 3 && getDataType(1).isArrayType() &&
@@ -362,7 +374,8 @@ private CuminRunStatus checkStringMethodsLocal() throws CuminRunException, Cashe
       String thisstr = thisarg.getString(getSession(),typer,getClock());
       switch (getMethod().getName()) {
 	 case "charAt" :
-	    rslt = CashewValue.characterValue(typer.CHAR_TYPE,thisstr.charAt(getInt(1)));
+            int cpos = getInt(1);
+	    rslt = CashewValue.characterValue(typer.CHAR_TYPE,thisstr.charAt(cpos));
 	    break;
 	 case "codePointAt" :
 	    rslt = CashewValue.numericValue(typer,typer.INT_TYPE,thisstr.codePointAt(getInt(1)));
@@ -398,10 +411,23 @@ private CuminRunStatus checkStringMethodsLocal() throws CuminRunException, Cashe
 	    rslt = CashewValue.booleanValue(typer,thisstr.endsWith(getString(1)));
 	    break;
 	 case "equals" :
-	    if (!getDataType(1).isStringType())
+	    if (!getDataType(1).isStringType()) {
 	       rslt = CashewValue.booleanValue(typer,false);
-	    else
-	       rslt = CashewValue.booleanValue(typer,thisstr.equals(getString(1)));
+             }
+	    else {
+               String s1 = getString(1);
+//             System.err.println("CHECK " + s1 + " " + s1.length() + " " + s1.getBytes().length + " " +
+//                   thisstr + " " + thisstr.length() + " " + thisstr.getBytes().length);
+//             byte [] b = s1.getBytes();
+//             for (int i = 0; i < b.length; ++i) {
+//                System.err.println("CHECKING " + i + " " + b[i]);
+//              }
+//             b = thisstr.getBytes();
+//             for (int i = 0; i < b.length; ++i) {
+//                System.err.println("CHECKING " + i + " " + b[i]);
+//              }
+	       rslt = CashewValue.booleanValue(typer,thisstr.equals(s1));
+             }
 	    break;
 	 case "equalsIgnoreCase" :
 	    rslt = CashewValue.booleanValue(typer,thisstr.equalsIgnoreCase(getString(1)));

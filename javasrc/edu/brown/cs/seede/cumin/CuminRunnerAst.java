@@ -107,6 +107,7 @@ import org.eclipse.jdt.core.dom.TypeLiteral;
 import org.eclipse.jdt.core.dom.TypeMethodReference;
 import org.eclipse.jdt.core.dom.VariableDeclarationExpression;
 
+import edu.brown.cs.ivy.file.IvyFormat;
 import edu.brown.cs.ivy.jcomp.JcompAst;
 import edu.brown.cs.ivy.jcomp.JcompSource;
 import edu.brown.cs.ivy.jcomp.JcompSymbol;
@@ -1025,7 +1026,9 @@ private CuminRunStatus visit(StringLiteral v)
 {
    try {
       JcompTyper typer = type_converter;
-      execution_stack.push(CashewValue.stringValue(typer,typer.STRING_TYPE,v.getLiteralValue()));
+      String s1 = v.getEscapedValue();
+      String s2 = IvyFormat.getLiteralValue(s1);
+      execution_stack.push(CashewValue.stringValue(typer,typer.STRING_TYPE,s2));
     }
    catch (IllegalArgumentException e) {
       return CuminRunStatus.Factory.createCompilerError();
@@ -1043,7 +1046,9 @@ private CuminRunStatus visit(TextBlock v)
 {
    try {
       JcompTyper typer = type_converter;
-      execution_stack.push(CashewValue.stringValue(typer,typer.STRING_TYPE,v.getLiteralValue()));
+      String s1 = v.getEscapedValue();
+      String s2 = IvyFormat.getLiteralValue(s1);
+      execution_stack.push(CashewValue.stringValue(typer,typer.STRING_TYPE,s2));
     }
    catch (IllegalArgumentException e) {
       return CuminRunStatus.Factory.createCompilerError();

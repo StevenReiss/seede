@@ -183,8 +183,15 @@ CashewValue getCashewValue(SesameSessionLaunch sess)
     }
    int lamidx = val_type.indexOf("$$Lambda$");
    if (typ == null && lamidx > 0 && decl_type != null) {
+      // this doesnt't work -- need to find actual type for the lambda
       String ltyp = val_type.substring(0,lamidx);
       ltyp = ltyp.replace("$",".");
+      // need to find type of the lambda at this point
+      switch (ltyp) {
+         case "java.util.stream.FindOps.FindSink.OfInt" :
+            ltyp = "java.util.Optional";
+            break;
+       }
       typ = typer.findType(ltyp);
       if  (typ == null) {
          String ityp = decl_type.replace("$",".");

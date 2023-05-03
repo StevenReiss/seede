@@ -328,7 +328,6 @@ String getAnyThread()
 @Override SesameValueData evaluateData(String expr,String thread0,boolean allframes)
 {
    String eid = "E_" + eval_counter.incrementAndGet();
-   // expr = "edu.brown.cs.seede.poppy.PoppyValue.register(" + expr + ")";
 
    SesameValueData svd0 = value_cache.lookup(thread0,expr);
    if (svd0 != null) return svd0;
@@ -368,6 +367,9 @@ String getAnyThread()
 
    return null;
 }
+
+
+
 
 
 

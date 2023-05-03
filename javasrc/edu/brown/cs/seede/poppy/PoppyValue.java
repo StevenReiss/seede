@@ -529,6 +529,26 @@ public static Object getNewInstance(String name)
 }
 
 
+
+public static Object getLambdaClassUsingPoppy(String name)
+{
+   try {
+      Class<?> cl = Class.forName(name);
+      System.err.println("FOUND " + cl + " " + cl.toGenericString());
+      System.err.println("SUPER: " + cl.getSuperclass());
+      System.err.println("FIELDS: " + cl.getFields());
+      System.err.println("FLAGS: " + cl.isAnonymousClass() + " " + cl.isLocalClass() + " " + cl.isMemberClass() + " " +
+            cl.isSynthetic());
+      String s = cl.getName() + ";" + cl.getSuperclass().getName();
+      return s;
+    }
+   catch (Throwable t) {
+      System.err.println("Problem with lambda class: " + t);
+      t.printStackTrace();
+      return null;
+    }
+}
+
 /********************************************************************************/
 /*                                                                              */
 /*      Handle patterns                                                         */
