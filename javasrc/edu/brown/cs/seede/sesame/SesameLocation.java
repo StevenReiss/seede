@@ -138,6 +138,8 @@ void setThread(String id)       { thread_id = id; }
 
 private void setupPosition()
 {
+   if (sesame_file == null) return;
+   
    ASTNode root = sesame_file.getAst(); 
    FindPositionVisitor fpv = new FindPositionVisitor();
    root.accept(fpv);
