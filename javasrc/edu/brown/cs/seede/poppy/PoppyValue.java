@@ -26,6 +26,7 @@ package edu.brown.cs.seede.poppy;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
@@ -393,9 +394,34 @@ public static ClassLoader getClassLoaderUsingPoppy(String cls)
 }
 
 
-public static NumberFormat getNumberFormatInstance()
+public static NumberFormat getNumberFormatInstance(String typ,String slocale)
 {
-   return NumberFormat.getInstance();
+   NumberFormat rslt = null;
+   Locale locale = null;
+   if (slocale != null) locale = Locale.forLanguageTag(slocale);
+   if (typ == null) typ = "*";
+   switch (typ) {
+      default :
+      case "*" :
+      case "Number" :
+         if (locale == null) rslt = NumberFormat.getInstance();
+         else rslt = NumberFormat.getInstance(locale);
+         break;
+      case "Integer" :
+         if (locale == null) rslt = NumberFormat.getIntegerInstance();
+         else rslt = NumberFormat.getIntegerInstance(locale);
+         break;
+      case "Percent" :
+         if (locale == null) rslt = NumberFormat.getPercentInstance();
+         else rslt = NumberFormat.getPercentInstance(locale);
+         break;
+      case "Currency" :
+         if (locale == null) rslt = NumberFormat.getCurrencyInstance();
+         else rslt = NumberFormat.getCurrencyInstance(locale);
+         break;
+    }
+   
+   return rslt;
 }
 
 

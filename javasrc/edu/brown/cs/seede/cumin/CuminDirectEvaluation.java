@@ -997,16 +997,18 @@ CuminRunStatus checkNumberFormatMethods() throws CashewException
    
    switch (getMethod().getName()) {
       case "getInstance" :
-         if (getNumArgs() == 0) {
-            exec_runner.ensureLoaded("edu.brown.cs.seede.poppy.PoppyValue");
-            String expr = "edu.brown.cs.seede.poppy.PoppyValue.getNumberFormatInstance()";
-            rslt = exec_runner.getLookupContext().evaluate(expr);
-            break;
-          }
-         else {
-            AcornLog.logD("CUMIN","Bad NumberFormat instance " + getNumArgs());
-            return null;
-          }
+      case "getNumberInstance" :
+         rslt = getNumberFormatInstance("Number");
+         break;
+      case "getCurrencyInstance" :
+         rslt = getNumberFormatInstance("Currency");
+         break;
+      case "getIntegerInstance" :
+         rslt = getNumberFormatInstance("Integer");
+         break;
+      case "getPercentInstance" :
+         rslt = getNumberFormatInstance("Percent");
+         break;
       case "format" :
          CashewValue thisarg = getValue(0);
          JcompType thistyp = getDataType(0);
@@ -1038,6 +1040,31 @@ CuminRunStatus checkNumberFormatMethods() throws CashewException
     }
          
    return CuminRunStatus.Factory.createReturn(rslt);
+}
+
+
+private CashewValue getNumberFormatInstance(String typ)
+{
+   String expr;
+   String lang = "null";
+
+   if (getNumArgs() == 1) {
+      try {
+         CashewValue loc = getValue(0);
+         CashewValue bloc = loc.getFieldValue(getSession(),getTyper(),
+               getClock(),"java.util.Locale.baseLocale");
+         CashewValue lval = bloc.getFieldValue(getSession(),getTyper(),
+               getClock(),"sun.util.locale.BaseLocale.language");
+         String s = lval.getString(getSession(),getTyper(),getClock());
+         lang = "\"" + s + "\"";
+       }
+      catch (CashewException e) { }
+    }
+   
+   exec_runner.ensureLoaded("edu.brown.cs.seede.poppy.PoppyValue");
+   expr = "edu.brown.cs.seede.poppy.PoppyValue.getNumberFormatInstance(\"" + typ + "\"," + lang + ")";
+   CashewValue rslt = exec_runner.getLookupContext().evaluate(expr);
+   return rslt;
 }
 
 /********************************************************************************/
