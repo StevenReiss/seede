@@ -71,7 +71,7 @@ CuminIOEvaluator(CuminRunnerByteCode bc)
 /*										*/
 /********************************************************************************/
 
-CuminRunStatus checkFileMethods() throws CashewException
+CuminRunStatus checkFileMethods() throws CashewException, CuminRunException
 {
    CashewValue rslt = null;
    File rfile = null;
@@ -113,151 +113,149 @@ CuminRunStatus checkFileMethods() throws CashewException
       File thisfile = ((CashewValueFile) thisarg).getFile();
       CashewInputOutputModel iomdl = getContext().getIOModel();
 
-      switch (getMethod().getName()) {
-	 case "canExecute" :
-	    rslt = CashewValue.booleanValue(typer,iomdl.canExecute(thisfile));
-	    break;
-	 case "canRead" :
-	    rslt = CashewValue.booleanValue(typer,iomdl.canRead(thisfile));
-	    break;
-	 case "canWrite" :
-	    rslt = CashewValue.booleanValue(typer,iomdl.canWrite(thisfile));
-	    break;
-	 case "compareTo" :
-	    rslt = CashewValue.numericValue(typer,typer.INT_TYPE,thisfile.compareTo(getFile(1)));
-	    break;
-	 case "delete" :
-	    rslt = CashewValue.booleanValue(typer,iomdl.delete(thisfile));
-	    break;
-	 case "deleteOnExit" :
-	    break;
-	 case "equals" :
-	    CashewValue cv = getValue(1);
-	    if (cv instanceof CashewValueFile) {
-	       rslt = CashewValue.booleanValue(typer,thisfile.equals(getFile(1)));
-	     }
-	    else rslt = CashewValue.booleanValue(typer,false);
-	    break;
-	 case "exists" :
-	    rslt = CashewValue.booleanValue(typer,iomdl.exists(thisfile));
-	    break;
-	 case "getAbsoluteFile" :
-	    rfile = thisfile.getAbsoluteFile();
-	    if (rfile == thisfile) rslt = thisarg;
-	    break;
-	 case "getAbsolutePath" :
-	    rslt = CashewValue.stringValue(typer,typer.STRING_TYPE,thisfile.getAbsolutePath());
-	    break;
-	 case "getCanonicalFile" :
-	    try {
-	       rfile = thisfile.getCanonicalFile();
-	     }
-	    catch (IOException e) {
-	       return CuminEvaluator.returnException(sess,typer,"java.io.IOException");
-	     }
-	    if (rfile == thisfile) rslt = thisarg;
-	    break;
-	 case "getCanonicalPath" :
-	    try {
-	       rslt = CashewValue.stringValue(typer,typer.STRING_TYPE,thisfile.getCanonicalPath());
-	     }
-	    catch (IOException e) {
-               return CuminEvaluator.returnException(sess,typer,"java.io.IOException");
-	     }
-	    break;
-	 case "getFreeSpace" :
-	    rslt = CashewValue.numericValue(typer,typer.LONG_TYPE,thisfile.getFreeSpace());
-	    break;
-	 case "getName" :
-	    rslt = CashewValue.stringValue(typer,typer.STRING_TYPE,thisfile.getName());
-	    break;
-	 case "getParent" :
-	    rslt = CashewValue.stringValue(typer,typer.STRING_TYPE,thisfile.getParent());
-	    break;
-	 case "getParentFile" :
-	    rfile = thisfile.getParentFile();
-	    break;
-	 case "getPath" :
-	    rslt = CashewValue.stringValue(typer,typer.STRING_TYPE,thisfile.getPath());
-	    break;
-	 case "getTotalSpace" :
-	    rslt = CashewValue.numericValue(typer,typer.LONG_TYPE,thisfile.getTotalSpace());
-	    break;
-	 case "getUsableSpace" :
-	    rslt = CashewValue.numericValue(typer,typer.LONG_TYPE,thisfile.getUsableSpace());
-	    break;
-	 case "hashCode" :
-	    rslt = CashewValue.numericValue(typer,typer.INT_TYPE,thisfile.hashCode());
-	    break;
-	 case "isAbsolute" :
-	    rslt = CashewValue.booleanValue(typer,thisfile.isAbsolute());
-	    break;
-	 case "isDirectory" :
-	    rslt = CashewValue.booleanValue(typer,iomdl.isDirectory(thisfile));
-	    break;
-	 case "isFile" :
-	    rslt = CashewValue.booleanValue(typer,iomdl.isFile(thisfile));
-	    break;
-	 case "isHidden" :
-	    rslt = CashewValue.booleanValue(typer,thisfile.isHidden());
-	    break;
-	 case "lastModified" :
-	    rslt = CashewValue.numericValue(typer,typer.LONG_TYPE,thisfile.lastModified());
-	    break;
-	 case "length" :
-	    rslt = CashewValue.numericValue(typer,typer.LONG_TYPE,thisfile.length());
-	    break;
-	 case "list" :
-	    return null;
-	 case "listFiles" :
-	    return null;
-	 case "mkdir"  :
-	    rslt = CashewValue.booleanValue(typer,iomdl.mkdir(thisfile));
-	    break;
-	 case "mkdirs"  :
-	    rslt = CashewValue.booleanValue(typer,iomdl.mkdirs(thisfile));
-	    break;
-	 case "renameTo" :
-	    return null;
-	 case "setExecutable" :
-	    iomdl.setExecutable(thisfile);
-	    rslt = CashewValue.booleanValue(typer,true);
-	    break;
-	 case "setLastModified" :
-	    rslt = CashewValue.booleanValue(typer,false);
-	    break;
-	 case "setReadable" :
-	    iomdl.setReadable(thisfile);
-	    rslt = CashewValue.booleanValue(typer,true);
-	    break;
-	 case "setReadOnly" :
-	    iomdl.setReadOnly(thisfile);
-	    rslt = CashewValue.booleanValue(typer,true);
-	    break;
-	 case "setWritable" :
-	    iomdl.setWritable(thisfile);
-	    rslt = CashewValue.booleanValue(typer,true);
-	    break;
-	 case "toPath" :
-	    return null;
-	 case "toString" :
-	    rslt = CashewValue.stringValue(typer,typer.STRING_TYPE,thisfile.toString());
-	    break;
-	 case "toURI" :
-	    return null;
-	 case "toURL" :
-	    return null;
-	
-	    // private methods	
-	 case "isInvalid" :
-	    // access to java.io.File.PathStatus.CHECKED fails for now
-	    rslt = CashewValue.booleanValue(typer,false);
-	    break;
-	
-	 default :
-	    AcornLog.logE("Unknown file operation: " + getMethod().getName());
-	    return null;
-	
+      try {
+         switch (getMethod().getName()) {
+            case "canExecute" :
+               rslt = CashewValue.booleanValue(typer,iomdl.canExecute(thisfile));
+               break;
+            case "canRead" :
+               rslt = CashewValue.booleanValue(typer,iomdl.canRead(thisfile));
+               break;
+            case "canWrite" :
+               rslt = CashewValue.booleanValue(typer,iomdl.canWrite(thisfile));
+               break;
+            case "compareTo" :
+               rslt = CashewValue.numericValue(typer,typer.INT_TYPE,thisfile.compareTo(getFile(1)));
+               break;
+            case "delete" :
+               rslt = CashewValue.booleanValue(typer,iomdl.delete(thisfile));
+               break;
+            case "deleteOnExit" :
+               break;
+            case "equals" :
+               CashewValue cv = getValue(1);
+               if (cv instanceof CashewValueFile) {
+                  rslt = CashewValue.booleanValue(typer,thisfile.equals(getFile(1)));
+                }
+               else rslt = CashewValue.booleanValue(typer,false);
+               break;
+            case "exists" :
+               rslt = CashewValue.booleanValue(typer,iomdl.exists(thisfile));
+               break;
+            case "getAbsoluteFile" :
+               rfile = thisfile.getAbsoluteFile();
+               if (rfile == thisfile) rslt = thisarg;
+               break;
+            case "getAbsolutePath" :
+               rslt = CashewValue.stringValue(typer,typer.STRING_TYPE,thisfile.getAbsolutePath());
+               break;
+            case "getCanonicalFile" :
+               rfile = thisfile.getCanonicalFile();
+               if (rfile == thisfile) rslt = thisarg;
+               break;
+            case "getCanonicalPath" :
+               rslt = CashewValue.stringValue(typer,typer.STRING_TYPE,thisfile.getCanonicalPath());
+               break;
+            case "getFreeSpace" :
+               rslt = CashewValue.numericValue(typer,typer.LONG_TYPE,thisfile.getFreeSpace());
+               break;
+            case "getName" :
+               rslt = CashewValue.stringValue(typer,typer.STRING_TYPE,thisfile.getName());
+               break;
+            case "getParent" :
+               rslt = CashewValue.stringValue(typer,typer.STRING_TYPE,thisfile.getParent());
+               break;
+            case "getParentFile" :
+               rfile = thisfile.getParentFile();
+               break;
+            case "getPath" :
+               rslt = CashewValue.stringValue(typer,typer.STRING_TYPE,thisfile.getPath());
+               break;
+            case "getTotalSpace" :
+               rslt = CashewValue.numericValue(typer,typer.LONG_TYPE,thisfile.getTotalSpace());
+               break;
+            case "getUsableSpace" :
+               rslt = CashewValue.numericValue(typer,typer.LONG_TYPE,thisfile.getUsableSpace());
+               break;
+            case "hashCode" :
+               rslt = CashewValue.numericValue(typer,typer.INT_TYPE,thisfile.hashCode());
+               break;
+            case "isAbsolute" :
+               rslt = CashewValue.booleanValue(typer,thisfile.isAbsolute());
+               break;
+            case "isDirectory" :
+               rslt = CashewValue.booleanValue(typer,iomdl.isDirectory(thisfile));
+               break;
+            case "isFile" :
+               rslt = CashewValue.booleanValue(typer,iomdl.isFile(thisfile));
+               break;
+            case "isHidden" :
+               rslt = CashewValue.booleanValue(typer,thisfile.isHidden());
+               break;
+            case "lastModified" :
+               rslt = CashewValue.numericValue(typer,typer.LONG_TYPE,thisfile.lastModified());
+               break;
+            case "length" :
+               rslt = CashewValue.numericValue(typer,typer.LONG_TYPE,thisfile.length());
+               break;
+            case "list" :
+               return null;
+            case "listFiles" :
+               return null;
+            case "mkdir"  :
+               rslt = CashewValue.booleanValue(typer,iomdl.mkdir(thisfile));
+               break;
+            case "mkdirs"  :
+               rslt = CashewValue.booleanValue(typer,iomdl.mkdirs(thisfile));
+               break;
+            case "renameTo" :
+               return null;
+            case "setExecutable" :
+               iomdl.setExecutable(thisfile);
+               rslt = CashewValue.booleanValue(typer,true);
+               break;
+            case "setLastModified" :
+               rslt = CashewValue.booleanValue(typer,false);
+               break;
+            case "setReadable" :
+               iomdl.setReadable(thisfile);
+               rslt = CashewValue.booleanValue(typer,true);
+               break;
+            case "setReadOnly" :
+               iomdl.setReadOnly(thisfile);
+               rslt = CashewValue.booleanValue(typer,true);
+               break;
+            case "setWritable" :
+               iomdl.setWritable(thisfile);
+               rslt = CashewValue.booleanValue(typer,true);
+               break;
+            case "toPath" :
+               return null;
+            case "toString" :
+               rslt = CashewValue.stringValue(typer,typer.STRING_TYPE,thisfile.toString());
+               break;
+            case "toURI" :
+               return null;
+            case "toURL" :
+               return null;
+               
+               // private methods	
+            case "isInvalid" :
+               // access to java.io.File.PathStatus.CHECKED fails for now
+               rslt = CashewValue.booleanValue(typer,false);
+               break;
+               
+            default :
+               AcornLog.logE("Unknown file operation: " + getMethod().getName());
+               return null;
+               
+          }
+       }
+      catch (IOException e) {
+         return CuminEvaluator.returnException(sess,typer,"java.io.IOException");
+       }
+      catch (NullPointerException e) {
+         CuminEvaluator.throwException(getSession(),getTyper(),e.getClass().getName());
        }
     }
 

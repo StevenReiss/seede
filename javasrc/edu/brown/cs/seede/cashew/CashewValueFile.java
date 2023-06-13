@@ -69,7 +69,8 @@ CashewValueFile(CashewValueSession sess,JcompTyper typer,
 {
    super(typer,jt,inits,caninit);
    user_file = null;
-   CashewValue cv = getFieldValue(sess,typer,null,"java.io.File.path",true);
+   CashewValue cv = super.getFieldValue(sess,typer,null,"java.io.File.path",true);
+   AcornLog.logD("CASHEW","Setup CashewValueFile " + cv + " " + inits + " " + caninit);
    if (!cv.isNull(sess,null)) {
       try { 
          String path = cv.getString(sess,typer,null);

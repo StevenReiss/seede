@@ -203,19 +203,22 @@ String getCallingClass()
 
 private CuminRunStatus handleException(CuminRunStatus cr)
 {
-   AcornLog.logD("CUMIN","Handle exception " + cr.getMessage() + " " + cr.getValue());
+   AcornLog.logD("CUMIN","Handle exception " + cr.getMessage() + " " + cr.getValue() + " " +
+         jcode_method.getFullName() + " " + current_instruction);
 
    if (cr.getMessage() != null && cr.getMessage().equals("SEEDE_TIMEOUT")) return cr;
 
    CashewValue ev = cr.getValue();
+   JcompType etyp = ev.getDataType(runner_session,execution_clock,type_converter);
    JcodeTryCatchBlock tcb = null;
    int len = 0;
    for (JcodeTryCatchBlock jtcb : jcode_method.getTryCatchBlocks()) {
       JcodeDataType jdt = jtcb.getException();
       JcompType cdt = null;
       if (jdt != null) cdt = convertType(jdt);
-      if (cdt == null ||
-	    cdt.isCompatibleWith(ev.getDataType(runner_session,execution_clock,type_converter))) {
+      AcornLog.logD("CUMIN","Check exception " + cdt + " " + etyp + " " + 
+            jtcb.getStart().getIndex() + " " + jtcb.getEnd().getIndex());
+      if (cdt == null || etyp.isCompatibleWith(cdt)) {
 	 int sidx = jtcb.getStart().getIndex();
 	 int eidx = jtcb.getEnd().getIndex();
 	 if (current_instruction >= sidx &&  current_instruction <= eidx) {
