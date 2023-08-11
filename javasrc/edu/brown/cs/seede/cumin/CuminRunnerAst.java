@@ -203,7 +203,7 @@ CuminRunnerAst(CashewValueSession sess,CuminProject cp,CashewContext gblctx,Cash
    method_node = method;
    current_node = method_node;
    last_line = 0;
-   
+
    AcornLog.logD("CUMIN","Setup AST runner: " + JcompAst.getSource(method) + " " +  method);
 
    setupContext(top);
@@ -476,7 +476,7 @@ private CuminRunStatus evalNode(ASTNode node,ASTNode afterchild)
 	    CashewValue lvl = CashewValue.numericValue(typer,typer.INT_TYPE,lno);
 	    lookup_context.findReference(LINE_NAME).setValueAt(runner_session,execution_clock,lvl);
 	  }
-         else execution_clock.tick();
+	 else execution_clock.tick();
        }
       CuminRunStatus sts = checkTimeout();
       if (sts != null) return sts;
@@ -488,6 +488,10 @@ private CuminRunStatus evalNode(ASTNode node,ASTNode afterchild)
       if (Thread.currentThread().isInterrupted()) {
 	 return CuminRunStatus.Factory.createStopped();
        }
+    }
+   if (node == null) {
+      AcornLog.logD("ATTEMPT TO EXECUTE NULL NODE " + node);
+      return CuminRunStatus.Factory.createCompilerError();
     }
 
    JcompType jt = JcompAst.getExprType(node);
@@ -700,8 +704,8 @@ private CuminRunStatus evalNode(ASTNode node,ASTNode afterchild)
 	 sts = visit((TryStatement) node,afterchild);
 	 break;
       case ASTNode.TYPE_DECLARATION_STATEMENT :
-         sts = visit((TypeDeclarationStatement) node,afterchild);
-         break;
+	 sts = visit((TypeDeclarationStatement) node,afterchild);
+	 break;
       case ASTNode.TYPE_LITERAL :
 	 sts = visit((TypeLiteral) node);
 	 break;
@@ -820,15 +824,15 @@ private CuminRunStatus evalThrow(ASTNode node,CuminRunStatus cause)
 	 return cause;
 
       case ASTNode.CLASS_INSTANCE_CREATION :
-         sts = visitThrow((ClassInstanceCreation) node,cause);
-         break;
+	 sts = visitThrow((ClassInstanceCreation) node,cause);
+	 break;
       case ASTNode.SUPER_CONSTRUCTOR_INVOCATION :
-         sts = visitThrow((SuperConstructorInvocation) node,cause);
-         break;
+	 sts = visitThrow((SuperConstructorInvocation) node,cause);
+	 break;
       case ASTNode.SYNCHRONIZED_STATEMENT :
-         sts = visitThrow((SynchronizedStatement) node,cause);
-         break;
-         
+	 sts = visitThrow((SynchronizedStatement) node,cause);
+	 break;
+	
       case ASTNode.DO_STATEMENT :
 	 sts = visitThrow((DoStatement) node,cause);
 	 break;
@@ -839,8 +843,8 @@ private CuminRunStatus evalThrow(ASTNode node,CuminRunStatus cause)
 	 sts = visitThrow((ForStatement) node,cause);
 	 break;
       case ASTNode.LABELED_STATEMENT :
-         sts = visitThrow((LabeledStatement) node,cause);
-         break;
+	 sts = visitThrow((LabeledStatement) node,cause);
+	 break;
       case ASTNode.METHOD_INVOCATION :
 	 sts = visitThrow((MethodInvocation) node,cause);
 	 break;
@@ -895,7 +899,7 @@ private CuminRunStatus visit(MethodDeclaration md,ASTNode after) throws CashewEx
 	  }
 	 else if (AcornLog.isTracing()) {
 	    AcornLog.logT("ARG " + i + " = " +
-                  argvals.get(i).getDebugString(runner_session,type_converter,execution_clock));
+		  argvals.get(i).getDebugString(runner_session,type_converter,execution_clock));
 	  }
        }
 
@@ -1056,7 +1060,7 @@ private CuminRunStatus visit(TextBlock v)
    catch (StringIndexOutOfBoundsException e) {
       return CuminRunStatus.Factory.createCompilerError();
     }
-   
+
    return null;
 }
 
@@ -1333,7 +1337,7 @@ private CuminRunStatus visit(InstanceofExpression v,ASTNode after) throws CuminR
       CashewValue nv = execution_stack.pop();
       boolean fg = false;
       if (!nv.isNull(runner_session,execution_clock)) {
-         fg = nv.getDataType(runner_session,execution_clock,type_converter).isCompatibleWith(rt);
+	 fg = nv.getDataType(runner_session,execution_clock,type_converter).isCompatibleWith(rt);
        }
       CashewValue rv = CashewValue.booleanValue(type_converter,fg);
       execution_stack.push(rv);
@@ -1375,7 +1379,7 @@ private CuminRunStatus visit(SimpleName v) throws CashewException
       String msg = v.getIdentifier() + " is undefined";
       return CuminRunStatus.Factory.createCompilerError(msg);
     }
-   
+
    if (AcornLog.isTracing()) AcornLog.logT("\tNAME: " + v);
 
    execution_stack.push(cv);
@@ -1500,11 +1504,11 @@ private CuminRunStatus visit(ClassInstanceCreation v, ASTNode after)
    else {
       JcompSymbol js1 = rty.getDefinition();
       if (js1 != null) {
-         ASTNode defn = js1.getDefinitionNode();
-         if (defn != null) inits = getMethodClassData(defn);
+	 ASTNode defn = js1.getDefinitionNode();
+	 if (defn != null) inits = getMethodClassData(defn);
        }
     }
-   
+
    JcompSymbol csym = JcompAst.getReference(v);
    if (csym == null) {
       JcompType ctyp = type_converter.createMethodType(null,null,false,null);
@@ -1522,7 +1526,7 @@ private CuminRunStatus visit(ClassInstanceCreation v, ASTNode after)
    if (inits != null) {
       fixMethodInits(rval,inits);
     }
-   
+
    if (csym == null) {
       execution_stack.push(rval);
       return null;
@@ -1564,7 +1568,7 @@ private CuminRunStatus visit(ClassInstanceCreation v, ASTNode after)
       CashewValue arrv = CashewValue.arrayValue(type_converter,argtyp,0);
       argv.add(arrv);
     }
-   
+
    if (rty.needsOuterClass()) {
       CashewValue outerv = handleThisAccess(rty.getOuterType());
       argv.add(outerv);
@@ -1579,12 +1583,12 @@ private CuminRunStatus visit(ClassInstanceCreation v, ASTNode after)
 
 
 private CuminRunStatus visit(TypeDeclarationStatement v, ASTNode after)
-        throws CuminRunException, CashewException
+	throws CuminRunException, CashewException
 {
    fixMethodClass(v.getDeclaration());
-   
+
    return null;
-} 
+}
 
 
 private CuminRunStatus visitThrow(ClassInstanceCreation n,CuminRunStatus cause)
@@ -1594,7 +1598,7 @@ private CuminRunStatus visitThrow(ClassInstanceCreation n,CuminRunStatus cause)
       if (cv != null) execution_stack.push(cv);
     }
    else return cause;
-   
+
    return null;
 }
 
@@ -1700,7 +1704,7 @@ private CuminRunStatus visit(MethodInvocation v,ASTNode after)
       CashewValue ncv = CuminEvaluator.castValue(this,cv,argtyp);
       if (ncv == null) {
 	 AcornLog.logD("Conversion problem " + cv + " " + argtyp);
-         ncv = cv;
+	 ncv = cv;
        }
       argv.add(ncv);
     }
@@ -1797,7 +1801,7 @@ private CuminRunStatus visitThrow(SuperConstructorInvocation n,CuminRunStatus ca
       if (cv != null) execution_stack.push(cv);
     }
    else return cause;
-   
+
    return null;
 }
 
@@ -2019,9 +2023,9 @@ private CuminRunStatus visit(ForStatement s,ASTNode after) throws CuminRunExcept
       int idx = 0;
       List<?> inits = s.initializers();
       if (after != null) {
-         JcompType typ = JcompAst.getExprType(after);
-         if (after instanceof VariableDeclarationExpression) typ = null;
-         if (typ != null && !typ.isVoidType()) execution_stack.pop();
+	 JcompType typ = JcompAst.getExprType(after);
+	 if (after instanceof VariableDeclarationExpression) typ = null;
+	 if (typ != null && !typ.isVoidType()) execution_stack.pop();
 	 idx = inits.indexOf(after)+1;
 	 if (idx == 0) idx = inits.size();
        }
@@ -2030,31 +2034,31 @@ private CuminRunStatus visit(ForStatement s,ASTNode after) throws CuminRunExcept
 	 return null;
        }
     }
-   
+
    if (after == s.getBody() || spd == ForStatement.UPDATERS_PROPERTY) {
       execution_clock.tick();
       List<?> updts = s.updaters();
       int idx = 0;
       if (after != s.getBody()) {
-         JcompType jt = JcompAst.getExprType(after);
-         if (jt != null && !jt.isVoidType()) {
-            execution_stack.pop();
-          }
-         idx = updts.indexOf(after)+1;
+	 JcompType jt = JcompAst.getExprType(after);
+	 if (jt != null && !jt.isVoidType()) {
+	    execution_stack.pop();
+	  }
+	 idx = updts.indexOf(after)+1;
        }
       if (idx < updts.size()) {
 	 next_node = (ASTNode) updts.get(idx);
 	 return null;
        }
     }
-   
+
    if (s.getExpression() == null) {
       next_node = s.getBody();
     }
    else {
       next_node = s.getExpression();
     }
-   
+
    return null;
 }
 
@@ -2091,7 +2095,7 @@ private CuminRunStatus visit(EnhancedForStatement s,ASTNode after)
    if (after == s.getExpression()) {
       JcompType ety = JcompAst.getExprType(s.getExpression());
       if (ety == null || ety.isVoidType()) {
-         throw CuminRunStatus.Factory.createCompilerError();
+	 throw CuminRunStatus.Factory.createCompilerError();
        }
       CashewValue cv = execution_stack.peek(0).getActualValue(runner_session,execution_clock);
       JcompType jt = cv.getDataType(runner_session,execution_clock,type_converter);
@@ -2258,7 +2262,7 @@ private CuminRunStatus enhancedCheck(EnhancedForStatement s)
 
 
 private CuminRunStatus visit(IfStatement s,ASTNode after) throws CashewException,
-        CuminRunException
+	CuminRunException
 {
    if (after == null) next_node = s.getExpression();
    else if (after == s.getExpression()) {
@@ -2288,14 +2292,14 @@ private CuminRunStatus visitThrow(LabeledStatement s,CuminRunStatus r)
 {
    switch (r.getReason()) {
       case BREAK :
-         String lbl = r.getMessage();
-         if (lbl == null) return r;
-         if (lbl.equals(s.getLabel().getIdentifier())) return null;
-         return r;
+	 String lbl = r.getMessage();
+	 if (lbl == null) return r;
+	 if (lbl.equals(s.getLabel().getIdentifier())) return null;
+	 return r;
       default :
-         break;
+	 break;
     }
-   
+
    return r;
 }
 
@@ -2684,7 +2688,7 @@ private CuminRunStatus visitThrow(WhileStatement s,CuminRunStatus r)
 /********************************************************************************/
 
 private CuminRunStatus visit(ArrayInitializer n,ASTNode after)
-        throws CashewException, CuminRunException
+	throws CashewException, CuminRunException
 {
    int idx = 0;
    List<?> exprs = n.expressions();
@@ -2698,7 +2702,7 @@ private CuminRunStatus visit(ArrayInitializer n,ASTNode after)
       CashewValue arrval = CashewValue.arrayValue(type_converter,typ,dim);
       for (int i = dim-1; i >= 0; --i) {
 	 CashewValue cv = execution_stack.pop();
-         cv = CuminEvaluator.boxValue(this,cv);
+	 cv = CuminEvaluator.boxValue(this,cv);
 	 arrval.setIndexValue(runner_session,execution_clock,i,cv);
        }
       execution_stack.push(arrval);
@@ -3179,13 +3183,13 @@ private boolean getBoolean(CashewValue cv) throws CashewException, CuminRunExcep
       return cv.getBoolean(runner_session,execution_clock);
     }
    else if (jt.getName().equals("java.lang.Boolean")) {
-       CashewValue ncv = CuminEvaluator.unboxValue(runner_session,type_converter,execution_clock,cv); 
+       CashewValue ncv = CuminEvaluator.unboxValue(runner_session,type_converter,execution_clock,cv);
        return ncv.getBoolean(runner_session,execution_clock);
     }
    else {
       CuminEvaluator.throwException(runner_session,type_converter,"java.lang.ClassCastException");
     }
-   
+
    return false;
 }
 
@@ -3193,43 +3197,43 @@ private boolean getBoolean(CashewValue cv) throws CashewException, CuminRunExcep
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Code to handle anonymous classes                                        */
-/*                                                                              */
+/*										*/
+/*	Code to handle anonymous classes					*/
+/*										*/
 /********************************************************************************/
 
 private Map<JcompSymbol,JcompSymbol> fixMethodClass(ASTNode classdef)
 {
    Map<JcompSymbol,JcompSymbol> rslt = getMethodClassData(classdef);
    if (rslt != null) return rslt;
-   
+
    rslt = new HashMap<>();
-   
+
    OuterVariableFinder ovf = new OuterVariableFinder(classdef);
    classdef.accept(ovf);
    Set<JcompSymbol> syms = ovf.getUsedLocals();
-   
+
    if (!syms.isEmpty()) {
       JcompType ctyp = JcompAst.getJavaType(classdef);
       for (JcompSymbol js : syms) {
-         JcompSymbol newsym = JcompSymbol.createDummyField(js,ctyp);
-         rslt.put(js,newsym);
+	 JcompSymbol newsym = JcompSymbol.createDummyField(js,ctyp);
+	 rslt.put(js,newsym);
        }
       OuterVariableReplacer ovr = new OuterVariableReplacer(rslt);
       classdef.accept(ovr);
     }
-   
+
    classdef.setProperty(PROP_ANON_MAP,rslt);
-   
+
    return rslt;
 }
 
 
-@SuppressWarnings("unchecked") 
+@SuppressWarnings("unchecked")
 private Map<JcompSymbol,JcompSymbol> getMethodClassData(ASTNode def)
 {
    Map<JcompSymbol,JcompSymbol> rslt =(Map<JcompSymbol,JcompSymbol>) def.getProperty(PROP_ANON_MAP);
-   
+
    return rslt;
 }
 
@@ -3237,71 +3241,71 @@ private Map<JcompSymbol,JcompSymbol> getMethodClassData(ASTNode def)
 private void fixMethodInits(CashewValue oval,Map<JcompSymbol,JcompSymbol> inits)
 {
    if (inits == null || inits.isEmpty()) return;
-   
+
    for (Map.Entry<JcompSymbol,JcompSymbol> ent : inits.entrySet()) {
       try {
-         JcompSymbol orig = ent.getKey();
-         CashewValue origrval = lookup_context.findReference(type_converter,orig);
-         CashewValue origval = origrval.getActualValue(runner_session,execution_clock);
-         JcompSymbol tgt = ent.getValue();
-         CashewValue tgtrval = oval.getFieldValue(runner_session,type_converter,
-               execution_clock,tgt.getFullName());
-         CuminEvaluator.assignValue(this,tgtrval,origval,tgt.getType());
+	 JcompSymbol orig = ent.getKey();
+	 CashewValue origrval = lookup_context.findReference(type_converter,orig);
+	 CashewValue origval = origrval.getActualValue(runner_session,execution_clock);
+	 JcompSymbol tgt = ent.getValue();
+	 CashewValue tgtrval = oval.getFieldValue(runner_session,type_converter,
+	       execution_clock,tgt.getFullName());
+	 CuminEvaluator.assignValue(this,tgtrval,origval,tgt.getType());
        }
-      catch (Exception e) { 
-         AcornLog.logE("CUMIN","Problem with method class initialization",e);
+      catch (Exception e) {
+	 AcornLog.logE("CUMIN","Problem with method class initialization",e);
        }
     }
 }
 
 
 private static class OuterVariableFinder extends ASTVisitor {
-   
+
    private Set<JcompSymbol> outer_syms;
    ASTNode base_node;
-   
+
    OuterVariableFinder(ASTNode base) {
       outer_syms = new HashSet<>();
       base_node = base;
     }
-   
-   Set<JcompSymbol> getUsedLocals()                     { return outer_syms; }
-   
+
+   Set<JcompSymbol> getUsedLocals()			{ return outer_syms; }
+
    @Override public void preVisit(ASTNode n) {
       JcompSymbol js = JcompAst.getReference(n);
       if (js != null && js.getSymbolKind() == JcompSymbolKind.LOCAL) {
-         ASTNode p = js.getDefinitionNode();
-         boolean fnd = false;
-         while (p != null && !fnd) {
-            if (p == base_node) {
-               fnd = true;
-             }
-            p = p.getParent();
-          }
-         if (!fnd) outer_syms.add(js);
+	 ASTNode p = js.getDefinitionNode();
+	 boolean fnd = false;
+	 while (p != null && !fnd) {
+	    if (p == base_node) {
+	       fnd = true;
+	     }
+	    p = p.getParent();
+	  }
+	 if (!fnd) outer_syms.add(js);
        }
     }
-   
-}       // end of inner class OuterVariableFinder
+
+}	// end of inner class OuterVariableFinder
 
 
 private static class OuterVariableReplacer extends ASTVisitor {
-   
+
    private Map<JcompSymbol,JcompSymbol> replace_map;
-   
+
    OuterVariableReplacer(Map<JcompSymbol,JcompSymbol> rmap) {
       replace_map = rmap;
     }
-   
+
    @Override public void preVisit(ASTNode n) {
       JcompSymbol js = JcompAst.getReference(n);
       if (js != null) {
-         JcompSymbol njs = replace_map.get(js);
-         if (njs != null) JcompAst.setReference(n,njs);
+	 JcompSymbol njs = replace_map.get(js);
+	 if (njs != null) JcompAst.setReference(n,njs);
        }
     }
-   
-}       // end of inner class OuterVariableReplacer
+
+}	// end of inner class OuterVariableReplacer
 
 
 }	// end of class CuminRunnerAst
