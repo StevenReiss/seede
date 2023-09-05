@@ -76,7 +76,7 @@ public JcompType getJcompType()                         { return class_value; }
 
 
 @Override public CashewValue getFieldValue(CashewValueSession sess,
-      JcompTyper typer,CashewClock cc,String nm,boolean force)
+      JcompTyper typer,CashewClock cc,String nm,CashewContext ctx,boolean force)
 {
    switch (nm) {
       case "java.lang.Class.packageName" :
@@ -87,7 +87,11 @@ public JcompType getJcompType()                         { return class_value; }
          return CashewValue.stringValue(typer,typer.STRING_TYPE,class_value.getName());
       case "@hashCode" :
          return CashewValue.numericValue(typer,typer.INT_TYPE,class_value.hashCode());
+      case "java.lang.Class.module" :
       case "module" :
+         String cnm = class_value.getName();
+         String eval = "edu.brown.cs.seede.poppy.PoppyValue.getClassModule(\"" + cnm + "\")";
+         return ctx.evaluate(eval);
          
       default :
          AcornLog.logE("CASHEW","Unknown Class field: " + nm);

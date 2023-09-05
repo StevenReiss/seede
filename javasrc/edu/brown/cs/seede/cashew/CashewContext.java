@@ -351,7 +351,7 @@ private CashewValue lookupVariableValue(CashewValueSession sess,
     }  
    
    if (bestvalue != null && next != null) {
-      bestvalue = bestvalue.lookupVariableName(sess,typer,next,when);
+      bestvalue = bestvalue.lookupVariableName(sess,this,typer,next,when);
     }
    
    return bestvalue;

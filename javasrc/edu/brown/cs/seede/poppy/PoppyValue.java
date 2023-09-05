@@ -233,6 +233,7 @@ private static Class<?> getClassByName(String cls)
 public static boolean getStaticFieldValueBoolean(String itm)
 {
    Boolean bv = (Boolean) getStaticFieldValue(itm);
+   if (bv == null) return false;
    return bv.booleanValue();
 }
 
@@ -241,6 +242,7 @@ public static boolean getStaticFieldValueBoolean(String itm)
 public static int getStaticFieldValueInt(String itm)
 {
    Number nv = (Number) getStaticFieldValue(itm);
+   if (nv == null) return 0;
    return nv.intValue();
 }
 
@@ -248,6 +250,7 @@ public static int getStaticFieldValueInt(String itm)
 public static long getStaticFieldValueLong(String itm)
 {
    Number nv = (Number) getStaticFieldValue(itm);
+   if (nv == null) return 0;
    return nv.longValue();
 }
 
@@ -255,6 +258,7 @@ public static long getStaticFieldValueLong(String itm)
 public static short getStaticFieldValueShort(String itm)
 {
    Number nv = (Number) getStaticFieldValue(itm);
+   if (nv == null) return 0;
    return nv.shortValue();
 }
 
@@ -262,6 +266,7 @@ public static short getStaticFieldValueShort(String itm)
 public static double getStaticFieldValueDouble(String itm)
 {
    Number nv = (Number) getStaticFieldValue(itm);
+   if (nv == null) return 0;
    return nv.doubleValue();
 }
 
@@ -269,6 +274,7 @@ public static double getStaticFieldValueDouble(String itm)
 public static float getStaticFieldValueFloat(String itm)
 {
    Number nv = (Number) getStaticFieldValue(itm);
+   if (nv == null) return 0;
    return nv.floatValue();
 }
 
@@ -352,6 +358,27 @@ public static Object getInteger(int v)
 {
    return Integer.valueOf(v);
 }
+
+
+
+public static Object getDefaultModule()
+{
+   return PoppyValue.class.getModule();
+}
+
+
+public static Object getClassModule(String nm)
+{
+   if (nm != null) {
+      try {
+         Class<?> c = Class.forName(nm);
+         return c.getModule();
+       }
+      catch (Throwable t) { }
+    }
+   return getDefaultModule();
+}
+
 
 
 /********************************************************************************/

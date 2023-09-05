@@ -48,11 +48,6 @@ class CuminDirectEvaluation extends CuminNativeEvaluator
 {
 
 
-
-
-
-
-
 /********************************************************************************/
 /*										*/
 /*	Constructors								*/
@@ -78,10 +73,12 @@ CuminRunStatus checkStringMethods() throws CuminRunException, CashewException
       return checkStringMethodsLocal();
     }
    catch (IndexOutOfBoundsException e) {
-      CuminEvaluator.throwException(getSession(),getTyper(),e.getClass().getName());
+      CuminEvaluator.throwException(getSession(),getContext(),
+            getTyper(),e.getClass().getName());
     }
    catch (UnsupportedEncodingException e) {
-      CuminEvaluator.throwException(getSession(),getTyper(),e.getClass().getName());
+      CuminEvaluator.throwException(getSession(),getContext(),
+            getTyper(),e.getClass().getName());
     }
 
    return null;
@@ -311,7 +308,8 @@ private CuminRunStatus checkStringMethodsLocal() throws CuminRunException, Cashe
 	    (getDataType(1).getName().contains("StringBuilder") ||
 		  getDataType(1).getName().contains("StringBuffer"))) {
 	 CashewValue cv = getValue(1);
-	 CashewValue cvbytes = cv.getFieldValue(sess,getTyper(),getClock(),"java.lang.AbstractStringBuilder.value");
+	 CashewValue cvbytes = cv.getFieldValue(sess,getTyper(),getClock(),
+               "java.lang.AbstractStringBuilder.value",getContext());
       	 cvbytes = cvbytes.getActualValue(sess,getClock());
          int coder = getIntFieldValue(cv,"java.lang.AbstractStringBuilder.coder");
          int cvlen = getIntFieldValue(cv,"java.lang.AbstractStringBuilder.count");
@@ -532,7 +530,8 @@ private CuminRunStatus checkStringMethodsLocal() throws CuminRunException, Cashe
 		}
 	     }
 	    catch (IndexOutOfBoundsException e) {
-	       CuminEvaluator.throwException(getSession(),typer,"java.lang.StringIndexOutOfBoundsException");
+	       CuminEvaluator.throwException(getSession(),getContext(),
+                     typer,"java.lang.StringIndexOutOfBoundsException");
 	     }
 	    break;
 	 case "toLowerCase" :
@@ -571,7 +570,8 @@ private CuminRunStatus checkStringMethodsLocal() throws CuminRunException, Cashe
 		  bbuf = thisstr.getBytes(cset);
 		}
 	       catch (UnsupportedEncodingException e) {
-		  CuminEvaluator.throwException(getSession(),typer,"java.io.UnsupportedEncodingException");
+		  CuminEvaluator.throwException(getSession(),getContext(),
+                        typer,"java.io.UnsupportedEncodingException");
 		}
 	     }
 	    if (bbuf == null) return null;
@@ -1052,9 +1052,9 @@ private CashewValue getNumberFormatInstance(String typ)
       try {
          CashewValue loc = getValue(0);
          CashewValue bloc = loc.getFieldValue(getSession(),getTyper(),
-               getClock(),"java.util.Locale.baseLocale");
+               getClock(),"java.util.Locale.baseLocale",getContext());
          CashewValue lval = bloc.getFieldValue(getSession(),getTyper(),
-               getClock(),"sun.util.locale.BaseLocale.language");
+               getClock(),"sun.util.locale.BaseLocale.language",getContext());
          String s = lval.getString(getSession(),getTyper(),getClock());
          lang = "\"" + s + "\"";
        }
@@ -1126,7 +1126,7 @@ CuminRunStatus checkSystemMethods() throws CashewException
 	 break;
       case "identityHashCode" :
 	 rslt = CashewValue.numericValue(typer,typer.INT_TYPE,
-	       getValue(0).getFieldValue(sess,typer,getClock(),HASH_CODE_FIELD).
+	       getValue(0).getFieldValue(sess,typer,getClock(),HASH_CODE_FIELD,getContext()).
 	       getNumber(sess,getClock()).intValue());
 	 break;
       case "load" :
@@ -1144,6 +1144,9 @@ CuminRunStatus checkSystemMethods() throws CashewException
       case "setIn" :
       case "setOut" :
 	 break;
+      case "allowSecurityManager" :
+         rslt = CashewValue.booleanValue(typer,false);
+         break;
       default :
 	 return null;
     }
@@ -1160,7 +1163,8 @@ private CuminRunStatus handleArrayCopy(CashewValue src,int spos,CashewValue dst,
    JcompTyper typer = getTyper();
 
    if (src.isNull(sess,getClock()) || dst.isNull(sess,getClock())) {
-      return CuminEvaluator.returnException(sess,typer,"java.lang.NullPointerException");
+      return CuminEvaluator.returnException(sess,getContext(),
+            typer,"java.lang.NullPointerException");
     }
 
    int sdim = -1;
@@ -1170,12 +1174,14 @@ private CuminRunStatus handleArrayCopy(CashewValue src,int spos,CashewValue dst,
       ddim = dst.getDimension(sess,getClock());
     }
    catch (Throwable t) {
-      return CuminEvaluator.returnException(sess,typer,"java.lang.ArrayStoreException");
+      return CuminEvaluator.returnException(sess,getContext(),
+            typer,"java.lang.ArrayStoreException");
     }
    // check array element types
 
    if (spos < 0 || dpos < 0 || len < 0 || spos+len > sdim || dpos+len > ddim) {
-      return CuminEvaluator.returnException(sess,typer,"java.lang.ArrayIndexOutOfBoundsException");
+      return CuminEvaluator.returnException(sess,getContext(),
+            typer,"java.lang.ArrayIndexOutOfBoundsException");
     }
 
    getClock().freezeTime();
@@ -1226,9 +1232,10 @@ CuminRunStatus checkObjectMethods() throws CuminRunException, CashewException
 	 break;
       case "hashCode" :
 	 if (getValue(0).isNull(sess,getClock()))
-	    return CuminEvaluator.returnException(sess,typer,"java.lang.NullPointerException");
+	    return CuminEvaluator.returnException(sess,getContext(),
+                  typer,"java.lang.NullPointerException");
 	 CashewValue cv0 = getValue(0);
-	 CashewValue cv1 = cv0.getFieldValue(sess,typer,getClock(),HASH_CODE_FIELD);
+	 CashewValue cv1 = cv0.getFieldValue(sess,typer,getClock(),HASH_CODE_FIELD,getContext());
 	 AcornLog.logD("CUMIN","Hash compute " + cv1 + " " + cv0);
 	 Number cv2 = cv1.getNumber(sess,getClock());
 	 AcornLog.logD("CUMIN","Hash value " + cv2);
@@ -1238,7 +1245,8 @@ CuminRunStatus checkObjectMethods() throws CuminRunException, CashewException
       case "clone" :
 	 CashewValue v0 = getValue(0);
 	 if (v0.isNull(sess,getClock()))
-	    return CuminEvaluator.returnException(sess,typer,"java.lang.NullPointerException");
+	    return CuminEvaluator.returnException(sess,getContext(),
+                  typer,"java.lang.NullPointerException");
 	 if (v0 instanceof CashewValueArray) {
 	    CashewValueArray arr = (CashewValueArray) v0;
 	    rslt = arr.cloneObject(sess,typer,getClock(),0);
@@ -1257,7 +1265,8 @@ CuminRunStatus checkObjectMethods() throws CuminRunException, CashewException
 	       scm.synchWait(exec_runner.getCurrentThread(),getValue(0),time);
 	     }
 	    catch (InterruptedException ex) {
-	       CuminEvaluator.throwException(sess,typer,"java.lang.InterruptedException");
+	       CuminEvaluator.throwException(sess,getContext(),
+                     typer,"java.lang.InterruptedException");
 	     }
 	    break;
 	  }
@@ -1373,7 +1382,8 @@ CuminRunStatus checkClassMethods() throws CashewException, CuminRunException
 	    expr = "edu.brown.cs.seede.poppy.PoppyValue.getConstructorUsingPoppy(\"" +
 		thistype.getName() + "\"";
 	    CashewValue av = getValue(1);
-	    int sz = av.getFieldValue(sess,typer,getClock(),"length").getNumber(sess,getClock()).intValue();
+	    int sz = av.getFieldValue(sess,typer,getClock(),"length",getContext()).
+                  getNumber(sess,getClock()).intValue();
 	    for (int i = 0; i < sz; ++i) {
 	       CashewValue tv = av.getIndexValue(sess,getClock(),i);
 	       tv = tv.getActualValue(sess,getClock());
@@ -1387,7 +1397,8 @@ CuminRunStatus checkClassMethods() throws CashewException, CuminRunException
 	    expr = "edu.brown.cs.seede.poppy.PoppyValue.getDeclaredConstructorUsingPoppy(\"" +
 	    thistype.getName() + "\"";
 	    av = getValue(1);
-	    sz = av.getFieldValue(sess,typer,getClock(),"length").getNumber(sess,getClock()).intValue();
+	    sz = av.getFieldValue(sess,typer,getClock(),"length",getContext()).
+                  getNumber(sess,getClock()).intValue();
 	    for (int i = 0; i < sz; ++i) {
 	       CashewValue tv = av.getIndexValue(sess,getClock(),i);
 	       tv = tv.getActualValue(sess,getClock());
@@ -1406,7 +1417,8 @@ CuminRunStatus checkClassMethods() throws CashewException, CuminRunException
 	    boolean declfg = (getMethod().getName().equals("getMethod") ? false : true);
 	    expr += "," + declfg;
 	    av = getValue(2);
-	    sz = av.getFieldValue(sess,typer,getClock(),"length").getNumber(sess,getClock()).intValue();
+	    sz = av.getFieldValue(sess,typer,getClock(),"length",getContext()).
+                  getNumber(sess,getClock()).intValue();
 	    for (int i = 0; i < sz; ++i) {
 	       CashewValue tv = av.getIndexValue(sess,getClock(),i);
 	       tv = tv.getActualValue(sess,getClock());
@@ -1447,6 +1459,7 @@ CuminRunStatus checkClassMethods() throws CashewException, CuminRunException
 	    rslt = CashewValue.booleanValue(typer,thistype.getName().contains("$00"));
 	    break;
 	 case "getModule" :
+            rslt = thisarg.getFieldValue(sess,typer,getClock(),"module",getContext());
 	    return null;
 
 	 default :
@@ -1503,14 +1516,17 @@ CuminRunStatus checkConstructorMethods()
       case "newInstance" :
 	 try {
 	    CashewValue cnst = getValue(0);
-	    CashewValue clzz = cnst.getFieldValue(sess,typer,getClock(),"java.lang.reflect.Constructor.clazz");
+	    CashewValue clzz = cnst.getFieldValue(sess,typer,getClock(),
+                  "java.lang.reflect.Constructor.clazz",getContext());
 	    clzz = clzz.getActualValue(sess,getClock());
-	    CashewValue prms = cnst.getFieldValue(sess,typer,getClock(),"java.lang.reflect.Constructor.parameterTypes");
+	    CashewValue prms = cnst.getFieldValue(sess,typer,getClock(),
+                  "java.lang.reflect.Constructor.parameterTypes",getContext());
 	    prms = prms.getActualValue(sess,getClock());
 	    CashewValueClass cvc = (CashewValueClass) clzz;
 	    JcompType newtyp = cvc.getJcompType();
 	    List<JcompType> argtyp = new ArrayList<>();
-	    CashewValue szv = prms.getFieldValue(sess,typer,getClock(),"length");
+	    CashewValue szv = prms.getFieldValue(sess,typer,getClock(),
+                  "length",getContext());
 	    int sz = szv.getNumber(sess,getClock()).intValue();
 	    for (int i = 0; i < sz; ++i) {
 	       CashewValue v0 = prms.getIndexValue(sess,getClock(),i);
@@ -1525,7 +1541,8 @@ CuminRunStatus checkConstructorMethods()
 	       exec_runner.getStack().push(nv);
 	       List<CashewValue> argv = new ArrayList<>();
 	       argv.add(nv);
-	       CashewValue pszv = pval.getFieldValue(sess,typer,getClock(),"length");
+	       CashewValue pszv = pval.getFieldValue(sess,typer,getClock(),
+                     "length",getContext());
 	       int psz = pszv.getNumber(sess,getClock()).intValue();
 	       for (int i = 0; i < sz; ++i) {
 		  JcompType t0 = argtyp.get(i);
@@ -1580,20 +1597,25 @@ CuminRunStatus checkMethodMethods()
       case "invoke" :
 	 try {
 	    CashewValue mthd = getValue(0);
-	    CashewValue clzz = mthd.getFieldValue(sess,typer,getClock(),"java.lang.reflect.Method.clazz");
+	    CashewValue clzz = mthd.getFieldValue(sess,typer,getClock(),
+                  "java.lang.reflect.Method.clazz",getContext());
 	    clzz = clzz.getActualValue(sess,getClock());
-	    CashewValue prms = mthd.getFieldValue(sess,typer,getClock(),"java.lang.reflect.Method.parameterTypes");
+	    CashewValue prms = mthd.getFieldValue(sess,typer,getClock(),
+                  "java.lang.reflect.Method.parameterTypes",getContext());
 	    prms = prms.getActualValue(sess,getClock());
-	    CashewValue rettvl = mthd.getFieldValue(sess,typer,getClock(),"java.lang.reflect.Method.returnType");
+	    CashewValue rettvl = mthd.getFieldValue(sess,typer,getClock(),
+                  "java.lang.reflect.Method.returnType",getContext());
 	    rettvl = rettvl.getActualValue(sess,getClock());
-	    CashewValue namvl = mthd.getFieldValue(sess,typer,getClock(),"java.lang.reflect.Method.name");
+	    CashewValue namvl = mthd.getFieldValue(sess,typer,getClock(),
+                  "java.lang.reflect.Method.name",getContext());
 	    String name = namvl.getString(sess,typer,getClock());
 	    CashewValueClass cvc = (CashewValueClass) clzz;
 	    JcompType newtyp = cvc.getJcompType();
 	    CashewValueClass rvc = (CashewValueClass) rettvl;
 	    JcompType rettyp = rvc.getJcompType();
 	    List<JcompType> argtyp = new ArrayList<>();
-	    CashewValue szv = prms.getFieldValue(sess,typer,getClock(),"length");
+	    CashewValue szv = prms.getFieldValue(sess,typer,getClock(),
+                  "length",getContext());
 	    int sz = szv.getNumber(sess,getClock()).intValue();
 	    for (int i = 0; i < sz; ++i) {
 	       CashewValue v0 = prms.getIndexValue(sess,getClock(),i);
@@ -1608,7 +1630,8 @@ CuminRunStatus checkMethodMethods()
 	       if (!jsym.isStatic()) {
 		  argv.add(getValue(1));
 		}
-	       CashewValue pszv = pval.getFieldValue(sess,typer,getClock(),"length");
+	       CashewValue pszv = pval.getFieldValue(sess,typer,getClock(),
+                     "length",getContext());
 	       int psz = pszv.getNumber(sess,getClock()).intValue();
 	       for (int i = 0; i < sz; ++i) {
 		  JcompType t0 = argtyp.get(i);
@@ -1733,7 +1756,8 @@ CuminRunStatus checkThrowableMethods()
 	 rslt = CashewValue.numericValue(typer,typer.INT_TYPE,0);
 	 break;
       case "getStackTraceElement" :
-	 return CuminEvaluator.returnException(sess,typer,"java.lang.IndexOutOfBoundsException");
+	 return CuminEvaluator.returnException(sess,getContext(),
+               typer,"java.lang.IndexOutOfBoundsException");
       default :
 	 return null;
     }
@@ -1771,7 +1795,8 @@ CuminRunStatus checkFloatingDecimalMehtods() throws CashewException
 	    rslt = CashewValue.numericValue(typer.DOUBLE_TYPE,d1);
 	  }
 	 catch (NumberFormatException e) {
-	    return CuminEvaluator.returnException(sess,typer,"java.lang.NumberFormatException");
+	    return CuminEvaluator.returnException(sess,getContext(),
+                  typer,"java.lang.NumberFormatException");
 	  }
 	 break;
       case "parseFloat" :
@@ -1780,7 +1805,8 @@ CuminRunStatus checkFloatingDecimalMehtods() throws CashewException
 	    rslt = CashewValue.numericValue(typer.FLOAT_TYPE,f1);
 	  }
 	 catch (NumberFormatException e) {
-	    return CuminEvaluator.returnException(sess,typer,"java.lang.NumberFormatException");
+	    return CuminEvaluator.returnException(sess,getContext(),
+                  typer,"java.lang.NumberFormatException");
 	  }
 	 break;
       default  :
@@ -1913,7 +1939,8 @@ CuminRunStatus checkReflectArrayMethods() throws CuminRunException, CashewExcept
 	 break;
       case "getLength" :
 	 rslt = getArrayValue(0);
-	 rslt = rslt.getFieldValue(getSession(),typer,getClock(),"length",false);
+	 rslt = rslt.getFieldValue(getSession(),typer,getClock(),
+               "length",getContext(),false);
 	 break;
       default :
 	 return null;
@@ -2087,7 +2114,8 @@ CuminRunStatus checkPatternMethods() throws CuminRunException
       case "matcherX" :
 	 try {
 	    CashewValue patv = getValue(0);
-	    CashewValue pats = patv.getFieldValue(sess,typer,getClock(),"java.util.regex.Pattern.pattern");
+	    CashewValue pats = patv.getFieldValue(sess,typer,getClock(),
+                  "java.util.regex.Pattern.pattern",getContext());
 	    String ps = pats.getString(sess,typer,getClock());
 	    String v = getString(1);
 	    exec_runner.ensureLoaded("edu.brown.cs.seede.poppy.PoppyValue");
@@ -2180,7 +2208,8 @@ private CashewValue runMatcher(CashewValue mval,String ps,String textv,int pos,b
 
 private String getPatternTextFromMatcher(CashewValue mval) throws CashewException
 {
-   CashewValue patv = mval.getFieldValue(getSession(),getTyper(),getClock(),"java.util.regex.Matcher.parentPattern");
+   CashewValue patv = mval.getFieldValue(getSession(),getTyper(),getClock(),
+         "java.util.regex.Matcher.parentPattern",getContext());
    if (patv.isNull(getSession(),getClock())) return null;
 
    String ps = getStringFieldValue(patv,"java.util.regex.Pattern.pattern");
@@ -2369,6 +2398,32 @@ CuminRunStatus checkArraysMethods() throws CuminRunException
 }
 
 
+
+/********************************************************************************/
+/*                                                                              */
+/*      Handle Resource Bundles                                                 */
+/*                                                                              */
+/********************************************************************************/
+
+CuminRunStatus checkResourceBundleMethods() throws CuminRunException
+{
+   if (!getMethod().isStatic()) return null;
+   
+   CashewValue rslt = null;
+   JcompTyper typer = getTyper();
+   CashewValueSession sess = getSession();
+   
+   switch (getMethod().getName()) {
+      case "getBundle" :
+         CuminEvaluator.throwException(sess,getContext(),
+              typer,"java.util.MissingResourceException");
+         break;
+      default : 
+         return null;
+    }
+   
+   return CuminRunStatus.Factory.createReturn(rslt);
+}
 
 
 

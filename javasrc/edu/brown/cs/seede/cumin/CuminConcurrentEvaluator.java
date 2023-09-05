@@ -75,7 +75,7 @@ CuminRunStatus checkAtomicIntMethods() throws CashewException
    CashewValueSession sess = getSession();
 
    synchronized (thisarg) {
-      CashewValue value = thisarg.getFieldValue(sess,typer,getClock(),valfld);
+      CashewValue value = thisarg.getFieldValue(sess,typer,getClock(),valfld,getContext());
       long lval = value.getNumber(sess,getClock()).longValue();
       JcompType dtyp = typer.LONG_TYPE;
       int secondarg = 3;
@@ -159,7 +159,7 @@ CuminRunStatus checkAtomicBooleanMethods() throws CashewException
    String valfld = clsnm + ".value";
 
    synchronized (thisarg) {
-      CashewValue value = thisarg.getFieldValue(sess,typer,getClock(),valfld);
+      CashewValue value = thisarg.getFieldValue(sess,typer,getClock(),valfld,getContext());
       boolean bval = value.getBoolean(sess,getClock());
 
       switch (getMethod().getName()) {
@@ -262,7 +262,7 @@ synchronized CuminRunStatus checkUnsafeMethods() throws CuminRunException, Cashe
 	 JcompType typ = cv1.getDataType(sess,getClock(),typer);
 	 String fld = getFieldAtOffset(typ,(int) off);
 	 if (fld == null) return null;
-	 CashewValue oldv = cv1.getFieldValue(getSession(),getTyper(),getClock(),fld);
+	 CashewValue oldv = cv1.getFieldValue(getSession(),getTyper(),getClock(),fld,getContext());
 	 int oldint = oldv.getNumber(sess,getClock()).intValue();
 	 if (oldint != v1) rslt = CashewValue.booleanValue(getTyper(),false);
 	 else {
@@ -279,7 +279,7 @@ synchronized CuminRunStatus checkUnsafeMethods() throws CuminRunException, Cashe
 	 typ = cv1.getDataType(sess,getClock(),typer);
 	 fld = getFieldAtOffset(typ,(int) off);
 	 if (fld == null) return null;
-	 oldv = cv1.getFieldValue(sess,typer,getClock(),fld);
+	 oldv = cv1.getFieldValue(sess,typer,getClock(),fld,getContext());
 	 long oldlong = oldv.getNumber(sess,getClock()).longValue();
 	 if (oldlong != lv1) rslt = CashewValue.booleanValue(getTyper(),false);
 	 else {
@@ -337,7 +337,7 @@ synchronized CuminRunStatus checkVarHandleMethods() throws CuminRunException, Ca
          CashewValue tgtval = getValue(1);
          CashewValue setval = getValue(2);
          CashewValue fldoffset = thisarg.getFieldValue(getSession(),getTyper(),getClock(),
-               "java.lang.invoke.VarHandleObjects.FieldInstanceReadOnly.fieldOffset");
+               "java.lang.invoke.VarHandleObjects.FieldInstanceReadOnly.fieldOffset",getContext());
          int fldoff = fldoffset.getNumber(getSession(),getClock()).intValue();
          JcompType typ = tgtval.getDataType(getSession(),getClock(),getTyper());
          String js = getFieldAtOffset(typ,fldoff);
@@ -354,7 +354,7 @@ synchronized CuminRunStatus checkVarHandleMethods() throws CuminRunException, Ca
          tgtval = getValue(1);
          setval = getValue(3);
          fldoffset = thisarg.getFieldValue(getSession(),getTyper(),getClock(),
-               "java.lang.invoke.VarHandleObjects.FieldInstanceReadOnly.fieldOffset");
+               "java.lang.invoke.VarHandleObjects.FieldInstanceReadOnly.fieldOffset",getContext());
          fldoff = fldoffset.getNumber(getSession(),getClock()).intValue();
          typ = tgtval.getDataType(getSession(),getClock(),getTyper());
          js = getFieldAtOffset(typ,fldoff);
@@ -368,12 +368,12 @@ synchronized CuminRunStatus checkVarHandleMethods() throws CuminRunException, Ca
          thisarg = getValue(0);
          tgtval = getValue(1);
          fldoffset = thisarg.getFieldValue(getSession(),getTyper(),getClock(),
-               "java.lang.invoke.VarHandleObjects.FieldInstanceReadOnly.fieldOffset");
+               "java.lang.invoke.VarHandleObjects.FieldInstanceReadOnly.fieldOffset",getContext());
          fldoff = fldoffset.getNumber(getSession(),getClock()).intValue();
          typ = tgtval.getDataType(getSession(),getClock(),getTyper());
          js = getFieldAtOffset(typ,fldoff);
          if (js != null) {
-            rslt = tgtval.getFieldValue(getSession(),getTyper(),getClock(),js);
+            rslt = tgtval.getFieldValue(getSession(),getTyper(),getClock(),js,getContext());
           }
          break; 
       case "acquireFence" :

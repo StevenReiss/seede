@@ -36,6 +36,7 @@ import edu.brown.cs.ivy.jcomp.JcompType;
 import edu.brown.cs.ivy.jcomp.JcompTyper;
 import edu.brown.cs.seede.acorn.AcornLog;
 import edu.brown.cs.seede.cashew.CashewClock;
+import edu.brown.cs.seede.cashew.CashewContext;
 import edu.brown.cs.seede.cashew.CashewConstants;
 import edu.brown.cs.seede.cashew.CashewException;
 import edu.brown.cs.seede.cashew.CashewValue;
@@ -113,8 +114,8 @@ static CashewValue evaluateUnchecked(CuminRunner runner,JcompTyper typer,CashewC
 
    if (dounbox) {
       if (t1.isClassType() || t2.isClassType()) {
-	 v1 = unboxValue(sess,typer,cc,v1);
-	 v2 = unboxValue(sess,typer,cc,v2);
+	 v1 = unboxValue(sess,typer,cc,v1,runner.getLookupContext());
+	 v2 = unboxValue(sess,typer,cc,v2,runner.getLookupContext());
 	 t1 = v1.getDataType(sess,cc,typer);
 	 t2 = v2.getDataType(sess,cc,typer);
        }
@@ -176,13 +177,15 @@ static CashewValue evaluateUnchecked(CuminRunner runner,JcompTyper typer,CashewC
 	  }
 	 else if (islng) {
 	    long vx = v2.getNumber(sess,cc).longValue();
-	    if (vx == 0) throwException(sess,typer,"java.lang.ArithmeticException");
+	    if (vx == 0) throwException(sess,runner.getLookupContext(),
+                  typer,"java.lang.ArithmeticException");
 	    long v0 = v1.getNumber(sess,cc).longValue() / vx;
 	    rslt = CashewValue.numericValue(typer,typer.LONG_TYPE,v0);
 	  }
 	 else {
 	    int vx = v2.getNumber(sess,cc).intValue();
-	    if (vx == 0) throwException(sess,typer,"java.lang.ArithmeticException");
+	    if (vx == 0) throwException(sess,runner.getLookupContext(),
+                  typer,"java.lang.ArithmeticException");
 	    int v0 = v1.getNumber(sess,cc).intValue() / vx;
 	    rslt = CashewValue.numericValue(typer,typer.INT_TYPE,v0);
 	  }
@@ -296,13 +299,15 @@ static CashewValue evaluateUnchecked(CuminRunner runner,JcompTyper typer,CashewC
 	  }
 	 else if (islng) {
 	    long vx = v2.getNumber(sess,cc).longValue();
-	    if (vx == 0) throwException(sess,typer,"java.lang.ArithmeticException");
+	    if (vx == 0) throwException(sess,runner.getLookupContext(),
+                  typer,"java.lang.ArithmeticException");
 	    long v0 = v1.getNumber(sess,cc).longValue() % vx;
 	    rslt = CashewValue.numericValue(typer,typer.LONG_TYPE,v0);
 	  }
 	 else {
 	    int vx = v2.getNumber(sess,cc).intValue();
-	    if (vx == 0) throwException(runner.getSession(),typer,"java.lang.ArithmeticException");
+	    if (vx == 0) throwException(runner.getSession(),runner.getLookupContext(),
+                  typer,"java.lang.ArithmeticException");
 	    int v0 = v1.getNumber(sess,cc).intValue() % vx;
 	    rslt = CashewValue.numericValue(typer,typer.INT_TYPE,v0);
 	  }
@@ -533,7 +538,7 @@ static CashewValue castValue(CuminRunner cr,CashewValue cv,JcompType target)
    if (styp == target) return cv;
 
    if (target.isNumericType()) {
-      cv = unboxValue(cr.getSession(),typer,cc,cv);
+      cv = unboxValue(cr.getSession(),typer,cc,cv,cr.getLookupContext());
       styp = cv.getDataType(sess,cc,cr.getTyper());
       if (styp.isFloatingType()) {
 	 cv = CashewValue.numericValue(target,cv.getNumber(sess,cc).doubleValue());
@@ -544,7 +549,7 @@ static CashewValue castValue(CuminRunner cr,CashewValue cv,JcompType target)
     }
    else if (target.isBooleanType()) {
       if (styp.getName().equals("java.lang.Boolean")) {
-	 cv = unboxValue(cr.getSession(),typer,cc,cv);
+	 cv = unboxValue(cr.getSession(),typer,cc,cv,cr.getLookupContext());
        }
     }
    else if (styp.isNumericType()) {
@@ -589,11 +594,12 @@ static CashewValue castValue(CuminRunner cr,CashewValue cv,JcompType target)
 }
 
 
-static CashewValue unboxValue(CashewValueSession sess,JcompTyper typer,CashewClock cc,CashewValue cv)
+static CashewValue unboxValue(CashewValueSession sess,JcompTyper typer,CashewClock cc,CashewValue cv,
+      CashewContext ctx)
 	throws CuminRunException, CashewException
 {
    JcompType styp = cv.getDataType(sess,cc,typer);
-   if (styp.isAnyType()) throwException(sess,typer,"java.lang.NullPointerException");
+   if (styp.isAnyType()) throwException(sess,ctx,typer,"java.lang.NullPointerException");
    if (styp.isNumericType() || styp.isBooleanType()) return cv;
 
    switch (styp.getName()) {
@@ -605,7 +611,7 @@ static CashewValue unboxValue(CashewValueSession sess,JcompTyper typer,CashewClo
       case "java.lang.Float" :
       case "java.lang.Double" :
       case "java.lang.Boolean" :
-	 cv = cv.getFieldValue(sess,typer,cc,styp.getName() + ".value");
+	 cv = cv.getFieldValue(sess,typer,cc,styp.getName() + ".value",ctx);
 	 break;
     }
 
@@ -727,25 +733,25 @@ private static String computeString(CuminRunner runner,JcompTyper typer,CashewCl
       return String.valueOf(v);
     }
    else if (typ.isPrimitiveType() || typ.isStringType()) {
-      return getStringValue(runner.getSession(),arg,typer,cc);
+      return getStringValue(runner.getSession(),arg,typer,cc,runner.getLookupContext());
     }
    String sgn = "(Ljava/lang/Object;)Ljava/lang/String;";
    if (typ.isArrayType() && typ.getBaseType().isCharType()) {
       sgn = "([C)Ljava/lang/String;";
     }
    CashewValue cv = invokeConverter(runner,"java.lang.String","valueOf",sgn,arg);
-   return getStringValue(runner.getSession(),cv,typer,cc);
+   return getStringValue(runner.getSession(),cv,typer,cc,runner.getLookupContext());
 }
 
 
 
-static CashewValue evaluate(CashewValueSession sess,JcompTyper typer,
+static CashewValue evaluate(CashewValueSession sess,CashewContext ctx,JcompTyper typer,
       CashewClock cc,CuminOperator op,CashewValue v1)
 	throws CuminRunException, CashewException
 {
    JcompType t1 = v1.getDataType(sess,cc,typer);
    if (t1.isClassType()) {
-      v1 = unboxValue(sess,typer,cc,v1);
+      v1 = unboxValue(sess,typer,cc,v1,ctx);
       t1 = v1.getDataType(sess,cc,typer);
     }
    boolean isflt = t1.isFloatType();
@@ -900,33 +906,35 @@ static CashewValue evaluate(CashewValueSession sess,JcompTyper typer,
 /*										*/
 /********************************************************************************/
 
-static void throwException(CashewValueSession sess,JcompTyper typer,String exc) throws CuminRunException
+static void throwException(CashewValueSession sess,CashewContext ctx,
+      JcompTyper typer,String exc) throws CuminRunException
 {
    JcompType typ = typer.findSystemType(exc);
-   throwException(sess,typer,typ);
+   throwException(sess,ctx,typer,typ);
 }
 
 
-static void throwException(CashewValueSession sess,JcompTyper typer,JcompType typ) 
+static void throwException(CashewValueSession sess,CashewContext ctx,
+      JcompTyper typer,JcompType typ) 
         throws CuminRunException
 {
-   CashewValue cv = CashewValue.objectValue(sess,typer,typ);
+   CashewValue cv = CashewValue.objectValue(sess,ctx,typer,typ);
    throw new CuminRunException(Reason.EXCEPTION,typ.toString(),null,cv);
 }
 
 
 
-static CuminRunStatus returnException(CashewValueSession sess,JcompTyper typer,String exc)
+static CuminRunStatus returnException(CashewValueSession sess,CashewContext ctx,JcompTyper typer,String exc)
 {
    JcompType typ = typer.findSystemType(exc);
-   return returnException(sess,typer,typ);
+   return returnException(sess,ctx,typer,typ);
 }
 
 
 
-static CuminRunStatus returnException(CashewValueSession sess,JcompTyper typer,JcompType typ)
+static CuminRunStatus returnException(CashewValueSession sess,CashewContext ctx,JcompTyper typer,JcompType typ)
 {
-   CashewValue cv = CashewValue.objectValue(sess,typer,typ);
+   CashewValue cv = CashewValue.objectValue(sess,ctx,typer,typ);
    return CuminRunStatus.Factory.createException(sess,cv);
 }
 
@@ -965,13 +973,14 @@ static CashewValue buildArray(CuminRunner runner,int idx,int [] bnds,JcompType b
 /********************************************************************************/
 
 static String getStringValue(CashewValueSession sess,CashewValue cv,
-      JcompTyper typer,CashewClock cc) throws CashewException
+      JcompTyper typer,CashewClock cc,CashewContext ctx) throws CashewException
 {
    if (!cv.getDataType(sess,cc,null).isPrimitiveType() && cv.isNull(sess,cc)) return "null";
 
    JcompType jt = cv.getDataType(sess,cc,typer);
    if (jt.isEnumType()) {
-      return cv.getFieldValue(sess,typer,cc,"java.lang.Enum.name").getString(sess,typer,cc);
+      return cv.getFieldValue(sess,typer,cc,"java.lang.Enum.name",ctx).
+         getString(sess,typer,cc);
     }
    String rslt = cv.getString(sess,typer,cc,1,false);
 

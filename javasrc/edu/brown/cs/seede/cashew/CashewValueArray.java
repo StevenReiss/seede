@@ -85,13 +85,13 @@ CashewValueArray(JcompTyper typer,JcompType jt,int dim,
 /********************************************************************************/
 
 @Override public CashewValue getFieldValue(CashewValueSession sess,
-      JcompTyper typer,CashewClock cc,String nm,boolean force) 
+      JcompTyper typer,CashewClock cc,String nm,CashewContext ctx,boolean force) 
         throws CashewException
 {
    if (nm != null && nm.equals("length")) {
       return CashewValue.numericValue(typer,typer.INT_TYPE,dim_size);
     }
-   return super.getFieldValue(sess,typer,cc,nm,force);
+   return super.getFieldValue(sess,typer,cc,nm,ctx,force);
 }
 
 @Override public int getDimension(CashewValueSession s,CashewClock cc)

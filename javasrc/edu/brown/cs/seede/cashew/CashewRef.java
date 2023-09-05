@@ -206,12 +206,12 @@ private void initialize(boolean init,Object cv)
 
 
 @Override public CashewValue getFieldValue(CashewValueSession sess,
-      JcompTyper typer,CashewClock cc,String name,boolean force)
+      JcompTyper typer,CashewClock cc,String name,CashewContext ctx,boolean force)
         throws CashewException
 {
    CashewValue cv = getValueAt(sess,cc);
    if (cv == null) return null;
-   return cv.getFieldValue(sess,typer,cc,name,force);
+   return cv.getFieldValue(sess,typer,cc,name,ctx,force);
 }
 
 

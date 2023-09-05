@@ -143,6 +143,7 @@ CashewValue getCashewValue(SesameSessionLaunch sess)
     }
    
    JcompTyper typer = sess.getProject().getTyper();
+   String addall = null;
 
    if (val_kind == ValueKind.UNKNOWN && val_type == null) {
       return null;
@@ -198,6 +199,11 @@ CashewValue getCashewValue(SesameSessionLaunch sess)
          typ = typer.findType(ityp);
        }
     }
+   if (typ == null && val_type.startsWith("java.lang.invoke.VarHandleObjects")) {
+      String ltyp = "java.lang.invoke.VarHandle";
+      typ = typer.findType(ltyp);
+      addall = ltyp;
+    }
    if (typ == null) {
       AcornLog.logE("TYPE " + val_type +  " " + vtype + " not found");
       return CashewValue.nullValue(typer);
@@ -219,6 +225,7 @@ CashewValue getCashewValue(SesameSessionLaunch sess)
 	 Map<String,Object> inits = new HashMap<>();
 	 typ.defineAll(typer);
 	 Map<String,SesameValueData> sets = new HashMap<>();
+         Map<String,SesameValueData> other = new HashMap<>();
 	 for (Map.Entry<String,JcompType> ent : typ.getFields().entrySet()) {
 	    String fnm = ent.getKey();
 	    String cnm = null;
@@ -239,6 +246,22 @@ CashewValue getCashewValue(SesameSessionLaunch sess)
 	       inits.put(fnm,def);
 	     }
 	  }
+         if (addall != null) {
+           for (String k : sub_values.keySet()) {
+              String k1 = k;
+              SesameValueData fsvd = sub_values.get(k);
+              int idx1 = k.lastIndexOf("?");
+              if (idx1 >= 0) k1 = k.substring(idx1+1);
+              int idx2 = k1.lastIndexOf(".");
+              if (idx2 > 0) {
+                 String cnm = k1.substring(0,idx2);
+                 if (cnm.equals(addall)) continue;
+               }
+              fsvd = sess.getUniqueValue(fsvd);
+              other.put(k1,fsvd);
+            }
+            
+          }
 	 if (hash_code == 0) {
 	    inits.put(CashewConstants.HASH_CODE_FIELD,
                   new DeferredLookup(CashewConstants.HASH_CODE_FIELD));
@@ -247,7 +270,8 @@ CashewValue getCashewValue(SesameSessionLaunch sess)
 	    CashewValue hvl = CashewValue.numericValue(typer,typer.INT_TYPE,hash_code);
 	    inits.put(CashewConstants.HASH_CODE_FIELD,hvl);
 	  }
-	 result_value = CashewValue.objectValue(sess,typer,typ,inits,true);
+	 result_value = CashewValue.objectValue(sess,null,typer,
+               typ,inits,true);
 	
 	 for (Map.Entry<String,SesameValueData> ent : sets.entrySet()) {
 	    CashewValue cv = ent.getValue().getCashewValue(sess);
@@ -258,6 +282,10 @@ CashewValue getCashewValue(SesameSessionLaunch sess)
 	       AcornLog.logE("Unexpected error setting field value",e);
 	     }
 	  }
+         for (Map.Entry<String,SesameValueData> ent : other.entrySet()) {
+            CashewValue cv = ent.getValue().getCashewValue(sess);
+            result_value.addFieldValue(sess,typer,null,ent.getKey(),cv);
+          }
 	 break;
       case ARRAY :
 	 if (array_length <= 1024) computeValues(sess);

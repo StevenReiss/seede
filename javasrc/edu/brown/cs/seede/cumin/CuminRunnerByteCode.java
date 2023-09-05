@@ -419,7 +419,8 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException, CashewExc
       case INEG :
       case LNEG :
 	 v0 = execution_stack.pop();
-	 vstack = CuminEvaluator.evaluate(sess,typer,execution_clock,CuminOperator.NEG,v0);
+	 vstack = CuminEvaluator.evaluate(sess,lookup_context,
+               typer,execution_clock,CuminOperator.NEG,v0);
 	 break;
 
 
@@ -722,7 +723,8 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException, CashewExc
 	 v1 = execution_stack.pop();
 	 idxv = v0.getNumber(sess,execution_clock).intValue();
 	 if (idxv < 0 || idxv >= v1.getDimension(sess,execution_clock))
-	    return CuminEvaluator.returnException(sess,typer,"java.lang.ArrayIndexOutOfBoundsException");
+	    return CuminEvaluator.returnException(sess,lookup_context,
+                  typer,"java.lang.ArrayIndexOutOfBoundsException");
 	 vstack = v1.getIndexValue(sess,execution_clock,idxv);
 	 break;
       case BALOAD :
@@ -732,7 +734,8 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException, CashewExc
 	 v1 = execution_stack.pop();
 	 idxv = v0.getNumber(sess,execution_clock).intValue();
 	 if (idxv < 0 || idxv >= v1.getDimension(sess,execution_clock))
-	    return CuminEvaluator.returnException(sess,typer,"java.lang.ArrayIndexOutOfBoundsException");
+	    return CuminEvaluator.returnException(sess,lookup_context,
+                  typer,"java.lang.ArrayIndexOutOfBoundsException");
 	 vstack = v1.getIndexValue(sess,execution_clock,idxv);
 	 vstack = CuminEvaluator.castValue(this,vstack,typer.INT_TYPE);
 	 break;
@@ -744,7 +747,8 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException, CashewExc
 	 v1 = execution_stack.pop();
 	 idxv = v0.getNumber(sess,execution_clock).intValue();
 	 if (idxv < 0 || idxv >= v1.getDimension(sess,execution_clock))
-	    return CuminEvaluator.returnException(sess,typer,"java.lang.ArrayIndexOutOfBoundsException");
+	    return CuminEvaluator.returnException(sess,lookup_context,
+                  typer,"java.lang.ArrayIndexOutOfBoundsException");
 	 vstack = v1.getIndexValue(sess,execution_clock,idxv);
 	 break;
 
@@ -755,7 +759,8 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException, CashewExc
 	 v2 = execution_stack.pop();
 	 idxv = v1.getNumber(sess,execution_clock).intValue();
 	 if (idxv < 0 || idxv >= v2.getDimension(sess,execution_clock))
-	    return CuminEvaluator.returnException(sess,typer,"java.lang.ArrayIndexOutOfBoundsException");
+	    return CuminEvaluator.returnException(sess,lookup_context,
+                  typer,"java.lang.ArrayIndexOutOfBoundsException");
 	 v2.setIndexValue(sess,execution_clock,idxv,v0);
 	 break;
       case BASTORE :
@@ -765,7 +770,8 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException, CashewExc
 	 v2 = execution_stack.pop();
 	 idxv = v1.getNumber(sess,execution_clock).intValue();
 	 if (idxv < 0 || idxv >= v2.getDimension(sess,execution_clock))
-	    return CuminEvaluator.returnException(sess,typer,"java.lang.ArrayIndexOutOfBoundsException");
+	    return CuminEvaluator.returnException(sess,lookup_context,
+                  typer,"java.lang.ArrayIndexOutOfBoundsException");
 	 v2.setIndexValue(sess,execution_clock,idxv,v0);
 	 break;
       case CASTORE :
@@ -775,7 +781,8 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException, CashewExc
 	 v2 = execution_stack.pop();
 	 idxv = v1.getNumber(sess,execution_clock).intValue();
 	 if (idxv < 0 || idxv >= v2.getDimension(sess,execution_clock))
-	    return CuminEvaluator.returnException(sess,typer,"java.lang.ArrayIndexOutOfBoundsException");
+	    return CuminEvaluator.returnException(sess,lookup_context,
+                  typer,"java.lang.ArrayIndexOutOfBoundsException");
 	 v2.setIndexValue(sess,execution_clock,idxv,v0);
 	 break;
       case DASTORE :
@@ -785,7 +792,8 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException, CashewExc
 	 v2 = execution_stack.pop();
 	 idxv = v1.getNumber(sess,execution_clock).intValue();
 	 if (idxv < 0 || idxv >= v2.getDimension(sess,execution_clock))
-	    return CuminEvaluator.returnException(sess,typer,"java.lang.ArrayIndexOutOfBoundsException");
+	    return CuminEvaluator.returnException(sess,lookup_context,
+                  typer,"java.lang.ArrayIndexOutOfBoundsException");
 	 v2.setIndexValue(sess,execution_clock,idxv,v0);
 	 break;
       case FASTORE :
@@ -795,7 +803,8 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException, CashewExc
 	 v2 = execution_stack.pop();
 	 idxv = v1.getNumber(sess,execution_clock).intValue();
 	 if (idxv < 0 || idxv >= v2.getDimension(sess,execution_clock))
-	    return CuminEvaluator.returnException(sess,typer,"java.lang.ArrayIndexOutOfBoundsException");
+	    return CuminEvaluator.returnException(sess,lookup_context,
+                  typer,"java.lang.ArrayIndexOutOfBoundsException");
 	 v2.setIndexValue(sess,execution_clock,idxv,v0);
 	 break;
       case IASTORE :
@@ -805,7 +814,8 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException, CashewExc
 	 v2 = execution_stack.pop();
 	 idxv = v1.getNumber(sess,execution_clock).intValue();
 	 if (idxv < 0 || idxv >= v2.getDimension(sess,execution_clock))
-	    return CuminEvaluator.returnException(sess,typer,"java.lang.ArrayIndexOutOfBoundsException");
+	    return CuminEvaluator.returnException(sess,lookup_context,
+                  typer,"java.lang.ArrayIndexOutOfBoundsException");
 	 v2.setIndexValue(sess,execution_clock,idxv,v0);
 	 break;
       case LASTORE :
@@ -815,7 +825,8 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException, CashewExc
 	 v2 = execution_stack.pop();
 	 idxv = v1.getNumber(sess,execution_clock).intValue();
 	 if (idxv < 0 || idxv >= v2.getDimension(sess,execution_clock))
-	    return CuminEvaluator.returnException(sess,typer,"java.lang.ArrayIndexOutOfBoundsException");
+	    return CuminEvaluator.returnException(sess,lookup_context,
+                  typer,"java.lang.ArrayIndexOutOfBoundsException");
 	 v2.setIndexValue(sess,execution_clock,idxv,v0);
 	 break;
       case SASTORE :
@@ -825,7 +836,8 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException, CashewExc
 	 v2 = execution_stack.pop();
 	 idxv = v1.getNumber(sess,execution_clock).intValue();
 	 if (idxv < 0 || idxv >= v2.getDimension(sess,execution_clock))
-	    return CuminEvaluator.returnException(sess,typer,"java.lang.ArrayIndexOutOfBoundsException");
+	    return CuminEvaluator.returnException(sess,lookup_context,
+                  typer,"java.lang.ArrayIndexOutOfBoundsException");
 	 v2.setIndexValue(sess,execution_clock,idxv,v0);
 	 break;
 
@@ -934,7 +946,8 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException, CashewExc
 	 v0 = execution_stack.peek(0);
 	 jty = convertType(jins.getTypeReference());
 	 if (!v0.getDataType(sess,execution_clock,type_converter).isCompatibleWith(jty)) {
-	    return CuminEvaluator.returnException(sess,typer,"java.lang.ClassCastException");
+	    return CuminEvaluator.returnException(sess,lookup_context,
+                  typer,"java.lang.ClassCastException");
 	  }
 	 break;
 
@@ -946,9 +959,10 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException, CashewExc
 	    nm = fld.getDeclaringClass().getName() + "." + fld.getName();
 	  }
 	 if (v0.isNull(sess,execution_clock))
-	    return CuminEvaluator.returnException(sess,typer,"java.lang.NullPointerException");
+	    return CuminEvaluator.returnException(sess,lookup_context,
+                  typer,"java.lang.NullPointerException");
          AcornLog.logD("CUMIN","Field lookup for " + v0.toString(runner_session) + " " + execution_clock.getTimeValue());
-	 vstack = v0.getFieldValue(sess,typer,execution_clock,nm);
+	 vstack = v0.getFieldValue(sess,typer,execution_clock,nm,lookup_context);
          AcornLog.logD("CUMIN","RESULT: " + nm + " = " +  vstack.toString(runner_session));
 	 vstack = vstack.getActualValue(sess,execution_clock);
          AcornLog.logD("CUMIN","ACTUAL RESULT: " + (vstack == null ? null : vstack.toString(runner_session)));
@@ -969,7 +983,8 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException, CashewExc
 	 String dcname = fld.getDeclaringClass().getName();
 	 nm = dcname + "." + fld.getName();
 	 if (v1.isNull(sess,execution_clock))
-	    return CuminEvaluator.returnException(sess,typer,"java.lang.NullPointerException");
+	    return CuminEvaluator.returnException(sess,lookup_context,
+                  typer,"java.lang.NullPointerException");
 	 v1.setFieldValue(sess,typer,execution_clock,nm,v0);
 	 if (AcornLog.isTracing()) AcornLog.logT("RESULT IS " + v0.toString(runner_session));
 	 break;
@@ -1135,7 +1150,7 @@ private void handleDynamicCall(JcodeInstruction ins)
 	    CashewValue v0 = execution_stack.pop();
 	    if (v0.isNull(sess,getClock())) buf.append("null");
 	    try {
-	       String v1 = CuminEvaluator.getStringValue(sess,v0,typer,getClock());
+	       String v1 = CuminEvaluator.getStringValue(sess,v0,typer,getClock(),lookup_context);
 	       buf.append(v1);
 	     }
 	    catch (CashewException e) {
@@ -1153,7 +1168,7 @@ private void handleDynamicCall(JcodeInstruction ins)
       for (int i = 0; i < argtyps.length; ++i) {
 	 CashewValue v0 = execution_stack.pop();
 	 try {
-	    String v1 = CuminEvaluator.getStringValue(sess,v0,typer,getClock());
+	    String v1 = CuminEvaluator.getStringValue(sess,v0,typer,getClock(),lookup_context);
 	    buf.append(v1);
 	  }
 	 catch (CashewException e) {
@@ -1519,6 +1534,10 @@ private CuminRunStatus checkSpecial() throws CuminRunException
          case "java.lang.ref.Reference" :
             cde = new CuminDirectEvaluation(this);
             sts = cde.checkReferenceMethods();
+            break;
+         case "java.util.ResourceBundle" :
+            cde = new CuminDirectEvaluation(this);
+            sts = cde.checkResourceBundleMethods();
             break;
        }
     }

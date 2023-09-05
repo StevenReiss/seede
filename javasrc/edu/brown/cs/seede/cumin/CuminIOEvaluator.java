@@ -252,10 +252,10 @@ CuminRunStatus checkFileMethods() throws CashewException, CuminRunException
           }
        }
       catch (IOException e) {
-         return CuminEvaluator.returnException(sess,typer,"java.io.IOException");
+         return CuminEvaluator.returnException(sess,getContext(),typer,"java.io.IOException");
        }
       catch (NullPointerException e) {
-         CuminEvaluator.throwException(getSession(),getTyper(),e.getClass().getName());
+         CuminEvaluator.throwException(getSession(),getContext(),getTyper(),e.getClass().getName());
        }
     }
 
@@ -279,13 +279,16 @@ CuminRunStatus checkOutputStreamMethods() throws CashewException
    JcompTyper typer = getTyper();
    CashewValueSession sess = getSession();
    CashewValue thisarg = getValue(0);
-   CashewValue fdval = thisarg.getFieldValue(sess,typer,getClock(),"java.io.FileOutputStream.fd");
+   CashewValue fdval = thisarg.getFieldValue(sess,typer,getClock(),
+         "java.io.FileOutputStream.fd",getContext());
    if (fdval.isNull(sess,getClock())) return null;
-   CashewValue fd = fdval.getFieldValue(sess,typer,getClock(),"java.io.FileDescriptor.fd");
+   CashewValue fd = fdval.getFieldValue(sess,typer,getClock(),
+         "java.io.FileDescriptor.fd",getContext());
    int fdv = fd.getNumber(sess,getClock()).intValue();
    String path = null;
    try {
-      CashewValue pathv = thisarg.getFieldValue(sess,typer,getClock(),"java.io.FileOutputStream.path");
+      CashewValue pathv = thisarg.getFieldValue(sess,typer,getClock(),
+            "java.io.FileOutputStream.path",getContext());
       if (!pathv.isNull(sess,getClock())) path = pathv.getString(sess,typer,getClock());
     }
    catch (Throwable t) {
@@ -303,7 +306,7 @@ CuminRunStatus checkOutputStreamMethods() throws CashewException
 	 if (path != null && fdv < 0) {
 	    File f = new File(path);
 	    if (f.exists() && !f.canWrite()) {
-	       return CuminEvaluator.returnException(sess,typer,"java.io.IOException");
+	       return CuminEvaluator.returnException(sess,getContext(),typer,"java.io.IOException");
 	     }
 	    //TODO: check that directory is writable
 	  }
@@ -347,13 +350,16 @@ CuminRunStatus checkInputStreamMethods() throws CashewException
    JcompTyper typer = getTyper();
    CashewValueSession sess = getSession();
    CashewValue thisarg = getValue(0);
-   CashewValue fdval = thisarg.getFieldValue(sess,typer,getClock(),"java.io.FileInputStream.fd");
+   CashewValue fdval = thisarg.getFieldValue(sess,typer,getClock(),
+         "java.io.FileInputStream.fd",getContext());
    if (fdval.isNull(sess,getClock())) return null;
-   CashewValue fd = fdval.getFieldValue(sess,typer,getClock(),"java.io.FileDescriptor.fd");
+   CashewValue fd = fdval.getFieldValue(sess,typer,getClock(),
+         "java.io.FileDescriptor.fd",getContext());
    int fdv = fd.getNumber(sess,getClock()).intValue();
    String path = null;
    try {
-      CashewValue pathv = thisarg.getFieldValue(sess,typer,getClock(),"java.io.FileInputStream.path");
+      CashewValue pathv = thisarg.getFieldValue(sess,typer,getClock(),
+            "java.io.FileInputStream.path",getContext());
       if (!pathv.isNull(sess,getClock())) path = pathv.getString(sess,typer,getClock());
     }
    catch (Throwable t) {
@@ -371,7 +377,7 @@ CuminRunStatus checkInputStreamMethods() throws CashewException
 	    if (path != null && fdv < 0) {
 	       File f = new File(path);
 	       if (!f.canRead()) {
-                  return CuminEvaluator.returnException(sess,typer,"java.io.IOException");
+                  return CuminEvaluator.returnException(sess,getContext(),typer,"java.io.IOException");
 		}
 	     }
 	    if (fdv < 0) {
@@ -416,7 +422,7 @@ CuminRunStatus checkInputStreamMethods() throws CashewException
        }
     }
    catch (IOException e) {
-      return CuminEvaluator.returnException(sess,typer,"java.io.IOException");
+      return CuminEvaluator.returnException(sess,getContext(),typer,"java.io.IOException");
     }
 
    return new CuminRunValue(Reason.RETURN,rslt);
@@ -490,11 +496,13 @@ CuminRunStatus checkPrintMethods(String cls) throws CashewException
    CashewValueSession sess = getSession();
    
    CashewValue thisarg = getValue(0);
-   CashewValue fdval = thisarg.getFieldValue(sess,typer,getClock(),cls + ".autoFlush");
+   CashewValue fdval = thisarg.getFieldValue(sess,typer,getClock(),
+         cls + ".autoFlush",getContext());
    if (!fdval.getBoolean(sess,getClock())) {
       forceflush = true;
     }
-   CashewValue cv1 = thisarg.getFieldValue(sess,typer,getClock(),ocls + ".out");
+   CashewValue cv1 = thisarg.getFieldValue(sess,typer,getClock(),
+         ocls + ".out",getContext());
    while (!cv1.getDataType(sess,getClock(),null).getName().equals("java.io.FileOutputStream")) {
       String typ = cv1.getDataType(sess,getClock(),null).getName();
       String fld = "out";
@@ -515,20 +523,24 @@ CuminRunStatus checkPrintMethods(String cls) throws CashewException
             break;
        }
       if (nxt == null) return null;
-      cv1 = cv1.getFieldValue(sess,typer,getClock(),nxt + "." + fld,false);
+      cv1 = cv1.getFieldValue(sess,typer,getClock(),
+            nxt + "." + fld,getContext(),false);
       if (cv1 == null) return null;
     }
     
    String sfx = null;
    CashewInputOutputModel mdl = getContext().getIOModel();
-   fdval = cv1.getFieldValue(sess,typer,getClock(),"java.io.FileOutputStream.fd");
+   fdval = cv1.getFieldValue(sess,typer,getClock(),
+         "java.io.FileOutputStream.fd",getContext());
    if (fdval.isNull(sess,getClock())) return null;
-   CashewValue fd = fdval.getFieldValue(sess,typer,getClock(),"java.io.FileDescriptor.fd");
+   CashewValue fd = fdval.getFieldValue(sess,typer,getClock(),
+         "java.io.FileDescriptor.fd",getContext());
    int fdv = fd.getNumber(sess,getClock()).intValue();
    
    boolean app = false;
    try {
-      CashewValue appv = cv1.getFieldValue(sess,typer,getClock(),"java.io.FileOutputStream.append");
+      CashewValue appv = cv1.getFieldValue(sess,typer,getClock(),
+            "java.io.FileOutputStream.append",getContext());
       app = appv.getBoolean(sess,getClock());
     }
    catch (Throwable t) {
@@ -537,7 +549,8 @@ CuminRunStatus checkPrintMethods(String cls) throws CashewException
    
    String path = null;
    try {
-      CashewValue pathv = cv1.getFieldValue(sess,typer,getClock(),"java.io.FileOutputStream.path");
+      CashewValue pathv = cv1.getFieldValue(sess,typer,getClock(),
+            "java.io.FileOutputStream.path",getContext());
       if (!pathv.isNull(sess,getClock())) path = pathv.getString(sess,typer,getClock());
     }
    catch (Throwable t) {

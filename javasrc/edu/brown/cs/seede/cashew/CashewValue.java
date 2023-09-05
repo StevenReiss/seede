@@ -103,7 +103,7 @@ public static CashewValue createValue(CashewValueSession sess,JcompTyper typer,E
    else {
       String val = IvyXml.getTextElement(xml,"VALUE");
       if (val != null && val.equals("null")) return nullValue(typer);
-      return objectValue(sess,typer,jtype);
+      return objectValue(sess,null,typer,jtype);
     }
 }
 
@@ -372,18 +372,18 @@ public static CashewValue arrayValue(JcompTyper typer,String [] arr)
    return arrayValue(typer,jty,arr.length,inits);
 }
 
-public static CashewValue objectValue(CashewValueSession sess,JcompTyper typer,JcompType otyp)
+public static CashewValue objectValue(CashewValueSession sess,CashewContext ctx,JcompTyper typer,JcompType otyp)
 {
-   return objectValue(sess,typer,otyp,null,false);
+   return objectValue(sess,ctx,typer,otyp,null,false);
 }
 
 
-public static CashewValue objectValue(CashewValueSession sess,JcompTyper typer,JcompType otyp,Map<String,Object> inits,boolean caninit)
+public static CashewValue objectValue(CashewValueSession sess,CashewContext ctx,JcompTyper typer,JcompType otyp,Map<String,Object> inits,boolean caninit)
 {
    if (otyp.isParameterizedType()) otyp = otyp.getBaseType();
 
    if (otyp.getName().equals("java.io.File")) {
-      CashewValueFile cf = new CashewValueFile(sess,typer,otyp,inits,caninit);
+      CashewValueFile cf = new CashewValueFile(sess,ctx,typer,otyp,inits,caninit);
       return cf;
     }
 
@@ -534,15 +534,15 @@ public CashewValue getActualValue(CashewValueSession sess,CashewClock cc)
 }
 
 public CashewValue getFieldValue(CashewValueSession sess,
-      JcompTyper typer,CashewClock cc,String name)
+      JcompTyper typer,CashewClock cc,String name,CashewContext ctx)
 	throws CashewException
 {
-   return getFieldValue(sess,typer,cc,name,true);
+   return getFieldValue(sess,typer,cc,name,ctx,true);
 }
 
 
 public CashewValue getFieldValue(CashewValueSession sess,JcompTyper typer,
-      CashewClock cc,String name,boolean force) throws CashewException
+      CashewClock cc,String name,CashewContext ctx,boolean force) throws CashewException
 {
    throw new CashewException("Value is not an object");
 }
@@ -551,6 +551,13 @@ public CashewValue setFieldValue(CashewValueSession sess,JcompTyper typer,
       CashewClock cc,String name,CashewValue v) throws CashewException
 {
    throw new CashewException("Value is not an object");
+}
+
+
+public CashewValue addFieldValue(CashewValueSession sess,JcompTyper typer,
+      CashewClock cc,String name,CashewValue v)
+{ 
+   return this;
 }
 
 
@@ -619,7 +626,7 @@ public int getHashCode(CashewClock cc,CashewContext ctx)
 
 public Map<Object,CashewValue> getBindings()	{ return null; }
 
-CashewValue lookupVariableName(CashewValueSession sess,
+CashewValue lookupVariableName(CashewValueSession sess,CashewContext ctx,
       JcompTyper typer,String name,long when) throws CashewException
 {
    if (name == null || name.length() == 0) return this;
@@ -636,9 +643,9 @@ CashewValue lookupVariableName(CashewValueSession sess,
       val = val.getIndexValue(sess,null,index);
     }
    else {
-      val = val.getFieldValue(sess,typer,null,name);
+      val = val.getFieldValue(sess,typer,null,name,ctx);
     }
-   if (rest != null) val = val.lookupVariableName(sess,typer,rest,when);
+   if (rest != null) val = val.lookupVariableName(sess,ctx,typer,rest,when);
 
    return val;
 }
@@ -843,7 +850,7 @@ private static class ValueNull extends CashewValue
     }
 
    @Override public CashewValue getFieldValue(CashewValueSession sess,
-         JcompTyper typer,CashewClock cc,String nm,boolean force) {
+         JcompTyper typer,CashewClock cc,String nm,CashewContext ctx,boolean force) {
       throw new NullPointerException();
     }
 

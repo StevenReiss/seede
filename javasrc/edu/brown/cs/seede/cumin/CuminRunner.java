@@ -404,7 +404,7 @@ protected CuminRunStatus checkTimeout()
    if (max_time <= 0) return null;
    if (execution_clock.getTimeValue() > max_time) {
       AcornLog.logI("Timeout " + max_time);
-      return CuminRunStatus.Factory.createTimeout(getSession(),getTyper());
+      return CuminRunStatus.Factory.createTimeout(getSession(),lookup_context,getTyper());
     }
 
    return null;
@@ -418,7 +418,8 @@ protected void checkStackOverflow() throws CuminRunException
 
    if (depth > max_depth) {
       AcornLog.logI("Stack overflow " + max_depth);
-      CuminEvaluator.throwException(getSession(),getTyper(),"java.lang.StackOverflowError");
+      CuminEvaluator.throwException(getSession(),lookup_context,
+            getTyper(),"java.lang.StackOverflowError");
 //    throw CuminRunStatus.Factory.createStackOverflow();
     }
 
@@ -446,7 +447,8 @@ CuminRunner handleCall(CashewClock cc,JcompSymbol method,List<CashewValue> args,
 
    if (!method.isStatic() && ctyp != CallType.STATIC && ctyp != CallType.SPECIAL) {
       if (thisarg == null || thisarg.isNull(getSession(),cc)) {
-	 CuminEvaluator.throwException(getSession(),getTyper(),"java.lang.NullPointerException");
+	 CuminEvaluator.throwException(getSession(),lookup_context,
+               getTyper(),"java.lang.NullPointerException");
        }
     }
 
@@ -550,7 +552,8 @@ CuminRunner handleCall(CashewClock cc,JcodeMethod method,List<CashewValue> args,
          cmethod = method;
        }
       else {
-         CuminEvaluator.throwException(getSession(),type_converter,"java.lang.NullPointerException");
+         CuminEvaluator.throwException(getSession(),lookup_context,
+               type_converter,"java.lang.NullPointerException");
        }
     }
 
@@ -694,17 +697,7 @@ private JcodeMethod findTargetMethod(CashewClock cc,JcodeMethod method,
       return null;
     }
 
-   JcodeClass cls = null;
-
-   String bnm = base.getName();
-   for ( ; ; ) {
-      cls = getCodeFactory().findClass(bnm);
-      if (cls != null) break;
-      int idx = bnm.lastIndexOf(".");
-      if (idx < 0) break;
-      bnm = bnm.substring(0,idx) + "$" + bnm.substring(idx+1);
-    }
-   if (cls == null) cls = getCodeFactory().findClass("java.lang.Object");
+   JcodeClass cls = findCodeClass(base);
    JcodeMethod cmethod = cls.findInheritedMethod(method.getName(),method.getDescription());
    
    if (cmethod == null && method.isVarArgs()) {                 // handle polymorphic methods
@@ -714,6 +707,29 @@ private JcodeMethod findTargetMethod(CashewClock cc,JcodeMethod method,
     }
 
    return cmethod;
+}
+
+
+private JcodeClass findCodeClass(JcompType base)
+{
+   JcodeClass cls = null;
+   
+   String bnm = base.getName();
+   for ( ; ; ) {
+      cls = getCodeFactory().findClass(bnm);
+      if (cls != null) break;
+      int idx = bnm.lastIndexOf(".");
+      if (idx < 0) break;
+      bnm = bnm.substring(0,idx) + "$" + bnm.substring(idx+1);
+    }
+   if (cls == null) {
+      JcompType sup = base.getSuperType();
+      if (sup != null && sup != base) cls = findCodeClass(sup);
+    }
+   
+   if (cls == null) cls = getCodeFactory().findClass("java.lang.Object");
+   
+   return cls;
 }
 
 
@@ -814,7 +830,7 @@ CashewValue handleNew(JcompType nty)
     }
    else {
       nty.defineAll(getTyper());
-      rslt = CashewValue.objectValue(getSession(),getTyper(),nty);
+      rslt = CashewValue.objectValue(getSession(),getLookupContext(),getTyper(),nty);
     }
 
    return rslt;

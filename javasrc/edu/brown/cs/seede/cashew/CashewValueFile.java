@@ -64,12 +64,12 @@ public CashewValueFile(JcompTyper typer,File path)
 }
 
 
-CashewValueFile(CashewValueSession sess,JcompTyper typer,
+CashewValueFile(CashewValueSession sess,CashewContext ctx,JcompTyper typer,
       JcompType jt,Map<String,Object> inits,boolean caninit)
 {
    super(typer,jt,inits,caninit);
    user_file = null;
-   CashewValue cv = super.getFieldValue(sess,typer,null,"java.io.File.path",true);
+   CashewValue cv = super.getFieldValue(sess,typer,null,"java.io.File.path",ctx,true);
    AcornLog.logD("CASHEW","Setup CashewValueFile " + cv + " " + inits + " " + caninit);
    if (!cv.isNull(sess,null)) {
       try { 
@@ -108,7 +108,7 @@ public File getFile()                   { return user_file; }
 
 
 @Override public CashewValue getFieldValue(CashewValueSession sess,
-      JcompTyper typer,CashewClock cc,String nm,boolean force)
+      JcompTyper typer,CashewClock cc,String nm,CashewContext ctx,boolean force)
 {
    switch (nm) {
       case "java.io.File.path" :

@@ -50,7 +50,7 @@ abstract class CuminNativeEvaluator implements CuminConstants, CashewConstants
 protected CuminRunnerByteCode	exec_runner;
 
 
-
+ 
 /********************************************************************************/
 /*										*/
 /*	Constructors								*/
@@ -217,7 +217,8 @@ protected CashewValue getArrayValue(int idx) throws CuminRunException
       exc = "java.lang.NullPointerException";
    if (!array.getDataType(sess,cc,getTyper()).isArrayType())
       exc = "java.lang.IllegalArgumentException";
-   if (exc != null) CuminEvaluator.throwException(sess,getTyper(),exc);
+   if (exc != null) CuminEvaluator.throwException(sess,getContext(),
+         getTyper(),exc);
    return array;
 }
 
@@ -231,14 +232,16 @@ protected CashewValueClass getTypeValue(int idx)
 
 protected String getStringFieldValue(CashewValue obj,String fld) throws CashewException
 {
-   CashewValue cv = obj.getFieldValue(getSession(),getTyper(),getClock(),fld);
+   CashewValue cv = obj.getFieldValue(getSession(),getTyper(),getClock(),
+         fld,getContext());
    return cv.getString(getSession(),getTyper(),getClock());
 }
 
 
 protected int getIntFieldValue(CashewValue obj,String fld) throws CashewException
 {
-   CashewValue cv = obj.getFieldValue(getSession(),getTyper(),getClock(),fld);
+   CashewValue cv = obj.getFieldValue(getSession(),getTyper(),getClock(),
+         fld,getContext());
    return cv.getNumber(getSession(),getClock()).intValue();
 }  
 
@@ -246,7 +249,8 @@ protected int getIntFieldValue(CashewValue obj,String fld) throws CashewExceptio
 
 protected void copyField(CashewValue from,CashewValue to,String fld) throws CashewException
 {
-   CashewValue v0 = from.getFieldValue(getSession(),getTyper(),getClock(),fld);
+   CashewValue v0 = from.getFieldValue(getSession(),getTyper(),getClock(),
+         fld,getContext());
    to.setFieldValue(getSession(),getTyper(),getClock(),fld,v0);
 }
 

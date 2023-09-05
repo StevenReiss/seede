@@ -80,6 +80,9 @@ static {
          "java.base/sun.util.locale.provider",
          "java.base/jdk.internal.math",
          "java.base/jdk.internal.misc",
+         "java.base/java.util","java.base/java.lang",
+         "java.base/java.util.concurrent",
+         "java.base/sun.util.locale",
     };
 }
 

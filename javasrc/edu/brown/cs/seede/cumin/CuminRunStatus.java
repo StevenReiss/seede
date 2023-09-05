@@ -26,6 +26,7 @@ package edu.brown.cs.seede.cumin;
 
 import edu.brown.cs.ivy.jcomp.JcompType;
 import edu.brown.cs.ivy.jcomp.JcompTyper;
+import edu.brown.cs.seede.cashew.CashewContext;
 import edu.brown.cs.seede.cashew.CashewValue;
 import edu.brown.cs.seede.cashew.CashewConstants.CashewValueSession;
 
@@ -97,18 +98,18 @@ public class Factory {
       return new CuminRunValue(Reason.CONTINUE,id);
     }
 
-   public static CuminRunStatus createTimeout(CashewValueSession sess,JcompTyper typer) {
+   public static CuminRunStatus createTimeout(CashewValueSession sess,CashewContext ctx,JcompTyper typer) {
       JcompType etyp = typer.findSystemType("java.lang.Error");
-      CashewValue cv = CashewValue.objectValue(sess,typer,etyp);
+      CashewValue cv = CashewValue.objectValue(sess,ctx,typer,etyp);
       return new CuminRunException(Reason.EXCEPTION,"SEEDE_TIMEOUT",null,cv);  
    // return new CuminRunValue(Reason.TIMEOUT);
     }
 
 
-   public static CuminRunException createStackOverflow(CashewValueSession sess,JcompTyper typer) {
+   public static CuminRunException createStackOverflow(CashewValueSession sess,CashewContext ctx,JcompTyper typer) {
    // return new CuminRunException(Reason.STACK_OVERFLOW);
       JcompType etyp = typer.findSystemType("java.lang.StackOverflowError");
-      CashewValue cv = CashewValue.objectValue(sess,typer,etyp);
+      CashewValue cv = CashewValue.objectValue(sess,ctx,typer,etyp);
       return new CuminRunException(Reason.EXCEPTION,etyp.toString(),null,cv);
    }
 

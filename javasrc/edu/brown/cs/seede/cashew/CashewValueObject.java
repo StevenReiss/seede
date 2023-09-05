@@ -139,7 +139,7 @@ CashewValueObject(JcompTyper typer,JcompType jt,Map<String,Object> inits,boolean
 /********************************************************************************/
 
 @Override public CashewValue getFieldValue(CashewValueSession sess,
-      JcompTyper typer,CashewClock cc,String nm,boolean force)
+      JcompTyper typer,CashewClock cc,String nm,CashewContext ctx,boolean force)
 {
    CashewValue cv = findFieldForName(typer,nm,force);
    if (cv == null && force) {
@@ -158,6 +158,21 @@ CashewValueObject(JcompTyper typer,JcompType jt,Map<String,Object> inits,boolean
       if (new_fields.isEmpty()) new_fields = null;
     }
 
+   return this;
+}
+
+
+@Override public CashewValue addFieldValue(CashewValueSession sess,
+      JcompTyper typer,CashewClock cc,String nm,CashewValue cv)
+{
+   CashewRef cr = field_values.get(nm);
+   CashewRef cr1 = static_values.get(nm);
+   if (cr != null || cr1 != null) {
+      return setFieldValue(sess,typer,cc,nm,cv);
+    }
+   CashewRef tr = new CashewRef(cv,true);
+   field_values.put(nm,tr);
+   
    return this;
 }
 
@@ -213,7 +228,7 @@ private CashewRef findFieldForName(JcompTyper typer,String nm,boolean force)
 
 
 @Override CashewValue lookupVariableName(CashewValueSession sess,
-      JcompTyper typer,String name,long when)
+      CashewContext ctx,JcompTyper typer,String name,long when)
 	throws CashewException
 {
    String rest = null;
@@ -228,19 +243,19 @@ private CashewRef findFieldForName(JcompTyper typer,String nm,boolean force)
    if (ov == null) {
       ov = static_values.get(look);
     }
-   if (ov != null) return super.lookupVariableName(sess,typer,name,when);
+   if (ov != null) return super.lookupVariableName(sess,ctx,typer,name,when);
 
    String match = "." + name;
    for (String fnm : field_values.keySet()) {
       if (fnm.endsWith(match)) {
 	 if (rest != null) fnm = fnm + "?" + rest;
-	 return super.lookupVariableName(sess,typer,fnm,when);
+	 return super.lookupVariableName(sess,ctx,typer,fnm,when);
        }
     }
    for (String fnm : static_values.keySet()) {
       if (fnm.endsWith(match)) {
 	 if (rest != null) fnm = fnm + "?" + rest;
-	 return super.lookupVariableName(sess,typer,fnm,when);
+	 return super.lookupVariableName(sess,ctx,typer,fnm,when);
        }
     }
 
@@ -262,7 +277,7 @@ private CashewRef findFieldForName(JcompTyper typer,String nm,boolean force)
 	 if (ctr++ != 0) buf.append(",");
 	 buf.append(fldname);
 	 buf.append(":");
-	 CashewValue cv = getFieldValue(sess,typer,cc,fldname);
+	 CashewValue cv = getFieldValue(sess,typer,cc,fldname,null);
 	 buf.append(cv.getString(sess,typer,cc,lvl-1,dbg));
 	 if ((ctr % 10) == 0 && Thread.currentThread().isInterrupted()) break;
        }
@@ -442,7 +457,8 @@ void getChangeTimes(Set<Long> times,Set<CashewValue> done)
     }
    if (otyp.isEnumType()) {
       try {
-         CashewValue evl = getFieldValue(outctx.getSession(),outctx.getTyper(),outctx.getClock(),"java.lang.Enum.name");
+         CashewValue evl = getFieldValue(outctx.getSession(),outctx.getTyper(),
+               outctx.getClock(),"java.lang.Enum.name",null);
          String enm = evl.getString(outctx.getSession(),outctx.getTyper(),outctx.getClock());
          xw.field("ENUM",enm);
        }

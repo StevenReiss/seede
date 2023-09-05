@@ -131,7 +131,7 @@ CashewValueString(JcompTyper typer,JcompType styp,String s)
 
 
 @Override synchronized public CashewValue getFieldValue(CashewValueSession sess,
-      JcompTyper typer,CashewClock cc,String name,boolean force)
+      JcompTyper typer,CashewClock cc,String name,CashewContext ctx,boolean force)
 {
    switch (name) {
       case "value" :

@@ -416,7 +416,7 @@ String getAnyThread()
 {
    if (accessible_types.contains(type)) return;
 
-   if (type.startsWith("jdk.internal.ref.")) {
+   if (type.startsWith("jdk.internal.ref.") || type.startsWith("edu.brown.cs.seede")) {
       accessible_types.add(type);
       return;
     }
