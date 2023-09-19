@@ -1336,6 +1336,10 @@ private CuminRunStatus checkSpecial() throws CuminRunException
 	    cde = new CuminDirectEvaluation(this);
 	    sts = cde.checkClassMethods();
 	    break;
+         case "java.lang.Module" :
+            cde = new CuminDirectEvaluation(this);
+            sts = cde.checkModuleMethods();
+            break;
 	 case "java.lang.Object" :
 	    cde = new CuminDirectEvaluation(this);
 	    sts = cde.checkObjectMethods();

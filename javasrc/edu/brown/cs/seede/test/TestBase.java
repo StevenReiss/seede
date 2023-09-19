@@ -83,6 +83,11 @@ static {
          "java.base/java.util","java.base/java.lang",
          "java.base/java.util.concurrent",
          "java.base/sun.util.locale",
+         "java.desktop/sun.java2d",
+         "java.desktop/sun.java2d.loops",
+         "java.desktop/sun.java2d.metal",
+         "java.desktop/sun.java2d.pipe",
+         "java.desktop/java.awt.geom",
     };
 }
 

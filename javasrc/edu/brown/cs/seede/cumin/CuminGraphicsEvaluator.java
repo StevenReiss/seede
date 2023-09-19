@@ -729,7 +729,7 @@ private class GraphicsOutput {
       current_hints = updateField(current_hints,"user_hints",FieldType.HINTS);
       current_composite = updateField(current_composite,"user_composite",FieldType.COMPOSITE);
       if (upd) {
-	 addInitializations();
+         addInitializations();
        }
    }
 

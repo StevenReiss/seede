@@ -1476,6 +1476,7 @@ CuminRunStatus checkClassMethods() throws CashewException, CuminRunException
 
 
 
+
 private static String getSimpleClassName(JcompType jt)
 {
    String s = jt.getName();
@@ -1657,6 +1658,53 @@ CuminRunStatus checkMethodMethods()
     }
    return null;
 }
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Handle Module methods                                                   */
+/*                                                                              */
+/********************************************************************************/
+
+CuminRunStatus checkModuleMethods() throws CashewException, CuminRunException
+{
+   CashewValue rslt = null;
+   JcompTyper typer = getTyper();
+   CashewValue thisarg = getValue(0);
+   CashewValueSession sess = getSession();
+   
+   switch (getMethod().getName()) {
+      case "addExports" :
+      case "addOpens" :
+      case "addReads" :
+      case "addUses" :
+         rslt = thisarg;
+         break;
+      default :
+      case "isNamed" :
+      case "getName" :
+      case "toString" :
+      case "getDescriptor" :   
+      case "getLayer" :
+      case "getPackages" :
+      case "getClassLoader" :
+      case "getAnnotations" :
+      case "getAnnotation" :
+      case "getDeclaredAnnotations" :
+      case "getResourceAsStream" :
+         return null;
+      case "canRead" :
+      case "canUse" :
+      case "isOpen" :
+      case "isExported" :
+         rslt = CashewValue.booleanValue(typer,true);
+         break;
+    }
+   
+   return CuminRunStatus.Factory.createReturn(rslt);
+}
+
 
 
 

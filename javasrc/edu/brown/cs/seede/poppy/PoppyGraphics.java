@@ -59,12 +59,13 @@ import java.awt.image.ImageObserver;
 import java.awt.image.RenderedImage;
 import java.awt.image.renderable.RenderableImage;
 import java.text.AttributedCharacterIterator;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 
 public class PoppyGraphics extends Graphics2D implements PoppyConstants
 {
-
 
 
 
@@ -78,27 +79,33 @@ public static PoppyGraphics computeGraphics(Component c,String id)
 {
    // note that this is executed in the user process, not in simulation
 
-   return new PoppyGraphics(c.getGraphics(),c,id);
+   PoppyGraphics pg = new PoppyGraphics(c.getGraphics(),c,id);
+   all_graphics.add(pg);
+   return pg;
 }
 
 
 public static PoppyGraphics computeGraphics1(Component c,Graphics g,String id)
 {
-   return new PoppyGraphics(g,c,id);
+   PoppyGraphics pg = new PoppyGraphics(g,c,id);
+   all_graphics.add(pg);
+   return pg;
 }
 
 
 public static PoppyGraphics computeGraphics2(Component c,String id)
 {
-   return new PoppyGraphics(null,c,id);
+   PoppyGraphics pg = new PoppyGraphics(null,c,id);
+   all_graphics.add(pg);
+   return pg;
 }
 
 
 public static String computeDrawingG(Component c,Graphics g)
 {
-   c.paint(g);
-
    PoppyGraphics pg = (PoppyGraphics) g;
+   
+   c.paint(g);
 
    return  pg.finalReport();
 }
@@ -139,6 +146,9 @@ private int		parent_index;
 private Component       base_component;
 
 private static int	poppy_counter = 0;
+
+// keep a list of all graphics to avoid them being GC'd
+private static List<PoppyGraphics> all_graphics = new ArrayList<>();
 
 
 

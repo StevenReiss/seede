@@ -338,7 +338,12 @@ private CashewValue getValueAt(CashewValueSession sess,CashewClock cc)
    if (map == null) {
       if (deferred_value != null) {
 	 CashewValue cv = deferred_value.getValue(sess);
-         if (cv == null) cv = deferred_value.getValue(sess.getParent());
+         if (cv == null && sess.getParent() != null) {
+            cv = deferred_value.getValue(sess.getParent());
+          }
+         else {
+            cv = deferred_value.getValue(sess);
+          }
 	 if (cv != null) {
             setLastUpdate(sess,0,cv);
 	    deferred_value = null;

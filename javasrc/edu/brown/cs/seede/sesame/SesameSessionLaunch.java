@@ -40,6 +40,7 @@ import org.w3c.dom.Element;
 
 import edu.brown.cs.ivy.jcomp.JcompAst;
 import edu.brown.cs.ivy.jcomp.JcompSymbol;
+import edu.brown.cs.ivy.jcomp.JcompType;
 import edu.brown.cs.ivy.jcomp.JcompTyper;
 import edu.brown.cs.ivy.xml.IvyXml;
 import edu.brown.cs.ivy.mint.MintConstants.CommandArgs;
@@ -228,24 +229,25 @@ String getAnyThread()
          // this code doesn't work -- 'this' cant be accessed in static context and
 	 //	Type has not been loaded occured (PoppyGraphics?) when this == null
          // need to check if 'this' is  compatible with COMPONENT
-//       JcompTyper typer = getProject().getTyper();
-//       JcompType jtyp = argval.getDataType(this,null,typer);
-//	 JcompType g2dtype = typer.findSystemType("java.awt.Graphics2D");
-// 	 if (jtyp.isCompatibleWith(g2dtype) && !argval.isNull(this,null)) {
-//          getProject().getJcodeFactory().findClass("edu.brown.cs.seede.poppy.PoppyGraphics");
-// 	    if (!jtyp.getName().contains("PoppyGraphics")) {
-// 	       String gname = "MAIN_" + loc.getThreadName();
-// 	       getProject().getJcodeFactory().findClass("edu.brown.cs.seede.poppy.PoppyGraphics");
-// 	       String expr = "edu.brown.cs.seede.poppy.PoppyGraphics.computeGraphics1(";
-// 	       expr += "this,";
-// 	       expr += psym.getName() +  ",\"" + gname + "\")";
-// 	       SesameValueData nval = evaluateData(expr,loc.getThread(),true);
-// 	       if (nval != null) {
-// 		  nval = getUniqueValue(nval);
-// 		  argval = nval.getCashewValue(this);
-// 		}
-// 	     }
-// 	  }
+         JcompTyper typer = getProject().getTyper();
+         JcompType jtyp = argval.getDataType(this,null,typer);
+	 JcompType g2dtype = typer.findSystemType("java.awt.Graphics2D");
+ 	 if (jtyp.isCompatibleWith(g2dtype) && !argval.isNull(this,null)) {
+            getProject().getJcodeFactory().findClass("edu.brown.cs.seede.poppy.PoppyGraphics");
+ 	    if (!jtyp.getName().contains("PoppyGraphics")) {
+ 	       String gname = "MAIN_" + loc.getThreadName();
+ 	       getProject().getJcodeFactory().findClass("edu.brown.cs.seede.poppy.PoppyGraphics");
+ 	       String expr = "edu.brown.cs.seede.poppy.PoppyGraphics.computeGraphics1(";
+               if (msym.isStatic()) expr += "null,";
+ 	       else expr += "this,";
+ 	       expr += psym.getName() +  ",\"" + gname + "\")";
+ 	       SesameValueData nval = evaluateData(expr,loc.getThread(),true);
+ 	       if (nval != null) {
+ 		  nval = getUniqueValue(nval);
+ 		  argval = nval.getCashewValue(this);
+ 		}
+ 	     }
+ 	  }
 	 AcornLog.logD("SESAME","ARG VALUE " + argval.toString(this) + " " +
 	       argval.toString(getParent()) + " " +
 	       argval.getClass() + " " + val);

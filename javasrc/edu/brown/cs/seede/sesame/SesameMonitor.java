@@ -538,41 +538,74 @@ private void handleExec(String sid,Element xml,IvyXmlWriter xw)
 
    SesameSession ss = session_map.get(sid);
    if (ss == null) throw new SesameException("Session " + sid + " not found");
+   
    AcornLog.logD("WAIT FOR SESSION READY");
    ss.waitForReady();
-   SesameContext gblctx = new SesameContext(ss);
-
-   AcornLog.logD("COMPILE PROJECT");
-   ss.getProject().compileProject();
-   SesameExecRunner execer = null;
-   int nr = 0;
-   for (SesameLocation loc : ss.getActiveLocations()) {
-      CuminRunner cr = ss.createRunner(loc,gblctx);
-      if (cr == null) {
-	 AcornLog.logD("No runner " + ss.getCallMethod(loc) + " " +
-	       ss.getCallArgs(loc) + " " + loc.getFile() + " " +
-	       loc);
-	 SesameFile sf = loc.getFile();
-	 ASTNode root = sf.getResolvedAst(ss.getProject());
-	 AcornLog.logD("Root is " + root);
-	 continue;
-       }
-      ++nr;
-      if (execer == null) {
-	 execer = new SesameExecRunner(ss,xid,gblctx,
-               iscont,maxtime,maxdepth,cr);
-	 ss.addRunner(execer);
-       }
-      else {
-	 execer.addRunner(cr);
-       }
+   if (ss.getActiveLocations().isEmpty()) {
+      throw new SesameException("Session " + sid + " has no starting points");
     }
-   AcornLog.logD("START RUNNER " + nr + " " + execer);
-   if (execer != null) {
-      execer.startExecution();
-    }
-   else throw new SesameException("Session " + sid + " has no starting points");
+   
+   ExecHandler eh = new ExecHandler(ss,xid,
+         iscont,maxtime,maxdepth);
+   eh.start();
 }
+
+
+
+private class ExecHandler extends Thread {
+   
+   private SesameSession for_session;
+   private String exec_id;
+   private boolean is_continuous;
+   private long max_time;
+   private int max_depth;
+   
+   ExecHandler(SesameSession ss,String xid,boolean cont,long maxt,int maxd) {
+      super("EXEC_" + ss.getSessionId());
+      for_session = ss;
+      exec_id = xid;
+      is_continuous = cont;
+      max_time = maxt;
+      max_depth = maxd;
+    }
+   
+   @Override public void run() {
+      AcornLog.logD("WAIT FOR SESSION READY");
+      for_session.waitForReady();
+      SesameContext gblctx = new SesameContext(for_session);
+      
+      AcornLog.logD("COMPILE PROJECT");
+      for_session.getProject().compileProject();
+      SesameExecRunner execer = null;
+      int nr = 0;
+      for (SesameLocation loc : for_session.getActiveLocations()) {
+         CuminRunner cr = for_session.createRunner(loc,gblctx);
+         if (cr == null) {
+            AcornLog.logD("No runner " + for_session.getCallMethod(loc) + " " +
+                  for_session.getCallArgs(loc) + " " + loc.getFile() + " " +
+                  loc);
+            SesameFile sf = loc.getFile();
+            ASTNode root = sf.getResolvedAst(for_session.getProject());
+            AcornLog.logD("Root is " + root);
+            continue;
+          }
+         ++nr;
+         if (execer == null) {
+            execer = new SesameExecRunner(for_session,exec_id,gblctx,
+                  is_continuous,max_time,max_depth,cr);
+            for_session.addRunner(execer);
+          }
+         else {
+            execer.addRunner(cr);
+          }
+       }
+      AcornLog.logD("START RUNNER " + nr + " " + execer);
+      if (execer != null) {
+         execer.startExecution();
+       }
+    }
+   
+}       // end of inner class ExecHandler
 
 
 
@@ -581,21 +614,39 @@ private void handleRemove(String sid) throws SesameException
    SesameSession ss = session_map.remove(sid);
    if (ss == null) AcornLog.logE("Session " + sid + " not found");
    else {
-      ss.stopRunners();
-      SesameProject sp = ss.getProject();
+      RemoveHandler rh = new RemoveHandler(ss);
+      rh.start();
+    }
+}
+
+
+private class RemoveHandler extends Thread {
+   
+   private SesameSession for_session;
+   
+   RemoveHandler(SesameSession ss) {
+      super("REMOVE_" + ss.getSessionId());
+      for_session = ss;
+    }
+   
+   @Override public void run() {
+      for_session.stopRunners();
+      SesameProject sp = for_session.getProject();
       String inuse = null;
       for (SesameSession ns : session_map.values()) {
 	 SesameProject np = ns.getProject();
 	 if (np == sp) inuse = ns.getSessionId();
        }
       if (inuse == null) {
-	 ss.removeSession();
+	 for_session.removeSession();
        }
       else {
-         AcornLog.logE("SESAME","Session not remove " + sid + " " + inuse);
+         AcornLog.logE("SESAME","Session not remove " +
+               for_session.getSessionId() + " " + inuse);
        }
     }
-}
+   
+}       // end of inner class RemoveHandler
 
 
 

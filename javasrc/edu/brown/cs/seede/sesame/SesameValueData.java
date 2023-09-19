@@ -458,7 +458,7 @@ private void addValues(SesameSessionLaunch sess,Element xml)
 private synchronized void computeValues(SesameSessionLaunch sess)
 {
    AcornLog.logD("SESAME","Compute deferred values " + has_values + " " +  val_expr + " " + val_name +
-         sub_values);
+         " " + sub_values);
    if (!has_values || sub_values != null) return;
    if (val_expr == null) {
       CommandArgs args = new CommandArgs("FRAME",getFrame(sess),"THREAD",getThread(),"DEPTH",2,
@@ -536,7 +536,7 @@ private class DeferredLookup implements CashewConstants.CashewDeferredValue {
        }
       String lookup = getKey(fnm,cnm);
       SesameValueData svd = sub_values.get(lookup);
-      svd = sess.getUniqueValue(svd);
+      if (sess != null) svd = sess.getUniqueValue(svd);
       if (svd == null) {
          AcornLog.logE("SESAME","Deferred Lookup of " + lookup + " not found");
          return null;
