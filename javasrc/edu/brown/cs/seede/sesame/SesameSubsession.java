@@ -193,6 +193,9 @@ private void editFileSetup(SesameFile sf)
    for (SesameLocation loc : super.getActiveLocations()) {
       if (loc.getFile().getFile().equals(sf.getFile())) {
          Position pos = sf.createPosition(loc.getStartPosition().getOffset());
+         AcornLog.logD("SESAME","SETUP LOCATION " + 
+               loc.getStartPosition() + " " + loc.getStartPosition().getOffset() + " " +
+               pos);
          position_map.put(loc.getStartPosition(),pos); 
        }
     }
@@ -204,6 +207,9 @@ private void editFileFixup(SesameFile sf)
 {
    // nothing to do for now - positions will be needed later
 }
+
+
+
 
 
 
@@ -340,7 +346,8 @@ private boolean isInitBlock(Block b)
    AcornLog.logD("START LOCATIONS " + rslt.size());
    
    for (SesameLocation loc : rslt) {
-      AcornLog.logD("WORK ON LOCATION " + loc);
+      AcornLog.logD("SESAME","WORK ON LOCATION " + loc + " " + loc.getLineNumber() + " " +
+          loc.getStartPosition());
       SesameFile sf = local_project.findLocalFile(loc.getFile().getFile());
       if (sf != loc.getFile()) {
          Position pos0 = loc.getStartPosition();
@@ -349,12 +356,16 @@ private boolean isInitBlock(Block b)
          int olno = loc.getFile().getLineOfPosition(pos0);
          int nlno = sf.getLineOfPosition(pos1);
          if (nlno == 0) nlno = olno;
+         AcornLog.logD("SESAME","CREATE LOCATION " + loc.getMethodName() + " " + sf + 
+               " " + loc.getThread() + " " + loc.getThreadName());
          SesameLocation nloc = new SesameLocation(sf,loc.getMethodName(),
                lno + (nlno-olno),loc.getThread(),loc.getThreadName());
          nloc.setActive(true);
          nrslt.add(nloc);
        }
-      else nrslt.add(loc);
+      else {
+         nrslt.add(loc);
+       }
     }
    
    AcornLog.logD("END LOCATION " + nrslt.size());

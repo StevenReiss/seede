@@ -494,19 +494,24 @@ public static Constructor<?> getDeclaredConstructorUsingPoppy(String cls, String
 
 public static Method getMethodUsingPoppy(String cls,String name,boolean decl,String ... args)
         throws NoSuchMethodException
-        {
+{
    try {
-      Class<?> cl = Class.forName(cls);
+//    Class<?> cl = Class.forName(cls);
+      Class<?> cl = getClassByName(cls);
       Class<?> [] acl = new Class<?>[args.length];
       for (int i = 0; i < args.length; ++i) {
          acl[i] = getClassForName(args[i]);
        }
+      System.err.println("POPPY: Get method " + name + " " + acl.length + " " + args.length);
+
       Method rslt = null;
       if (decl) rslt = cl.getDeclaredMethod(name,acl);
       else rslt = cl.getMethod(name,acl);
       return rslt;
     }
-   catch (ClassNotFoundException e) { }
+   catch (ClassNotFoundException e) { 
+       System.err.println("POPPY: Class " + cls + " not found");
+    }
    
    return null;
 }

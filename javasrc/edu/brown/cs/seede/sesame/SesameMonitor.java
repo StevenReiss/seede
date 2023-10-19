@@ -603,6 +603,17 @@ private class ExecHandler extends Thread {
       if (execer != null) {
          execer.startExecution();
        }
+      else {
+         sendErrorStatus(); 
+       }
+    }
+   
+   private void sendErrorStatus() {
+      CommandArgs args = new CommandArgs("ID",exec_id,
+            "PROJECT",for_session.getProject().getName(),
+            "ERROR",true,
+            "COMPLETE",true);
+      sendCommand("EXEC",args,null,null);
     }
    
 }       // end of inner class ExecHandler

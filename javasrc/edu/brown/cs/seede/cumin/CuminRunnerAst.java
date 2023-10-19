@@ -143,7 +143,7 @@ private static Map<Object,CuminOperator> op_map;
 
 private enum ForState { INIT, HASNEXT, NEXT, BODY };
 
- 
+
 static {
    op_map = new HashMap<>();
    op_map.put(InfixExpression.Operator.AND,CuminOperator.AND);
@@ -316,7 +316,7 @@ String getMethodName()
 	    return sts;
 	  }
 	 passerror = sts;
-	 current_node = current_node.getParent();
+	 if (current_node != null) current_node = current_node.getParent();
 	 afternode = null;
        }
     }
@@ -832,7 +832,7 @@ private CuminRunStatus evalThrow(ASTNode node,CuminRunStatus cause)
       case ASTNode.SYNCHRONIZED_STATEMENT :
 	 sts = visitThrow((SynchronizedStatement) node,cause);
 	 break;
-	
+
       case ASTNode.DO_STATEMENT :
 	 sts = visitThrow((DoStatement) node,cause);
 	 break;
@@ -924,6 +924,7 @@ private CuminRunStatus visit(MethodDeclaration md,ASTNode after) throws CashewEx
 	 SingleVariableDeclaration svd = (SingleVariableDeclaration) o;
 	 JcompSymbol psym = JcompAst.getDefinition(svd.getName());
 	 CashewValue pv = lookup_context.findReference(type_converter,psym);
+	 if (idx + off >= argvals.size()) break;
 	 pv.setValueAt(runner_session,execution_clock,argvals.get(idx+off));
 	 ++idx;
        }
@@ -1095,7 +1096,7 @@ private CuminRunStatus visit(ArrayAccess v,ASTNode after) throws CashewException
       int idx = cv.getNumber(sess,execution_clock).intValue();
       if (idx < 0 || idx >= av.getDimension(sess,execution_clock)) {
 	 return CuminEvaluator.returnException(sess,lookup_context,
-               typer,"java.lang.ArrayIndexOutOfBoundsException");
+	       typer,"java.lang.ArrayIndexOutOfBoundsException");
        }
       CashewValue rv = av.getIndexValue(sess,execution_clock,idx);
       execution_stack.push(rv);
@@ -1136,7 +1137,7 @@ private CuminRunStatus visit(ArrayCreation v,ASTNode after) throws CashewExcepti
       int v0 = execution_stack.pop().getNumber(runner_session,execution_clock).intValue();
       if (v0 < 0) {
 	 return CuminEvaluator.returnException(runner_session,lookup_context,
-               type_converter,"java.lang.NegativeArraySizeException");
+	       type_converter,"java.lang.NegativeArraySizeException");
        }
       idims[k-i-1] = v0;
     }
@@ -1219,7 +1220,7 @@ private CuminRunStatus visit(FieldAccess v,ASTNode after)
 	 String s = v.getName().getIdentifier();
 	 CashewValue obj = execution_stack.pop().getActualValue(runner_session,execution_clock);
 	 CashewValue rslt = obj.getFieldValue(runner_session,type_converter,execution_clock,
-               s,lookup_context);
+	       s,lookup_context);
 	 execution_stack.push(rslt);
        }
     }
@@ -1238,18 +1239,18 @@ private CuminRunStatus visit(SuperFieldAccess v) throws CashewException
    CashewValue obj = lookup_context.findReference(var);
    if (obj.isNull(runner_session,execution_clock)) {
       return CuminEvaluator.returnException(runner_session,lookup_context,
-            type_converter,"java.lang.NullPointerException");
+	    type_converter,"java.lang.NullPointerException");
     }
 
    JcompSymbol sym = JcompAst.getReference(v.getName());
    try {
       CashewValue rslt = obj.getFieldValue(runner_session,type_converter,execution_clock,
-            sym.getFullName(),lookup_context);
+	    sym.getFullName(),lookup_context);
       execution_stack.push(rslt);
     }
    catch (NullPointerException e) {
       return CuminEvaluator.returnException(runner_session,lookup_context,
-            type_converter,"java.lang.NullPointerException");
+	    type_converter,"java.lang.NullPointerException");
     }
 
    return null;
@@ -1362,17 +1363,17 @@ private CuminRunStatus visit(SimpleName v) throws CashewException
       else {
 	 CashewValue tv = lookup_context.findReference(THIS_NAME);
 	 cv = tv.getFieldValue(runner_session,type_converter,execution_clock,
-               js.getFullName(),lookup_context,false);
+	       js.getFullName(),lookup_context,false);
 	 while (cv == null) {
 	    String nm = tv.getDataType(runner_session,execution_clock,null).getName() + "." + OUTER_NAME;
 	    CashewValue xtv = tv.getFieldValue(runner_session,type_converter,execution_clock,
-                  nm,lookup_context,false);
+		  nm,lookup_context,false);
 	    if (xtv == null) xtv = tv.getFieldValue(runner_session,type_converter,execution_clock,
-                  OUTER_NAME,lookup_context,false);
+		  OUTER_NAME,lookup_context,false);
 	    if (xtv == null) break;
 	    tv = xtv;
 	    cv = tv.getFieldValue(runner_session,type_converter,execution_clock,
-                  js.getFullName(),lookup_context,false);
+		  js.getFullName(),lookup_context,false);
 	  }
 	 if (cv == null) {
 	    AcornLog.logE("Missing Field " + js.getFullName());
@@ -1421,10 +1422,10 @@ private CuminRunStatus visit(QualifiedName v,ASTNode after)
       CashewValue obj = execution_stack.pop().getActualValue(runner_session,execution_clock);
       if (obj.isNull(runner_session,execution_clock)) {
 	 return CuminEvaluator.returnException(runner_session,lookup_context,
-               type_converter,"java.lang.NullPointerException");
+	       type_converter,"java.lang.NullPointerException");
        }
       CashewValue rslt = obj.getFieldValue(runner_session,type_converter,execution_clock,
-            "length",lookup_context);
+	    "length",lookup_context);
       if (AcornLog.isTracing()) AcornLog.logT("LENGTH " + obj + " = " + rslt);
       execution_stack.push(rslt);
     }
@@ -1451,7 +1452,7 @@ private CuminRunStatus visit(PostfixExpression v,ASTNode after)
       CashewValue v1 = execution_stack.pop();
       CuminOperator op = op_map.get(v.getOperator());
       CashewValue v0 = CuminEvaluator.evaluate(runner_session,lookup_context,
-            type_converter,execution_clock,op,v1);
+	    type_converter,execution_clock,op,v1);
       execution_stack.push(v0);
     }
 
@@ -1467,7 +1468,7 @@ private CuminRunStatus visit(PrefixExpression v,ASTNode after)
       CashewValue v1 = execution_stack.pop();
       CuminOperator op = op_map.get(v.getOperator());
       CashewValue v0 = CuminEvaluator.evaluate(runner_session,lookup_context,
-            type_converter,execution_clock,op,v1);
+	    type_converter,execution_clock,op,v1);
       execution_stack.push(v0);
     }
 
@@ -1510,6 +1511,11 @@ private CuminRunStatus visit(ClassInstanceCreation v, ASTNode after)
     }
 
    JcompType rty = JcompAst.getJavaType(v.getType());
+   if (rty.getName().equals("java.lang.Class")) {
+      CuminEvaluator.throwException(runner_session,lookup_context,
+            type_converter,"java.lang.Error");
+    }
+   
    Map<JcompSymbol,JcompSymbol> inits = null;
    if (v.getAnonymousClassDeclaration() != null) {
       inits = fixMethodClass(v.getAnonymousClassDeclaration());
@@ -1693,6 +1699,12 @@ private CuminRunStatus visit(MethodInvocation v,ASTNode after)
       if (sz == 1) {
 	 CashewValue cv = execution_stack.peek(0);
 	 JcompType cvtyp = cv.getDataType(runner_session,execution_clock,type_converter);
+         if (cvtyp.isAnyType()) {
+            ASTNode n = (ASTNode) v.arguments().get(ncomp-1);
+            JcompType jt1 = JcompAst.getExprType(n);
+            if (jt1 == null) jt1 = JcompAst.getJavaType(n);
+            if (jt1 != null) cvtyp = jt1;
+          }
 	 if (cvtyp.isArrayType() && cvtyp.isCompatibleWith(vtyp)) {
 	    sz = -1;
 	  }
@@ -1938,7 +1950,7 @@ private CuminRunStatus visit(AssertStatement s,ASTNode after)
       CashewValue cv = execution_stack.pop();
       if (!getBoolean(cv)) {
 	 CuminEvaluator.throwException(runner_session,lookup_context,
-               type_converter,"java.lang.AssertionError");
+	       type_converter,"java.lang.AssertionError");
        }
     }
    return null;
@@ -3046,10 +3058,10 @@ private CashewValue handleFieldAccess(JcompSymbol sym) throws CuminRunException,
    if (sym != null && sym.isStatic()) return handleStaticFieldAccess(sym);
    if (obj.isNull(runner_session,execution_clock))
       CuminEvaluator.throwException(runner_session,lookup_context,
-            type_converter,"java.lang.NullPointerException");
+	    type_converter,"java.lang.NullPointerException");
 
    CashewValue rslt = obj.getFieldValue(runner_session,type_converter,execution_clock,
-         sym.getFullName(),lookup_context);
+	 sym.getFullName(),lookup_context);
    return rslt;
 }
 
@@ -3076,7 +3088,7 @@ private CashewValue handleThisAccess(JcompType base)
    if (cv1 == null) cv1 = lookup_context.findReference(nm);
    if (cv1 == null) {
       cv1 = cv.getFieldValue(runner_session,type_converter,execution_clock,
-         nm,lookup_context);
+	 nm,lookup_context);
     }
    if (cv1 == null) {
       AcornLog.logE("Can't find outer this for " + base + " " + thistyp);
@@ -3096,7 +3108,7 @@ private CashewValue handleThisAccess(JcompType base,CashewValue cv)
    JcompType thistyp = cv.getDataType(runner_session,execution_clock,type_converter);
    if (thistyp.isCompatibleWith(base)) return cv;
    CashewValue cv1 = cv.getFieldValue(runner_session,type_converter,execution_clock,
-         OUTER_NAME,lookup_context,false);
+	 OUTER_NAME,lookup_context,false);
    return handleThisAccess(base,cv1);
 }
 
@@ -3205,12 +3217,12 @@ private boolean getBoolean(CashewValue cv) throws CashewException, CuminRunExcep
     }
    else if (jt.getName().equals("java.lang.Boolean")) {
        CashewValue ncv = CuminEvaluator.unboxValue(runner_session,type_converter,
-             execution_clock,cv,lookup_context);
+	     execution_clock,cv,lookup_context);
        return ncv.getBoolean(runner_session,execution_clock);
     }
    else {
       CuminEvaluator.throwException(runner_session,lookup_context,
-            type_converter,"java.lang.ClassCastException");
+	    type_converter,"java.lang.ClassCastException");
     }
 
    return false;

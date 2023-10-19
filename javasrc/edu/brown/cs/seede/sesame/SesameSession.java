@@ -447,7 +447,8 @@ CuminRunner createRunner(SesameLocation loc,SesameContext gblctx)
 {
    MethodDeclaration mthd = getCallMethod(loc);
    List<CashewValue> args = getCallArgs(loc);
-   if (args == null) return null;
+   if (args == null || mthd == null) return null;
+
    SesameThreadContext tctx = new SesameThreadContext(loc.getThread(),
 	 loc.getThreadName(),this,gblctx);
    CuminRunner cr = CuminRunner.createRunner(this,getProject(),tctx,mthd,args,true);

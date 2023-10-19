@@ -160,7 +160,7 @@ boolean editFile(TextEdit te,String id)
 
    if (id == null) id = "";
    AcornLog.logD("SESAME","RESULTANT FILE: " + id + ": " + hashCode() +
-         "\n" + edit_document.get());
+	 "\n" + edit_document.get());
 
    return true;
 }
@@ -223,15 +223,15 @@ boolean handleErrors(Element msgs)
       synchronized (ast_roots) {
 	 an = ast_roots.get(sp);
 	 if (an != null) {
-            AcornLog.logD("SESAME","Get previous AST root for project " + 
-                  this + " " + sp.getName() + " " + sp.isLocal() + " " + sp.hashCode());
-            return an;
-          }
+	    AcornLog.logD("SESAME","Get previous AST root for project " +
+		  this + " " + sp.getName() + " " + sp.isLocal() + " " + sp.hashCode());
+	    return an;
+	  }
        }
       an = buildAst();
       AcornLog.logD("SESAME","Create new AST root " +
-            this + " " + hashCode() + " " + 
-            sp.getName() + " " + sp.isLocal() + " " + sp.hashCode());
+	    this + " " + hashCode() + " " +
+	    sp.getName() + " " + sp.isLocal() + " " + sp.hashCode());
       synchronized (ast_roots) {
 	 ast_roots.put(sp,an);
        }
@@ -300,6 +300,7 @@ private ASTNode buildAst()
 
 private void cleanupAstRoot(CompilationUnit an)
 {
+   if (an == null) return; 
    for (Object typn : an.types()) {
       if (typn instanceof TypeDeclaration) {
 	 TypeDeclaration td = (TypeDeclaration) typn;
@@ -352,7 +353,7 @@ private void fixType(TypeDeclaration td)
 	 List<Object> stmts = blk.statements();
 	 if (stmts.size() > 0) {
 	    Statement st0 = (Statement) stmts.get(0);
-            if (st0 instanceof ConstructorInvocation) continue;         // done in that constructor
+	    if (st0 instanceof ConstructorInvocation) continue; 	// done in that constructor
 	    if (st0 instanceof SuperConstructorInvocation) idx = 1;
 	  }
 	 if (idx == 0 && td.getSuperclassType() != null) {
@@ -363,10 +364,10 @@ private void fixType(TypeDeclaration td)
 	 if (cnstinits != null) {
 	    for (VariableDeclarationFragment vdf : cnstinits) {
 	       Assignment asgn = ast.newAssignment();
-               FieldAccess fa = ast.newFieldAccess();
-               fa.setExpression(ast.newThisExpression());
-               fa.setName(ast.newSimpleName(vdf.getName().getIdentifier()));
-               asgn.setLeftHandSide(fa);
+	       FieldAccess fa = ast.newFieldAccess();
+	       fa.setExpression(ast.newThisExpression());
+	       fa.setName(ast.newSimpleName(vdf.getName().getIdentifier()));
+	       asgn.setLeftHandSide(fa);
 	       asgn.setRightHandSide((Expression) ASTNode.copySubtree(ast,vdf.getInitializer()));
 	       ExpressionStatement es = ast.newExpressionStatement(asgn);
 	       stmts.add(idx++,es);
@@ -389,7 +390,7 @@ ASTNode getResolvedAst(SesameProject sp)
       an = ast_roots.get(sp);
       if (an != null && JcompAst.isResolved(an)) return an;
     }
-							
+						
    JcompProject proj = sp.getJcompProject();
    proj.resolve();
    JcompSemantics semdata = SesameMain.getJcompBase().getSemanticData(this);
@@ -433,7 +434,10 @@ int getLineOfPosition(Position p)
    if (p == null) return 0;
 
    try {
-      return edit_document.getLineOfOffset(p.getOffset());
+      int lno = edit_document.getLineOfOffset(p.getOffset());
+      lno += 1; 		// convert 0 offset to 1 offset
+      AcornLog.logD("SESAME","POS " + p.getOffset() + " " + lno);
+      return lno;
     }
    catch (BadLocationException e) {
       return 0;

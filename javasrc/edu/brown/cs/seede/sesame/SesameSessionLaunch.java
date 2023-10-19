@@ -226,33 +226,38 @@ String getAnyThread()
       val = getUniqueValue(val);
       if (val != null) {
 	 CashewValue argval = val.getCashewValue(this);
-         // this code doesn't work -- 'this' cant be accessed in static context and
+	 // this code doesn't work -- 'this' cant be accessed in static context and
 	 //	Type has not been loaded occured (PoppyGraphics?) when this == null
-         // need to check if 'this' is  compatible with COMPONENT
-         JcompTyper typer = getProject().getTyper();
-         JcompType jtyp = argval.getDataType(this,null,typer);
+	 // need to check if 'this' is  compatible with COMPONENT
+	 JcompTyper typer = getProject().getTyper();
+	 JcompType jtyp = argval.getDataType(this,null,typer);
 	 JcompType g2dtype = typer.findSystemType("java.awt.Graphics2D");
- 	 if (jtyp.isCompatibleWith(g2dtype) && !argval.isNull(this,null)) {
-            getProject().getJcodeFactory().findClass("edu.brown.cs.seede.poppy.PoppyGraphics");
- 	    if (!jtyp.getName().contains("PoppyGraphics")) {
- 	       String gname = "MAIN_" + loc.getThreadName();
- 	       getProject().getJcodeFactory().findClass("edu.brown.cs.seede.poppy.PoppyGraphics");
- 	       String expr = "edu.brown.cs.seede.poppy.PoppyGraphics.computeGraphics1(";
-               if (msym.isStatic()) expr += "null,";
- 	       else expr += "this,";
- 	       expr += psym.getName() +  ",\"" + gname + "\")";
- 	       SesameValueData nval = evaluateData(expr,loc.getThread(),true);
- 	       if (nval != null) {
- 		  nval = getUniqueValue(nval);
- 		  argval = nval.getCashewValue(this);
- 		}
- 	     }
- 	  }
-	 AcornLog.logD("SESAME","ARG VALUE " + argval.toString(this) + " " +
-	       argval.toString(getParent()) + " " +
-	       argval.getClass() + " " + val);
+	 if (jtyp.isCompatibleWith(g2dtype) && !argval.isNull(this,null)) {
+	    getProject().getJcodeFactory().findClass("edu.brown.cs.seede.poppy.PoppyGraphics");
+	    if (!jtyp.getName().contains("PoppyGraphics")) {
+	       String gname = "MAIN_" + loc.getThreadName();
+	       getProject().getJcodeFactory().findClass("edu.brown.cs.seede.poppy.PoppyGraphics");
+	       String expr = "edu.brown.cs.seede.poppy.PoppyGraphics.computeGraphics1(";
+	       if (msym.isStatic()) expr += "null,";
+	       else expr += "this,";
+	       expr += psym.getName() +  ",\"" + gname + "\")";
+	       SesameValueData nval = evaluateData(expr,loc.getThread(),true);
+	       if (nval != null) {
+		  nval = getUniqueValue(nval);
+		  argval = nval.getCashewValue(this);
+		}
+	     }
+	  }
+	 if (argval != null) {
+	    AcornLog.logD("SESAME","ARG VALUE " + argval.toString(this) + " " +
+			     argval.toString(getParent()) + " " +
+			     argval.getClass() + " " + val);
+	    args.add(argval);
+	  }
+	 else {
+	    AcornLog.logE("SESAME","NULL ARGUMENT VALUE " + val);
+	  }
 
-	 args.add(argval);
        }
     }
 
@@ -512,6 +517,8 @@ private void loadInitialValues()
        }
       SesameLocation loc = new SesameLocation(source_file,method_name,line_number,teid,thnm);
       AcornLog.logD("SESAME","Create location " + loc);
+      AcornLog.logD("SESAME","INITIAL LOCATION " + method_name + " " + line_number);
+
       getProject().addFile(source_file);
       addLocation(loc);
     }

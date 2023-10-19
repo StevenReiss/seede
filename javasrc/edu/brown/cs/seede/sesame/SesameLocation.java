@@ -28,17 +28,13 @@ import java.io.File;
 import java.util.Random;
 
 import org.eclipse.jdt.core.dom.ASTNode;
-import org.eclipse.jdt.core.dom.ASTVisitor;
-import org.eclipse.jdt.core.dom.Block;
-import org.eclipse.jdt.core.dom.CompilationUnit;
-import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.Statement;
 import org.eclipse.jface.text.Position;
 import org.w3c.dom.Element;
 
+import edu.brown.cs.ivy.jcomp.JcompAst;
 import edu.brown.cs.ivy.xml.IvyXml;
 import edu.brown.cs.seede.acorn.AcornConstants;
-import edu.brown.cs.seede.acorn.AcornLog;
 
 class SesameLocation implements SesameConstants
 {
@@ -141,87 +137,109 @@ private void setupPosition()
    if (sesame_file == null) return;
    
    ASTNode root = sesame_file.getAst(); 
-   FindPositionVisitor fpv = new FindPositionVisitor();
-   root.accept(fpv);
-   int pos = fpv.getStartOffset();
-   if (pos >= 0) {
-      start_position = sesame_file.createPosition(pos);
+   ASTNode posnode = JcompAst.findNodeAtLine(root,line_number);
+   while (posnode != null) {
+      ASTNode next = posnode.getParent();
+      if (posnode instanceof Statement) next = null;
+      else {
+         switch (posnode.getNodeType()) {
+            case ASTNode.METHOD_DECLARATION :
+            case ASTNode.FIELD_DECLARATION :
+            case ASTNode.COMPILATION_UNIT :
+            case ASTNode.TYPE_DECLARATION :
+            case ASTNode.TYPE_DECLARATION_STATEMENT :
+            case ASTNode.ANONYMOUS_CLASS_DECLARATION :
+            case ASTNode.ANNOTATION_TYPE_DECLARATION :
+            case ASTNode.ENUM_DECLARATION :
+               next = null;
+          }
+       }
+      if (next == null) break;
+      posnode = next;
+    }
+   if (posnode != null) {
+      int off = posnode.getStartPosition();
+      start_position = sesame_file.createPosition(off);
     }
 }
 
 
 
-private class FindPositionVisitor extends ASTVisitor {
-   
-   private int start_offset;   
-   private CompilationUnit comp_unit;
-   
-   FindPositionVisitor() { 
-      start_offset = -1;
-      comp_unit = null;
-    }
-   
-   
-   int getStartOffset()                 { return start_offset; }
-   
-   @Override public boolean preVisit2(ASTNode n) {
-      if (n instanceof CompilationUnit) {
-         comp_unit = (CompilationUnit) n;
-       }
-      if (comp_unit == null) return true;
-      int startln = comp_unit.getLineNumber(n.getStartPosition());
-      int endln = comp_unit.getLineNumber(n.getStartPosition() + n.getLength() + 1);
-      if (endln < 0) endln = line_number+1;
-      AcornLog.logD("SESAME","CHECK LINES " + startln + " " + endln + " " + line_number + " " +
-            n.getClass());
-      if (n.getNodeType() == ASTNode.METHOD_DECLARATION) 
-         AcornLog.logD("SESAME","METHOD " + ((MethodDeclaration) n).getName());
-      if (n.getRoot() != comp_unit) {
-         AcornLog.logD("SESAME","Bad CompUnit " + n);
-       }
-      
-      if (line_number < startln || line_number > endln) return false;
-      switch (n.getNodeType()) {
-         case ASTNode.METHOD_DECLARATION :
-            return true;
-         case ASTNode.FIELD_DECLARATION :
-            return false;
-         case ASTNode.COMPILATION_UNIT :
-         case ASTNode.TYPE_DECLARATION :
-         case ASTNode.TYPE_DECLARATION_STATEMENT :
-         case ASTNode.ANONYMOUS_CLASS_DECLARATION :
-         case ASTNode.ANNOTATION_TYPE_DECLARATION :
-         case ASTNode.ENUM_DECLARATION :
-            return true;
-         default :
-            return false;
-       }
-    }
-   
-   @Override public boolean visit(MethodDeclaration md) {
-      if (comp_unit == null) return false;
-      AcornLog.logD("SESAME","CHECK METHOD LOCATION: " + md.getStartPosition() + " "
-            + comp_unit.getLineNumber(md.getStartPosition()) +
-            " " + md.getStartPosition() + md.getLength() + " " +
-            comp_unit.getLineNumber(md.getStartPosition() + md.getLength()) + " " +
-            line_number + " " +  md.getName());
-      int startln = comp_unit.getLineNumber(md.getStartPosition());   
-      Block b = md.getBody();
-      if (b == null) return false;
-      int blockln = comp_unit.getLineNumber(b.getStartPosition());
-      int firstln = blockln;
-      if (b.statements().size() > 0) {
-         Statement s = (Statement) b.statements().get(0);
-         firstln = comp_unit.getLineNumber(s.getStartPosition());
-       }
-      start_offset = md.getStartPosition();
-      if (startln == line_number || startln == blockln || startln == firstln) {
-         return false;
-       }
-      return true;
-    }
-   
-}       // end of inner class FindPositionVisitor
+
+
+
+// private class FindPositionVisitor extends ASTVisitor {
+// 
+// private int start_offset;   
+// private CompilationUnit comp_unit;
+// 
+// FindPositionVisitor() { 
+//       start_offset = -1;
+//       comp_unit = null;
+//     }
+// 
+// int getStartOffset()                 { return start_offset; }
+// 
+// @Override public boolean preVisit2(ASTNode n) {
+//       if (n instanceof CompilationUnit) {
+//          comp_unit = (CompilationUnit) n;
+//        }
+//       if (comp_unit == null) return true;
+//       int startln = comp_unit.getLineNumber(n.getStartPosition());
+//       int endln = comp_unit.getLineNumber(n.getStartPosition() + n.getLength() + 1);
+//       if (endln < 0) endln = line_number+1;
+//       AcornLog.logD("SESAME","CHECK LINES " + startln + " " + endln + " " + line_number + " " +
+//             n.getClass());
+//       if (n.getNodeType() == ASTNode.METHOD_DECLARATION) 
+//          AcornLog.logD("SESAME","METHOD " + ((MethodDeclaration) n).getName());
+//       if (n.getRoot() != comp_unit) {
+//          AcornLog.logD("SESAME","Bad CompUnit " + n);
+//        }
+//       
+//       if (line_number < startln || line_number > endln) return false;
+//       switch (n.getNodeType()) {
+//          case ASTNode.METHOD_DECLARATION :
+//             return true;
+//          case ASTNode.FIELD_DECLARATION :
+//             return false;
+//          case ASTNode.COMPILATION_UNIT :
+//          case ASTNode.TYPE_DECLARATION :
+//          case ASTNode.TYPE_DECLARATION_STATEMENT :
+//          case ASTNode.ANONYMOUS_CLASS_DECLARATION :
+//          case ASTNode.ANNOTATION_TYPE_DECLARATION :
+//          case ASTNode.ENUM_DECLARATION :
+//             return true;
+//          default :
+//             return false;
+//        }
+//     }
+// 
+// @Override public boolean visit(MethodDeclaration md) {
+//       if (comp_unit == null) return false;
+//       AcornLog.logD("SESAME","CHECK METHOD LOCATION: " + md.getStartPosition() + " "
+//             + comp_unit.getLineNumber(md.getStartPosition()) +
+//             " " + md.getStartPosition() + " " + md.getLength() + " " +
+//             comp_unit.getLineNumber(md.getStartPosition() + md.getLength()) + " " +
+//             line_number + " " +  md.getName());
+//       int startln = comp_unit.getLineNumber(md.getStartPosition());   
+//       Block b = md.getBody();
+//       if (b == null) return false;
+//       int blockln = comp_unit.getLineNumber(b.getStartPosition());
+//       int firstln = blockln;
+//       if (b.statements().size() > 0) {
+//          Statement s = (Statement) b.statements().get(0);
+//          firstln = comp_unit.getLineNumber(s.getStartPosition());
+//        }
+//       start_offset = md.getStartPosition();
+//       AcornLog.logD("SESAME","CHECK METHOD " + startln + " " + line_number + " " +
+//             blockln + " " + firstln);
+//       if (startln == line_number || startln == blockln || startln == firstln) {
+//          return false;
+//        }
+//       return true;
+//     }
+// 
+// }       // end of inner class FindPositionVisitor
 
 
 

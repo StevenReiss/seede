@@ -336,18 +336,19 @@ private CashewValue getValueAt(CashewValueSession sess,CashewClock cc)
 
    SortedMap<Long,CashewValue> map = getValueMap(sess);
    if (map == null) {
-      if (deferred_value != null) {
+      CashewDeferredValue cdv = deferred_value;
+      if (cdv != null) {
 	 CashewValue cv = deferred_value.getValue(sess);
          if (cv == null && sess.getParent() != null) {
-            cv = deferred_value.getValue(sess.getParent());
+            cv = cdv.getValue(sess.getParent());
           }
          else {
-            cv = deferred_value.getValue(sess);
+            cv = cdv.getValue(sess);
           }
 	 if (cv != null) {
             setLastUpdate(sess,0,cv);
-	    deferred_value = null;
             initial_value = cv;
+            deferred_value = null;
 	    return cv;
 	  }
          else AcornLog.logE("CASHEW","No value computed for deferred value");

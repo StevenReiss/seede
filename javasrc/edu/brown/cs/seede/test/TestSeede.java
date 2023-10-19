@@ -49,6 +49,7 @@ private static final String		TEST4_SID = "SEED_12349";
 private static final String		TEST5_SID = "SEED_12950";
 private static final String		TEST6_SID = "SEED_12951";
 private static final String		TEST7_SID = "SEED_12952";
+private static final String		TEST8_SID = "SEED_12953";
 
 private static final String		TEST_PROJECT = "sample1";
 private static final String		LAUNCH1_NAME = "test1";
@@ -57,6 +58,7 @@ private static final String		LAUNCH4_NAME = "test3";
 private static final String		LAUNCH5_NAME = "testLambda";
 private static final String		LAUNCH6_NAME = "testList";
 private static final String		LAUNCH7_NAME = "testNative";
+private static final String		LAUNCH8_NAME = "testReflection";
 private static final String		REL_PATH1 = "src/edu/brown/cs/seede/sample/Tester.java";
 
 
@@ -183,6 +185,14 @@ public TestSeede()
    LaunchData ld = startLaunch(LAUNCH7_NAME,1);
    setupSeedeSession(TEST7_SID,ld,0);
    runSeede(TEST7_SID);
+}
+
+@Test public void test8()
+{
+   AcornLog.logD("TEST: START TEST8");
+   LaunchData ld = startLaunch(LAUNCH8_NAME,0);
+   setupSeedeSession(TEST8_SID,ld,0);
+   runSeede(TEST8_SID);
 }
 
 

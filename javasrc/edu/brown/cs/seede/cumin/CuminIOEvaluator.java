@@ -482,7 +482,7 @@ CuminRunStatus checkConsoleMethods()
 /*                                                                              */
 /********************************************************************************/
 
-CuminRunStatus checkPrintMethods(String cls) throws CashewException
+CuminRunStatus checkPrintMethods(String cls) throws CashewException, CuminRunException
 {
    CashewValue rslt = null;
    String ocls = cls;
@@ -538,14 +538,14 @@ CuminRunStatus checkPrintMethods(String cls) throws CashewException
    int fdv = fd.getNumber(sess,getClock()).intValue();
    
    boolean app = false;
-   try {
-      CashewValue appv = cv1.getFieldValue(sess,typer,getClock(),
-            "java.io.FileOutputStream.append",getContext());
-      app = appv.getBoolean(sess,getClock());
-    }
-   catch (Throwable t) {
+// try {
+//    CashewValue appv = cv1.getFieldValue(sess,typer,getClock(),
+//          "java.io.FileOutputStream.append",getContext());
+//    app = appv.getBoolean(sess,getClock());
+//  }
+// catch (Throwable t) {
       // append is not defined in Java 10 -- need to compute this some other way
-    }
+//  }
    
    String path = null;
    try {
@@ -613,6 +613,30 @@ CuminRunStatus checkPrintMethods(String cls) throws CashewException
                   return null;
              }
           }
+         break;
+      case "printf" :
+      case "format" :
+         int base = 1;
+         if (getNumArgs() == 4) {
+            base = 2;
+            argv = getValue(2);
+          }
+         String fmt = argv.getString(sess,typer,getClock());
+         CashewValue arr = getValue(base+1);
+         Object [] args = new Object[0];
+         if (!arr.isNull(sess,getClock())) {
+            int sz = arr.getDimension(sess,getClock());
+            if (sz > 0) {
+               args = new Object[sz];
+               for (int i = 0; i < sz; ++i) {
+                  CashewValue v0 = arr.getIndexValue(sess,getClock(),i);
+                  String s0 = v0.getString(sess,typer,getClock());
+                  args[i] = s0;
+                }
+             }
+          }
+         toout = String.format(fmt,args);
+         rslt = thisarg;
          break;
     }
    

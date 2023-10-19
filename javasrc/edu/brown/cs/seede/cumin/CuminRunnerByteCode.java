@@ -1543,6 +1543,10 @@ private CuminRunStatus checkSpecial() throws CuminRunException
             cde = new CuminDirectEvaluation(this);
             sts = cde.checkResourceBundleMethods();
             break;
+         case "java.util.TimeZone" :
+            cde = new CuminDirectEvaluation(this);
+            sts = cde.checkTimeZoneMethods();
+            break;
        }
     }
    catch (CuminRunException e) {
