@@ -2255,9 +2255,11 @@ private CashewValue runMatcher(CashewValue mval,String ps,String textv,int pos,b
 {
    int from = getIntFieldValue(mval,"java.util.regex.Matcher.from");
    int to = getIntFieldValue(mval,"java.util.regex.Matcher.to"); 
+   if (from < 0) from = 0;
+   if (to < 0) to = textv.length();
    String expr = "edu.brown.cs.seede.poppy.PoppyValue.matchFinder(\"" +
       IvyFormat.formatString(ps) + "\",\"" +
-      IvyFormat.formatString(textv)  + "\"," + pos + "," + from + "," + to + "," + fail + ",-1)";
+      IvyFormat.formatString(textv)  + "\"," + pos + "," + from + "," + to + "," + fail + "," + anch + ")";
    CashewValue rslt = exec_runner.getLookupContext().evaluate(expr);
    copyMatcherFields(rslt,mval);
    int first = getIntFieldValue(rslt,"java.util.regex.Matcher.first");

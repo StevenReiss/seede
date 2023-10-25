@@ -29,6 +29,7 @@ import java.util.Map;
 
 import edu.brown.cs.ivy.jcomp.JcompType;
 import edu.brown.cs.ivy.jcomp.JcompTyper;
+import edu.brown.cs.ivy.xml.IvyXml;
 import edu.brown.cs.ivy.xml.IvyXmlWriter;
 
 
@@ -232,7 +233,29 @@ public void setInitialValue(JcompTyper typer,String s,int coder)
 
 @Override public void outputLocalXml(IvyXmlWriter xw,CashewOutputContext ctx,String name)
 {
+   int len = string_value.length();
+   boolean usechars = false;
+   for (int i = 0; i < len; ++i) {
+      if (isBadChar(string_value.charAt(i))) {
+         usechars = true;
+         break;
+       }
+    }
+   if (usechars) {
+      xw.field("CHARS",true);
+      xw.field("LENGTH",len);
+      xw.text(IvyXml.encodeCharacters(string_value));
+    }
    xw.cdata(string_value);
+}
+
+
+private boolean isBadChar(char ch)
+{
+   if (ch >= 128) return true;
+   if (ch >= 32) return false;
+   if (ch == '\r' || ch == '\n' || ch == '\t') return false;
+   return true;
 }
 
 

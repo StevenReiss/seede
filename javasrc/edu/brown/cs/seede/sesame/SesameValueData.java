@@ -368,9 +368,6 @@ private String getFieldKey(String fnm,String cnm)
 
 
 
-
-
-
 String findValue(CashewValue cv,int lvl)
 {
    if (result_value == null) return null;
@@ -430,6 +427,9 @@ private void initialize(SesameSessionLaunch sess,Element xml,String expr)
    val_kind = IvyXml.getAttrEnum(xml,"KIND",ValueKind.UNKNOWN);
    val_value = IvyXml.getTextElement(xml,"DESCRIPTION");
    if (val_value == null) val_value = "";
+   if (val_kind == ValueKind.STRING && IvyXml.getAttrBool(xml,"CHARS")) {
+      val_value = IvyXml.decodeCharacters(val_value,IvyXml.getAttrInt(xml,"LENGTH"));
+    }
    has_values = IvyXml.getAttrBool(xml,"HASVARS");
    is_local = IvyXml.getAttrBool(xml,"LOCAL");
    is_static = IvyXml.getAttrBool(xml,"STATIC");

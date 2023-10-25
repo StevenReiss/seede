@@ -909,11 +909,16 @@ private CuminRunStatus visit(MethodDeclaration md,ASTNode after) throws CashewEx
       JcompSymbol vsym = JcompAst.getDefinition(md.getName());
       if (!vsym.isStatic()) {
 	 off = 1;
-	 lookup_context.define(THIS_NAME,argvals.get(0));
+         CashewValue thisval = argvals.get(0);
+	 lookup_context.define(THIS_NAME,thisval);
 	 if (md.isConstructor()) {
 	    JcompType jtyp = JcompAst.getDefinition(md).getClassType();
 	    if (jtyp.needsOuterClass()) {
-	       lookup_context.define(OUTER_NAME,argvals.get(1));
+               CashewValue outval = argvals.get(1);
+	       lookup_context.define(OUTER_NAME,outval);
+               String outfldnm = jtyp.getName() + "." + OUTER_NAME;
+               thisval.setFieldValue(runner_session,type_converter,
+                     execution_clock,outfldnm,outval);
 	       off = 2;
 	     }
 	  }
@@ -1372,7 +1377,8 @@ private CuminRunStatus visit(SimpleName v) throws CashewException
 		  OUTER_NAME,lookup_context,false);
 	    if (xtv == null) break;
 	    tv = xtv;
-	    cv = tv.getFieldValue(runner_session,type_converter,execution_clock,
+	    cv = tv.getFieldValue(runner_session,type_converter,
+                  execution_clock,
 		  js.getFullName(),lookup_context,false);
 	  }
 	 if (cv == null) {

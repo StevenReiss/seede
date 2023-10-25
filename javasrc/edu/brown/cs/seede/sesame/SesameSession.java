@@ -230,7 +230,7 @@ public MethodDeclaration getCallMethod(SesameLocation loc)
    SesameFile sf = loc.getFile();
    ASTNode root = sf.getResolvedAst(getProject());
    ASTNode mnode = JcompAst.findNodeAtOffset(root,loc.getStartPosition().getOffset());
-   while (!(mnode instanceof MethodDeclaration)) {
+   while (mnode != null && !(mnode instanceof MethodDeclaration)) {
       mnode = mnode.getParent();
     }
    return (MethodDeclaration) mnode;
