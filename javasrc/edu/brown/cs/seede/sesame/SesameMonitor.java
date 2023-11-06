@@ -223,8 +223,14 @@ void sendCommand(String cmd,CommandArgs args,String cnts,MintReply rply)
 
    String msg = xw.toString();
    xw.close();
-
-   AcornLog.logD("Send to Bubbles: " + msg);
+   
+   String msg1 = msg;
+   if (msg1.length() > 1024000) {
+      AcornLog.logW("Size of response is " + msg.length());
+      msg1 = msg1.substring(0,1024000);
+    }
+   AcornLog.logD("Send to Bubbles: " + msg1);
+   
    if (rply != null) {
       sendMessage(msg,rply,MintConstants.MINT_MSG_FIRST_REPLY);
     }
@@ -645,11 +651,11 @@ private class RemoveHandler extends Thread {
       SesameProject sp = for_session.getProject();
       String inuse = null;
       for (SesameSession ns : session_map.values()) {
-	 SesameProject np = ns.getProject();
-	 if (np == sp) inuse = ns.getSessionId();
+         SesameProject np = ns.getProject();
+         if (np == sp) inuse = ns.getSessionId();
        }
       if (inuse == null) {
-	 for_session.removeSession();
+         for_session.removeSession();
        }
       else {
          AcornLog.logE("SESAME","Session not remove " +

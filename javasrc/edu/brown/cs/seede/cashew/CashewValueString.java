@@ -246,7 +246,9 @@ public void setInitialValue(JcompTyper typer,String s,int coder)
       xw.field("LENGTH",len);
       xw.text(IvyXml.encodeCharacters(string_value));
     }
-   xw.cdata(string_value);
+   else {
+      xw.cdata(string_value);
+    }
 }
 
 

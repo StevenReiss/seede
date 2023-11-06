@@ -31,6 +31,7 @@ import edu.brown.cs.ivy.jcode.JcodeMethod;
 import edu.brown.cs.ivy.jcode.JcodeTryCatchBlock;
 import edu.brown.cs.ivy.jcomp.JcompType;
 import edu.brown.cs.ivy.jcomp.JcompTyper;
+import edu.brown.cs.ivy.xml.IvyXml;
 import edu.brown.cs.seede.acorn.AcornLog;
 import edu.brown.cs.seede.cashew.CashewClock;
 import edu.brown.cs.seede.cashew.CashewConstants;
@@ -965,7 +966,9 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException, CashewExc
 	 vstack = v0.getFieldValue(sess,typer,execution_clock,nm,lookup_context);
          AcornLog.logD("CUMIN","RESULT: " + nm + " = " +  vstack.toString(runner_session));
 	 vstack = vstack.getActualValue(sess,execution_clock);
-         AcornLog.logD("CUMIN","ACTUAL RESULT: " + (vstack == null ? null : vstack.toString(runner_session)));
+         
+         AcornLog.logD("CUMIN","ACTUAL RESULT: " + (vstack == null ? null : 
+            IvyXml.xmlSanitize(vstack.toString(runner_session))));
 	 break;
       case GETSTATIC :
 	 fld = jins.getFieldReference();

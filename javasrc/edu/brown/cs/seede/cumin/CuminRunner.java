@@ -454,7 +454,8 @@ CuminRunner handleCall(CashewClock cc,JcompSymbol method,List<CashewValue> args,
 
    JcompSymbol cmethod = findTargetMethod(cc,method,thisarg,ctyp);
    if (cmethod == null) {
-      AcornLog.logE("Couldn't find method to call " + method);
+      AcornLog.logE("Couldn't find method to call " + 
+            thisarg.getDataType(getSession(),cc,type_converter) + " " + method);
       for (CashewValue cv : args) {
 	 AcornLog.logE("ARG: " + cv.getDebugString(getSession(),getTyper(),cc));
        }

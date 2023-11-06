@@ -159,10 +159,14 @@ protected SesameSessionLaunch(SesameSessionLaunch ssl)
 {
    super.removeSession();
 
+   thread_ids = null;
+   frame_ids = null;
+   source_file = null;
    thread_values = null;
    unique_values = null;
    thread_frame = null;
    value_cache = null;
+   accessible_types = null;
 }
 
 

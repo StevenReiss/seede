@@ -186,7 +186,10 @@ void removeSession()
    runner_location = null;
    exec_runners = null;
    cashew_iomodel = null;
+   cashew_syncmodel = null;
    expand_names = null;
+   parent_session = null;
+   poppy_graphics = null;
 }
 
 

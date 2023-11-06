@@ -105,6 +105,7 @@ SesameSubsession(SesameSessionLaunch base,Element xml)
    local_project = null;
    base_session = null;
    position_map.clear();
+   call_location = null;
 }
 
 

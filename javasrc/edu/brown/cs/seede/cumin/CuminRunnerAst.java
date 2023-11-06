@@ -114,6 +114,7 @@ import edu.brown.cs.ivy.jcomp.JcompSymbol;
 import edu.brown.cs.ivy.jcomp.JcompSymbolKind;
 import edu.brown.cs.ivy.jcomp.JcompType;
 import edu.brown.cs.ivy.jcomp.JcompTyper;
+import edu.brown.cs.ivy.xml.IvyXml;
 import edu.brown.cs.seede.cashew.CashewClock;
 import edu.brown.cs.seede.cashew.CashewContext;
 import edu.brown.cs.seede.cashew.CashewException;
@@ -204,7 +205,7 @@ CuminRunnerAst(CashewValueSession sess,CuminProject cp,CashewContext gblctx,Cash
    current_node = method_node;
    last_line = 0;
 
-   AcornLog.logD("CUMIN","Setup AST runner: " + JcompAst.getSource(method) + " " +  method);
+   AcornLog.logD("CUMIN","Setup AST runner: " + JcompAst.getSource(method) + "\n" +  method);
 
    setupContext(top);
 }
@@ -899,7 +900,8 @@ private CuminRunStatus visit(MethodDeclaration md,ASTNode after) throws CashewEx
 	  }
 	 else if (AcornLog.isTracing()) {
 	    AcornLog.logT("ARG " + i + " = " +
-		  argvals.get(i).getDebugString(runner_session,type_converter,execution_clock));
+		  IvyXml.xmlSanitize(argvals.get(i).getDebugString(
+			runner_session,type_converter,execution_clock)));
 	  }
        }
 
@@ -909,16 +911,16 @@ private CuminRunStatus visit(MethodDeclaration md,ASTNode after) throws CashewEx
       JcompSymbol vsym = JcompAst.getDefinition(md.getName());
       if (!vsym.isStatic()) {
 	 off = 1;
-         CashewValue thisval = argvals.get(0);
+	 CashewValue thisval = argvals.get(0);
 	 lookup_context.define(THIS_NAME,thisval);
 	 if (md.isConstructor()) {
 	    JcompType jtyp = JcompAst.getDefinition(md).getClassType();
 	    if (jtyp.needsOuterClass()) {
-               CashewValue outval = argvals.get(1);
+	       CashewValue outval = argvals.get(1);
 	       lookup_context.define(OUTER_NAME,outval);
-               String outfldnm = jtyp.getName() + "." + OUTER_NAME;
-               thisval.setFieldValue(runner_session,type_converter,
-                     execution_clock,outfldnm,outval);
+	       String outfldnm = jtyp.getName() + "." + OUTER_NAME;
+	       thisval.setFieldValue(runner_session,type_converter,
+		     execution_clock,outfldnm,outval);
 	       off = 2;
 	     }
 	  }
@@ -1378,7 +1380,7 @@ private CuminRunStatus visit(SimpleName v) throws CashewException
 	    if (xtv == null) break;
 	    tv = xtv;
 	    cv = tv.getFieldValue(runner_session,type_converter,
-                  execution_clock,
+		  execution_clock,
 		  js.getFullName(),lookup_context,false);
 	  }
 	 if (cv == null) {
@@ -1519,9 +1521,9 @@ private CuminRunStatus visit(ClassInstanceCreation v, ASTNode after)
    JcompType rty = JcompAst.getJavaType(v.getType());
    if (rty.getName().equals("java.lang.Class")) {
       CuminEvaluator.throwException(runner_session,lookup_context,
-            type_converter,"java.lang.Error");
+	    type_converter,"java.lang.Error");
     }
-   
+
    Map<JcompSymbol,JcompSymbol> inits = null;
    if (v.getAnonymousClassDeclaration() != null) {
       inits = fixMethodClass(v.getAnonymousClassDeclaration());
@@ -1581,13 +1583,15 @@ private CuminRunStatus visit(ClassInstanceCreation v, ASTNode after)
 	  }
 	 cv = arrv;
        }
-      JcompType argtyp = atyps.get(atypct);
-      CashewValue ncv = CuminEvaluator.castValue(this,cv,argtyp);
-      if (ncv == null) {
-	 AcornLog.logD("Conversion problem " + cv + " " + argtyp + " " +
-			  cv.getDataType(runner_session,execution_clock,null) );
+      if (atypct < atyps.size()) {
+	 JcompType argtyp = atyps.get(atypct);
+	 CashewValue ncv = CuminEvaluator.castValue(this,cv,argtyp);
+	 if (ncv == null) {
+	    AcornLog.logD("Conversion problem " + cv + " " + argtyp + " " +
+			     cv.getDataType(runner_session,execution_clock,null) );
+	  }
+	 argv.add(ncv);
        }
-      argv.add(ncv);
     }
    if (args.size() < atyps.size() && ctyp.isVarArgs()) {
       JcompType argtyp = atyps.get(atyps.size()-1);
@@ -1705,12 +1709,12 @@ private CuminRunStatus visit(MethodInvocation v,ASTNode after)
       if (sz == 1) {
 	 CashewValue cv = execution_stack.peek(0);
 	 JcompType cvtyp = cv.getDataType(runner_session,execution_clock,type_converter);
-         if (cvtyp.isAnyType()) {
-            ASTNode n = (ASTNode) v.arguments().get(ncomp-1);
-            JcompType jt1 = JcompAst.getExprType(n);
-            if (jt1 == null) jt1 = JcompAst.getJavaType(n);
-            if (jt1 != null) cvtyp = jt1;
-          }
+	 if (cvtyp.isAnyType()) {
+	    ASTNode n = (ASTNode) v.arguments().get(ncomp-1);
+	    JcompType jt1 = JcompAst.getExprType(n);
+	    if (jt1 == null) jt1 = JcompAst.getJavaType(n);
+	    if (jt1 != null) cvtyp = jt1;
+	  }
 	 if (cvtyp.isArrayType() && cvtyp.isCompatibleWith(vtyp)) {
 	    sz = -1;
 	  }

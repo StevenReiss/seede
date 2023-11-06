@@ -123,7 +123,7 @@ SesameContext(SesameSession ss)
       expr += suffix + "(\"" + name + "\")";
       cv = for_session.lookupValue(expr,type);
       // System.err.println("HANDLE PROBLEM FIELDS " + cv);
-      AcornLog.logI("Handle problem fields: " + suffix + "('" + name + "') => " + cv);
+      AcornLog.logD("Handle problem fields: " + suffix + "('" + name + "') => " + cv);
     }
    if (cv != null) {
       cv = CashewValue.createReference(cv,true);

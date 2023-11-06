@@ -402,6 +402,8 @@ synchronized void removeProject()
        }
     }
    local_files = null;
+   binary_control = null;
+   local_files = null;
 }
 
 
