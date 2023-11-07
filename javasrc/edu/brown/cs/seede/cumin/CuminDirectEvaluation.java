@@ -1376,6 +1376,9 @@ CuminRunStatus checkClassMethods() throws CashewException, CuminRunException
 	 case "isInterface" :
 	    rslt = CashewValue.booleanValue(typer,thistype.isInterfaceType());
 	    break;
+         case "isRecord" :
+            rslt = CashewValue.booleanValue(typer,thistype.isRecord());
+            break;
 	 case "getModifiers" :
 	    JcompSymbol sym = thistype.getDefinition();
 	    rslt = CashewValue.numericValue(typer,typer.INT_TYPE,sym.getModifiers());
