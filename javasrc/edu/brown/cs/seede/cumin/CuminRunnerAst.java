@@ -3066,10 +3066,24 @@ private CashewValue handleFieldAccess(JcompSymbol sym) throws CuminRunException,
 {
    CashewValue obj = execution_stack.pop().getActualValue(runner_session,execution_clock);
    if (sym != null && sym.isStatic()) return handleStaticFieldAccess(sym);
-   if (obj.isNull(runner_session,execution_clock))
+   if (obj.isNull(runner_session,execution_clock)) {
       CuminEvaluator.throwException(runner_session,lookup_context,
 	    type_converter,"java.lang.NullPointerException");
+    }
 
+   JcompType base = sym.getClassType();
+   JcompType have = obj.getDataType(runner_session,execution_clock,type_converter);
+   if (!have.isCompatibleWith(base)) {
+      String name = have.getName() + "." + OUTER_NAME;
+      CashewValue cv1 = lookup_context.findReference(OUTER_NAME);
+      if (cv1 == null) cv1 = lookup_context.findReference(name);
+      if (cv1 == null) { 
+         cv1 = obj.getFieldValue(runner_session,type_converter,execution_clock,name,
+            lookup_context);
+       }
+      if (cv1 != null) obj = cv1;
+    }
+   
    CashewValue rslt = obj.getFieldValue(runner_session,type_converter,execution_clock,
 	 sym.getFullName(),lookup_context);
    return rslt;
