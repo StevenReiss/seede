@@ -1240,7 +1240,8 @@ CuminRunStatus checkObjectMethods() throws CuminRunException, CashewException
 	    return CuminEvaluator.returnException(sess,getContext(),
 		  typer,"java.lang.NullPointerException");
 	 CashewValue cv0 = getValue(0);
-	 CashewValue cv1 = cv0.getFieldValue(sess,typer,getClock(),HASH_CODE_FIELD,getContext());
+	 CashewValue cv1 = cv0.getFieldValue(sess,typer,getClock(),
+               HASH_CODE_FIELD,getContext());
 	 AcornLog.logD("CUMIN","Hash compute " + cv1 + " " + cv0);
 	 Number cv2 = cv1.getNumber(sess,getClock());
 	 AcornLog.logD("CUMIN","Hash value " + cv2);
@@ -1359,7 +1360,8 @@ CuminRunStatus checkClassMethods() throws CashewException, CuminRunException
 	       List<CashewValue> argv = new ArrayList<>();
 	       argv.add(nv);
 	       exec_runner.getStack().push(nv);
-	       CuminRunner nrun = exec_runner.handleCall(getClock(),csym,argv,CallType.SPECIAL);
+	       CuminRunner nrun = exec_runner.handleCall(getClock(),csym,
+                     argv,CallType.SPECIAL);
 	       return CuminRunStatus.Factory.createCall(nrun);
 	     }
 	    // exec_runner.ensureLoaded("edu.brown.cs.seede.poppy.PoppyValue");
@@ -2021,7 +2023,7 @@ CuminRunStatus checkReflectArrayMethods() throws CuminRunException, CashewExcept
 }
 
 
-CuminRunStatus checkReferenceMethods()
+CuminRunStatus checkReferenceMethods() throws CashewException
 {
    CashewValue rslt = null;
 
@@ -2029,6 +2031,15 @@ CuminRunStatus checkReferenceMethods()
       case "clear" :
       case "clear0" :
 	 break;
+      case "refersTo" :
+      case "refersToImpl" :
+      case "refersTo0" :
+         CashewValue thiscv = getValue(0);
+         CashewValue refcv = thiscv.getFieldValue(getSession(),getTyper(),getClock(),
+               "java.lang.ref.Reference.referent",getContext());
+         CashewValue checkcv = getValue(1);
+         rslt = CashewValue.booleanValue(getTyper(),checkcv == refcv);
+         break;
       default :
 	 return null;
     }

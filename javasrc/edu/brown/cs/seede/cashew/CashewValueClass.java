@@ -40,6 +40,7 @@ public class CashewValueClass extends CashewValueObject implements CashewConstan
 /********************************************************************************/
 
 private JcompType       class_value;
+private long            hash_code;
 
 
 
@@ -53,6 +54,7 @@ CashewValueClass(JcompTyper typer,JcompType c)
 {
    super(typer,typer.CLASS_TYPE,null,false);
    class_value = c;
+   hash_code = 0;
 }
 
 
@@ -86,6 +88,20 @@ public JcompType getJcompType()                         { return class_value; }
       case "name" :
          return CashewValue.stringValue(typer,typer.STRING_TYPE,class_value.getName());
       case "@hashCode" :
+         String xnm = class_value.getName();
+         if (hash_code == 0) {
+            String eval = xnm + ".class.hashCode()";
+            CashewValue evv = ctx.evaluate(eval);
+            if (evv != null) {
+               try {
+                  hash_code = evv.getNumber(sess,cc).intValue();
+                }
+               catch (CashewException e) {
+                  AcornLog.logE("CASHEW","Problem getting hash code for class",e);
+                }
+             }
+            if (hash_code != 0) return CashewValue.numericValue(typer,typer.INT_TYPE,hash_code);
+          }
          return CashewValue.numericValue(typer,typer.INT_TYPE,class_value.hashCode());
       case "java.lang.Class.module" :
       case "module" :

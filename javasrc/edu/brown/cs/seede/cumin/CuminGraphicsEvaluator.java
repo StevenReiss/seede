@@ -125,6 +125,52 @@ CuminRunStatus checkJFrame() throws CashewException
 
 
 /********************************************************************************/
+/*                                                                              */
+/*      Entry point for getDefaultToolkit                                       */
+/*                                                                              */
+/********************************************************************************/
+
+CuminRunStatus checkToolkit() throws CashewException
+{
+   CashewValue rslt = null;
+   
+   switch (getMethod().getName()) {
+      case "getDefaultToolkit" :
+         String exec = "java.awt.Toolkit.getDefaultToolkit()";
+         rslt = exec_runner.getLookupContext().evaluate(exec);
+         break;
+      default :
+         return null;
+    }
+   
+   return CuminRunStatus.Factory.createReturn(rslt);
+}
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Entry point for Component                                               */
+/*                                                                              */
+/********************************************************************************/
+
+CuminRunStatus checkComponent() throws CashewException
+{
+   CashewValue rslt = null;
+   
+   switch (getMethod().getName()) {
+      case "updateCursorImmediately" :
+         // skip this
+         break;
+      default :
+         return null;
+    }
+   
+   return CuminRunStatus.Factory.createReturn(rslt);
+}
+
+
+
+/********************************************************************************/
 /*										*/
 /*	Entry point for PoppyGraphics methods					*/
 /*										*/
@@ -308,6 +354,7 @@ CuminRunStatus checkPoppyGraphics() throws CashewException
       case "getFontMetrics" :
       case "getFontRenderContext" :
       case "hit" :
+      case "doClip" :
 	 return null;
 
       default :
@@ -423,6 +470,7 @@ private void createCommand(GraphicsOutput g,CommandType typ,int ign) throws Cash
    g.addFields();
    CashewValueSession sess = getSession();
    CashewClock cc = getClock();
+   JcompType mrimage = getTyper().findSystemType("java.awt.image.MultiResolutionImage");
 
    IvyXmlWriter xw = g.getCommandList();
    xw.begin("DRAW");
@@ -435,7 +483,7 @@ private void createCommand(GraphicsOutput g,CommandType typ,int ign) throws Cash
       CashewValue cv = getValue(i);
       JcompType dtyp = cv.getDataType(sess,cc,getTyper());
       xw.field("TYPE",dtyp.getName());
-      if (cv.getDataType(sess,cc,getTyper()).isPrimitiveType()) {
+      if (dtyp.isPrimitiveType()) {
 	 switch (dtyp.getName()) {
 	    case "int" :
 	    case "short" :
@@ -492,6 +540,13 @@ private void createCommand(GraphicsOutput g,CommandType typ,int ign) throws Cash
 	    xw.field("FILE",getStringField(cv2,"java.net.URL.file"));
 	  }
        }
+      else if (dtyp.isCompatibleWith(mrimage)) {
+         int basewidth = getIntField(cv,"sun.awt.image.MulteResolutionCachedImage.baseImageWidth");
+         int baseht = getIntField(cv,"sun.awt.image.MulteResolutionCachedImage.baseImageHeight");
+         xw.field("KIND","MULTI");
+         xw.field("BASEWIDTH",basewidth);
+         xw.field("BASEHT",baseht);
+       }
       else {
 	 xw.textElement("VALUE",cv.getString(getSession(),getTyper(),cc));
        }
@@ -517,7 +572,8 @@ private String encodeField(CashewValue cv) throws CashewException
 
    if (cv == null || cv.isNull(sess,getClock())) return null;
 
-   switch (cv.getDataType(sess,getClock(),null).getName()) {
+   JcompType fldtyp = cv.getDataType(sess,getClock(),typer);
+   switch (fldtyp.getName()) {
       case "java.awt.Color" :
       case "sun.swing.PrintColorUIResource" :
       case "javax.swing.plaf.ColorUIResource" :
@@ -533,6 +589,7 @@ private String encodeField(CashewValue cv) throws CashewException
 
       case "java.awt.Font" :
       case "javax.swing.plaf.FontUIResource" :
+      case "com.apple.laf.AquaFonts.DerivedUIResourceFont" :
 	 String fnm = getStringField(cv,"java.awt.Font.name");
 	 int fsz = getIntField(cv,"java.awt.Font.size");
 	 int fstyle = getIntField(cv,"java.awt.Font.style");
@@ -580,6 +637,7 @@ private String encodeField(CashewValue cv) throws CashewException
 	       " X1='" + f1x + "' Y1='" + f1y + "' X2='" + f2x + "' Y2='" + f2y + "' CYC='" + cyc + "' />";
 
       default :
+         AcornLog.logE("CUMIN","Unknown field type " + fldtyp);
 	 break;
     }
 
@@ -671,18 +729,18 @@ private class GraphicsOutput {
       poppy_graphics = cv;
       parent_graphics = this;
       poppy_id = cv.getFieldValue(getSession(),getTyper(),getClock(),
-	    "edu.brown.cs.seede.poppy.PoppyGraphics.poppy_id",getContext()).
+            "edu.brown.cs.seede.poppy.PoppyGraphics.poppy_id",getContext()).
             getString(getSession(),getTyper(),getClock());
       CashewValue dimv = cv.getFieldValue(getSession(),getTyper(),getClock(),
-	    "edu.brown.cs.seede.poppy.PoppyGraphics.poppy_width",getContext());
+            "edu.brown.cs.seede.poppy.PoppyGraphics.poppy_width",getContext());
       int wid = dimv.getNumber(getSession(),getClock()).intValue();
       dimv = cv.getFieldValue(getSession(),getTyper(),getClock(),
-	    "edu.brown.cs.seede.poppy.PoppyGraphics.poppy_height",getContext());
+            "edu.brown.cs.seede.poppy.PoppyGraphics.poppy_height",getContext());
       int ht = dimv.getNumber(getSession(),getClock()).intValue();
-
+   
       current_index = 0;
       clearCurrents();
-
+   
       command_list = new IvyXmlWriter();
       command_list.begin("GRAPHICS");
       command_list.field("WIDTH",wid);
@@ -787,6 +845,7 @@ private class GraphicsOutput {
       int nidx = fval.getNumber(getSession(),getClock()).intValue();
       int pidx = fval2.getNumber(getSession(),getClock()).intValue();
       if (nidx == current_index) return false;
+      AcornLog.logD("CUMIN","Update graphics index " + nidx);
       IvyXmlWriter xw = getCommandList();
       xw.begin("INDEX");
       xw.field("TIME",getClock().getTimeValue());

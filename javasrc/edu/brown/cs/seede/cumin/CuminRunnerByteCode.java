@@ -1479,6 +1479,14 @@ private CuminRunStatus checkSpecial() throws CuminRunException
             cge = new CuminGraphicsEvaluator(this);
             sts = cge.checkJFrame();
             break;
+         case "java.awt.Toolkit" :
+            cge = new CuminGraphicsEvaluator(this);
+            sts = cge.checkToolkit();
+            break;
+         case "java.awt.Component" :
+            cge = new CuminGraphicsEvaluator(this);
+            sts = cge.checkComponent();
+            break;
 
 	 case "java.util.concurrent.atomic.AtomicInteger" :
 	 case "java.util.concurrent.atomic.AtomicLong" :

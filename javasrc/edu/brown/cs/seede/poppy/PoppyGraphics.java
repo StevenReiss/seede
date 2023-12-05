@@ -551,6 +551,7 @@ public void constrain(int x,int y,int w,int h)
 }
 
 
+
 private void doClip(Shape s)
 {
    if (user_clip == null) user_clip = s;

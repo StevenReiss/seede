@@ -174,34 +174,36 @@ public static Object getStaticFieldValue(String itm)
    int idx1 = itm.lastIndexOf(".");
    String fld = itm.substring(idx1+1);
    String cls = itm.substring(0,idx1);
-   
+
    Class<?> c1 = getClassByName(cls);
    if (c1 == null) return null;
-  
+
    Throwable err = null;
-   
+
    // handle special cases
    switch (fld) {
       case "ENUM$VALUES" :
-         return c1.getEnumConstants();
+	 return c1.getEnumConstants();
     }
-   
+
    try {
       Field f1 = c1.getDeclaredField(fld);
       try {
-         f1.setAccessible(true);
+	 f1.setAccessible(true);
        }
       catch (Throwable t) { err = t; }
-      
+
       return f1.get(null);
     }
-   catch (Throwable t) { 
+   catch (Throwable t) {
       if (err == null) err = t;
     }
-   
-   System.err.println("POPPY: Problem getting static field: " + c1 + " " + fld);
+
+   System.err.println("POPPY: Problem getting static field: " + c1.getModule().getName() +
+			 "/" +  c1.getName() + " " + fld);
    System.err.println("POPPY: Error: " + err);
-   System.err.println("POPPY: Add module/package to Bicex.props");
+   System.err.println("POPPY: Add '" + c1.getModule().getName() + "/" + c1.getName() + "' to Bicex.props");
+
    return null;
 }
 
@@ -210,7 +212,7 @@ private static Class<?> getClassByName(String cls)
 {
    String itm = cls;
    Class<?> c1 = null;
-   
+
    for ( ; ; ) {
       try {
 	 c1 = Class.forName(cls);
@@ -220,12 +222,12 @@ private static Class<?> getClassByName(String cls)
 //    System.err.println("POPPY: Can't find class " + cls);
       int idx = cls.lastIndexOf(".");
       if (idx < 0) {
-         System.err.println("POPPY: Problem getting class: " + itm);
-         return null;
-       }     
+	 System.err.println("POPPY: Problem getting class: " + itm);
+	 return null;
+       }
       cls = cls.substring(0,idx) + "$" + cls.substring(idx+1);
     }
-   
+
    return c1;
 }
 
@@ -281,9 +283,9 @@ public static float getStaticFieldValueFloat(String itm)
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      File calls                                                              */
-/*                                                                              */
+/*										*/
+/*	File calls								*/
+/*										*/
 /********************************************************************************/
 
 public static String getFileData(FileInputStream fis)
@@ -296,24 +298,24 @@ public static String getFileData(FileInputStream fis)
     }
    catch (IOException e) {
     }
-   
+
    return null;
 }
 
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      toString handling                                                       */
-/*                                                                              */
+/*										*/
+/*	toString handling							*/
+/*										*/
 /********************************************************************************/
 
 public static String getToString(Object o)
 {
    if (o == null) return "null";
-   
+
    String rslt = o.toString();
-   
+
    return rslt;
 }
 
@@ -330,9 +332,9 @@ public static Object [] getToArray(Object o)
       Object [][] rslt = new Object[sz][2];
       int ct = 0;
       for (Map.Entry<?,?> ent : m.entrySet()) {
-         rslt[ct][0] = ent.getKey();
-         rslt[ct][1] = ent.getValue();
-         ++ct;
+	 rslt[ct][0] = ent.getKey();
+	 rslt[ct][1] = ent.getValue();
+	 ++ct;
        }
       return rslt;
     }
@@ -347,7 +349,7 @@ public static void setAccessible(String cls)
    if (c1 == null) return;
    for (Field f : c1.getDeclaredFields()) {
       try {
-         f.trySetAccessible();
+	 f.trySetAccessible();
        }
       catch (Throwable t) { }
     }
@@ -371,8 +373,8 @@ public static Object getClassModule(String nm)
 {
    if (nm != null) {
       try {
-         Class<?> c = Class.forName(nm);
-         return c.getModule();
+	 Class<?> c = Class.forName(nm);
+	 return c.getModule();
        }
       catch (Throwable t) { }
     }
@@ -405,9 +407,9 @@ public static class Return {
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Other helper routines                                                   */
-/*                                                                              */
+/*										*/
+/*	Other helper routines							*/
+/*										*/
 /********************************************************************************/
 
 public static ClassLoader getClassLoaderUsingPoppy(String cls)
@@ -431,61 +433,61 @@ public static NumberFormat getNumberFormatInstance(String typ,String slocale)
       default :
       case "*" :
       case "Number" :
-         if (locale == null) rslt = NumberFormat.getInstance();
-         else rslt = NumberFormat.getInstance(locale);
-         break;
+	 if (locale == null) rslt = NumberFormat.getInstance();
+	 else rslt = NumberFormat.getInstance(locale);
+	 break;
       case "Integer" :
-         if (locale == null) rslt = NumberFormat.getIntegerInstance();
-         else rslt = NumberFormat.getIntegerInstance(locale);
-         break;
+	 if (locale == null) rslt = NumberFormat.getIntegerInstance();
+	 else rslt = NumberFormat.getIntegerInstance(locale);
+	 break;
       case "Percent" :
-         if (locale == null) rslt = NumberFormat.getPercentInstance();
-         else rslt = NumberFormat.getPercentInstance(locale);
-         break;
+	 if (locale == null) rslt = NumberFormat.getPercentInstance();
+	 else rslt = NumberFormat.getPercentInstance(locale);
+	 break;
       case "Currency" :
-         if (locale == null) rslt = NumberFormat.getCurrencyInstance();
-         else rslt = NumberFormat.getCurrencyInstance(locale);
-         break;
+	 if (locale == null) rslt = NumberFormat.getCurrencyInstance();
+	 else rslt = NumberFormat.getCurrencyInstance(locale);
+	 break;
     }
-   
+
    return rslt;
 }
 
 
 
 public static Constructor<?> getConstructorUsingPoppy(String cls, String ... args)
-        throws NoSuchMethodException
+	throws NoSuchMethodException
 {
    try {
       Class<?> cl = Class.forName(cls);
       Class<?> [] acl = new Class<?>[args.length];
       for (int i = 0; i < args.length; ++i) {
-         acl[i] = getClassForName(args[i]);
+	 acl[i] = getClassForName(args[i]);
        }
       Constructor<?> rslt = cl.getConstructor(acl);
       return rslt;
     }
    catch (ClassNotFoundException e) { }
-   
+
    return null;
 }
 
 
 
 public static Constructor<?> getDeclaredConstructorUsingPoppy(String cls, String ... args)
-        throws NoSuchMethodException
-        {
+	throws NoSuchMethodException
+	{
    try {
       Class<?> cl = Class.forName(cls);
       Class<?> [] acl = new Class<?>[args.length];
       for (int i = 0; i < args.length; ++i) {
-         acl[i] = getClassForName(args[i]);
+	 acl[i] = getClassForName(args[i]);
        }
       Constructor<?> rslt = cl.getDeclaredConstructor(acl);
       return rslt;
     }
    catch (ClassNotFoundException e) { }
-   
+
    return null;
 }
 
@@ -493,26 +495,26 @@ public static Constructor<?> getDeclaredConstructorUsingPoppy(String cls, String
 
 
 public static Method getMethodUsingPoppy(String cls,String name,boolean decl,String ... args)
-        throws NoSuchMethodException
+	throws NoSuchMethodException
 {
    try {
 //    Class<?> cl = Class.forName(cls);
       Class<?> cl = getClassByName(cls);
       Class<?> [] acl = new Class<?>[args.length];
       for (int i = 0; i < args.length; ++i) {
-         acl[i] = getClassForName(args[i]);
+	 acl[i] = getClassForName(args[i]);
        }
-      System.err.println("POPPY: Get method " + name + " " + acl.length + " " + args.length);
+//    System.err.println("POPPY: Get method " + name + " " + acl.length + " " + args.length);
 
       Method rslt = null;
       if (decl) rslt = cl.getDeclaredMethod(name,acl);
       else rslt = cl.getMethod(name,acl);
       return rslt;
     }
-   catch (ClassNotFoundException e) { 
+   catch (ClassNotFoundException e) {
        System.err.println("POPPY: Class " + cls + " not found");
     }
-   
+
    return null;
 }
 
@@ -522,21 +524,21 @@ private static Class<?> getClassForName(String name) throws ClassNotFoundExcepti
 {
    switch (name) {
       case "int" :
-         return int.class;
+	 return int.class;
       case "short" :
-         return short.class;
+	 return short.class;
       case "byte" :
-         return byte.class;
+	 return byte.class;
       case "char" :
-         return char.class;
+	 return char.class;
       case "long" :
-         return long.class;
+	 return long.class;
       case "float" :
-         return float.class;
+	 return float.class;
       case "double" :
-         return double.class;
+	 return double.class;
     }
-   
+
    return Class.forName(name);
 }
 
@@ -548,26 +550,26 @@ public static Constructor<?>[] getDeclaredConstructorsUsingPoppy(String cls,bool
       Class<?> cl = Class.forName(cls);
       Constructor<?>[] rslt = cl.getDeclaredConstructors();
       if (pub) {
-         int ct = 0;
-         for (int i = 0; i < rslt.length; ++i) {
-            if (Modifier.isPublic(rslt[i].getModifiers())) ++ct;
-          }
-         if (ct != rslt.length) {
-            Constructor<?>[] nrslt = new Constructor<?>[ct];
-            int nct = 0;
-            for (int i = 0; i < rslt.length; ++i) {
-               if (Modifier.isPublic(rslt[i].getModifiers())) {
-                  nrslt[nct++] = rslt[i];
-                }
-             }
-            rslt = nrslt;
-          }
+	 int ct = 0;
+	 for (int i = 0; i < rslt.length; ++i) {
+	    if (Modifier.isPublic(rslt[i].getModifiers())) ++ct;
+	  }
+	 if (ct != rslt.length) {
+	    Constructor<?>[] nrslt = new Constructor<?>[ct];
+	    int nct = 0;
+	    for (int i = 0; i < rslt.length; ++i) {
+	       if (Modifier.isPublic(rslt[i].getModifiers())) {
+		  nrslt[nct++] = rslt[i];
+		}
+	     }
+	    rslt = nrslt;
+	  }
        }
       return rslt;
     }
    catch (ClassNotFoundException e) { }
-   
-   return null; 
+
+   return null;
 }
 
 
@@ -596,7 +598,7 @@ public static Object getLambdaClassUsingPoppy(String name)
       System.err.println("SUPER: " + cl.getSuperclass());
       System.err.println("FIELDS: " + cl.getFields());
       System.err.println("FLAGS: " + cl.isAnonymousClass() + " " + cl.isLocalClass() + " " + cl.isMemberClass() + " " +
-            cl.isSynthetic());
+	    cl.isSynthetic());
       String s = cl.getName() + ";" + cl.getSuperclass().getName();
       return s;
     }
@@ -608,9 +610,9 @@ public static Object getLambdaClassUsingPoppy(String name)
 }
 
 /********************************************************************************/
-/*                                                                              */
-/*      Handle patterns                                                         */
-/*                                                                              */
+/*										*/
+/*	Handle patterns 							*/
+/*										*/
 /********************************************************************************/
 
 public static Matcher getPatternMatcher(String pat,String v)
@@ -622,7 +624,7 @@ public static Matcher getPatternMatcher(String pat,String v)
 
 public static Matcher matchFinder(String pat,String v,int start,
       int from,int to,boolean fail,int anch)
-{ 
+{
    Pattern p = Pattern.compile(pat);
    Matcher m = p.matcher(v);
    m.region(from,to);
@@ -635,7 +637,7 @@ public static Matcher matchFinder(String pat,String v,int start,
    else if (anch == 0) {
       m.lookingAt();
     }
-   else { 
+   else {
       m.find(start);
     }
    return m;
@@ -644,9 +646,9 @@ public static Matcher matchFinder(String pat,String v,int start,
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Handle invoke dynamic                                                   */
-/*                                                                              */
+/*										*/
+/*	Handle invoke dynamic							*/
+/*										*/
 /********************************************************************************/
 
 public static Object invokeLambdaMetaFactory(String clsnam,
@@ -658,7 +660,7 @@ public static Object invokeLambdaMetaFactory(String clsnam,
       loader = cl.getClassLoader();
     }
    catch (ClassNotFoundException e) { }
-   
+
    try {
       MethodHandles.Lookup lookup = MethodHandles.lookup();
       MethodType mtype = MethodType.fromMethodDescriptorString(desc,loader);
