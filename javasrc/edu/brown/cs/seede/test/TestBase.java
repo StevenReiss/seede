@@ -66,7 +66,7 @@ private String          stopped_thread;
 private static final String BROWN_ECLIPSE = "eclipse-oxygenx/eclipse/eclipse";
 private static final String BROWN_WS = "Eclipse/";
 private static final String HOME_ECLIPSE =
-   "/vol/Developer/java-2023-06/Eclipse.app/Contents/MacOS/eclipse";
+   "/vol/Developer/java-2023-12/Eclipse.app/Contents/MacOS/eclipse";
 private static final String HOME_WS = "Eclipse/";
 private static final String BROWN_SEEDE_LIB = "/research/people/spr/seede/lib";
 private static final String HOME_SEEDE_LIB = "/pro/seede/lib";
@@ -88,6 +88,7 @@ static {
          "java.desktop/sun.java2d.metal",
          "java.desktop/sun.java2d.pipe",
          "java.desktop/java.awt.geom",
+         "java.base/sun.util.calendar",
     };
 }
 
