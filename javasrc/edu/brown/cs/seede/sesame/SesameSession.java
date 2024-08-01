@@ -98,10 +98,10 @@ private Set<SesameExecRunner> exec_runners;
 private CashewInputOutputModel	cashew_iomodel;
 private CashewSynchronizationModel cashew_syncmodel;
 private Set<String>	expand_names;
-private SesameSession   parent_session;
+private SesameSession	parent_session;
 private boolean 	compute_tostring;
-private boolean         compute_toarray;
-private boolean         show_all;
+private boolean 	compute_toarray;
+private boolean 	show_all;
 private Set<CashewValue> poppy_graphics;
 
 
@@ -133,9 +133,9 @@ SesameSession(SesameSession parent)
    for_project = parent.for_project;
 
    initialize(null,null);
-   
+
    parent_session = parent;
-   
+
    location_map.putAll(parent.location_map);
    if (parent.expand_names != null) {
       expand_names = new HashSet<>(parent.expand_names);
@@ -173,9 +173,9 @@ private void initialize(String sid,Element xml)
 
 
 /********************************************************************************/
-/*                                                                              */
-/*      Cleanup methods                                                         */
-/*                                                                              */
+/*										*/
+/*	Cleanup methods 							*/
+/*										*/
 /********************************************************************************/
 
 void removeSession()
@@ -226,7 +226,7 @@ public MethodDeclaration getCallMethod(SesameLocation loc)
 {
    if (!loc.isActive() || loc.getStartPosition() == null) {
       AcornLog.logE("Bad call method " + loc.getMethodName() + " " +
-            loc.isActive() + " " + loc.getStartPosition());
+	    loc.isActive() + " " + loc.getStartPosition());
       return null;
     }
 
@@ -338,7 +338,7 @@ Object getSessionKey()
 }
 
 
-@Override public void addPoppyGraphics(CashewValue cv) 
+@Override public void addPoppyGraphics(CashewValue cv)
 {
    if (parent_session != null) {
       parent_session.addPoppyGraphics(cv);
@@ -353,7 +353,7 @@ Object getSessionKey()
 Collection<CashewValue> getPoppyGraphics()
 {
    if (poppy_graphics == null) return Collections.emptyList();
-   
+
    return poppy_graphics;
 }
 
@@ -583,7 +583,7 @@ void enableAccess(String type)		{ }
 
 /********************************************************************************/
 /*										*/
-/*	Model management methods 						*/
+/*	Model management methods						*/
 /*										*/
 /********************************************************************************/
 
