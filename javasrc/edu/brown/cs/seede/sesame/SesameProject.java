@@ -72,7 +72,7 @@ private JcodeFactory	binary_control;
 private ReadWriteLock	project_lock;
 private Map<File,SesameFile> local_files;
 
-static SesameProject NO_PROJECT = new SesameProject();
+static final SesameProject NO_PROJECT = new SesameProject();
 
 
 

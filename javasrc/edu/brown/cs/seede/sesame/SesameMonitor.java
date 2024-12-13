@@ -154,7 +154,7 @@ private class WaitForExit extends Thread {
 	 for ( ; ; ) {
 	    if (checkEclipse()) break;
 	    try {
-	       mon.wait(30000l);
+	       mon.wait(30000L);
 	     }
 	    catch (InterruptedException e) { }
 	  }
@@ -163,7 +163,7 @@ private class WaitForExit extends Thread {
 	    if (!checkEclipse()) is_done = true;
 	    else {
 	       try {
-		  mon.wait(30000l);
+		  mon.wait(30000L);
 		}
 	       catch (InterruptedException e) { }
 	     }
@@ -869,7 +869,7 @@ private void handleExpand(String sid,Element xml,IvyXmlWriter xw) throws SesameE
 /*										*/
 /********************************************************************************/
 
-private class EclipseHandler implements MintHandler {
+private final class EclipseHandler implements MintHandler {
 
    @Override public void receive(MintMessage msg,MintArguments args) {
       String cmd = args.getArgument(0);
@@ -959,7 +959,7 @@ private class EclipseHandler implements MintHandler {
 /*										*/
 /********************************************************************************/
 
-private class BubblesHandler implements MintHandler {
+private final class BubblesHandler implements MintHandler {
 
    @Override public void receive(MintMessage msg,MintArguments args) {
       String cmd = args.getArgument(0);
@@ -1053,7 +1053,7 @@ private String processCommand(String cmd,String sid,Element e) throws SesameExce
 }
 
 
-private class CommandHandler implements MintHandler {
+private final class CommandHandler implements MintHandler {
 
    @Override public void receive(MintMessage msg,MintArguments args) {
       AcornLog.logD("PROCESS COMMAND: " + msg.getText());

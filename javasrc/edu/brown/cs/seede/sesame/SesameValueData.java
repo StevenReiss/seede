@@ -133,7 +133,9 @@ int getLength() 		        { return array_length; }
 
 
 
+// CHECKSTYLE:OFF
 CashewValue getCashewValue(SesameSessionLaunch sess)
+// CHECKSTYLE:ON
 {
    if (result_value != null) return result_value;
    

@@ -31,7 +31,7 @@ public interface AcornConstants
 {
 
 
-public static File getCanonical(File f)
+static File getCanonical(File f)
 {
    if (!f.exists()) return f;
    
@@ -46,7 +46,7 @@ public static File getCanonical(File f)
 
 
 
-public static File getCanonical(String s)
+static File getCanonical(String s)
 {
    if (s == null) return null;
    

@@ -321,7 +321,7 @@ protected void editSeede(String id,String file,int len,int off,String txt)
 
 
 
-protected void addSeedeFiles(String id,String ... files) 
+protected void addSeedeFiles(String id,String... files) 
 {
    IvyXmlWriter xw = new IvyXmlWriter();
    for (String s : files) {
@@ -419,7 +419,10 @@ private void setupBedrock(String workspace,String project)
    
    try {
       for (int i = 0; i < 250; ++i) {
-	 try { Thread.sleep(1000); } catch (InterruptedException e) { }
+	 try {
+	    Thread.sleep(1000);
+	 }
+catch (InterruptedException e) { }
 	 if (pingEclipse()) {
 	    CommandArgs args = new CommandArgs("LEVEL","DEBUG");
 	    sendBubblesMessage("LOGLEVEL",null,args,null);
@@ -492,7 +495,10 @@ private void startSeede()
    for (int i = 0; i < 100; ++i) {
       if (pingSeede()) return;
       if (i == 0) st.start();
-      try { Thread.sleep(1000); } catch (InterruptedException e) { }
+      try {
+         Thread.sleep(1000);
+      }
+catch (InterruptedException e) { }
     }
    throw new Error("Problem starting sesame server");
 }
@@ -776,7 +782,7 @@ protected void sendSeedeMessage(String cmd,String sess,CommandArgs flds,String c
 /*                                                                              */
 /********************************************************************************/
 
-private class BedrockHandler implements MintHandler {
+private final class BedrockHandler implements MintHandler {
 
    @Override public void receive(MintMessage msg,MintArguments args) {
       String cmd = args.getArgument(0);
@@ -868,7 +874,7 @@ protected Element waitForSeedeResult()
 
 
 
-private class SeedeHandler implements MintHandler {
+private final class SeedeHandler implements MintHandler {
    
    @Override public void receive(MintMessage msg,MintArguments args) {
       AcornLog.logI("TEST: Received from seede: " + msg.getText());

@@ -439,6 +439,7 @@ private void outputResult(IvyXmlWriter xw,CuminRunner cr,CuminRunStatus sts,bool
    xw.end("RETURN");
 
    if (sts.getReason() == Reason.STACK_OVERFLOW) {
+      // do nothing
     }
    else {
       ctx.outputXml(outctx);
@@ -486,7 +487,7 @@ private class MasterThread extends Thread implements LoggerThread {
    @Override public int getLogId()			{ return thread_id; }
 
    @Override public void run() {
-      for (int i = 0; ; ++i ) {
+      for (int i = 0; ; ++i) {
 	 // first start all the threads
 	 setupRun(i == 0);
 	 run_state = RunState.INIT;
@@ -715,10 +716,10 @@ private class MasterThread extends Thread implements LoggerThread {
    }
 
 
-   private void addPoppyGraphics(CashewValue cv,CuminRunner cr)
-   {
+   private void addPoppyGraphics(CashewValue cv,CuminRunner cr) {
       if (cv == null || cv.isNull(cr.getSession(),cr.getClock())) return;
-      if (cv.getDataType(cr.getSession(),cr.getClock(),cr.getTyper()).getName().equals("edu.brown.cs.seede.poppy.PoppyGraphics")) {
+      if (cv.getDataType(cr.getSession(),cr.getClock(),
+            cr.getTyper()).getName().equals("edu.brown.cs.seede.poppy.PoppyGraphics")) {
 	 CashewValue rv = cr.executeCall("edu.brown.cs.seede.poppy.PoppyGraphics.finalReport",cv);
 	 if (rv != null) {
 	    try  {

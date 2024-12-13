@@ -299,11 +299,16 @@ private void setupContext(List<CashewValue> args)
 /*										*/
 /********************************************************************************/
 
+// CHECKSTYLE:OFF
 private CuminRunStatus evaluateInstruction() throws CuminRunException, CashewException
+// CHECKSTYLE:ON
 {
    CashewValue vstack = null;
    JcodeInstruction nextins = null;
-   CashewValue v0,v1,v2,v3;
+   CashewValue v0;
+   CashewValue v1;
+   CashewValue v2;
+   CashewValue v3;
    int next = current_instruction+1;
    int idxv;
 
@@ -962,7 +967,8 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException, CashewExc
 	 if (v0.isNull(sess,execution_clock))
 	    return CuminEvaluator.returnException(sess,lookup_context,
                   typer,"java.lang.NullPointerException");
-         AcornLog.logD("CUMIN","Field lookup for " + v0.toString(runner_session) + " " + execution_clock.getTimeValue());
+         AcornLog.logD("CUMIN","Field lookup for " + v0.toString(runner_session) +
+               " " + execution_clock.getTimeValue());
 	 vstack = v0.getFieldValue(sess,typer,execution_clock,nm,lookup_context);
          AcornLog.logD("CUMIN","RESULT: " + nm + " = " +  vstack.toString(runner_session));
 	 vstack = vstack.getActualValue(sess,execution_clock);
@@ -1265,7 +1271,8 @@ private CashewValue buildMethodType(String typ)
       CashewValue cv = CashewValue.classValue(atyp);
       aval.setIndexValue(execution_clock,i,cv);
     }
-   String m = "java/lang/invoke/MethodType.methodType(Ljava/lang/Class;[Ljava/lang/Class;)Ljava/lang/invoke/MethodType;";
+   String m = "java/lang/invoke/MethodType.methodType(Ljava/lang/Class;" +
+        "[Ljava/lang/Class;)Ljava/lang/invoke/MethodType;";
    CashewValue rslt = executeCall(m,rval,aval);
 
    return rslt;
@@ -1295,7 +1302,9 @@ private JcompType buildMethodType1(String typ)
 /*										*/
 /********************************************************************************/
 
+// CHECKSTYLE:OFF
 private CuminRunStatus checkSpecial() throws CuminRunException
+// CHECKSTYLE:ON
 {
    String cls = jcode_method.getDeclaringClass().getName();
 

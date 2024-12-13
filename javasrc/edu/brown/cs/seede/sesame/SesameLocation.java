@@ -115,7 +115,7 @@ String getId()                  { return location_id; }
 SesameFile getFile()            { return sesame_file; }
 boolean isActive()              { return is_active; }
 void setActive(boolean a)       { is_active = a; }
-String getMethodName()          { return method_name;} 
+String getMethodName()          { return method_name; } 
 int getLineNumber()             { return line_number; }
 Position getStartPosition()     { return start_position; }
 String getThread()              { return thread_id; }

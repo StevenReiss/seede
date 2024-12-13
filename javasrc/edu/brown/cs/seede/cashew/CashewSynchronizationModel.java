@@ -65,7 +65,7 @@ public CashewSynchronizationModel()
 /*                                                                              */
 /********************************************************************************/
 
-synchronized public void clear()
+public synchronized void clear()
 {
    synch_locks.clear();
    // might want to hold locks known by the debugger
@@ -73,7 +73,7 @@ synchronized public void clear()
 
 
 
-synchronized public void reset()
+public synchronized void reset()
 {
    clear();
 }

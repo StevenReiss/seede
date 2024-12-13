@@ -132,7 +132,8 @@ public CashewContext(String js,File f,CashewContext par)
    context_map = new HashMap<>();
    parent_context = par;
    nested_contexts = new ArrayList<CashewContext>();
-   start_time = end_time = 0;
+   start_time = 0;
+   end_time = 0;
    context_id = id_counter.incrementAndGet();
    is_output = f != null;
 }
@@ -143,7 +144,8 @@ public void reset()
 {
    nested_contexts.clear();
    context_map.clear();
-   start_time = end_time = 0;
+   start_time = 0;
+   end_time = 0;
 }
 
 
