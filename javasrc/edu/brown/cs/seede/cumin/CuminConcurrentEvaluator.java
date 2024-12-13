@@ -431,7 +431,7 @@ static {
 }
 
 
-private static void addFields(String cls,Object ... args)
+private static void addFields(String cls,Object... args)
 {
    Map<Integer,String> fmap = new HashMap<>();
    field_offset_map.put(cls,fmap);

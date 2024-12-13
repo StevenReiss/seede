@@ -38,7 +38,7 @@ import edu.brown.cs.ivy.xml.IvyXml;
 import edu.brown.cs.ivy.xml.IvyXmlWriter;
 import edu.brown.cs.seede.acorn.AcornLog;
 
-public class SesameMain implements SesameConstants, MintConstants
+public final class SesameMain implements SesameConstants, MintConstants
 {
 
 

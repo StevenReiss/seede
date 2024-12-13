@@ -75,7 +75,7 @@ public static CuminRunner createRunner(CashewValueSession sess,CuminProject cp,C
 
 
 
-public CashewValue executeCall(String method,CashewValue ... args)
+public CashewValue executeCall(String method,CashewValue... args)
 {
    List<CashewValue> arglist = new ArrayList<CashewValue>();
    for (CashewValue argv : args) arglist.add(argv);
@@ -390,7 +390,7 @@ public CuminRunStatus interpret(EvalType et) throws CuminRunException
 }
 
 
-abstract protected CuminRunStatus interpretRun(CuminRunStatus ret) throws CuminRunException;
+protected abstract CuminRunStatus interpretRun(CuminRunStatus ret) throws CuminRunException;
 
 
 protected void saveReturn(CashewValue cv)
@@ -786,7 +786,7 @@ private void endSynch()
 }
 
 
-abstract protected CashewValue synchronizeOn();
+protected abstract CashewValue synchronizeOn();
 
 
 

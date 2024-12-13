@@ -83,10 +83,11 @@ static CashewValue evaluate(CuminRunner runner,JcompTyper typer,
 
 
 
-
+//CHECKSTYLE:OFF
 static CashewValue evaluateUnchecked(CuminRunner runner,JcompTyper typer,CashewClock cc,CuminOperator op,
       CashewValue v1,CashewValue v2)
 	throws CuminRunException, CashewException
+//CHECKSTYLE:ON
 {
    CashewValue rslt = null;
    CashewValueSession sess = runner.getSession();
@@ -858,7 +859,7 @@ static CashewValue evaluate(CashewValueSession sess,CashewContext ctx,JcompTyper
 	 break;
       case NEG :
 	 if (isflt) {
-	    float fnv = - v1.getNumber(sess,cc).floatValue();
+	    float fnv = -v1.getNumber(sess,cc).floatValue();
 	    rslt = CashewValue.numericValue(typer.FLOAT_TYPE,fnv);
 	  }
 	 else if (isdbl) {

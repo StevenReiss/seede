@@ -71,7 +71,9 @@ CuminIOEvaluator(CuminRunnerByteCode bc)
 /*										*/
 /********************************************************************************/
 
+//CHECKSTYLE:OFF
 CuminRunStatus checkFileMethods() throws CashewException, CuminRunException
+//CHECKSTYLE:ON
 {
    CashewValue rslt = null;
    File rfile = null;
@@ -482,7 +484,9 @@ CuminRunStatus checkConsoleMethods()
 /*                                                                              */
 /********************************************************************************/
 
+//CHECKSTYLE:OFF
 CuminRunStatus checkPrintMethods(String cls) throws CashewException, CuminRunException
+//CHECKSTYLE:ON
 {
    CashewValue rslt = null;
    String ocls = cls;
@@ -674,7 +678,7 @@ CuminRunStatus checkObjectStreamMethods() throws CashewException
                int v = ((src[srcpos+i*4] & 0xff) << 24) +
                   ((src[srcpos+i*4+1] & 0xff) << 16) +
                   ((src[srcpos+i*4+2] & 0xff) << 8) + 
-                  ((src[srcpos+i*4+3] & 0xff) << 0) ;
+                  ((src[srcpos+i*4+3] & 0xff) << 0);
                float fv = Float.intBitsToFloat(v);
                CashewValue rv = CashewValue.numericValue(typer.FLOAT_TYPE,fv);
                dst.setIndexValue(sess,getClock(),dstpos+i,rv);
@@ -694,7 +698,7 @@ CuminRunStatus checkObjectStreamMethods() throws CashewException
                ((src[srcpos+i*8+4] & 0xff) << 24) +
                ((src[srcpos+i*8+5] & 0xff) << 16) +
                ((src[srcpos+i*8+6] & 0xff) << 8) + 
-               ((src[srcpos+i*8+7] & 0xff) << 0) ;
+               ((src[srcpos+i*8+7] & 0xff) << 0);
                double fv = Double.longBitsToDouble(v);
                CashewValue rv = CashewValue.numericValue(typer.FLOAT_TYPE,fv);
                dst.setIndexValue(sess,getClock(),dstpos+i,rv);

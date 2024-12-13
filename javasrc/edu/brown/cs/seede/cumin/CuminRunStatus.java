@@ -60,7 +60,7 @@ Throwable getCause();
 /*										*/
 /********************************************************************************/
 
-public class Factory {
+class Factory {
 
    public static CuminRunStatus createReturn() {
       return createReturn(null);

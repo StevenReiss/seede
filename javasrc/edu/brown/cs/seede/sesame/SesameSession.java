@@ -261,7 +261,7 @@ public SesameLocation getLocation(CuminRunner cr)
 
 SesameMain getControl() 			{ return sesame_control; }
 
-protected void addLocation(SesameLocation sl)
+protected final void addLocation(SesameLocation sl)
 {
    location_map.put(sl.getId(),sl);
    getProject().addFile(sl.getFile());

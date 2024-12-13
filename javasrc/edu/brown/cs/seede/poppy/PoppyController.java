@@ -32,7 +32,7 @@ import java.lang.instrument.Instrumentation;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 
-public class PoppyController implements PoppyConstants
+public final class PoppyController implements PoppyConstants
 {
 
 

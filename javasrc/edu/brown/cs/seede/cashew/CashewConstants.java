@@ -71,8 +71,8 @@ String CURRENT_THREAD_NAME_FIELD = "@currentThreadName";
 
 interface CashewValueSession {
    
-   public default CashewValueSession getParent()        { return null; }
-   public default void addPoppyGraphics(CashewValue cv) {
+   default CashewValueSession getParent()        { return null; }
+   default void addPoppyGraphics(CashewValue cv) {
       if (getParent() != null) getParent().addPoppyGraphics(cv);
     }
    
@@ -88,7 +88,7 @@ interface CashewDeferredValue {
 interface CashewRunner {
    void ensureLoaded(String cls);
    CashewClock getClock();
-   CashewValue executeCall(String method,CashewValue ... args);
+   CashewValue executeCall(String method,CashewValue... args);
    JcompTyper getTyper();
    CashewValueSession getSession();
 }

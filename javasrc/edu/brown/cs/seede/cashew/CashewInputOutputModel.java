@@ -87,13 +87,13 @@ public CashewInputOutputModel()
 /*										*/
 /********************************************************************************/
 
-synchronized public void clear()
+public synchronized void clear()
 {
    output_files.clear();
 }
 
 
-synchronized public void reset()
+public synchronized void reset()
 {
    output_files.clear();
 
@@ -110,7 +110,7 @@ synchronized public void reset()
 /*										*/
 /********************************************************************************/
 
-synchronized public void fileWrite(CashewClock clk,int fd,String path,byte [] buf,int off,int len,boolean app)
+public synchronized void fileWrite(CashewClock clk,int fd,String path,byte [] buf,int off,int len,boolean app)
 {
    if (fd < 0) return;
    OutputData file = output_files.get(fd);
@@ -133,7 +133,7 @@ synchronized public void fileWrite(CashewClock clk,int fd,String path,byte [] bu
 /*										*/
 /********************************************************************************/
 
-synchronized public long fileRead(CashewClock clk,int fd,byte [] buf,int off,long len)
+public synchronized long fileRead(CashewClock clk,int fd,byte [] buf,int off,long len)
 	throws IOException
 {
    InputData id = input_files.get(fd);
@@ -148,7 +148,7 @@ synchronized public long fileRead(CashewClock clk,int fd,byte [] buf,int off,lon
 
 
 
-synchronized public long fileAvailable(CashewClock clk,int fd)
+public synchronized long fileAvailable(CashewClock clk,int fd)
 	throws IOException
 {
    InputData id = input_files.get(fd);
@@ -159,7 +159,8 @@ synchronized public long fileAvailable(CashewClock clk,int fd)
 
 
 
-synchronized public void checkInputFile(CashewValueSession sess,JcompTyper typer,CashewContext ctx,CashewClock cc,CashewValue cv,int fd,String path,
+public synchronized void checkInputFile(CashewValueSession sess,JcompTyper typer,
+      CashewContext ctx,CashewClock cc,CashewValue cv,int fd,String path,
       boolean prior) throws IOException
 {
    InputData id = input_files.get(fd);
@@ -200,7 +201,7 @@ synchronized public void checkInputFile(CashewValueSession sess,JcompTyper typer
 
 
 
-synchronized public void closeFile(int fd) throws IOException
+public synchronized void closeFile(int fd) throws IOException
 {
    InputData id = input_files.get(fd);
    if (id != null) id.reset();

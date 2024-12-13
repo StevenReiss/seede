@@ -223,7 +223,10 @@ CuminRunStatus checkCharacterMethods() throws CuminRunException, CashewException
 }
 
 
-private CuminRunStatus checkStringMethodsLocal() throws CuminRunException, CashewException, UnsupportedEncodingException
+//CHECKSTYLE:OFF
+private CuminRunStatus checkStringMethodsLocal()
+        throws CuminRunException, CashewException, UnsupportedEncodingException
+//CHECKSTYLE:ON        
 {
    CashewValue rslt = null;
    JcompTyper typer = getTyper();
@@ -337,7 +340,7 @@ private CuminRunStatus checkStringMethodsLocal() throws CuminRunException, Cashe
 	 String enc = null;
 	 int coder = -1;
 	 if (getDataType(2).isByteType() || getDataType(2).isIntType()) {
-	    coder = getInt(2);													  
+            coder = getInt(2);	
 	  }
 	 else if (getDataType(2).isStringType()) {
 	    enc = getString(2);
@@ -359,11 +362,13 @@ private CuminRunStatus checkStringMethodsLocal() throws CuminRunException, Cashe
       else if (getNumArgs() == 5 && getDataType(1).isArrayType() &&
 	    getDataType(1).getBaseType().isByteType()) {
 	 String temp = null;
-	 if (getDataType(4).isStringType()) {						// new String(byte[],int,int,String)
+	 if (getDataType(4).isStringType()) {					
+            // new String(byte[],int,int,String)
 	    temp = new String(getByteArray(1),getInt(2),getInt(3),getString(4));
 	  }
 	 else {
-	    temp = new String(getCharArray(1),getInt(2),getInt(3));			// new String(byte[],int,int,charset)
+	    temp = new String(getCharArray(1),getInt(2),getInt(3));
+            // new String(byte[],int,int,charset)
 	  }
 	 cvs.setInitialValue(typer,temp,-1);
        }
@@ -638,7 +643,9 @@ private CuminRunStatus checkStringMethodsLocal() throws CuminRunException, Cashe
 /*										*/
 /********************************************************************************/
 
+//CHECKSTYLE:OFF
 CuminRunStatus checkMathMethods() throws CashewException
+//CHECKSTYLE:ON
 {
    CashewValue rslt = null;
    JcompTyper typer = getTyper();
@@ -1310,7 +1317,9 @@ CuminRunStatus checkObjectMethods() throws CuminRunException, CashewException
 /*										*/
 /********************************************************************************/
 
+//CHECKSTYLE:OFF
 CuminRunStatus checkClassMethods() throws CashewException, CuminRunException
+//CHECKSTYLE:ON
 {
    CashewValue rslt = null;
    JcompType rtype = null;
@@ -1431,7 +1440,7 @@ CuminRunStatus checkClassMethods() throws CashewException, CuminRunException
 		thistype.getName() + "\"";
 	    String nm = getString(1);
 	    expr += ",\"" + nm + "\"";
-	    boolean declfg = (getMethod().getName().equals("getMethod") ? false : true);
+	    boolean declfg = !(getMethod().getName().equals("getMethod"));
 	    expr += "," + declfg;
 	    av = getValue(2);
 	    if (av.isNull(sess,getClock())) sz = 0;
@@ -2404,7 +2413,7 @@ CuminRunStatus checkAccessMethods() throws CashewException
 	 int srcoff = sp;
 	 for (int i = 0; i < len; ++i) {
 	    // da[dstoff++] = (char)(sa[srcoff++]&0xff);
-	    char bv = (char)(sa[srcoff++]&0xff);
+	    char bv = (char) (sa[srcoff++]&0xff);
 	    CashewValue charv = CashewValue.characterValue(typer.CHAR_TYPE,bv);
 	    da.setIndexValue(sess,getClock(),dstoff++,charv);
 	  }

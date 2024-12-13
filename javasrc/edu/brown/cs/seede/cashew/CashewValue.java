@@ -378,7 +378,8 @@ public static CashewValue objectValue(CashewValueSession sess,CashewContext ctx,
 }
 
 
-public static CashewValue objectValue(CashewValueSession sess,CashewContext ctx,JcompTyper typer,JcompType otyp,Map<String,Object> inits,boolean caninit)
+public static CashewValue objectValue(CashewValueSession sess,CashewContext ctx,
+      JcompTyper typer,JcompType otyp,Map<String,Object> inits,boolean caninit)
 {
    if (otyp.isParameterizedType()) otyp = otyp.getBaseType();
 

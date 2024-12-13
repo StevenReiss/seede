@@ -449,8 +449,10 @@ private static class LocalFinder extends ASTVisitor {
 /*										*/
 /********************************************************************************/
 
+//CHECKSTYLE:OFF
 private CuminRunStatus evalNode(ASTNode node,ASTNode afterchild)
 	throws CuminRunException, CashewException
+//CHECKSTYLE:ON        
 {
    JcompTyper typer = type_converter;
 
@@ -1588,7 +1590,7 @@ private CuminRunStatus visit(ClassInstanceCreation v, ASTNode after)
 	 CashewValue ncv = CuminEvaluator.castValue(this,cv,argtyp);
 	 if (ncv == null) {
 	    AcornLog.logD("Conversion problem " + cv + " " + argtyp + " " +
-			     cv.getDataType(runner_session,execution_clock,null) );
+			     cv.getDataType(runner_session,execution_clock,null));
 	  }
 	 argv.add(ncv);
        }
@@ -1662,7 +1664,7 @@ private CuminRunStatus visit(ConstructorInvocation v,ASTNode after)
       CashewValue ncv = CuminEvaluator.castValue(this,cv,argtyp);
       if (ncv == null) {
 	 AcornLog.logD("Conversion problem " + cv + " " + argtyp + " " +
-			  cv.getDataType(runner_session,execution_clock,null) );
+			  cv.getDataType(runner_session,execution_clock,null));
        }
       argv.add(ncv);
     }
@@ -1764,7 +1766,7 @@ private CuminRunStatus visit(MethodInvocation v,ASTNode after)
 	 argv.add(thisv);
        }
       else {
-	 AcornLog.logE("THIS problem " + js + " " + v );
+	 AcornLog.logE("THIS problem " + js + " " + v);
        }
     }
    else cty = CallType.STATIC;
@@ -1921,7 +1923,7 @@ private CuminRunStatus visit(SuperMethodInvocation v,ASTNode after)
       CashewValue ncv = CuminEvaluator.castValue(this,cv,argtyp);
       if (ncv == null) {
 	 AcornLog.logD("Conversion problem " + cv + " " + argtyp + " " +
-	       cv.getDataType(runner_session,execution_clock,null) );
+	       cv.getDataType(runner_session,execution_clock,null));
        }
       argv.add(ncv);
     }
@@ -3321,7 +3323,7 @@ private void fixMethodInits(CashewValue oval,Map<JcompSymbol,JcompSymbol> inits)
 private static class OuterVariableFinder extends ASTVisitor {
 
    private Set<JcompSymbol> outer_syms;
-   ASTNode base_node;
+   private ASTNode base_node;
 
    OuterVariableFinder(ASTNode base) {
       outer_syms = new HashSet<>();

@@ -191,7 +191,9 @@ public static Object getStaticFieldValue(String itm)
       try {
 	 f1.setAccessible(true);
        }
-      catch (Throwable t) { err = t; }
+      catch (Throwable t) {
+         err = t;
+      }
 
       return f1.get(null);
     }
@@ -389,6 +391,7 @@ public static Object getClassModule(String nm)
 /*										*/
 /********************************************************************************/
 
+//CHECKSTYLE:OFF        needed to get values back to seede
 public static class Return {
 
    public Object for_object;
@@ -402,7 +405,7 @@ public static class Return {
     }
 
 }	// end of inner class Return
-
+//CHECKSTYLE:OFF
 
 
 
@@ -455,7 +458,7 @@ public static NumberFormat getNumberFormatInstance(String typ,String slocale)
 
 
 
-public static Constructor<?> getConstructorUsingPoppy(String cls, String ... args)
+public static Constructor<?> getConstructorUsingPoppy(String cls, String... args)
 	throws NoSuchMethodException
 {
    try {
@@ -474,7 +477,7 @@ public static Constructor<?> getConstructorUsingPoppy(String cls, String ... arg
 
 
 
-public static Constructor<?> getDeclaredConstructorUsingPoppy(String cls, String ... args)
+public static Constructor<?> getDeclaredConstructorUsingPoppy(String cls, String... args)
 	throws NoSuchMethodException
 	{
    try {
@@ -494,7 +497,7 @@ public static Constructor<?> getDeclaredConstructorUsingPoppy(String cls, String
 
 
 
-public static Method getMethodUsingPoppy(String cls,String name,boolean decl,String ... args)
+public static Method getMethodUsingPoppy(String cls,String name,boolean decl,String... args)
 	throws NoSuchMethodException
 {
    try {

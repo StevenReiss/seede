@@ -176,7 +176,9 @@ CuminRunStatus checkComponent() throws CashewException
 /*										*/
 /********************************************************************************/
 
+//CHECKSTYLE:OFF
 CuminRunStatus checkPoppyGraphics() throws CashewException
+//CHECKSTYLE:ON
 {
    if (getMethod().isStatic() || getMethod().isConstructor()) return null;
 

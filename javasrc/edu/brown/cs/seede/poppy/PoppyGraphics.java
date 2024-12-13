@@ -64,7 +64,7 @@ import java.util.List;
 import java.util.Map;
 
 
-public class PoppyGraphics extends Graphics2D implements PoppyConstants
+public final class PoppyGraphics extends Graphics2D implements PoppyConstants
 {
 
 
@@ -561,7 +561,8 @@ private void doClip(Shape s)
       user_clip = r.intersection(r1);
     }
    else {
-      Area a1,a2;
+      Area a1;
+      Area a2;
       a1 = new Area(user_clip);
       if (s instanceof Area) {
 	 a2 = (Area) s;

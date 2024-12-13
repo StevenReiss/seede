@@ -40,7 +40,7 @@ private Reason		throw_reason;
 private transient CashewValue associated_value;
 private transient CuminRunner call_value;
 
-private final static long serialVersionUID = 1;
+private static final long serialVersionUID = 1;
 
 
 
