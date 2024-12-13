@@ -223,9 +223,10 @@ CuminRunStatus checkCharacterMethods() throws CuminRunException, CashewException
 }
 
 
-// CHECKSTYLE:OFF
-private CuminRunStatus checkStringMethodsLocal() throws CuminRunException, CashewException, UnsupportedEncodingException
-// CHECKSTYLE:ON
+//CHECKSTYLE:OFF
+private CuminRunStatus checkStringMethodsLocal()
+        throws CuminRunException, CashewException, UnsupportedEncodingException
+//CHECKSTYLE:ON        
 {
    CashewValue rslt = null;
    JcompTyper typer = getTyper();
@@ -366,8 +367,8 @@ private CuminRunStatus checkStringMethodsLocal() throws CuminRunException, Cashe
 	    temp = new String(getByteArray(1),getInt(2),getInt(3),getString(4));
 	  }
 	 else {
+	    temp = new String(getCharArray(1),getInt(2),getInt(3));
             // new String(byte[],int,int,charset)
-            temp = new String(getCharArray(1),getInt(2),getInt(3));	
 	  }
 	 cvs.setInitialValue(typer,temp,-1);
        }
@@ -642,9 +643,9 @@ private CuminRunStatus checkStringMethodsLocal() throws CuminRunException, Cashe
 /*										*/
 /********************************************************************************/
 
-// CHECKSTYLE:OFF
+//CHECKSTYLE:OFF
 CuminRunStatus checkMathMethods() throws CashewException
-// CHECKSTYLE:ON
+//CHECKSTYLE:ON
 {
    CashewValue rslt = null;
    JcompTyper typer = getTyper();
@@ -1316,9 +1317,9 @@ CuminRunStatus checkObjectMethods() throws CuminRunException, CashewException
 /*										*/
 /********************************************************************************/
 
-// CHECKSTYLE:OFF
+//CHECKSTYLE:OFF
 CuminRunStatus checkClassMethods() throws CashewException, CuminRunException
-// CHECKSTYLE:ON
+//CHECKSTYLE:ON
 {
    CashewValue rslt = null;
    JcompType rtype = null;

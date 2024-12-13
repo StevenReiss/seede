@@ -391,6 +391,7 @@ public static Object getClassModule(String nm)
 /*										*/
 /********************************************************************************/
 
+//CHECKSTYLE:OFF        needed to get values back to seede
 public static class Return {
 
    private Object for_object;
@@ -406,7 +407,7 @@ public static class Return {
     }
 
 }	// end of inner class Return
-
+//CHECKSTYLE:OFF
 
 
 

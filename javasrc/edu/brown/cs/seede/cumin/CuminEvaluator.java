@@ -83,12 +83,12 @@ static CashewValue evaluate(CuminRunner runner,JcompTyper typer,
 
 
 
-// CHECKSTYLE:OFF
+//CHECKSTYLE:OFF
 static CashewValue evaluateUnchecked(CuminRunner runner,JcompTyper typer,
       CashewClock cc,CuminOperator op,
       CashewValue v1,CashewValue v2)
 	throws CuminRunException, CashewException
-// CHECKSTYLE:ON        
+//CHECKSTYLE:ON
 {
    CashewValue rslt = null;
    CashewValueSession sess = runner.getSession();

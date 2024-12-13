@@ -299,9 +299,9 @@ private void setupContext(List<CashewValue> args)
 /*										*/
 /********************************************************************************/
 
-// CHECKSTYLE:OFF
+//CHECKSTYLE:OFF
 private CuminRunStatus evaluateInstruction() throws CuminRunException, CashewException
-// CHECKSTYLE:ON
+//CHECKSTYLE:ON
 {
    CashewValue vstack = null;
    JcodeInstruction nextins = null;
@@ -1271,8 +1271,13 @@ private CashewValue buildMethodType(String typ)
       CashewValue cv = CashewValue.classValue(atyp);
       aval.setIndexValue(execution_clock,i,cv);
     }
+<<<<<<< HEAD
    String m = "java/lang/invoke/MethodType.methodType(Ljava/lang/Class;" +
         "[Ljava/lang/Class;)Ljava/lang/invoke/MethodType;";
+=======
+   String m = "java/lang/invoke/MethodType.methodType(Ljava/lang/Class;" + 
+        *"[Ljava/lang/Class;)Ljava/lang/invoke/MethodType;";
+>>>>>>> ab1620ce64e2f8ba2f5f16bb5d28081f5a6bdf9a
    CashewValue rslt = executeCall(m,rval,aval);
 
    return rslt;
@@ -1302,9 +1307,9 @@ private JcompType buildMethodType1(String typ)
 /*										*/
 /********************************************************************************/
 
-// CHECKSTYLE:OFF
+//CHECKSTYLE:OFF
 private CuminRunStatus checkSpecial() throws CuminRunException
-// CHECKSTYLE:ON
+//CHECKSTYLE:ON
 {
    String cls = jcode_method.getDeclaringClass().getName();
 
@@ -1346,7 +1351,7 @@ private CuminRunStatus checkSpecial() throws CuminRunException
 	    break;
 	 case "java.lang.Class" :
 	    cde = new CuminDirectEvaluation(this);
-	    sts = cde.checkClassMethods();
+	    sts = cde.checkClassMethods(); 
 	    break;
          case "java.lang.Module" :
             cde = new CuminDirectEvaluation(this);

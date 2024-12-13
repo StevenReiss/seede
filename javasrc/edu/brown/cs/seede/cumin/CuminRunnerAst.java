@@ -449,10 +449,10 @@ private static class LocalFinder extends ASTVisitor {
 /*										*/
 /********************************************************************************/
 
-// CHECKSTYLE:OFF
+//CHECKSTYLE:OFF
 private CuminRunStatus evalNode(ASTNode node,ASTNode afterchild)
 	throws CuminRunException, CashewException
-// CHECKSTYLE:ON        
+//CHECKSTYLE:ON        
 {
    JcompTyper typer = type_converter;
 

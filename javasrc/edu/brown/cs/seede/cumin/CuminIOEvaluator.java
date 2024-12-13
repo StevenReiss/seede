@@ -70,10 +70,9 @@ CuminIOEvaluator(CuminRunnerByteCode bc)
 /*	java.io.File methods							*/
 /*										*/
 /********************************************************************************/
-
-// CHECKSTYLE:OFF
+//CHECKSTYLE:OFF
 CuminRunStatus checkFileMethods() throws CashewException, CuminRunException
-// CHECKSTYLE:ON
+//CHECKSTYLE:ON
 {
    CashewValue rslt = null;
    File rfile = null;
@@ -484,9 +483,9 @@ CuminRunStatus checkConsoleMethods()
 /*                                                                              */
 /********************************************************************************/
 
-// CHECKSTYLE:OFF
+//CHECKSTYLE:OFF
 CuminRunStatus checkPrintMethods(String cls) throws CashewException, CuminRunException
-// CHECKSTYLE:ON
+//CHECKSTYLE:ON
 {
    CashewValue rslt = null;
    String ocls = cls;

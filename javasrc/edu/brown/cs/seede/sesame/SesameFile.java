@@ -146,7 +146,7 @@ void editFile(int len,int off,String txt,boolean complete)
       ast_roots.remove(SesameProject.NO_PROJECT);
     }
 }
-
+ 
 
 
 boolean editFile(TextEdit te,String id)
