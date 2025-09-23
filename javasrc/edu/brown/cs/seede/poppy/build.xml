@@ -38,7 +38,6 @@
 		source='10' target='10'
 		includeantruntime='false' excludes='scan/**' >
 	 <classpath refid='seede.classpath' />
-	 <compilerarg value='-Xlint:all' />
       </javac>
    </target>
 
