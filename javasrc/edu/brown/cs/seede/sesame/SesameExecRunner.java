@@ -545,26 +545,26 @@ private class MasterThread extends Thread implements LoggerThread {
 
    synchronized void stopCurrentRun() {
       stop_state = StopState.STOP_DESIRED;
-
+   
       AcornLog.logI("MASTER: Stop current run " + runner_threads.size());
-
+   
       for (RunnerThread rt : runner_threads.values()) {
-	 rt.interrupt();
+         rt.interrupt();
        }
-
+   
       interrupt();
-
+   
       notifyAll();
-
+   
       for ( ; ; ) {
-	 if (run_state == RunState.INIT || run_state == RunState.RUNNING ||
-	       run_state == RunState.SWING) {
-	    try {
-	       wait(1000);
-	     }
-	    catch (InterruptedException e) { }
-	  }
-	 else break;
+         if (run_state == RunState.INIT || run_state == RunState.RUNNING ||
+               run_state == RunState.SWING) {
+            try {
+               wait(1000);
+             }
+            catch (InterruptedException e) { }
+          }
+         else break;
        }
     }
 
@@ -575,10 +575,10 @@ private class MasterThread extends Thread implements LoggerThread {
       stop_state = StopState.EXIT_DESIRED;
       stopCurrentRun();
       while (run_state != RunState.EXIT && master_thread != null) {
-	 try {
-	    wait(5000);
-	  }
-	 catch (InterruptedException e) { }
+         try {
+            wait(5000);
+          }
+         catch (InterruptedException e) { }
        }
       AcornLog.logD("MASTER: threads stopped");
     }
