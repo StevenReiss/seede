@@ -63,7 +63,7 @@ private Element         seede_result;
 private String          bedrock_id;
 private String          stopped_thread;
 
-private static final String BROWN_ECLIPSE = "eclipse-oxygenx/eclipse/eclipse";
+private static final String BROWN_ECLIPSE = "java-2024-098/eclipse/eclipse";
 private static final String BROWN_WS = "Eclipse/";
 private static final String HOME_ECLIPSE =
    "/vol/Developer/java-2023-12/Eclipse.app/Contents/MacOS/eclipse";
