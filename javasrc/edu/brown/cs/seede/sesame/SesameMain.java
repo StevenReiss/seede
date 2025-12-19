@@ -157,7 +157,6 @@ private void badArgs()
 
 
 
-
 /********************************************************************************/
 /*										*/
 /*	Access methods								*/
@@ -185,7 +184,10 @@ SesameMonitor getMonitor()			{ return message_monitor; }
 
 String getMintId()				{ return message_id; }
 
-
+public static void pongEclipse()
+{
+   SesameMonitor.pongEclipse(); 
+}
 
 
 /********************************************************************************/

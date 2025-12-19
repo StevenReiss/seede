@@ -421,8 +421,8 @@ private void setupBedrock(String workspace,String project)
       for (int i = 0; i < 250; ++i) {
 	 try {
 	    Thread.sleep(1000);
-	 }
-catch (InterruptedException e) { }
+          }
+         catch (InterruptedException e) { }
 	 if (pingEclipse()) {
 	    CommandArgs args = new CommandArgs("LEVEL","DEBUG");
 	    sendBubblesMessage("LOGLEVEL",null,args,null);
@@ -430,12 +430,17 @@ catch (InterruptedException e) { }
 	    MintDefaultReply rply = new MintDefaultReply();
 	    sendBubblesMessage("OPENPROJECT",project,null,null,rply);
 	    Element pxml = rply.waitForXml();
-	    if (!IvyXml.isElement(pxml,"PROJECT")) pxml = IvyXml.getChild(pxml,"PROJECT");
+	    if (!IvyXml.isElement(pxml,"PROJECT")) {
+               pxml = IvyXml.getChild(pxml,"PROJECT");
+             }
             String dirs = IvyXml.getAttrString(pxml,"PATH");
             if (dirs != null) project_directory = new File(dirs);
 	    return;
 	  }
-	 if (i == 0) new IvyExec(cmd);
+	 if (i == 0) {
+            SesameMain.pongEclipse();
+            new IvyExec(cmd);
+          }
        }
     }
    catch (IOException e) { }
