@@ -87,7 +87,7 @@ SesameSessionLaunch(SesameMain sm,String sid,Element xml)
 {
    super(sm,sid,xml);
 
-   launch_id = IvyXml.getAttrString(xml,"LAUNCHID");
+   launch_id = IvyXml.getAttrString(xml,"LAUNCHID","");
    thread_ids = new HashSet<>();
    thread_frame = new HashMap<>();
    String s = IvyXml.getAttrString(xml,"THREADID");
@@ -304,7 +304,7 @@ String getAnyThread()
 
 @Override void noteContinue(String launch,String thread)
 {
-   if (!launch.equals(launch_id)) return;
+   if (!launch_id.isEmpty() && !launch.equals(launch_id)) return;
    if (thread != null) {
       if (!thread_ids.contains(thread)) return;
     }
@@ -487,7 +487,10 @@ private void loadInitialValues()
 {
    int ct = 1;
    if (frame_ids != null) ct = -1;
-   CommandArgs cargs = new CommandArgs("LAUNCH",launch_id,"THREAD",null,"COUNT",ct,
+   String lid = launch_id;
+   if (lid.isEmpty()) lid = null;
+
+   CommandArgs cargs = new CommandArgs("LAUNCH",lid,"THREAD",null,"COUNT",ct,
 					  "ARRAY",-1);
 
    Element stack = sesame_control.getXmlReply("GETSTACKFRAMES",getProject(),cargs,
@@ -572,4 +575,187 @@ SesameValueData getUniqueValue(SesameValueData svd)
 
 
 /* end of SesameSessionLaunch.java */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
