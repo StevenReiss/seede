@@ -184,10 +184,6 @@ void addSwingComponent(String name)
 }
 
 
-
-
-
-
 /********************************************************************************/
 /*										*/
 /*	Execution methods							*/
@@ -421,6 +417,8 @@ private void outputResult(IvyXmlWriter xw,CuminRunner cr,CuminRunStatus sts,bool
       xw.field("LINE",loc.getLineNumber());
       xw.field("THREAD",loc.getThread());
       xw.field("THREADNAME",loc.getThreadName());
+      String fid = for_session.getFrameId(loc.getThread());
+      if (fid != null) xw.field("FRAME",fid);
     }
 
    xw.begin("RETURN");

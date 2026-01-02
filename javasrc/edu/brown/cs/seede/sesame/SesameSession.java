@@ -357,6 +357,14 @@ Collection<CashewValue> getPoppyGraphics()
    return poppy_graphics;
 }
 
+String getFrameId(String thrd)
+{
+   if (parent_session != null) {
+      return parent_session.getFrameId(thrd);
+    }
+   return null;
+}
+
 
 
 /********************************************************************************/

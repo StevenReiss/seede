@@ -176,8 +176,14 @@ protected SesameSessionLaunch(SesameSessionLaunch ssl)
 /*	Access methods								*/
 /*										*/
 /********************************************************************************/
+ 
+@Override String getFrameId(String thread)	
+{
+   if (thread == null) return null;
+   return thread_frame.get(thread);
+} 
 
-String getFrameId(String thread)	{ return thread_frame.get(thread); }
+
 
 String getAnyThread()
 {
