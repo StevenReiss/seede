@@ -585,38 +585,38 @@ private class ExecHandler extends Thread {
       AcornLog.logD("WAIT FOR SESSION READY");
       for_session.waitForReady();
       SesameContext gblctx = new SesameContext(for_session);
-
+   
       AcornLog.logD("COMPILE PROJECT");
       for_session.getProject().compileProject();
       SesameExecRunner execer = null;
       int nr = 0;
       for (SesameLocation loc : for_session.getActiveLocations()) {
-	 CuminRunner cr = for_session.createRunner(loc,gblctx);
-	 if (cr == null) {
-	    AcornLog.logD("No runner " + for_session.getCallMethod(loc) + " " +
-		  for_session.getCallArgs(loc) + " " + loc.getFile() + " " +
-		  loc);
-	    SesameFile sf = loc.getFile();
-	    ASTNode root = sf.getResolvedAst(for_session.getProject());
-	    AcornLog.logD("Root is " + root);
-	    continue;
-	  }
-	 ++nr;
-	 if (execer == null) {
-	    execer = new SesameExecRunner(for_session,exec_id,gblctx,
-		  is_continuous,max_time,max_depth,cr);
-	    for_session.addRunner(execer);
-	  }
-	 else {
-	    execer.addRunner(cr);
-	  }
+         CuminRunner cr = for_session.createRunner(loc,gblctx);
+         if (cr == null) {
+            AcornLog.logD("No runner " + for_session.getCallMethod(loc) + " " +
+        	  for_session.getCallArgs(loc) + " " + loc.getFile() + " " +
+        	  loc);
+            SesameFile sf = loc.getFile();
+            ASTNode root = sf.getResolvedAst(for_session.getProject());
+            AcornLog.logD("Root is " + root);
+            continue;
+          }
+         ++nr;
+         if (execer == null) {
+            execer = new SesameExecRunner(for_session,exec_id,gblctx,
+        	  is_continuous,max_time,max_depth,cr);
+            for_session.addRunner(execer);
+          }
+         else {
+            execer.addRunner(cr);
+          }
        }
       AcornLog.logD("START RUNNER " + nr + " " + execer);
       if (execer != null) {
-	 execer.startExecution();
+         execer.startExecution();
        }
       else {
-	 sendErrorStatus();
+         sendErrorStatus();
        }
     }
 

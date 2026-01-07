@@ -68,9 +68,9 @@ private String			message_id;
 private SesameFileManager	file_manager;
 private SesameMonitor		message_monitor;
 private Map<String,SesameProject> project_map;
-private boolean                 compute_tostring;
-private boolean                 compute_toarray;
-private long                     timeout_error;
+private boolean 		compute_tostring;
+private boolean 		compute_toarray;
+private long			 timeout_error;
 
 private static JcompControl	jcomp_base;
 
@@ -85,18 +85,22 @@ private static JcompControl	jcomp_base;
 private SesameMain(String [] args)
 {
    AcornLog.setup();
-   
+
    message_id = null;
    project_map = new HashMap<String,SesameProject>();
    jcomp_base = new JcompControl();
    compute_tostring = false;
    compute_toarray = false;
    timeout_error = -1;
-   
+
    scanArgs(args);
 
    file_manager = new SesameFileManager(this);
    message_monitor = new SesameMonitor(this);
+
+   AcornLog.logD("SESAME","Class path " + System.getProperty("java.class.path"));
+   AcornLog.logD("SESAME","Java " + System.getProperty("java.home") + " " +
+		    System.getProperty("java.version"));
 }
 
 
@@ -126,15 +130,15 @@ private void scanArgs(String [] args)
 	 else if (args[i].startsWith("-L") && i+1 < args.length) {      // -L logfile
 	    AcornLog.setLogFile(new File(args[++i]));
 	  }
-         else if (args[i].startsWith("-s")) {
-            compute_tostring = !compute_tostring;
-          }
-         else if (args[i].startsWith("-a")) {
-            compute_toarray = !compute_toarray;
-          }
-         else if (args[i].startsWith("-time") && i+1 < args.length) {   // -timeout <val>
-            timeout_error = Long.parseLong(args[++i]);
-          }
+	 else if (args[i].startsWith("-s")) {
+	    compute_tostring = !compute_tostring;
+	  }
+	 else if (args[i].startsWith("-a")) {
+	    compute_toarray = !compute_toarray;
+	  }
+	 else if (args[i].startsWith("-time") && i+1 < args.length) {   // -timeout <val>
+	    timeout_error = Long.parseLong(args[++i]);
+	  }
 	 else badArgs();
        }
       else badArgs();
@@ -167,11 +171,11 @@ static JcompControl getJcompBase()		{ return jcomp_base; }
 
 SesameFileManager getFileManager()		{ return file_manager; }
 
-boolean getComputeToString()                    { return compute_tostring; }
+boolean getComputeToString()			{ return compute_tostring; }
 
-boolean getComputeToArray()                     { return compute_toarray; }
+boolean getComputeToArray()			{ return compute_toarray; }
 
-long getTimeoutError()                       { return timeout_error; }
+long getTimeoutError()			     { return timeout_error; }
 
 
 
@@ -186,7 +190,7 @@ String getMintId()				{ return message_id; }
 
 public static void pongEclipse()
 {
-   SesameMonitor.pongEclipse(); 
+   SesameMonitor.pongEclipse();
 }
 
 
@@ -219,8 +223,8 @@ void removeProject(SesameProject sp)
       SesameProject np = project_map.remove(sp.getName());
       if (np == null) return;
       else if (np != sp) {
-         project_map.put(np.getName(),np);
-         return;
+	 project_map.put(np.getName(),np);
+	 return;
        }
     }
    sp.removeProject();
@@ -319,4 +323,68 @@ private void process()
 
 
 /* end of SesameMain.java */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

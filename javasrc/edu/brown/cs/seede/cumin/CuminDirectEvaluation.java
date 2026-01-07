@@ -1304,6 +1304,8 @@ CuminRunStatus checkObjectMethods() throws CuminRunException, CashewException
 	 AcornLog.logD("UNKNOWN CALL TO OBJECT: " + getMethod().getName());
 	 return null;
     }
+   
+   AcornLog.logT("CUMIN","Result of internal evaluation: " + rslt);
 
    return CuminRunStatus.Factory.createReturn(rslt);
 }
