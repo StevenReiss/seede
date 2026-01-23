@@ -641,7 +641,12 @@ private void outputVariables(CashewOutputContext outctx)
          xw.field("LINE",lno);
        }
       CashewValue cv = ent.getValue();
-      if (cv != null) cv.outputXml(outctx,name);
+      if (cv != null) {
+         cv.outputXml(outctx,name);
+       }
+      else { 
+         AcornLog.logD("CASHEW","Skip variable " + name);
+       }
       xw.end("VARIABLE");
     }
 }

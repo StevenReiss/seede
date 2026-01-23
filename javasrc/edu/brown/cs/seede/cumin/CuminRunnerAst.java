@@ -338,6 +338,11 @@ private void setupContext(boolean top)
    JcompSymbol js = JcompAst.getDefinition(method_node);
    JcompSource src = JcompAst.getSource(method_node.getRoot());
    JcompTyper typer = type_converter;
+   
+   if (js.getName().contains("getQualifiedName")) {
+      AcornLog.logD("CUMIN","SETUP CONTEXT " + js.getCompleteName() + " " +
+            js.isStatic());
+    }
 
    File file = null;
    if (src != null) file = AcornConstants.getCanonical(src.getFileName());
