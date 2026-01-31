@@ -51,6 +51,7 @@ import edu.brown.cs.ivy.jcomp.JcompType;
 import edu.brown.cs.ivy.xml.IvyXml;
 import edu.brown.cs.ivy.xml.IvyXmlWriter;
 import edu.brown.cs.seede.acorn.AcornConstants;
+import edu.brown.cs.seede.acorn.AcornLog;
 import edu.brown.cs.seede.cashew.CashewContext;
 
 
@@ -187,7 +188,15 @@ void process(IvyXmlWriter xw)
       xw.field("TYPE","CALL");
       xw.field("INNERMETHOD",actual_context.getName());
       CashewContext ctx1 = actual_context;
-      for ( ; ctx1.getParentContext() != relative_context; ctx1 = ctx1.getParentContext()) ;
+      
+      while (ctx1 != null && ctx1.getParentContext() != relative_context) {
+         ctx1 = ctx1.getParentContext();
+       }
+      if (ctx1 == null) {
+         AcornLog.logE("SESAME","Contexts differ " + actual_context.getId() + " " +
+               relative_context.getId() + " " + base_time);
+         ctx1 = relative_context;
+       }
       xw.field("CALLMETHOD",ctx1.getName());
       // stmt = the part of statement corresponding to the function call to ctx1
     }
@@ -221,14 +230,22 @@ void process(IvyXmlWriter xw)
 /*                                                                              */
 /********************************************************************************/
 
-private CashewContext findActualContext(CashewContext base,long time)
+private CashewContext findActualContext(CashewContext base0,long time)
 {
-   if (base == null) return null;
+   if (base0 == null) return null;
+   
+   CashewContext base = base0;
    
    for (CashewContext cc : base.getChildContexts()) {
       if (cc.getStartTime() < time && cc.getEndTime() > time) {
          return findActualContext(cc,time);
        }
+    }
+   
+   while (base.getParentContext() != null) {
+      if (base.isOutput()) break;
+      AcornLog.logD("SESAME","Skipping found non-output context " + base.getId());
+      base = base.getParentContext();
     }
    
    return base;
