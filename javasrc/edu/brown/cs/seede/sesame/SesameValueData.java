@@ -1,21 +1,21 @@
 /********************************************************************************/
-/*										*/
-/*		SesameValueData.java						*/
-/*										*/
-/*	Hold value returned from Bubbles					*/
-/*										*/
+/*                                                                              */
+/*              SesameValueData.java                                            */
+/*                                                                              */
+/*      Hold value returned from Bubbles                                        */
+/*                                                                              */
 /********************************************************************************/
-/*	Copyright 2011 Brown University -- Steven P. Reiss		      */
+/*      Copyright 2011 Brown University -- Steven P. Reiss                    */
 /*********************************************************************************
- *  Copyright 2011, Brown University, Providence, RI.				 *
- *										 *
- *			  All Rights Reserved					 *
- *										 *
- * This program and the accompanying materials are made available under the	 *
+ *  Copyright 2011, Brown University, Providence, RI.                            *
+ *                                                                               *
+ *                        All Rights Reserved                                    *
+ *                                                                               *
+ * This program and the accompanying materials are made available under the      *
  * terms of the Eclipse Public License v1.0 which accompanies this distribution, *
- * and is available at								 *
- *	http://www.eclipse.org/legal/epl-v10.html				 *
- *										 *
+ * and is available at                                                           *
+ *      http://www.eclipse.org/legal/epl-v10.html                                *
+ *                                                                               *
  ********************************************************************************/
 
 /* SVN: $Id$ */
@@ -45,9 +45,9 @@ class SesameValueData implements SesameConstants
 
 
 /********************************************************************************/
-/*										*/
-/*	Private Storage 							*/
-/*										*/
+/*                                                                              */
+/*      Private Storage                                                         */
+/*                                                                              */
 /********************************************************************************/
 
 private ValueKind val_kind; 
@@ -69,9 +69,9 @@ private CashewValueSession value_session;
 
 
 /********************************************************************************/
-/*										*/
-/*	Constructors								*/
-/*										*/
+/*                                                                              */
+/*      Constructors                                                            */
+/*                                                                              */
 /********************************************************************************/
 
 SesameValueData(SesameSessionLaunch sess,String thread,Element xml,String name)
@@ -113,23 +113,23 @@ SesameValueData(CashewValue cv)
 
 
 /********************************************************************************/
-/*										*/
-/*	Access methods								*/
-/*										*/
+/*                                                                              */
+/*      Access methods                                                          */
+/*                                                                              */
 /********************************************************************************/
 
-ValueKind getKind()		        { return val_kind; }
+ValueKind getKind()                     { return val_kind; }
 
-String getType()		        { return val_type; }
-String getValue()		        { return val_value; }
+String getType()                        { return val_type; }
+String getValue()                       { return val_value; }
 
-String getActualType()		        { return null; }
-boolean hasContents()		        { return has_values; }
-boolean isLocal()		        { return is_local; }
-boolean isStatic()		        { return is_static; }
-String getFrame(SesameSessionLaunch s)	{ return s.getFrameId(val_thread); }
-String getThread()		        { return val_thread; }
-int getLength() 		        { return array_length; }
+String getActualType()                  { return null; }
+boolean hasContents()                   { return has_values; }
+boolean isLocal()                       { return is_local; }
+boolean isStatic()                      { return is_static; }
+String getFrame(SesameSessionLaunch s)  { return s.getFrameId(val_thread); }
+String getThread()                      { return val_thread; }
+int getLength()                         { return array_length; }
 
 
 //CHECKSTYLE:OFF
@@ -160,8 +160,8 @@ CashewValue getCashewValue(SesameSessionLaunch sess)
       int idx = vtype.indexOf("<");
       int idx1 = vtype.lastIndexOf(">");
       if (idx >= 0) {
-	 vtype = val_type.substring(0,idx);
-	 if (idx1 > 0) vtype += val_type.substring(idx1+1);
+         vtype = val_type.substring(0,idx);
+         if (idx1 > 0) vtype += val_type.substring(idx1+1);
        }
     }
 
@@ -212,41 +212,41 @@ CashewValue getCashewValue(SesameSessionLaunch sess)
 
    switch (val_kind) {
       case PRIMITIVE :
-	 if (typ.isBooleanType()) {
-	    result_value = CashewValue.booleanValue(typer,val_value);
-	  }
-	 else if (typ.isNumericType()) {
-	    result_value = CashewValue.numericValue(typer,typ,val_value);
-	  }
-	 break;
+         if (typ.isBooleanType()) {
+            result_value = CashewValue.booleanValue(typer,val_value);
+          }
+         else if (typ.isNumericType()) {
+            result_value = CashewValue.numericValue(typer,typ,val_value);
+          }
+         break;
       case STRING :
-	 result_value = CashewValue.stringValue(typer,typer.STRING_TYPE,val_value);
-	 break;
+         result_value = CashewValue.stringValue(typer,typer.STRING_TYPE,val_value);
+         break;
       case OBJECT :
-	 Map<String,Object> inits = new HashMap<>();
-	 typ.defineAll(typer);
-	 Map<String,SesameValueData> sets = new HashMap<>();
+         Map<String,Object> inits = new HashMap<>();
+         typ.defineAll(typer);
+         Map<String,SesameValueData> sets = new HashMap<>();
          Map<String,SesameValueData> other = new HashMap<>();
-	 for (Map.Entry<String,JcompType> ent : typ.getFields().entrySet()) {
-	    String fnm = ent.getKey();
-	    String cnm = null;
-	    String key = fnm;
-	    int idx1 = fnm.lastIndexOf(".");
-	    if (idx1 >= 0) {
-	       cnm = fnm.substring(0,idx1);
-	       key = fnm.substring(idx1+1);
-	     }
-	    key = getKey(key,cnm);
-	    if (sub_values != null && sub_values.get(key) != null) {
-	       SesameValueData fsvd = sub_values.get(key);
-	       fsvd = sess.getUniqueValue(fsvd);
-	       sets.put(fnm,fsvd);
-	     }
-	    else {
-	       DeferredLookup def = new DeferredLookup(fnm);
-	       inits.put(fnm,def);
-	     }
-	  }
+         for (Map.Entry<String,JcompType> ent : typ.getFields().entrySet()) {
+            String fnm = ent.getKey();
+            String cnm = null;
+            String key = fnm;
+            int idx1 = fnm.lastIndexOf(".");
+            if (idx1 >= 0) {
+               cnm = fnm.substring(0,idx1);
+               key = fnm.substring(idx1+1);
+             }
+            key = getKey(key,cnm);
+            if (sub_values != null && sub_values.get(key) != null) {
+               SesameValueData fsvd = sub_values.get(key);
+               fsvd = sess.getUniqueValue(fsvd);
+               sets.put(fnm,fsvd);
+             }
+            else {
+               DeferredLookup def = new DeferredLookup(fnm);
+               inits.put(fnm,def);
+             }
+          }
          if (addall != null) {
            for (String k : sub_values.keySet()) {
               String k1 = k;
@@ -263,73 +263,73 @@ CashewValue getCashewValue(SesameSessionLaunch sess)
             }
             
           }
-	 if (hash_code == 0) {
-	    inits.put(CashewConstants.HASH_CODE_FIELD,
+         if (hash_code == 0) {
+            inits.put(CashewConstants.HASH_CODE_FIELD,
                   new DeferredLookup(CashewConstants.HASH_CODE_FIELD));
-	  }
-	 else {
-	    CashewValue hvl = CashewValue.numericValue(typer,typer.INT_TYPE,hash_code);
-	    inits.put(CashewConstants.HASH_CODE_FIELD,hvl);
-	  }
-	 result_value = CashewValue.objectValue(sess,null,typer,
+          }
+         else {
+            CashewValue hvl = CashewValue.numericValue(typer,typer.INT_TYPE,hash_code);
+            inits.put(CashewConstants.HASH_CODE_FIELD,hvl);
+          }
+         result_value = CashewValue.objectValue(sess,null,typer,
                typ,inits,true);
-	
-	 for (Map.Entry<String,SesameValueData> ent : sets.entrySet()) {
-	    CashewValue cv = ent.getValue().getCashewValue(sess);
-	    try {
-	       result_value.setFieldValue(sess,typer,null,ent.getKey(),cv);
-	     }
-	    catch (CashewException e) {
-	       AcornLog.logE("Unexpected error setting field value",e);
-	     }
-	  }
+        
+         for (Map.Entry<String,SesameValueData> ent : sets.entrySet()) {
+            CashewValue cv = ent.getValue().getCashewValue(sess);
+            try {
+               result_value.setFieldValue(sess,typer,null,ent.getKey(),cv);
+             }
+            catch (CashewException e) {
+               AcornLog.logE("Unexpected error setting field value",e);
+             }
+          }
          for (Map.Entry<String,SesameValueData> ent : other.entrySet()) {
             CashewValue cv = ent.getValue().getCashewValue(sess);
             result_value.addFieldValue(sess,typer,null,ent.getKey(),cv);
           }
-	 break;
+         break;
       case ARRAY :
-	 if (array_length <= 1024) computeValues(sess);
-	 Map<Integer,Object> ainits = new HashMap<Integer,Object>();
-	 for (int i = 0; i < array_length; ++i) {
-	    String key = "[" + i + "]";
-	    String fullkey = getKey(key,null);
-	    if (sub_values != null && sub_values.get(fullkey) != null) {
-	       SesameValueData fsvd = sub_values.get(fullkey);
-	       fsvd = sess.getUniqueValue(fsvd);
-	       ainits.put(i,fsvd.getCashewValue(sess));
-	     }
-	    else {
-	       DeferredLookup def = new DeferredLookup(key);
-	       ainits.put(i,def);
-	     }
-	  }
-	 result_value = CashewValue.arrayValue(typer,typ,array_length,ainits);
-	 // AcornLog.logD("BUILT ARRAY : " + result_value);
-	 break;
+         if (array_length <= 1024) computeValues(sess);
+         Map<Integer,Object> ainits = new HashMap<Integer,Object>();
+         for (int i = 0; i < array_length; ++i) {
+            String key = "[" + i + "]";
+            String fullkey = getKey(key,null);
+            if (sub_values != null && sub_values.get(fullkey) != null) {
+               SesameValueData fsvd = sub_values.get(fullkey);
+               fsvd = sess.getUniqueValue(fsvd);
+               ainits.put(i,fsvd.getCashewValue(sess));
+             }
+            else {
+               DeferredLookup def = new DeferredLookup(key);
+               ainits.put(i,def);
+             }
+          }
+         result_value = CashewValue.arrayValue(typer,typ,array_length,ainits);
+         // AcornLog.logD("BUILT ARRAY : " + result_value);
+         break;
       case CLASS :
-	 int idx2 = val_value.lastIndexOf("(");
-	 String tnm = val_value.substring(0,idx2).trim();
-	 if (tnm.startsWith("(")) {
-	    idx2 = tnm.lastIndexOf(")");
-	    tnm = tnm.substring(1,idx2).trim();
-	  }
-	 JcompType ctyp = typer.findType(tnm);
-	 if (ctyp == null) ctyp = typer.findSystemType(tnm);
-	 if (ctyp == null) {
-	    int idx = tnm.indexOf("<");
-	    if (idx > 0) {
-	       tnm = tnm.substring(0,idx);
-	       ctyp = typer.findSystemType(tnm);
-	     }
-	  }
-	 if (ctyp == null) {
-	    AcornLog.logE("Can't find type " + tnm + " for " + val_value);
-	  }
-	 result_value = CashewValue.classValue(typer,ctyp);
-	 break;
+         int idx2 = val_value.lastIndexOf("(");
+         String tnm = val_value.substring(0,idx2).trim();
+         if (tnm.startsWith("(")) {
+            idx2 = tnm.lastIndexOf(")");
+            tnm = tnm.substring(1,idx2).trim();
+          }
+         JcompType ctyp = typer.findType(tnm);
+         if (ctyp == null) ctyp = typer.findSystemType(tnm);
+         if (ctyp == null) {
+            int idx = tnm.indexOf("<");
+            if (idx > 0) {
+               tnm = tnm.substring(0,idx);
+               ctyp = typer.findSystemType(tnm);
+             }
+          }
+         if (ctyp == null) {
+            AcornLog.logE("Can't find type " + tnm + " for " + val_value);
+          }
+         result_value = CashewValue.classValue(typer,ctyp);
+         break;
       case UNKNOWN :
-	 break;
+         break;
     }
 
    if (result_value == null) {
@@ -378,10 +378,10 @@ String findValue(CashewValue cv,int lvl)
    for (Map.Entry<String,SesameValueData> ent : sub_values.entrySet()) {
       String r = ent.getValue().findValue(cv,lvl-1);
       if (r != null) {
-	 if (array_length > 0) {
-	    return "[" + ent.getKey() + "]";
-	  }
-	 else return "." + ent.getKey();
+         if (array_length > 0) {
+            return "[" + ent.getKey() + "]";
+          }
+         else return "." + ent.getKey();
        }
     }
 
@@ -391,9 +391,9 @@ String findValue(CashewValue cv,int lvl)
 
 
 /********************************************************************************/
-/*										*/
-/*	Setup methods								*/
-/*										*/
+/*                                                                              */
+/*      Setup methods                                                           */
+/*                                                                              */
 /********************************************************************************/
 
 private void initialize(SesameSessionLaunch sess,Element xml,String expr)
@@ -405,17 +405,17 @@ private void initialize(SesameSessionLaunch sess,Element xml,String expr)
       int refid = 0;
       int hashcode = 0;
       for (Element celt : IvyXml.children(xml,"VALUE")) {
-	 switch (IvyXml.getAttrString(celt,"NAME")) {
-	    case "for_object" :
-	       objxml = celt;
-	       break;
-	    case "ref_id" :
-	       refid = Integer.parseInt(IvyXml.getTextElement(celt,"DESCRIPTION"));
-	       break;
-	    case "hash_code" :
-	       hashcode = Integer.parseInt(IvyXml.getTextElement(celt,"DESCRIPTION"));
-	       break;
-	  }
+         switch (IvyXml.getAttrString(celt,"NAME")) {
+            case "for_object" :
+               objxml = celt;
+               break;
+            case "ref_id" :
+               refid = Integer.parseInt(IvyXml.getTextElement(celt,"DESCRIPTION"));
+               break;
+            case "hash_code" :
+               hashcode = Integer.parseInt(IvyXml.getTextElement(celt,"DESCRIPTION"));
+               break;
+          }
        }
       val_type = IvyXml.getAttrString(objxml,"TYPE");
       String nexpr = "edu.brown.cs.seede.poppy.PoppyValue.getValue(" + refid + ")";
@@ -463,12 +463,12 @@ private synchronized void computeValues(SesameSessionLaunch sess)
    if (!has_values || sub_values != null) return;
    if (val_expr == null) {
       CommandArgs args = new CommandArgs("FRAME",getFrame(sess),"THREAD",getThread(),"DEPTH",2,
-					    "ARRAY",-1);
+                                            "ARRAY",-1);
       String var = "<VAR>" + IvyXml.xmlSanitize(val_name) + "</VAR>";
       Element xml = sess.getControl().getXmlReply("VARVAL",sess.getProject(),args,var,0);
       if (IvyXml.isElement(xml,"RESULT")) {
-	 Element root = IvyXml.getChild(xml,"VALUE");
-	 addValues(sess,root);
+         Element root = IvyXml.getChild(xml,"VALUE");
+         addValues(sess,root);
        }
     }
    else {
@@ -487,9 +487,9 @@ void resetType(JcompTyper typer,Set<CashewValue> done)
 
 
 /********************************************************************************/
-/*										*/
-/*	Deferred value lookup							*/
-/*										*/
+/*                                                                              */
+/*      Deferred value lookup                                                   */
+/*                                                                              */
 /********************************************************************************/
 
 private class DeferredLookup implements CashewConstants.CashewDeferredValue {
@@ -513,7 +513,7 @@ private class DeferredLookup implements CashewConstants.CashewDeferredValue {
              }
             else {
                CommandArgs args = new CommandArgs("FRAME",getFrame(sess),"THREAD",getThread(),
-        	     "DEPTH",1,"ARRAY",-1);
+                     "DEPTH",1,"ARRAY",-1);
                String var = "<VAR>" + IvyXml.xmlSanitize(val_name) + "?@hashCode</VAR>";
                Element xml = sess.getControl().getXmlReply("VARVAL",sess.getProject(),args,var,0);
                if (IvyXml.isElement(xml,"RESULT")) {
@@ -547,14 +547,14 @@ private class DeferredLookup implements CashewConstants.CashewDeferredValue {
       return cvr;
     }
 
-}	// end of inner class DeferredLookup
+}       // end of inner class DeferredLookup
 
 
 
 /********************************************************************************/
-/*										*/
-/*	Debugging methods							*/
-/*										*/
+/*                                                                              */
+/*      Debugging methods                                                       */
+/*                                                                              */
 /********************************************************************************/
 
 @Override public String toString()
@@ -581,7 +581,7 @@ private class DeferredLookup implements CashewConstants.CashewDeferredValue {
 
 
 
-}	// end of class SesameValueData
+}       // end of class SesameValueData
 
 
 

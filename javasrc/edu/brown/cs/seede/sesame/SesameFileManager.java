@@ -1,21 +1,21 @@
 /********************************************************************************/
-/*										*/
-/*		SesameFileManager.java						*/
-/*										*/
-/*	Manage file buffers							*/
-/*										*/
+/*                                                                              */
+/*              SesameFileManager.java                                          */
+/*                                                                              */
+/*      Manage file buffers                                                     */
+/*                                                                              */
 /********************************************************************************/
-/*	Copyright 2011 Brown University -- Steven P. Reiss		      */
+/*      Copyright 2011 Brown University -- Steven P. Reiss                    */
 /*********************************************************************************
- *  Copyright 2011, Brown University, Providence, RI.				 *
- *										 *
- *			  All Rights Reserved					 *
- *										 *
- * This program and the accompanying materials are made available under the	 *
+ *  Copyright 2011, Brown University, Providence, RI.                            *
+ *                                                                               *
+ *                        All Rights Reserved                                    *
+ *                                                                               *
+ * This program and the accompanying materials are made available under the      *
  * terms of the Eclipse Public License v1.0 which accompanies this distribution, *
- * and is available at								 *
- *	http://www.eclipse.org/legal/epl-v10.html				 *
- *										 *
+ * and is available at                                                           *
+ *      http://www.eclipse.org/legal/epl-v10.html                                *
+ *                                                                               *
  ********************************************************************************/
 
 
@@ -40,19 +40,19 @@ class SesameFileManager implements SesameConstants
 
 
 /********************************************************************************/
-/*										*/
-/*	Private Storage 							*/
-/*										*/
+/*                                                                              */
+/*      Private Storage                                                         */
+/*                                                                              */
 /********************************************************************************/
 
-private Map<File,SesameFile>	known_files;
-private SesameMain		sesame_control;
+private Map<File,SesameFile>    known_files;
+private SesameMain              sesame_control;
 
 
 /********************************************************************************/
-/*										*/
-/*	Constructors								*/
-/*										*/
+/*                                                                              */
+/*      Constructors                                                            */
+/*                                                                              */
 /********************************************************************************/
 
 SesameFileManager(SesameMain sm)
@@ -66,9 +66,9 @@ SesameFileManager(SesameMain sm)
 
 
 /********************************************************************************/
-/*										*/
-/*	Setup methods								*/
-/*										*/
+/*                                                                              */
+/*      Setup methods                                                           */
+/*                                                                              */
 /********************************************************************************/
 
 SesameFile findOpenFile(File f) 
@@ -136,9 +136,9 @@ SesameFile openFile(File f,String cnts)
    synchronized (known_files) {
       SesameFile sf1 = known_files.get(f);
       if (sf1 == null) {
-	 sf1 = new SesameFile(f,cnts,linesep);
+         sf1 = new SesameFile(f,cnts,linesep);
          if (islcl) sf1 = new SesameFile(sf1,true);
-	 known_files.put(f,sf1);
+         known_files.put(f,sf1);
        }
       return sf1;
     }
@@ -149,11 +149,11 @@ void removeFileUse(SesameFile sf)
 {
    if (sf.removeUse()) {
       if (!sf.isLocal()) {
-	 File f = sf.getFile();
+         File f = sf.getFile();
          closeFile(f);
-	 Map<String,Object> args = new HashMap<>();
-	 args.put("FILE",f.getPath());
-	 sesame_control.getStringReply("FINISHFILE",null,args,null,0);
+         Map<String,Object> args = new HashMap<>();
+         args.put("FILE",f.getPath());
+         sesame_control.getStringReply("FINISHFILE",null,args,null,0);
 
        }
       sf.clear();
@@ -173,9 +173,9 @@ void closeFile(File f)
 
 
 /********************************************************************************/
-/*										*/
-/*	File Action methods							*/
-/*										*/
+/*                                                                              */
+/*      File Action methods                                                     */
+/*                                                                              */
 /********************************************************************************/
 
 SesameFile handleEdit(File f,int len,int offset,boolean complete,String txt)
@@ -196,9 +196,9 @@ SesameFile handleEdit(File f,int len,int offset,boolean complete,String txt)
 
 
 /********************************************************************************/
-/*										*/
-/*	Error handling methods							*/
-/*										*/
+/*                                                                              */
+/*      Error handling methods                                                  */
+/*                                                                              */
 /********************************************************************************/
 
 boolean handleErrors(File f,Element msgs)
@@ -211,7 +211,7 @@ boolean handleErrors(File f,Element msgs)
 
 
 
-}	// end of class SesameFileManager
+}       // end of class SesameFileManager
 
 
 

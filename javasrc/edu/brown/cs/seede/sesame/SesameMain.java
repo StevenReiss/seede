@@ -1,21 +1,21 @@
 /********************************************************************************/
-/*										*/
-/*		SesameMain.java 						*/
-/*										*/
-/*	Main program for SEEDE assistance					*/
-/*										*/
+/*                                                                              */
+/*              SesameMain.java                                                 */
+/*                                                                              */
+/*      Main program for SEEDE assistance                                       */
+/*                                                                              */
 /********************************************************************************/
-/*	Copyright 2011 Brown University -- Steven P. Reiss		      */
+/*      Copyright 2011 Brown University -- Steven P. Reiss                    */
 /*********************************************************************************
- *  Copyright 2011, Brown University, Providence, RI.				 *
- *										 *
- *			  All Rights Reserved					 *
- *										 *
- * This program and the accompanying materials are made available under the	 *
+ *  Copyright 2011, Brown University, Providence, RI.                            *
+ *                                                                               *
+ *                        All Rights Reserved                                    *
+ *                                                                               *
+ * This program and the accompanying materials are made available under the      *
  * terms of the Eclipse Public License v1.0 which accompanies this distribution, *
- * and is available at								 *
- *	http://www.eclipse.org/legal/epl-v10.html				 *
- *										 *
+ * and is available at                                                           *
+ *      http://www.eclipse.org/legal/epl-v10.html                                *
+ *                                                                               *
  ********************************************************************************/
 
 /* SVN: $Id$ */
@@ -45,9 +45,9 @@ public final class SesameMain implements SesameConstants, MintConstants
 
 
 /********************************************************************************/
-/*										*/
-/*	Main Program								*/
-/*										*/
+/*                                                                              */
+/*      Main Program                                                            */
+/*                                                                              */
 /********************************************************************************/
 
 public static void main(String [] args)
@@ -59,27 +59,27 @@ public static void main(String [] args)
 
 
 /********************************************************************************/
-/*										*/
-/*	Private Storage 							*/
-/*										*/
+/*                                                                              */
+/*      Private Storage                                                         */
+/*                                                                              */
 /********************************************************************************/
 
-private String			message_id;
-private SesameFileManager	file_manager;
-private SesameMonitor		message_monitor;
+private String                  message_id;
+private SesameFileManager       file_manager;
+private SesameMonitor           message_monitor;
 private Map<String,SesameProject> project_map;
-private boolean 		compute_tostring;
-private boolean 		compute_toarray;
-private long			 timeout_error;
+private boolean                 compute_tostring;
+private boolean                 compute_toarray;
+private long                     timeout_error;
 
-private static JcompControl	jcomp_base;
+private static JcompControl     jcomp_base;
 
 
 
 /********************************************************************************/
-/*										*/
-/*	Constructors								*/
-/*										*/
+/*                                                                              */
+/*      Constructors                                                            */
+/*                                                                              */
 /********************************************************************************/
 
 private SesameMain(String [] args)
@@ -100,46 +100,46 @@ private SesameMain(String [] args)
 
    AcornLog.logD("SESAME","Class path " + System.getProperty("java.class.path"));
    AcornLog.logD("SESAME","Java " + System.getProperty("java.home") + " " +
-		    System.getProperty("java.version"));
+                    System.getProperty("java.version"));
 }
 
 
 
 /********************************************************************************/
-/*										*/
-/*	Argument scanning methods						*/
-/*										*/
+/*                                                                              */
+/*      Argument scanning methods                                               */
+/*                                                                              */
 /********************************************************************************/
 
 private void scanArgs(String [] args)
 {
    for (int i = 0; i < args.length; ++i) {
       if (args[i].startsWith("-")) {
-	 if (args[i].startsWith("-m") && i+1 < args.length) {           // -m <MINTID>
-	    message_id = args[++i];
-	  }
-	 else if (args[i].startsWith("-T")) {                           // -Trace
-	    AcornLog.setTracing(true);
-	  }
-	 else if (args[i].startsWith("-D")) {                           // -Debug
-	    AcornLog.setLogLevel(AcornLog.LogLevel.DEBUG);
-	  }
-	 else if (args[i].startsWith("-E")) {                           // -Error
-	    AcornLog.useStdErr(true);
-	  }
-	 else if (args[i].startsWith("-L") && i+1 < args.length) {      // -L logfile
-	    AcornLog.setLogFile(new File(args[++i]));
-	  }
-	 else if (args[i].startsWith("-s")) {
-	    compute_tostring = !compute_tostring;
-	  }
-	 else if (args[i].startsWith("-a")) {
-	    compute_toarray = !compute_toarray;
-	  }
-	 else if (args[i].startsWith("-time") && i+1 < args.length) {   // -timeout <val>
-	    timeout_error = Long.parseLong(args[++i]);
-	  }
-	 else badArgs();
+         if (args[i].startsWith("-m") && i+1 < args.length) {           // -m <MINTID>
+            message_id = args[++i];
+          }
+         else if (args[i].startsWith("-T")) {                           // -Trace
+            AcornLog.setTracing(true);
+          }
+         else if (args[i].startsWith("-D")) {                           // -Debug
+            AcornLog.setLogLevel(AcornLog.LogLevel.DEBUG);
+          }
+         else if (args[i].startsWith("-E")) {                           // -Error
+            AcornLog.useStdErr(true);
+          }
+         else if (args[i].startsWith("-L") && i+1 < args.length) {      // -L logfile
+            AcornLog.setLogFile(new File(args[++i]));
+          }
+         else if (args[i].startsWith("-s")) {
+            compute_tostring = !compute_tostring;
+          }
+         else if (args[i].startsWith("-a")) {
+            compute_toarray = !compute_toarray;
+          }
+         else if (args[i].startsWith("-time") && i+1 < args.length) {   // -timeout <val>
+            timeout_error = Long.parseLong(args[++i]);
+          }
+         else badArgs();
        }
       else badArgs();
     }
@@ -162,20 +162,20 @@ private void badArgs()
 
 
 /********************************************************************************/
-/*										*/
-/*	Access methods								*/
-/*										*/
+/*                                                                              */
+/*      Access methods                                                          */
+/*                                                                              */
 /********************************************************************************/
 
-static JcompControl getJcompBase()		{ return jcomp_base; }
+static JcompControl getJcompBase()              { return jcomp_base; }
 
-SesameFileManager getFileManager()		{ return file_manager; }
+SesameFileManager getFileManager()              { return file_manager; }
 
-boolean getComputeToString()			{ return compute_tostring; }
+boolean getComputeToString()                    { return compute_tostring; }
 
-boolean getComputeToArray()			{ return compute_toarray; }
+boolean getComputeToArray()                     { return compute_toarray; }
 
-long getTimeoutError()			     { return timeout_error; }
+long getTimeoutError()                       { return timeout_error; }
 
 
 
@@ -184,9 +184,9 @@ void noteFileChanged(SesameFile sf)
    message_monitor.noteFileChanged(sf);
 }
 
-SesameMonitor getMonitor()			{ return message_monitor; }
+SesameMonitor getMonitor()                      { return message_monitor; }
 
-String getMintId()				{ return message_id; }
+String getMintId()                              { return message_id; }
 
 public static void pongEclipse()
 {
@@ -195,9 +195,9 @@ public static void pongEclipse()
 
 
 /********************************************************************************/
-/*										*/
-/*	Project managment							*/
-/*										*/
+/*                                                                              */
+/*      Project managment                                                       */
+/*                                                                              */
 /********************************************************************************/
 
 SesameProject getProject(String name)
@@ -207,8 +207,8 @@ SesameProject getProject(String name)
    synchronized (project_map) {
       SesameProject sp = project_map.get(name);
       if (sp == null) {
-	 sp = new SesameProject(this,name);
-	 project_map.put(name,sp);
+         sp = new SesameProject(this,name);
+         project_map.put(name,sp);
        }
       return sp;
     }
@@ -223,8 +223,8 @@ void removeProject(SesameProject sp)
       SesameProject np = project_map.remove(sp.getName());
       if (np == null) return;
       else if (np != sp) {
-	 project_map.put(np.getName(),np);
-	 return;
+         project_map.put(np.getName(),np);
+         return;
        }
     }
    sp.removeProject();
@@ -233,9 +233,9 @@ void removeProject(SesameProject sp)
 
 
 /********************************************************************************/
-/*										*/
-/*	Messaging methods							*/
-/*										*/
+/*                                                                              */
+/*      Messaging methods                                                       */
+/*                                                                              */
 /********************************************************************************/
 
 void sendMessage(String cmd,String proj,Map<String,Object> flds,String cnts)
@@ -287,7 +287,7 @@ private void sendMessage(String cmd,String proj,Map<String,Object> flds,String c
    xw.field("LANG","Eclipse");
    if (flds != null) {
       for (Map.Entry<String,Object> ent : flds.entrySet()) {
-	 xw.field(ent.getKey(),ent.getValue());
+         xw.field(ent.getKey(),ent.getValue());
        }
     }
    if (cnts != null) {
@@ -304,9 +304,9 @@ private void sendMessage(String cmd,String proj,Map<String,Object> flds,String c
 
 
 /********************************************************************************/
-/*										*/
-/*	Processing methods							*/
-/*										*/
+/*                                                                              */
+/*      Processing methods                                                      */
+/*                                                                              */
 /********************************************************************************/
 
 private void process()
@@ -317,7 +317,7 @@ private void process()
 
 
 
-}	// end of class SesameMain
+}       // end of class SesameMain
 
 
 

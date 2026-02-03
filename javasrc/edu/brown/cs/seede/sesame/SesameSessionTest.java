@@ -1,21 +1,21 @@
 /********************************************************************************/
-/*										*/
-/*		SesameSessionTest.java						*/
-/*										*/
-/*	Session based on specific test inputs					*/
-/*										*/
+/*                                                                              */
+/*              SesameSessionTest.java                                          */
+/*                                                                              */
+/*      Session based on specific test inputs                                   */
+/*                                                                              */
 /********************************************************************************/
-/*	Copyright 2011 Brown University -- Steven P. Reiss		      */
+/*      Copyright 2011 Brown University -- Steven P. Reiss                    */
 /*********************************************************************************
- *  Copyright 2011, Brown University, Providence, RI.				 *
- *										 *
- *			  All Rights Reserved					 *
- *										 *
- * This program and the accompanying materials are made available under the	 *
+ *  Copyright 2011, Brown University, Providence, RI.                            *
+ *                                                                               *
+ *                        All Rights Reserved                                    *
+ *                                                                               *
+ * This program and the accompanying materials are made available under the      *
  * terms of the Eclipse Public License v1.0 which accompanies this distribution, *
- * and is available at								 *
- *	http://www.eclipse.org/legal/epl-v10.html				 *
- *										 *
+ * and is available at                                                           *
+ *      http://www.eclipse.org/legal/epl-v10.html                                *
+ *                                                                               *
  ********************************************************************************/
 
 /* SVN: $Id$ */
@@ -42,9 +42,9 @@ class SesameSessionTest extends SesameSession
 
 
 /********************************************************************************/
-/*										*/
-/*	Private Storage 							*/
-/*										*/
+/*                                                                              */
+/*      Private Storage                                                         */
+/*                                                                              */
 /********************************************************************************/
 
 private List<CashewValue> test_args;
@@ -53,9 +53,9 @@ private Map<String,CashewValue> global_vars;
 
 
 /********************************************************************************/
-/*										*/
-/*	Constructors								*/
-/*										*/
+/*                                                                              */
+/*      Constructors                                                            */
+/*                                                                              */
 /********************************************************************************/
 
 SesameSessionTest(SesameMain sm,String sid,Element xml) throws SesameException
@@ -69,12 +69,12 @@ SesameSessionTest(SesameMain sm,String sid,Element xml) throws SesameException
    test_args = new ArrayList<CashewValue>();
    try {
       for (Element axml : IvyXml.children(txml,"ARG")) {
-	 test_args.add(CashewValue.createValue(this,typer,axml));
+         test_args.add(CashewValue.createValue(this,typer,axml));
        }
       for (Element gxml : IvyXml.children(txml,"GLOBAL")) {
-	 String nm = IvyXml.getAttrString(gxml,"NAME");
-	 CashewValue cv = CashewValue.createValue(this,typer,gxml);
-	 global_vars.put(nm,cv);
+         String nm = IvyXml.getAttrString(gxml,"NAME");
+         CashewValue cv = CashewValue.createValue(this,typer,gxml);
+         global_vars.put(nm,cv);
        }
     }
    catch (CashewException e) {
@@ -88,9 +88,9 @@ SesameSessionTest(SesameMain sm,String sid,Element xml) throws SesameException
 
 
 /********************************************************************************/
-/*										*/
-/*	Access methods								*/
-/*										*/
+/*                                                                              */
+/*      Access methods                                                          */
+/*                                                                              */
 /********************************************************************************/
 
 @Override public List<CashewValue> getCallArgs(SesameLocation loc)
@@ -129,7 +129,7 @@ SesameSessionTest(SesameMain sm,String sid,Element xml) throws SesameException
 
 
 
-}	// end of class SesameSessionTest
+}       // end of class SesameSessionTest
 
 
 

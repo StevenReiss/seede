@@ -1,21 +1,21 @@
 /********************************************************************************/
-/*										*/
-/*		SesameContext.java						*/
-/*										*/
-/*	description of class							*/
-/*										*/
+/*                                                                              */
+/*              SesameContext.java                                              */
+/*                                                                              */
+/*      description of class                                                    */
+/*                                                                              */
 /********************************************************************************/
-/*	Copyright 2011 Brown University -- Steven P. Reiss		      */
+/*      Copyright 2011 Brown University -- Steven P. Reiss                    */
 /*********************************************************************************
- *  Copyright 2011, Brown University, Providence, RI.				 *
- *										 *
- *			  All Rights Reserved					 *
- *										 *
- * This program and the accompanying materials are made available under the	 *
+ *  Copyright 2011, Brown University, Providence, RI.                            *
+ *                                                                               *
+ *                        All Rights Reserved                                    *
+ *                                                                               *
+ * This program and the accompanying materials are made available under the      *
  * terms of the Eclipse Public License v1.0 which accompanies this distribution, *
- * and is available at								 *
- *	http://www.eclipse.org/legal/epl-v10.html				 *
- *										 *
+ * and is available at                                                           *
+ *      http://www.eclipse.org/legal/epl-v10.html                                *
+ *                                                                               *
  ********************************************************************************/
 
 /* SVN: $Id$ */
@@ -37,18 +37,18 @@ public class SesameContext extends CashewContext implements SesameConstants
 
 
 /********************************************************************************/
-/*										*/
-/*	Private Storage 							*/
-/*										*/
+/*                                                                              */
+/*      Private Storage                                                         */
+/*                                                                              */
 /********************************************************************************/
 
-private SesameSession	for_session;
+private SesameSession   for_session;
 
 
 /********************************************************************************/
-/*										*/
-/*	Constructors								*/
-/*										*/
+/*                                                                              */
+/*      Constructors                                                            */
+/*                                                                              */
 /********************************************************************************/
 
 SesameContext(SesameSession ss)
@@ -62,9 +62,9 @@ SesameContext(SesameSession ss)
 
 
 /********************************************************************************/
-/*										*/
-/*	Overridden methods							*/
-/*										*/
+/*                                                                              */
+/*      Overridden methods                                                      */
+/*                                                                              */
 /********************************************************************************/
 
 @Override public CashewValue findStaticFieldReference(JcompTyper typer,String name,String type)
@@ -100,24 +100,24 @@ SesameContext(SesameSession ss)
       String suffix = "";
       if (type == null) type = "java.lang.Object";
       switch (type) {
-	 case "boolean" :
-	    suffix = "Boolean";
-	    break;
-	 case "int" :
-	    suffix = "Int";
-	    break;
-	 case "long" :
-	    suffix = "Long";
-	    break;
-	 case "short" :
-	    suffix = "Short";
-	    break;
-	 case "double" :
-	    suffix = "Double";
-	    break;
-	 case "float" :
-	    suffix = "Float";
-	    break;
+         case "boolean" :
+            suffix = "Boolean";
+            break;
+         case "int" :
+            suffix = "Int";
+            break;
+         case "long" :
+            suffix = "Long";
+            break;
+         case "short" :
+            suffix = "Short";
+            break;
+         case "double" :
+            suffix = "Double";
+            break;
+         case "float" :
+            suffix = "Float";
+            break;
        }
       String expr = "edu.brown.cs.seede.poppy.PoppyValue.getStaticFieldValue";
       expr += suffix + "(\"" + name + "\")";
@@ -207,7 +207,7 @@ private CashewValue getKnownStaticField(JcompTyper typer,String name,String type
 
 
 
-}	// end of class SesameContext
+}       // end of class SesameContext
 
 
 

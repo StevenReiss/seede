@@ -1,21 +1,21 @@
 /********************************************************************************/
-/*										*/
-/*		TestPole.java							*/
-/*										*/
-/*	Test seede using POLE package						*/
-/*										*/
+/*                                                                              */
+/*              TestPole.java                                                   */
+/*                                                                              */
+/*      Test seede using POLE package                                           */
+/*                                                                              */
 /********************************************************************************/
-/*	Copyright 2011 Brown University -- Steven P. Reiss		      */
+/*      Copyright 2011 Brown University -- Steven P. Reiss                    */
 /*********************************************************************************
- *  Copyright 2011, Brown University, Providence, RI.				 *
- *										 *
- *			  All Rights Reserved					 *
- *										 *
- * This program and the accompanying materials are made available under the	 *
+ *  Copyright 2011, Brown University, Providence, RI.                            *
+ *                                                                               *
+ *                        All Rights Reserved                                    *
+ *                                                                               *
+ * This program and the accompanying materials are made available under the      *
  * terms of the Eclipse Public License v1.0 which accompanies this distribution, *
- * and is available at								 *
- *	http://www.eclipse.org/legal/epl-v10.html				 *
- *										 *
+ * and is available at                                                           *
+ *      http://www.eclipse.org/legal/epl-v10.html                                *
+ *                                                                               *
  ********************************************************************************/
 
 /* SVN: $Id$ */
@@ -33,22 +33,22 @@ public class TestPole extends TestBase
 
 
 /********************************************************************************/
-/*										*/
-/*	Private Storage 							*/
-/*										*/
+/*                                                                              */
+/*      Private Storage                                                         */
+/*                                                                              */
 /********************************************************************************/
 
-private static final String		TESTPOLE_SID = "SEED_22348";
+private static final String             TESTPOLE_SID = "SEED_22348";
 
-private static final String		TEST_PROJECT = "Pole";
-private static final String		LAUNCHPOLE_NAME = "Pole Test2";
+private static final String             TEST_PROJECT = "Pole";
+private static final String             LAUNCHPOLE_NAME = "Pole Test2";
 
 
 
 /********************************************************************************/
-/*										*/
-/*	Constructors								*/
-/*										*/
+/*                                                                              */
+/*      Constructors                                                            */
+/*                                                                              */
 /********************************************************************************/
 
 public TestPole()
@@ -59,9 +59,9 @@ public TestPole()
 
 
 /********************************************************************************/
-/*										*/
-/*	Test method								*/
-/*										*/
+/*                                                                              */
+/*      Test method                                                             */
+/*                                                                              */
 /********************************************************************************/
 
 @Test public void testPole()
@@ -75,7 +75,7 @@ public TestPole()
 
 
 
-}	// end of class TestPole
+}       // end of class TestPole
 
 
 

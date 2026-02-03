@@ -1,21 +1,21 @@
 /********************************************************************************/
-/*										*/
-/*		SesameFile.java 						*/
-/*										*/
-/*	Description of a single editable file					*/
-/*										*/
+/*                                                                              */
+/*              SesameFile.java                                                 */
+/*                                                                              */
+/*      Description of a single editable file                                   */
+/*                                                                              */
 /********************************************************************************/
-/*	Copyright 2011 Brown University -- Steven P. Reiss		      */
+/*      Copyright 2011 Brown University -- Steven P. Reiss                    */
 /*********************************************************************************
- *  Copyright 2011, Brown University, Providence, RI.				 *
- *										 *
- *			  All Rights Reserved					 *
- *										 *
- * This program and the accompanying materials are made available under the	 *
+ *  Copyright 2011, Brown University, Providence, RI.                            *
+ *                                                                               *
+ *                        All Rights Reserved                                    *
+ *                                                                               *
+ * This program and the accompanying materials are made available under the      *
  * terms of the Eclipse Public License v1.0 which accompanies this distribution, *
- * and is available at								 *
- *	http://www.eclipse.org/legal/epl-v10.html				 *
- *										 *
+ * and is available at                                                           *
+ *      http://www.eclipse.org/legal/epl-v10.html                                *
+ *                                                                               *
  ********************************************************************************/
 
 /* SVN: $Id$ */
@@ -71,24 +71,24 @@ class SesameFile implements SesameConstants, JcompAstCleaner, JcompExtendedSourc
 
 
 /********************************************************************************/
-/*										*/
-/*	Private Storage 							*/
-/*										*/
+/*                                                                              */
+/*      Private Storage                                                         */
+/*                                                                              */
 /********************************************************************************/
 
-private IDocument		edit_document;
-private File			for_file;
+private IDocument               edit_document;
+private File                    for_file;
 private Map<SesameProject,ASTNode> ast_roots;
-private Set<Integer>		error_lines;
-private int			use_count;
-private boolean 		is_local;
+private Set<Integer>            error_lines;
+private int                     use_count;
+private boolean                 is_local;
 
 
 
 /********************************************************************************/
-/*										*/
-/*	Constructors								*/
-/*										*/
+/*                                                                              */
+/*      Constructors                                                            */
+/*                                                                              */
 /********************************************************************************/
 
 SesameFile(File f,String cnts,String linesep)
@@ -127,9 +127,9 @@ private void initialize(String cnts)
 
 
 /********************************************************************************/
-/*										*/
-/*	Action methods								*/
-/*										*/
+/*                                                                              */
+/*      Action methods                                                          */
+/*                                                                              */
 /********************************************************************************/
 
 void editFile(int len,int off,String txt,boolean complete)
@@ -160,7 +160,7 @@ boolean editFile(TextEdit te,String id)
 
    if (id == null) id = "";
    AcornLog.logD("SESAME","RESULTANT FILE: " + id + ": " + hashCode() +
-	 "\n" + edit_document.get());
+         "\n" + edit_document.get());
 
    return true;
 }
@@ -186,9 +186,9 @@ void resetSemantics(SesameProject sp)
 
 
 /********************************************************************************/
-/*										*/
-/*	Track errors in file							*/
-/*										*/
+/*                                                                              */
+/*      Track errors in file                                                    */
+/*                                                                              */
 /********************************************************************************/
 
 boolean handleErrors(Element msgs)
@@ -210,30 +210,30 @@ boolean handleErrors(Element msgs)
 
 
 /********************************************************************************/
-/*										*/
-/*	Methods to provide ASTs to jcomp for current project			*/
-/*										*/
+/*                                                                              */
+/*      Methods to provide ASTs to jcomp for current project                    */
+/*                                                                              */
 /********************************************************************************/
 
-@Override public ASTNode getAstRootNode(Object key)	// extended source 1
+@Override public ASTNode getAstRootNode(Object key)     // extended source 1
 {
    SesameProject sp = (SesameProject) key;
    if (sp != null) {
       ASTNode an = null;
       synchronized (ast_roots) {
-	 an = ast_roots.get(sp);
-	 if (an != null) {
-	    AcornLog.logD("SESAME","Get previous AST root for project " +
-		  this + " " + sp.getName() + " " + sp.isLocal() + " " + sp.hashCode());
-	    return an;
-	  }
+         an = ast_roots.get(sp);
+         if (an != null) {
+            AcornLog.logD("SESAME","Get previous AST root for project " +
+                  this + " " + sp.getName() + " " + sp.isLocal() + " " + sp.hashCode());
+            return an;
+          }
        }
       an = buildAst();
       AcornLog.logD("SESAME","Create new AST root " +
-	    this + " " + hashCode() + " " +
-	    sp.getName() + " " + sp.isLocal() + " " + sp.hashCode());
+            this + " " + hashCode() + " " +
+            sp.getName() + " " + sp.isLocal() + " " + sp.hashCode());
       synchronized (ast_roots) {
-	 ast_roots.put(sp,an);
+         ast_roots.put(sp,an);
        }
       return an;
     }
@@ -262,9 +262,9 @@ void clear()
 
 
 /********************************************************************************/
-/*										*/
-/*	Abstract syntax tree methods						*/
-/*										*/
+/*                                                                              */
+/*      Abstract syntax tree methods                                            */
+/*                                                                              */
 /********************************************************************************/
 
 ASTNode getAst()
@@ -303,8 +303,8 @@ private void cleanupAstRoot(CompilationUnit an)
    if (an == null) return; 
    for (Object typn : an.types()) {
       if (typn instanceof TypeDeclaration) {
-	 TypeDeclaration td = (TypeDeclaration) typn;
-	 fixType(td);
+         TypeDeclaration td = (TypeDeclaration) typn;
+         fixType(td);
        }
     }
 }
@@ -320,19 +320,19 @@ private void fixType(TypeDeclaration td)
    for (Object o : td.bodyDeclarations()) {
       BodyDeclaration bd = (BodyDeclaration) o;
       if (bd instanceof MethodDeclaration) {
-	 MethodDeclaration md = (MethodDeclaration) bd;
-	 if (md.isConstructor()) havecnst = true;
+         MethodDeclaration md = (MethodDeclaration) bd;
+         if (md.isConstructor()) havecnst = true;
        }
       else if (bd instanceof FieldDeclaration) {
-	 FieldDeclaration fd = (FieldDeclaration) bd;
-	 if (Modifier.isStatic(fd.getModifiers())) continue;
-	 for (Object o1 : fd.fragments()) {
-	    VariableDeclarationFragment vdf = (VariableDeclarationFragment) o1;
-	    if (vdf.getInitializer() != null) {
-	       if (cnstinits == null) cnstinits = new ArrayList<>();
-	       cnstinits.add(vdf);
-	     }
-	  }
+         FieldDeclaration fd = (FieldDeclaration) bd;
+         if (Modifier.isStatic(fd.getModifiers())) continue;
+         for (Object o1 : fd.fragments()) {
+            VariableDeclarationFragment vdf = (VariableDeclarationFragment) o1;
+            if (vdf.getInitializer() != null) {
+               if (cnstinits == null) cnstinits = new ArrayList<>();
+               cnstinits.add(vdf);
+             }
+          }
        }
     }
 
@@ -347,32 +347,32 @@ private void fixType(TypeDeclaration td)
 
    if (td.getSuperclassType() != null || cnstinits != null) {
       for (MethodDeclaration md : td.getMethods()) {
-	 if (!md.isConstructor()) continue;
-	 int idx = 0;
-	 Block blk = md.getBody();
-	 List<Object> stmts = blk.statements();
-	 if (stmts.size() > 0) {
-	    Statement st0 = (Statement) stmts.get(0);
-	    if (st0 instanceof ConstructorInvocation) continue; 	// done in that constructor
-	    if (st0 instanceof SuperConstructorInvocation) idx = 1;
-	  }
-	 if (idx == 0 && td.getSuperclassType() != null) {
-	    SuperConstructorInvocation sci = ast.newSuperConstructorInvocation();
-	    stmts.add(0,sci);
-	    idx = 1;
-	  }
-	 if (cnstinits != null) {
-	    for (VariableDeclarationFragment vdf : cnstinits) {
-	       Assignment asgn = ast.newAssignment();
-	       FieldAccess fa = ast.newFieldAccess();
-	       fa.setExpression(ast.newThisExpression());
-	       fa.setName(ast.newSimpleName(vdf.getName().getIdentifier()));
-	       asgn.setLeftHandSide(fa);
-	       asgn.setRightHandSide((Expression) ASTNode.copySubtree(ast,vdf.getInitializer()));
-	       ExpressionStatement es = ast.newExpressionStatement(asgn);
-	       stmts.add(idx++,es);
-	     }
-	  }
+         if (!md.isConstructor()) continue;
+         int idx = 0;
+         Block blk = md.getBody();
+         List<Object> stmts = blk.statements();
+         if (stmts.size() > 0) {
+            Statement st0 = (Statement) stmts.get(0);
+            if (st0 instanceof ConstructorInvocation) continue;         // done in that constructor
+            if (st0 instanceof SuperConstructorInvocation) idx = 1;
+          }
+         if (idx == 0 && td.getSuperclassType() != null) {
+            SuperConstructorInvocation sci = ast.newSuperConstructorInvocation();
+            stmts.add(0,sci);
+            idx = 1;
+          }
+         if (cnstinits != null) {
+            for (VariableDeclarationFragment vdf : cnstinits) {
+               Assignment asgn = ast.newAssignment();
+               FieldAccess fa = ast.newFieldAccess();
+               fa.setExpression(ast.newThisExpression());
+               fa.setName(ast.newSimpleName(vdf.getName().getIdentifier()));
+               asgn.setLeftHandSide(fa);
+               asgn.setRightHandSide((Expression) ASTNode.copySubtree(ast,vdf.getInitializer()));
+               ExpressionStatement es = ast.newExpressionStatement(asgn);
+               stmts.add(idx++,es);
+             }
+          }
        }
     }
 
@@ -390,7 +390,7 @@ ASTNode getResolvedAst(SesameProject sp)
       an = ast_roots.get(sp);
       if (an != null && JcompAst.isResolved(an)) return an;
     }
-						
+                                                
    JcompProject proj = sp.getJcompProject();
    proj.resolve();
    JcompSemantics semdata = SesameMain.getJcompBase().getSemanticData(this);
@@ -435,7 +435,7 @@ int getLineOfPosition(Position p)
 
    try {
       int lno = edit_document.getLineOfOffset(p.getOffset());
-      lno += 1; 		// convert 0 offset to 1 offset
+      lno += 1;                 // convert 0 offset to 1 offset
       AcornLog.logD("SESAME","POS " + p.getOffset() + " " + lno);
       return lno;
     }
@@ -446,9 +446,9 @@ int getLineOfPosition(Position p)
 
 
 /********************************************************************************/
-/*										*/
-/*	JcompSource methods							*/
-/*										*/
+/*                                                                              */
+/*      JcompSource methods                                                     */
+/*                                                                              */
 /********************************************************************************/
 
 @Override public String getFileContents()
@@ -470,7 +470,7 @@ public File getFile()
 }
 
 
-boolean isLocal()			{ return is_local; }
+boolean isLocal()                       { return is_local; }
 
 
 synchronized void addUse()
@@ -489,9 +489,9 @@ synchronized boolean removeUse()
 
 
 /********************************************************************************/
-/*										*/
-/*	Debugging methods							*/
-/*										*/
+/*                                                                              */
+/*      Debugging methods                                                       */
+/*                                                                              */
 /********************************************************************************/
 
 @Override public String toString()
@@ -506,7 +506,7 @@ synchronized boolean removeUse()
 
 
 
-}	// end of class SesameFile
+}       // end of class SesameFile
 
 
 

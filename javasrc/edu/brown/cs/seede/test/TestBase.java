@@ -419,25 +419,25 @@ private void setupBedrock(String workspace,String project)
    
    try {
       for (int i = 0; i < 250; ++i) {
-	 try {
-	    Thread.sleep(1000);
+         try {
+            Thread.sleep(1000);
           }
          catch (InterruptedException e) { }
-	 if (pingEclipse()) {
-	    CommandArgs args = new CommandArgs("LEVEL","DEBUG");
-	    sendBubblesMessage("LOGLEVEL",null,args,null);
-	    sendBubblesMessage("ENTER");
-	    MintDefaultReply rply = new MintDefaultReply();
-	    sendBubblesMessage("OPENPROJECT",project,null,null,rply);
-	    Element pxml = rply.waitForXml();
-	    if (!IvyXml.isElement(pxml,"PROJECT")) {
+         if (pingEclipse()) {
+            CommandArgs args = new CommandArgs("LEVEL","DEBUG");
+            sendBubblesMessage("LOGLEVEL",null,args,null);
+            sendBubblesMessage("ENTER");
+            MintDefaultReply rply = new MintDefaultReply();
+            sendBubblesMessage("OPENPROJECT",project,null,null,rply);
+            Element pxml = rply.waitForXml();
+            if (!IvyXml.isElement(pxml,"PROJECT")) {
                pxml = IvyXml.getChild(pxml,"PROJECT");
              }
             String dirs = IvyXml.getAttrString(pxml,"PATH");
             if (dirs != null) project_directory = new File(dirs);
-	    return;
-	  }
-	 if (i == 0) {
+            return;
+          }
+         if (i == 0) {
             SesameMain.pongEclipse();
             new IvyExec(cmd);
           }
@@ -532,7 +532,7 @@ private class SeedeThread extends Thread {
             "-T", "-D", "-L", log });
     }
    
-}	// end of inner class SeedeThread
+}       // end of inner class SeedeThread
 
 
 
@@ -583,7 +583,7 @@ private LaunchData doStartLaunch(String name)
    
    stopped_thread = null;
    CommandArgs args = new CommandArgs("NAME",name,"MODE","debug","BUILD","TRUE",
-	 "REGISTER","TRUE","VMARG",dargs);
+         "REGISTER","TRUE","VMARG",dargs);
    MintDefaultReply rply = new MintDefaultReply();
    sendBubblesMessage("START",project_name,args,null,rply);
    Element xml = rply.waitForXml();
@@ -610,8 +610,8 @@ private void doContinueLaunch(LaunchData ld)
    if (ld == null) return;
    
    CommandArgs args = new CommandArgs("LAUNCH",ld.getLaunchId(),
-	 "TARGET",ld.getTargetId(),
-	 "PROCESS",ld.getProcessId(),"ACTION","RESUME");
+         "TARGET",ld.getTargetId(),
+         "PROCESS",ld.getProcessId(),"ACTION","RESUME");
    MintDefaultReply rply = new MintDefaultReply();
    sendBubblesMessage("DEBUGACTION",project_name,args,null,rply);
    String x = rply.waitForString();
@@ -629,10 +629,10 @@ private String waitForStop()
    synchronized (this) {
       for (int i = 0; i < 100; ++i) {
          if (stopped_thread != null) break;
-	 try {
-	    wait(3000);
-	  }
-	 catch (InterruptedException e) { }
+         try {
+            wait(3000);
+          }
+         catch (InterruptedException e) { }
        }
       return stopped_thread;
     }
@@ -645,14 +645,14 @@ private void handleRunEvent(Element xml,long when)
    if (type == null) return;
    switch (type) {
       case "PROCESS" :
-	 break;
+         break;
       case "THREAD" :
-	 handleThreadEvent(xml,when);
-	 break;
+         handleThreadEvent(xml,when);
+         break;
       case "TARGET" :
-	 break;
+         break;
       default :
-	 break;
+         break;
     }
 }
 
@@ -665,11 +665,11 @@ private void handleThreadEvent(Element xml,long when)
    if (thread == null) return;
    switch (kind) {
       case "SUSPEND" :
-	 synchronized (this) {
-	    stopped_thread = IvyXml.getAttrString(thread,"ID");
-	    notifyAll();
-	  }
-	 break;
+         synchronized (this) {
+            stopped_thread = IvyXml.getAttrString(thread,"ID");
+            notifyAll();
+          }
+         break;
     }
 }
 
@@ -688,14 +688,14 @@ protected static class LaunchData {
       thread_id = thread;
     }
    
-   String getLaunchId() 			{ return lanuch_id; }
-   String getTargetId() 			{ return target_id; }
-   String getProcessId()			{ return process_id; }
-   String getThreadId() 			{ return thread_id; }
+   String getLaunchId()                         { return lanuch_id; }
+   String getTargetId()                         { return target_id; }
+   String getProcessId()                        { return process_id; }
+   String getThreadId()                         { return thread_id; }
    
-   void setThreadId(String id)			{ thread_id = id; }
+   void setThreadId(String id)                  { thread_id = id; }
    
-}	// end of inner class LaunchData
+}       // end of inner class LaunchData
 
 
 
@@ -730,7 +730,7 @@ protected void sendBubblesMessage(String cmd,String proj,CommandArgs flds,String
    if (proj != null && proj.length() > 0) xw.field("PROJECT",proj);
    if (flds != null) {
       for (Map.Entry<String,Object> ent : flds.entrySet()) {
-	 xw.field(ent.getKey(),ent.getValue());
+         xw.field(ent.getKey(),ent.getValue());
        }
     }
    xw.field("LANG","eclipse");
@@ -765,7 +765,7 @@ protected void sendSeedeMessage(String cmd,String sess,CommandArgs flds,String c
    xw.field("SID",sess);
    if (flds != null) {
       for (Map.Entry<String,Object> ent : flds.entrySet()) {
-	 xw.field(ent.getKey(),ent.getValue());
+         xw.field(ent.getKey(),ent.getValue());
        }
     }
    if (cnts != null) xw.xmlText(cnts);
@@ -850,15 +850,15 @@ private final class BedrockHandler implements MintHandler {
        }
     }
    
-}	// end of innerclass IDEHandler
+}       // end of innerclass IDEHandler
 
 
 
 
 /********************************************************************************/
-/*										*/
-/*	Handle results from SEEDE						*/
-/*										*/
+/*                                                                              */
+/*      Handle results from SEEDE                                               */
+/*                                                                              */
 /********************************************************************************/
 
 protected Element waitForSeedeResult()
@@ -866,10 +866,10 @@ protected Element waitForSeedeResult()
    synchronized (this) {
       for (int i = 0; i < 5000; ++i) {
          if (seede_result != null) break;
-	 try {
-	    wait(1000);
-	  }
-	 catch (InterruptedException e) { }
+         try {
+            wait(1000);
+          }
+         catch (InterruptedException e) { }
        }
       Element rslt = seede_result;
       seede_result = null;
@@ -896,7 +896,7 @@ private final class SeedeHandler implements MintHandler {
       msg.replyTo();
     }
 
-}	// end of inner class SeedeHandler
+}       // end of inner class SeedeHandler
 
 
 

@@ -1,21 +1,21 @@
 /********************************************************************************/
-/*										*/
-/*		SesameSession.java						*/
-/*										*/
-/*	Abstarct representation of a evaluation session 			*/
-/*										*/
+/*                                                                              */
+/*              SesameSession.java                                              */
+/*                                                                              */
+/*      Abstarct representation of a evaluation session                         */
+/*                                                                              */
 /********************************************************************************/
-/*	Copyright 2011 Brown University -- Steven P. Reiss		      */
+/*      Copyright 2011 Brown University -- Steven P. Reiss                    */
 /*********************************************************************************
- *  Copyright 2011, Brown University, Providence, RI.				 *
- *										 *
- *			  All Rights Reserved					 *
- *										 *
- * This program and the accompanying materials are made available under the	 *
+ *  Copyright 2011, Brown University, Providence, RI.                            *
+ *                                                                               *
+ *                        All Rights Reserved                                    *
+ *                                                                               *
+ * This program and the accompanying materials are made available under the      *
  * terms of the Eclipse Public License v1.0 which accompanies this distribution, *
- * and is available at								 *
- *	http://www.eclipse.org/legal/epl-v10.html				 *
- *										 *
+ * and is available at                                                           *
+ *      http://www.eclipse.org/legal/epl-v10.html                                *
+ *                                                                               *
  ********************************************************************************/
 
 /* SVN: $Id$ */
@@ -57,9 +57,9 @@ public abstract class SesameSession implements SesameConstants, CashewValueSessi
 
 
 /********************************************************************************/
-/*										*/
-/*	Factory methods 							*/
-/*										*/
+/*                                                                              */
+/*      Factory methods                                                         */
+/*                                                                              */
 /********************************************************************************/
 
 static SesameSession createSession(SesameMain sm,String sid,Element xml) throws SesameException
@@ -84,32 +84,32 @@ static SesameSession createSession(SesameMain sm,String sid,Element xml) throws 
 
 
 /********************************************************************************/
-/*										*/
-/*	Private Storage 							*/
-/*										*/
+/*                                                                              */
+/*      Private Storage                                                         */
+/*                                                                              */
 /********************************************************************************/
 
-protected SesameMain	sesame_control;
-private String		session_id;
-private SesameProject	for_project;
+protected SesameMain    sesame_control;
+private String          session_id;
+private SesameProject   for_project;
 private Map<String,SesameLocation> location_map;
 private Map<CuminRunner,SesameLocation> runner_location;
 private Set<SesameExecRunner> exec_runners;
-private CashewInputOutputModel	cashew_iomodel;
+private CashewInputOutputModel  cashew_iomodel;
 private CashewSynchronizationModel cashew_syncmodel;
-private Set<String>	expand_names;
-private SesameSession	parent_session;
-private boolean 	compute_tostring;
-private boolean 	compute_toarray;
-private boolean 	show_all;
+private Set<String>     expand_names;
+private SesameSession   parent_session;
+private boolean         compute_tostring;
+private boolean         compute_toarray;
+private boolean         show_all;
 private Set<CashewValue> poppy_graphics;
 
 
 
 /********************************************************************************/
-/*										*/
-/*	Constructors								*/
-/*										*/
+/*                                                                              */
+/*      Constructors                                                            */
+/*                                                                              */
 /********************************************************************************/
 
 protected SesameSession(SesameMain sm,String sid,Element xml)
@@ -173,9 +173,9 @@ private void initialize(String sid,Element xml)
 
 
 /********************************************************************************/
-/*										*/
-/*	Cleanup methods 							*/
-/*										*/
+/*                                                                              */
+/*      Cleanup methods                                                         */
+/*                                                                              */
 /********************************************************************************/
 
 void removeSession()
@@ -195,25 +195,25 @@ void removeSession()
 
 
 /********************************************************************************/
-/*										*/
-/*	Setup methods								*/
-/*										*/
+/*                                                                              */
+/*      Setup methods                                                           */
+/*                                                                              */
 /********************************************************************************/
 
-void setupSession()				{ }
-protected void waitForReady()			{ }
-SesameSubsession getSubsession()		{ return null; }
+void setupSession()                             { }
+protected void waitForReady()                   { }
+SesameSubsession getSubsession()                { return null; }
 
 
 
 
 /********************************************************************************/
-/*										*/
-/*	Access methods								*/
-/*										*/
+/*                                                                              */
+/*      Access methods                                                          */
+/*                                                                              */
 /********************************************************************************/
 
-public String getSessionId()			{ return session_id; }
+public String getSessionId()                    { return session_id; }
 
 @Override public CashewValueSession getParent() { return parent_session; }
 
@@ -226,7 +226,7 @@ public MethodDeclaration getCallMethod(SesameLocation loc)
 {
    if (!loc.isActive() || loc.getStartPosition() == null) {
       AcornLog.logE("Bad call method " + loc.getMethodName() + " " +
-	    loc.isActive() + " " + loc.getStartPosition());
+            loc.isActive() + " " + loc.getStartPosition());
       return null;
     }
 
@@ -252,14 +252,14 @@ public List<SesameLocation> getActiveLocations()
    return rslt;
 }
 
-public List<CashewValue> getCallArgs(SesameLocation loc)	{ return null; }
+public List<CashewValue> getCallArgs(SesameLocation loc)        { return null; }
 
 public SesameLocation getLocation(CuminRunner cr)
 {
    return runner_location.get(cr);
 }
 
-SesameMain getControl() 			{ return sesame_control; }
+SesameMain getControl()                         { return sesame_control; }
 
 protected final void addLocation(SesameLocation sl)
 {
@@ -277,11 +277,11 @@ void noteFileChanged(SesameFile sf)
 
 
 
-void noteContinue(String launch,String thread)			{ }
+void noteContinue(String launch,String thread)                  { }
 
 
 
-void setInitialValue(String what,Element value) throws SesameException	   { }
+void setInitialValue(String what,Element value) throws SesameException     { }
 
 
 void setInitialValue(String what,String thread,String expr) throws SesameException
@@ -368,9 +368,9 @@ String getFrameId(String thrd)
 
 
 /********************************************************************************/
-/*										*/
-/*	Request methods 							*/
-/*										*/
+/*                                                                              */
+/*      Request methods                                                         */
+/*                                                                              */
 /********************************************************************************/
 
 void requestInitialValue(String what)
@@ -407,14 +407,14 @@ synchronized void addExpandName(String name)
    expand_names.add(name);
 }
 
-Set<String> getExpandNames()		{ return expand_names; }
+Set<String> getExpandNames()            { return expand_names; }
 
 
 
 /********************************************************************************/
-/*										*/
-/*	Methods to help in variable history					*/
-/*										*/
+/*                                                                              */
+/*      Methods to help in variable history                                     */
+/*                                                                              */
 /********************************************************************************/
 
 CashewContext findContext(int idn)
@@ -449,9 +449,9 @@ private CashewContext findContext(int id,CashewContext ctx)
 
 
 /********************************************************************************/
-/*										*/
-/*	Runner management methods						*/
-/*										*/
+/*                                                                              */
+/*      Runner management methods                                               */
+/*                                                                              */
 /********************************************************************************/
 
 CuminRunner createRunner(SesameLocation loc,SesameContext gblctx)
@@ -461,7 +461,7 @@ CuminRunner createRunner(SesameLocation loc,SesameContext gblctx)
    if (args == null || mthd == null) return null;
 
    SesameThreadContext tctx = new SesameThreadContext(loc.getThread(),
-	 loc.getThreadName(),this,gblctx);
+         loc.getThreadName(),this,gblctx);
    CuminRunner cr = CuminRunner.createRunner(this,getProject(),tctx,mthd,args,true);
    runner_location.put(cr,loc);
 
@@ -515,9 +515,9 @@ synchronized void startRunners()
 
 
 /********************************************************************************/
-/*										*/
-/*	Handle project changes							*/
-/*										*/
+/*                                                                              */
+/*      Handle project changes                                                  */
+/*                                                                              */
 /********************************************************************************/
 
 void resetRunners()
@@ -552,14 +552,14 @@ void addSwingComponent(String name)
 
 
 
-void resetCache()				{ }
+void resetCache()                               { }
 
 
 
 /********************************************************************************/
-/*										*/
-/*	Methods to get global values from underlying execution			*/
-/*										*/
+/*                                                                              */
+/*      Methods to get global values from underlying execution                  */
+/*                                                                              */
 /********************************************************************************/
 
 CashewValue lookupValue(String name,String type)
@@ -585,14 +585,14 @@ void evaluateVoid(String expr,boolean allframes) throws CashewException
 }
 
 
-void enableAccess(String type)		{ }
+void enableAccess(String type)          { }
 
 
 
 /********************************************************************************/
-/*										*/
-/*	Model management methods						*/
-/*										*/
+/*                                                                              */
+/*      Model management methods                                                */
+/*                                                                              */
 /********************************************************************************/
 
 CashewInputOutputModel getIOModel()
@@ -608,7 +608,7 @@ CashewSynchronizationModel getSynchronizationModel()
 
 
 
-}	// end of class SesameSession
+}       // end of class SesameSession
 
 
 

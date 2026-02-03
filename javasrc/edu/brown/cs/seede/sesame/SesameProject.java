@@ -1,21 +1,21 @@
 /********************************************************************************/
-/*										*/
-/*		SesameProject.java						*/
-/*										*/
-/*	Hold information about an Bubbles project for compilation		*/
-/*										*/
+/*                                                                              */
+/*              SesameProject.java                                              */
+/*                                                                              */
+/*      Hold information about an Bubbles project for compilation               */
+/*                                                                              */
 /********************************************************************************/
-/*	Copyright 2011 Brown University -- Steven P. Reiss		      */
+/*      Copyright 2011 Brown University -- Steven P. Reiss                    */
 /*********************************************************************************
- *  Copyright 2011, Brown University, Providence, RI.				 *
- *										 *
- *			  All Rights Reserved					 *
- *										 *
- * This program and the accompanying materials are made available under the	 *
+ *  Copyright 2011, Brown University, Providence, RI.                            *
+ *                                                                               *
+ *                        All Rights Reserved                                    *
+ *                                                                               *
+ * This program and the accompanying materials are made available under the      *
  * terms of the Eclipse Public License v1.0 which accompanies this distribution, *
- * and is available at								 *
- *	http://www.eclipse.org/legal/epl-v10.html				 *
- *										 *
+ * and is available at                                                           *
+ *      http://www.eclipse.org/legal/epl-v10.html                                *
+ *                                                                               *
  ********************************************************************************/
 
 /* SVN: $Id$ */
@@ -57,19 +57,19 @@ public class SesameProject implements SesameConstants, CuminProject
 
 
 /********************************************************************************/
-/*										*/
-/*	Private Storage 							*/
-/*										*/
+/*                                                                              */
+/*      Private Storage                                                         */
+/*                                                                              */
 /********************************************************************************/
 
-protected SesameMain	sesame_control;
-private String		project_name;
-private List<String>	class_paths;
+protected SesameMain    sesame_control;
+private String          project_name;
+private List<String>    class_paths;
 private Set<SesameFile> active_files;
 private Set<SesameFile> changed_files;
-private JcompProject	base_project;
-private JcodeFactory	binary_control;
-private ReadWriteLock	project_lock;
+private JcompProject    base_project;
+private JcodeFactory    binary_control;
+private ReadWriteLock   project_lock;
 private Map<File,SesameFile> local_files;
 
 static final SesameProject NO_PROJECT = new SesameProject();
@@ -77,9 +77,9 @@ static final SesameProject NO_PROJECT = new SesameProject();
 
 
 /********************************************************************************/
-/*										*/
-/*	Constructors								*/
-/*										*/
+/*                                                                              */
+/*      Constructors                                                            */
+/*                                                                              */
 /********************************************************************************/
 
 SesameProject(SesameMain sm,String name)
@@ -107,19 +107,19 @@ SesameProject(SesameMain sm,String name)
       String bn = null;
       String ptyp = IvyXml.getAttrString(rpe,"TYPE");
       if (ptyp != null && ptyp.equals("SOURCE")) {
-	 bn = IvyXml.getTextElement(rpe,"OUTPUT");
+         bn = IvyXml.getTextElement(rpe,"OUTPUT");
        }
       else {
-	 bn = IvyXml.getTextElement(rpe,"BINARY");
+         bn = IvyXml.getTextElement(rpe,"BINARY");
        }
       if (bn == null) continue;
       if (bn.endsWith("/lib/rt.jar")) {
-	 int idx = bn.lastIndexOf("rt.jar");
-	 ignore = bn.substring(0,idx);
+         int idx = bn.lastIndexOf("rt.jar");
+         ignore = bn.substring(0,idx);
        }
       if (bn.endsWith("/lib/jrt-fs.jar")) {
-	 int idx = bn.lastIndexOf("/lib/jrt-fs.jar");
-	 ignore = bn.substring(0,idx);
+         int idx = bn.lastIndexOf("/lib/jrt-fs.jar");
+         ignore = bn.substring(0,idx);
        }
       if (bn.contains("poppy.jar")) havepoppy = true;
       if (IvyXml.getAttrBool(rpe,"SYSTEM")) continue;
@@ -128,8 +128,8 @@ SesameProject(SesameMain sm,String name)
    
    if (ignore != null) {
       for (Iterator<String> it = class_paths.iterator(); it.hasNext(); ) {
-	 String nm = it.next();
-	 if (nm.startsWith(ignore)) it.remove();
+         String nm = it.next();
+         if (nm.startsWith(ignore)) it.remove();
        }
     }
    if (!havepoppy) {
@@ -179,14 +179,14 @@ private SesameProject()
 
 
 /********************************************************************************/
-/*										*/
-/*	Access methods								*/
-/*										*/
+/*                                                                              */
+/*      Access methods                                                          */
+/*                                                                              */
 /********************************************************************************/
 
-boolean isLocal()			{ return false; }
+boolean isLocal()                       { return false; }
 
-String getName()			{ return project_name; }
+String getName()                        { return project_name; }
 
 void addFile(SesameFile sf)
 {
@@ -203,13 +203,13 @@ boolean removeFile(SesameFile sf)
       AcornLog.logD("SESAME","File removed " + sf + " " + hashCode());
       noteFileChanged(sf,true);
       if (local_files != null && local_files.get(sf.getFile()) == null) {
-	 sesame_control.getFileManager().removeFileUse(sf);
+         sesame_control.getFileManager().removeFileUse(sf);
        }
       return true;
     }
    else {
       AcornLog.logD("SESAME","Failed to remove file " +
-	    sf + " " + hashCode());
+            sf + " " + hashCode());
       return false;
     }
 }
@@ -221,8 +221,8 @@ protected SesameFile findFile(File f)
 
    if (local_files != null) {
       synchronized (local_files) {
-	 SesameFile sf = local_files.get(f);
-	 if (sf != null) return sf;
+         SesameFile sf = local_files.get(f);
+         if (sf != null) return sf;
        }
     }
 
@@ -265,14 +265,14 @@ protected SesameFile localizeFile(File f)
    synchronized (local_files) {
       newfile = new SesameFile(sf,true);
       if (!removeFile(sf)) {
-	 for (Iterator<SesameFile> it = active_files.iterator(); it.hasNext(); ) {
-	    SesameFile sf1 = it.next();
-	    AcornLog.logD("SESAME","Check active file " + sf1 + " " + sf);
-	    if (sf1.getFile().equals(f)) {
-	       AcornLog.logD("SESAME","Remove active file " + sf1);
-	       it.remove();
-	     }
-	  }
+         for (Iterator<SesameFile> it = active_files.iterator(); it.hasNext(); ) {
+            SesameFile sf1 = it.next();
+            AcornLog.logD("SESAME","Check active file " + sf1 + " " + sf);
+            if (sf1.getFile().equals(f)) {
+               AcornLog.logD("SESAME","Remove active file " + sf1);
+               it.remove();
+             }
+          }
        }
       local_files.put(f,newfile);
       active_files.add(newfile);
@@ -300,9 +300,9 @@ Collection<SesameFile> getActiveFiles()
 
 
 /********************************************************************************/
-/*										*/
-/*	Locking methods 							*/
-/*										*/
+/*                                                                              */
+/*      Locking methods                                                         */
+/*                                                                              */
 /********************************************************************************/
 
 void executionLock()
@@ -321,9 +321,9 @@ void executionUnlock()
 
 
 /********************************************************************************/
-/*										*/
-/*	Compilation related methods						*/
-/*										*/
+/*                                                                              */
+/*      Compilation related methods                                             */
+/*                                                                              */
 /********************************************************************************/
 
 boolean noteFileChanged(SesameFile sf,boolean force)
@@ -333,10 +333,10 @@ boolean noteFileChanged(SesameFile sf,boolean force)
    project_lock.readLock().lock();
    try {
       if (force || active_files.contains(sf)) {
-	 synchronized (changed_files) {
-	    if (sf != null) changed_files.add(sf);
-	  }
-	 return true;
+         synchronized (changed_files) {
+            if (sf != null) changed_files.add(sf);
+          }
+         return true;
        }
     }
    finally {
@@ -358,15 +358,15 @@ void compileProject()
    if (!newfiles.isEmpty()) {
       project_lock.writeLock().lock();
       try {
-	 for (SesameFile sf : newfiles) {
-	    sf.resetSemantics(this);
-	  }
-	 clearProject();
-	 getJcompProject();
-	 getTyper();			// this resolves the project
+         for (SesameFile sf : newfiles) {
+            sf.resetSemantics(this);
+          }
+         clearProject();
+         getJcompProject();
+         getTyper();                    // this resolves the project
        }
       finally {
-	 project_lock.writeLock().unlock();
+         project_lock.writeLock().unlock();
        }
     }
 }
@@ -379,7 +379,7 @@ synchronized void clearProject()
       jc.freeProject(base_project);
       base_project = null;
       for (SesameFile sf : active_files) {
-	 sf.resetProject(this);
+         sf.resetProject(this);
        }
     }
 }
@@ -415,13 +415,13 @@ synchronized void removeProject()
    Collection<JcompSource> srcs = new ArrayList<>(active_files);
   //  base_project = jc.getProject(class_paths,srcs,false);
    AcornLog.logD("SESAME","Create Jcomp project for " + hashCode() + " " +
-	 srcs);
+         srcs);
 
    base_project = jc.getProject(getJcodeFactory(),srcs);
    base_project.setProjectKey(this);
 
    AcornLog.logD("SESAME","Jcomp project for " + hashCode() + " = " +
-	 base_project.hashCode());
+         base_project.hashCode());
 
    return base_project;
 }
@@ -435,7 +435,7 @@ synchronized void removeProject()
 
    int ct = Runtime.getRuntime().availableProcessors();
    ct = Math.max(1,ct/2);
-   // ct = 1;			// for debugging only
+   // ct = 1;                   // for debugging only
    JcodeFactory jf = new JcodeFactory(ct);
    for (String s : class_paths) {
       AcornLog.logD("SESAME","Add to class path " + s);
@@ -450,9 +450,9 @@ synchronized void removeProject()
 
 
 /********************************************************************************/
-/*										*/
-/*	Context methods 							*/
-/*										*/
+/*                                                                              */
+/*      Context methods                                                         */
+/*                                                                              */
 /********************************************************************************/
 
 @Override public JcompTyper getTyper()
@@ -470,7 +470,7 @@ synchronized void removeProject()
    return null;
 }
 
-}	// end of class SesameProject
+}       // end of class SesameProject
 
 
 

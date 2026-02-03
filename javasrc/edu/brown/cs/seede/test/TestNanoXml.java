@@ -39,10 +39,10 @@ public class TestNanoXml extends TestBase
 /********************************************************************************/
 
 
-private static final String		TESTNANOXML_SID = "SEED_22736";
+private static final String             TESTNANOXML_SID = "SEED_22736";
 
-private static final String		TEST_PROJECT = "nanoxml";
-private static final String		LAUNCH_NAME = "testParsing16";
+private static final String             TEST_PROJECT = "nanoxml";
+private static final String             LAUNCH_NAME = "testParsing16";
 
 
 
@@ -63,9 +63,9 @@ public TestNanoXml()
 
 
 /********************************************************************************/
-/*										*/
-/*	Test method								*/
-/*										*/
+/*                                                                              */
+/*      Test method                                                             */
+/*                                                                              */
 /********************************************************************************/
 
 @Test

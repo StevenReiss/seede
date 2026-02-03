@@ -1,21 +1,21 @@
 /********************************************************************************/
-/*										*/
-/*		TestSolar.java							*/
-/*										*/
-/*	Test seede using SOLAR package						*/
-/*										*/
+/*                                                                              */
+/*              TestSolar.java                                                  */
+/*                                                                              */
+/*      Test seede using SOLAR package                                          */
+/*                                                                              */
 /********************************************************************************/
-/*	Copyright 2011 Brown University -- Steven P. Reiss		      */
+/*      Copyright 2011 Brown University -- Steven P. Reiss                    */
 /*********************************************************************************
- *  Copyright 2011, Brown University, Providence, RI.				 *
- *										 *
- *			  All Rights Reserved					 *
- *										 *
- * This program and the accompanying materials are made available under the	 *
+ *  Copyright 2011, Brown University, Providence, RI.                            *
+ *                                                                               *
+ *                        All Rights Reserved                                    *
+ *                                                                               *
+ * This program and the accompanying materials are made available under the      *
  * terms of the Eclipse Public License v1.0 which accompanies this distribution, *
- * and is available at								 *
- *	http://www.eclipse.org/legal/epl-v10.html				 *
- *										 *
+ * and is available at                                                           *
+ *      http://www.eclipse.org/legal/epl-v10.html                                *
+ *                                                                               *
  ********************************************************************************/
 
 /* SVN: $Id$ */
@@ -35,23 +35,23 @@ public class TestSolar extends TestBase
 
 
 /********************************************************************************/
-/*										*/
-/*	Private Storage 							*/
-/*										*/
+/*                                                                              */
+/*      Private Storage                                                         */
+/*                                                                              */
 /********************************************************************************/
 
-private static final String		TESTSOLAR_SID = "SEED_22548";
-private static final String		TESTSOLAR_SID1 = "SEED_22548_1";
+private static final String             TESTSOLAR_SID = "SEED_22548";
+private static final String             TESTSOLAR_SID1 = "SEED_22548_1";
 
-private static final String		TEST_PROJECT = "solar";
-private static final String		LAUNCHSOLAR_NAME = "solar";
+private static final String             TEST_PROJECT = "solar";
+private static final String             LAUNCHSOLAR_NAME = "solar";
 
 
 
 /********************************************************************************/
-/*										*/
-/*	Constructors								*/
-/*										*/
+/*                                                                              */
+/*      Constructors                                                            */
+/*                                                                              */
 /********************************************************************************/
 
 
@@ -63,9 +63,9 @@ public TestSolar()
 
 
 /********************************************************************************/
-/*										*/
-/*	Test method								*/
-/*										*/
+/*                                                                              */
+/*      Test method                                                             */
+/*                                                                              */
 /********************************************************************************/
 
 @Test public void testSolar()
@@ -88,7 +88,7 @@ public TestSolar()
 
 
 
-}	// end of class TestSolar
+}       // end of class TestSolar
 
 
 

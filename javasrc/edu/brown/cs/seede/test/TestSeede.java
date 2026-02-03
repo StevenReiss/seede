@@ -1,21 +1,21 @@
 /********************************************************************************/
-/*										*/
-/*		TestSeede.java							*/
-/*										*/
-/*	General test program for seede execution engine 			*/
-/*										*/
+/*                                                                              */
+/*              TestSeede.java                                                  */
+/*                                                                              */
+/*      General test program for seede execution engine                         */
+/*                                                                              */
 /********************************************************************************/
-/*	Copyright 2011 Brown University -- Steven P. Reiss		      */
+/*      Copyright 2011 Brown University -- Steven P. Reiss                    */
 /*********************************************************************************
- *  Copyright 2011, Brown University, Providence, RI.				 *
- *										 *
- *			  All Rights Reserved					 *
- *										 *
- * This program and the accompanying materials are made available under the	 *
+ *  Copyright 2011, Brown University, Providence, RI.                            *
+ *                                                                               *
+ *                        All Rights Reserved                                    *
+ *                                                                               *
+ * This program and the accompanying materials are made available under the      *
  * terms of the Eclipse Public License v1.0 which accompanies this distribution, *
- * and is available at								 *
- *	http://www.eclipse.org/legal/epl-v10.html				 *
- *										 *
+ * and is available at                                                           *
+ *      http://www.eclipse.org/legal/epl-v10.html                                *
+ *                                                                               *
  ********************************************************************************/
 
 /* SVN: $Id$ */
@@ -37,36 +37,36 @@ public class TestSeede extends TestBase
 
 
 /********************************************************************************/
-/*										*/
-/*	Private Storage 							*/
-/*										*/
+/*                                                                              */
+/*      Private Storage                                                         */
+/*                                                                              */
 /********************************************************************************/
 
-private static final String		TEST1_SID = "SEED_12346";
-private static final String		TEST2_SID = "SEED_12347";
-private static final String		TEST3_SID = "SEED_12348";
-private static final String		TEST4_SID = "SEED_12349";
-private static final String		TEST5_SID = "SEED_12950";
-private static final String		TEST6_SID = "SEED_12951";
-private static final String		TEST7_SID = "SEED_12952";
-private static final String		TEST8_SID = "SEED_12953";
+private static final String             TEST1_SID = "SEED_12346";
+private static final String             TEST2_SID = "SEED_12347";
+private static final String             TEST3_SID = "SEED_12348";
+private static final String             TEST4_SID = "SEED_12349";
+private static final String             TEST5_SID = "SEED_12950";
+private static final String             TEST6_SID = "SEED_12951";
+private static final String             TEST7_SID = "SEED_12952";
+private static final String             TEST8_SID = "SEED_12953";
 
-private static final String		TEST_PROJECT = "sample1";
-private static final String		LAUNCH1_NAME = "test1";
-private static final String		LAUNCH3_NAME = "test2";
-private static final String		LAUNCH4_NAME = "test3";
-private static final String		LAUNCH5_NAME = "testLambda";
-private static final String		LAUNCH6_NAME = "testList";
-private static final String		LAUNCH7_NAME = "testNative";
-private static final String		LAUNCH8_NAME = "testReflection";
-private static final String		REL_PATH1 = "src/edu/brown/cs/seede/sample/Tester.java";
+private static final String             TEST_PROJECT = "sample1";
+private static final String             LAUNCH1_NAME = "test1";
+private static final String             LAUNCH3_NAME = "test2";
+private static final String             LAUNCH4_NAME = "test3";
+private static final String             LAUNCH5_NAME = "testLambda";
+private static final String             LAUNCH6_NAME = "testList";
+private static final String             LAUNCH7_NAME = "testNative";
+private static final String             LAUNCH8_NAME = "testReflection";
+private static final String             REL_PATH1 = "src/edu/brown/cs/seede/sample/Tester.java";
 
 
 
 /********************************************************************************/
-/*										*/
-/*	Constructors								*/
-/*										*/
+/*                                                                              */
+/*      Constructors                                                            */
+/*                                                                              */
 /********************************************************************************/
 
 public TestSeede()
@@ -78,9 +78,9 @@ public TestSeede()
 
 
 /********************************************************************************/
-/*										*/
-/*	Basic Tests								*/
-/*										*/
+/*                                                                              */
+/*      Basic Tests                                                             */
+/*                                                                              */
 /********************************************************************************/
 
 @Test public void test1()
@@ -197,7 +197,7 @@ public TestSeede()
 
 
 
-}	// end of class TestSeede
+}       // end of class TestSeede
 
 
 

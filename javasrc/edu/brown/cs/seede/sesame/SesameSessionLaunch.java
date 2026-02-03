@@ -1,21 +1,21 @@
 /********************************************************************************/
-/*										*/
-/*		SesameSessionLaunch.java					*/
-/*										*/
-/*	Session based on a debugger launch					*/
-/*										*/
+/*                                                                              */
+/*              SesameSessionLaunch.java                                        */
+/*                                                                              */
+/*      Session based on a debugger launch                                      */
+/*                                                                              */
 /********************************************************************************/
-/*	Copyright 2011 Brown University -- Steven P. Reiss		      */
+/*      Copyright 2011 Brown University -- Steven P. Reiss                    */
 /*********************************************************************************
- *  Copyright 2011, Brown University, Providence, RI.				 *
- *										 *
- *			  All Rights Reserved					 *
- *										 *
- * This program and the accompanying materials are made available under the	 *
+ *  Copyright 2011, Brown University, Providence, RI.                            *
+ *                                                                               *
+ *                        All Rights Reserved                                    *
+ *                                                                               *
+ * This program and the accompanying materials are made available under the      *
  * terms of the Eclipse Public License v1.0 which accompanies this distribution, *
- * and is available at								 *
- *	http://www.eclipse.org/legal/epl-v10.html				 *
- *										 *
+ * and is available at                                                           *
+ *      http://www.eclipse.org/legal/epl-v10.html                                *
+ *                                                                               *
  ********************************************************************************/
 
 /* SVN: $Id$ */
@@ -55,32 +55,32 @@ class SesameSessionLaunch extends SesameSession implements CashewValueSession
 
 
 /********************************************************************************/
-/*										*/
-/*	Private Storage 							*/
-/*										*/
+/*                                                                              */
+/*      Private Storage                                                         */
+/*                                                                              */
 /********************************************************************************/
 
-private String		launch_id;
-private Set<String>	thread_ids;
-private Set<String>	frame_ids;
-private String		method_name;
-private SesameFile	source_file;
-private int		line_number;
+private String          launch_id;
+private Set<String>     thread_ids;
+private Set<String>     frame_ids;
+private String          method_name;
+private SesameFile      source_file;
+private int             line_number;
 private Map<String,Map<String,SesameValueData>> thread_values;
 private Map<String,SesameValueData> unique_values;
 private Map<String,String> thread_frame;
-private Set<String>	accessible_types;
+private Set<String>     accessible_types;
 private SesameSessionCache value_cache;
-private boolean 	session_ready;
+private boolean         session_ready;
 
 private static AtomicInteger eval_counter = new AtomicInteger();
 
 
 
 /********************************************************************************/
-/*										*/
-/*	Constructors								*/
-/*										*/
+/*                                                                              */
+/*      Constructors                                                            */
+/*                                                                              */
 /********************************************************************************/
 
 SesameSessionLaunch(SesameMain sm,String sid,Element xml)
@@ -99,7 +99,7 @@ SesameSessionLaunch(SesameMain sm,String sid,Element xml)
    if (s1 != null) {
       frame_ids = new HashSet<>();
       for (StringTokenizer tok = new StringTokenizer(s1," ,;\t\n"); tok.hasMoreTokens(); ) {
-	 frame_ids.add(tok.nextToken());
+         frame_ids.add(tok.nextToken());
        }
     }
 
@@ -122,7 +122,7 @@ protected SesameSessionLaunch(SesameSessionLaunch ssl)
    unique_values = ssl.unique_values;
    accessible_types = ssl.accessible_types;
 
-   value_cache = ssl.value_cache;	     // reuse value cache as execution doesn't change
+   value_cache = ssl.value_cache;            // reuse value cache as execution doesn't change
 // value_cache = new SesameSessionCache();
 
    session_ready = true;
@@ -146,7 +146,7 @@ protected SesameSessionLaunch(SesameSessionLaunch ssl)
 {
    while (!session_ready) {
       try {
-	 wait(10000);
+         wait(10000);
        }
       catch (InterruptedException e) { }
     }
@@ -172,12 +172,12 @@ protected SesameSessionLaunch(SesameSessionLaunch ssl)
 
 
 /********************************************************************************/
-/*										*/
-/*	Access methods								*/
-/*										*/
+/*                                                                              */
+/*      Access methods                                                          */
+/*                                                                              */
 /********************************************************************************/
  
-@Override String getFrameId(String thread)	
+@Override String getFrameId(String thread)      
 {
    if (thread == null) return null;
    return thread_frame.get(thread);
@@ -213,8 +213,8 @@ String getAnyThread()
       getProject().getTyper();
       msym = JcompAst.getDefinition(md.getName());
       if (msym == null) {
-	 AcornLog.logE("SESAME","Can't find method symbol for args " + md + " " + loc);
-	 return null;
+         AcornLog.logE("SESAME","Can't find method symbol for args " + md + " " + loc);
+         return null;
        }
     }
 
@@ -224,8 +224,8 @@ String getAnyThread()
       svd = getUniqueValue(svd);
       CashewValue cv = svd.getCashewValue(this);
       AcornLog.logD("SESAME","ARG VALUE0 " + cv.toString(this) + " " +
-	    cv.toString(getParent()) + " " +
-	    cv.getClass() + " " + svd);
+            cv.toString(getParent()) + " " +
+            cv.getClass() + " " + svd);
       args.add(cv);
     }
    for (Object o : md.parameters()) {
@@ -235,38 +235,38 @@ String getAnyThread()
       if (val == null) val = valmap.get(psym.getName());
       val = getUniqueValue(val);
       if (val != null) {
-	 CashewValue argval = val.getCashewValue(this);
-	 // this code doesn't work -- 'this' cant be accessed in static context and
-	 //	Type has not been loaded occured (PoppyGraphics?) when this == null
-	 // need to check if 'this' is  compatible with COMPONENT
-	 JcompTyper typer = getProject().getTyper();
-	 JcompType jtyp = argval.getDataType(this,null,typer);
-	 JcompType g2dtype = typer.findSystemType("java.awt.Graphics2D");
-	 if (jtyp.isCompatibleWith(g2dtype) && !argval.isNull(this,null)) {
-	    getProject().getJcodeFactory().findClass("edu.brown.cs.seede.poppy.PoppyGraphics");
-	    if (!jtyp.getName().contains("PoppyGraphics")) {
-	       String gname = "MAIN_" + loc.getThreadName();
-	       getProject().getJcodeFactory().findClass("edu.brown.cs.seede.poppy.PoppyGraphics");
-	       String expr = "edu.brown.cs.seede.poppy.PoppyGraphics.computeGraphics1(";
-	       if (msym.isStatic()) expr += "null,";
-	       else expr += "this,";
-	       expr += psym.getName() +  ",\"" + gname + "\")";
-	       SesameValueData nval = evaluateData(expr,loc.getThread(),true);
-	       if (nval != null) {
-		  nval = getUniqueValue(nval);
-		  argval = nval.getCashewValue(this);
-		}
-	     }
-	  }
-	 if (argval != null) {
-	    AcornLog.logD("SESAME","ARG VALUE " + argval.toString(this) + " " +
-			     argval.toString(getParent()) + " " +
-			     argval.getClass() + " " + val);
-	    args.add(argval);
-	  }
-	 else {
-	    AcornLog.logE("SESAME","NULL ARGUMENT VALUE " + val);
-	  }
+         CashewValue argval = val.getCashewValue(this);
+         // this code doesn't work -- 'this' cant be accessed in static context and
+         //     Type has not been loaded occured (PoppyGraphics?) when this == null
+         // need to check if 'this' is  compatible with COMPONENT
+         JcompTyper typer = getProject().getTyper();
+         JcompType jtyp = argval.getDataType(this,null,typer);
+         JcompType g2dtype = typer.findSystemType("java.awt.Graphics2D");
+         if (jtyp.isCompatibleWith(g2dtype) && !argval.isNull(this,null)) {
+            getProject().getJcodeFactory().findClass("edu.brown.cs.seede.poppy.PoppyGraphics");
+            if (!jtyp.getName().contains("PoppyGraphics")) {
+               String gname = "MAIN_" + loc.getThreadName();
+               getProject().getJcodeFactory().findClass("edu.brown.cs.seede.poppy.PoppyGraphics");
+               String expr = "edu.brown.cs.seede.poppy.PoppyGraphics.computeGraphics1(";
+               if (msym.isStatic()) expr += "null,";
+               else expr += "this,";
+               expr += psym.getName() +  ",\"" + gname + "\")";
+               SesameValueData nval = evaluateData(expr,loc.getThread(),true);
+               if (nval != null) {
+                  nval = getUniqueValue(nval);
+                  argval = nval.getCashewValue(this);
+                }
+             }
+          }
+         if (argval != null) {
+            AcornLog.logD("SESAME","ARG VALUE " + argval.toString(this) + " " +
+                             argval.toString(getParent()) + " " +
+                             argval.getClass() + " " + val);
+            args.add(argval);
+          }
+         else {
+            AcornLog.logE("SESAME","NULL ARGUMENT VALUE " + val);
+          }
 
        }
     }
@@ -293,7 +293,7 @@ String getAnyThread()
 
 
 @Override void setInitialValue(String what,String thread,String expr)
-	throws SesameException
+        throws SesameException
 {
    CashewValue cv = evaluate(expr,thread,true);
    if (cv == null) throw new SesameException("Evaluation failed");
@@ -303,9 +303,9 @@ String getAnyThread()
 
 
 /********************************************************************************/
-/*										*/
-/*	Evaluation methods							*/
-/*										*/
+/*                                                                              */
+/*      Evaluation methods                                                      */
+/*                                                                              */
 /********************************************************************************/
 
 @Override void noteContinue(String launch,String thread)
@@ -358,14 +358,14 @@ String getAnyThread()
 
    String frame = thread_frame.get(thread);
    CommandArgs args = new CommandArgs("THREAD",thread,
-	 "FRAME",frame,"BREAK",false,"EXPR",expr,"IMPLICIT",true,
-	 "LEVEL",3,"ARRAY",-1,"REPLYID",eid,"ALLFRAMES",allframes);
+         "FRAME",frame,"BREAK",false,"EXPR",expr,"IMPLICIT",true,
+         "LEVEL",3,"ARRAY",-1,"REPLYID",eid,"ALLFRAMES",allframes);
    args.put("SAVEID",eid);
    Element root = null;
    synchronized (launch_id) {
       Element xml = getControl().getXmlReply("EVALUATE",getProject(),args,null,0);
       if (IvyXml.isElement(xml,"RESULT")) {
-	 root = getControl().waitForEvaluation(eid);
+         root = getControl().waitForEvaluation(eid);
        }
     }
    if (root != null) {
@@ -373,7 +373,7 @@ String getAnyThread()
       Element v1 = IvyXml.getChild(v,"VALUE");
       String assoc = expr;
       if (args.get("SAVEID") != null) {
-	 assoc = "*" + args.get("SAVEID").toString();
+         assoc = "*" + args.get("SAVEID").toString();
        }
       SesameValueData svd = new SesameValueData(this,thread,v1,assoc);
       svd = getUniqueValue(svd);
@@ -393,19 +393,19 @@ String getAnyThread()
 @Override void evaluateVoid(String expr,boolean allframes) throws CashewException
 {
    SesameValueData svd0 = value_cache.lookup("*",expr);
-   if (svd0 != null) return;				// already done
+   if (svd0 != null) return;                            // already done
 
    String eid = "E_" + eval_counter.incrementAndGet();
    String thread = getAnyThread();
    String frame = thread_frame.get(thread);
    CommandArgs args = new CommandArgs("THREAD",getAnyThread(),
-	 "FRAME",frame,"BREAK",false,"EXPR",expr,"IMPLICIT",true,
-	 "LEVEL",4,"REPLYID",eid,"ALLFRAMES",allframes);
+         "FRAME",frame,"BREAK",false,"EXPR",expr,"IMPLICIT",true,
+         "LEVEL",4,"REPLYID",eid,"ALLFRAMES",allframes);
    Element rslt = null;
    synchronized (launch_id) {
       Element xml = getControl().getXmlReply("EVALUATE",getProject(),args,null,0);
       if (IvyXml.isElement(xml,"RESULT")) {
-	 rslt = getControl().waitForEvaluation(eid);
+         rslt = getControl().waitForEvaluation(eid);
        }
     }
    if (rslt != null) {
@@ -417,10 +417,10 @@ String getAnyThread()
       Element v = IvyXml.getChild(rslt,"EVAL");
       String sts = IvyXml.getAttrString(v,"STATUS");
       if (sts.equals("EXCEPTION")) {
-	 String exc = IvyXml.getTextElement(v,"EXCEPTION");
-	 if (exc != null && exc.contains("thread not suspended")) {
-	    throw new CashewException("Process continued");
-	  }
+         String exc = IvyXml.getTextElement(v,"EXCEPTION");
+         if (exc != null && exc.contains("thread not suspended")) {
+            throw new CashewException("Process continued");
+          }
        }
       svd0 = new SesameValueData(null);
       value_cache.cacheValue("*",expr,svd0);
@@ -461,12 +461,12 @@ String getAnyThread()
       Map<String,SesameValueData> maps = emaps.getValue();
       if (thread != null && !thread.equals(tid)) continue;
       for (Map.Entry<String,SesameValueData> ent : maps.entrySet()) {
-	 String key = ent.getKey();
-	 SesameValueData svd = ent.getValue();
-	 String find = svd.findValue(cv,1);
-	 if (find != null) {
-	    return key + find;
-	  }
+         String key = ent.getKey();
+         SesameValueData svd = ent.getValue();
+         String find = svd.findValue(cv,1);
+         if (find != null) {
+            return key + find;
+          }
        }
     }
 
@@ -484,9 +484,9 @@ String getAnyThread()
 
 
 /********************************************************************************/
-/*										*/
-/*	Launch access methods							*/
-/*										*/
+/*                                                                              */
+/*      Launch access methods                                                   */
+/*                                                                              */
 /********************************************************************************/
 
 private void loadInitialValues()
@@ -497,10 +497,10 @@ private void loadInitialValues()
    if (lid.isEmpty()) lid = null;
 
    CommandArgs cargs = new CommandArgs("LAUNCH",lid,"THREAD",null,"COUNT",ct,
-					  "ARRAY",-1);
+                                          "ARRAY",-1);
 
    Element stack = sesame_control.getXmlReply("GETSTACKFRAMES",getProject(),cargs,
-	 null,0);
+         null,0);
    stack = IvyXml.getChild(stack,"STACKFRAMES");
 
    for (Element telt : IvyXml.children(stack,"THREAD")) {
@@ -519,14 +519,14 @@ private void loadInitialValues()
       line_number = IvyXml.getAttrInt(frm,"LINENO");
       Map<String,SesameValueData> valmap = thread_values.get(teid);
       if (valmap == null) {
-	 valmap = new HashMap<String,SesameValueData>();
-	 thread_values.put(teid,valmap);
+         valmap = new HashMap<String,SesameValueData>();
+         thread_values.put(teid,valmap);
        }
       for (Element var : IvyXml.children(frm,"VALUE")) {
-	 String nm = IvyXml.getAttrString(var,"NAME");
-	 SesameValueData svd = new SesameValueData(this,teid,var,null);
-	 svd = getUniqueValue(svd);
-	 valmap.put(nm,svd);
+         String nm = IvyXml.getAttrString(var,"NAME");
+         SesameValueData svd = new SesameValueData(this,teid,var,null);
+         svd = getUniqueValue(svd);
+         valmap.put(nm,svd);
        }
       SesameLocation loc = new SesameLocation(source_file,method_name,line_number,teid,thnm);
       AcornLog.logD("SESAME","Create location " + loc);
@@ -561,21 +561,21 @@ SesameValueData getUniqueValue(SesameValueData svd)
    switch (svd.getKind()) {
       case OBJECT :
       case ARRAY :
-	 String dnm = svd.getValue();
-	 if (dnm != null && dnm.length() > 0) {
-	    SesameValueData nsvd = unique_values.get(dnm);
-	    if (nsvd != null) svd = nsvd;
-	    else unique_values.put(dnm,svd);
-	  }
-	 break;
+         String dnm = svd.getValue();
+         if (dnm != null && dnm.length() > 0) {
+            SesameValueData nsvd = unique_values.get(dnm);
+            if (nsvd != null) svd = nsvd;
+            else unique_values.put(dnm,svd);
+          }
+         break;
       default :
-	 break;
+         break;
     }
    return svd;
 }
 
 
-}	// end of class SesameSessionLaunch
+}       // end of class SesameSessionLaunch
 
 
 
