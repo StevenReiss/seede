@@ -251,6 +251,7 @@ private CuminRunStatus handleException(CuminRunStatus cr)
 private void setupContext(List<CashewValue> args)
 {
    CashewContext ctx = new CashewContext(jcode_method,global_context);
+// CashewContext ctx = new CashewContext(jcode_method,lookup_context); ???
    JcompTyper typer = getTyper();
 
    int nlcl = jcode_method.getLocalSize();

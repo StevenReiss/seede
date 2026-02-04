@@ -82,6 +82,29 @@ public CashewContext(JcompSymbol js,File f,CashewContext par)
 }
 
 
+
+public CashewContext(JcodeMethod jm,CashewContext par)
+{
+   this(getNameWithSignature(jm),null,par);
+}
+
+
+public CashewContext(String js,File f,CashewContext par)
+{
+   context_owner = js;
+   context_file = f;
+   context_map = new HashMap<>();
+   parent_context = par;
+   nested_contexts = new ArrayList<CashewContext>();
+   start_time = 0;
+   end_time = 0;
+   context_id = id_counter.incrementAndGet();
+   is_output = f != null;
+}
+
+
+
+
 private static String getNameWithSignature(JcompSymbol js)
 {
    StringBuffer buf = new StringBuffer();
@@ -101,13 +124,6 @@ private static String getNameWithSignature(JcompSymbol js)
 }
 
 
-public CashewContext(JcodeMethod jm,CashewContext par)
-{
-   this(getNameWithSignature(jm),null,par);
-}
-
-
-
 private static String getNameWithSignature(JcodeMethod jm)
 {
    StringBuffer buf = new StringBuffer();
@@ -122,22 +138,6 @@ private static String getNameWithSignature(JcodeMethod jm)
    
    return buf.toString();
 }
-
-
-
-public CashewContext(String js,File f,CashewContext par)
-{
-   context_owner = js;
-   context_file = f;
-   context_map = new HashMap<>();
-   parent_context = par;
-   nested_contexts = new ArrayList<CashewContext>();
-   start_time = 0;
-   end_time = 0;
-   context_id = id_counter.incrementAndGet();
-   is_output = f != null;
-}
-
 
 
 public void reset()
@@ -592,6 +592,7 @@ public void checkToArray(CashewValueSession sess,CashewOutputContext outctx)
 
 public void outputXml(CashewOutputContext outctx)
 {
+   CashewContext par = outctx.getContext(); 
    outctx.setContext(this);
    if (isOutput() || outctx.getShowAll()) {
       IvyXmlWriter xw = outctx.getXmlWriter();
@@ -605,7 +606,7 @@ public void outputXml(CashewOutputContext outctx)
        }
       xw.field("START",start_time);
       xw.field("END",end_time);
-      if (parent_context != null) xw.field("PARENT",parent_context.context_id);
+      if (par != null) xw.field("PARENT",par.context_id);
       
       outputVariables(outctx);
       
@@ -619,7 +620,7 @@ public void outputXml(CashewOutputContext outctx)
          ctx.outputXml(outctx);
        } 
     }
-   outctx.setContext(null);
+   outctx.setContext(par);
 }
 
 

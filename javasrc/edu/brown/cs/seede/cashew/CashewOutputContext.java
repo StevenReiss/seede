@@ -109,6 +109,7 @@ void setContext(CashewContext ctx)
 {
    current_context = ctx;
 }
+CashewContext getContext()                      { return current_context; }
 
 public boolean getShowAll()                     { return show_all; }
 
