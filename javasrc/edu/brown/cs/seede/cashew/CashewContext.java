@@ -606,7 +606,11 @@ public void outputXml(CashewOutputContext outctx)
        }
       xw.field("START",start_time);
       xw.field("END",end_time);
-      if (par != null) xw.field("PARENT",par.context_id);
+      if (par != null) {
+         if (par.isOutput() || outctx.getShowAll()) {
+            xw.field("PARENT",par.context_id);
+          }
+       }
       
       outputVariables(outctx);
       
