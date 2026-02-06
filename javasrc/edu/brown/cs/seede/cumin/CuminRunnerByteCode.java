@@ -1573,6 +1573,10 @@ private CuminRunStatus checkSpecial() throws CuminRunException
             cde = new CuminDirectEvaluation(this);
             sts = cde.checkTimeZoneMethods();
             break;
+         case "jdk.internal.misc.VM" :
+            cde = new CuminDirectEvaluation(this); 
+            sts = cde.checkVMMethods();
+            break;
        }
     }
    catch (CuminRunException e) {

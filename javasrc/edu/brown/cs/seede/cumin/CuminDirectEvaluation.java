@@ -518,7 +518,8 @@ private CuminRunStatus checkStringMethodsLocal()
 	    rslt = CashewValue.stringValue(typer,typer.STRING_TYPE,thisstr.replaceAll(getString(1),getString(2)));
 	    break;
 	 case "replaceFirst" :
-	    rslt = CashewValue.stringValue(typer,typer.STRING_TYPE,thisstr.replaceFirst(getString(1),getString(2)));
+	    rslt = CashewValue.stringValue(typer,typer.STRING_TYPE,
+                  thisstr.replaceFirst(getString(1),getString(2)));
 	    break;
 	 case "startsWith" :
 	    if (getNumArgs() == 2) {
@@ -2558,6 +2559,31 @@ CuminRunStatus checkTimeZoneMethods() throws CuminRunException
 	 return null;
     }
 
+   return CuminRunStatus.Factory.createReturn(rslt);
+}
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Handle VM methods                                                        */
+/*                                                                              */
+/********************************************************************************/
+
+CuminRunStatus checkVMMethods() throws CuminRunException
+{
+   if (!getMethod().isStatic()) return null; 
+   
+   CashewValue rslt = null;
+   JcompTyper typer = getTyper();
+   
+   switch (getMethod().getName()) {
+      case "getNanoTimeAdjustment" :
+         rslt = CashewValue.numericValue(typer,typer.LONG_TYPE,0);
+	 break;
+      default :
+	 return null;
+    }
+   
    return CuminRunStatus.Factory.createReturn(rslt);
 }
 

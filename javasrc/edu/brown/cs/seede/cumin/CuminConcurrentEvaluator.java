@@ -217,7 +217,8 @@ CuminRunStatus checkConcurrentHashMapMethods() throws CuminRunException, CashewE
 	    int idxv = getInt(1);
 	    CashewValue a2 = getValue(2);
 	    CashewValue a3 = getValue(3);
-	    CashewValue v1 = a1.getIndexValue(sess,getClock(),idxv).getActualValue(sess,getClock());
+	    CashewValue v1 = a1.getIndexValue(sess,getClock(),idxv).getActualValue(sess,
+                  getClock());
 	    if (v1 == a2) {
 	       a1.setIndexValue(sess,getClock(),idxv,a3);
 	       rslt = CashewValue.booleanValue(getTyper(),true);
@@ -226,6 +227,12 @@ CuminRunStatus checkConcurrentHashMapMethods() throws CuminRunException, CashewE
 	       rslt = CashewValue.booleanValue(getTyper(),false);
 	     }
 	    break;
+         case "setTabAt" :
+            a1 = getArrayValue(0);
+	    idxv = getInt(1);
+	    a3 = getValue(3);
+            a1.setIndexValue(sess,getClock(),idxv,a3);
+            break;
 	 default :
 	    return null;
        }

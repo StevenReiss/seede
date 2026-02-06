@@ -68,6 +68,9 @@ private static final String BROWN_WS = "Eclipse/";
 private static final String HOME_ECLIPSE =
    "/vol/Developer/java-2023-12/Eclipse.app/Contents/MacOS/eclipse";
 private static final String HOME_WS = "Eclipse/";
+private static final String LHOME_ECLIPSE =
+   "/pro/eclipse/java-2023-12/eclipse/eclipse";
+private static final String LHOME_WS = "Eclipse/";
 private static final String BROWN_SEEDE_LIB = "/research/people/spr/seede/lib";
 private static final String HOME_SEEDE_LIB = "/pro/seede/lib";
 
@@ -404,6 +407,10 @@ private void setupBedrock(String workspace,String project)
       ec2 = getFile(HOME_WS + workspace);
     }
    if (!ec1.exists()) {
+      ec1 = getFile(LHOME_ECLIPSE);
+      ec2 = getFile(LHOME_WS + workspace);
+    }
+   if (!ec1.exists()) {
       System.err.println("Can't find bubbles version of eclipse to run");
       throw new Error("No eclipse");
     }
@@ -502,8 +509,8 @@ private void startSeede()
       if (i == 0) st.start();
       try {
          Thread.sleep(1000);
-      }
-catch (InterruptedException e) { }
+       }
+      catch (InterruptedException e) { }
     }
    throw new Error("Problem starting sesame server");
 }
