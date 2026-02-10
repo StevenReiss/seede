@@ -1534,7 +1534,12 @@ private CuminRunStatus checkSpecial() throws CuminRunException
 	    cce = new CuminConcurrentEvaluator(this);
 	    sts = cce.checkUnsafeMethods();
 	    break;
-	
+         case "jdk.internal.misc.Blocker" :
+            cce = new CuminConcurrentEvaluator(this);
+            sts = cce.checkBlockerMethods(); 
+            break;
+            
+            
 	 case "java.util.regex.Pattern" :
 	    cde = new CuminDirectEvaluation(this);
 	    sts = cde.checkPatternMethods();
@@ -1576,6 +1581,18 @@ private CuminRunStatus checkSpecial() throws CuminRunException
          case "jdk.internal.misc.VM" :
             cde = new CuminDirectEvaluation(this); 
             sts = cde.checkVMMethods();
+            break;
+         case "sun.security.provider.ByteArrayAccess" :
+            cde = new CuminDirectEvaluation(this);
+            sts = cde.checkByteArrayAccessMethods(); 
+            break;
+         case "jdk.internal.util.HexDigits" :
+            cde = new CuminDirectEvaluation(this);
+            sts = cde.checkHexDigitsMethods(); 
+            break;
+         case "java.util.UUID" :
+            cde = new CuminDirectEvaluation(this);
+            sts = cde.checkUUIDethods();
             break;
        }
     }

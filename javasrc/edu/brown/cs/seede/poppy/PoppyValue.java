@@ -28,6 +28,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -579,9 +580,6 @@ public static Constructor<?>[] getDeclaredConstructorsUsingPoppy(String cls,bool
 
 
 
-
-
-
 public static Object getNewInstance(String name)
 {
    try {
@@ -613,6 +611,19 @@ public static Object getLambdaClassUsingPoppy(String name)
       return null;
     }
 }
+
+
+public static UUID getUUIDUsingPoppy(String v)
+{
+   if (v == null || v.isEmpty()) {
+      return UUID.randomUUID();
+    }
+   else {
+      return UUID.fromString(v);
+    }
+}
+
+
 
 /********************************************************************************/
 /*										*/

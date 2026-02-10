@@ -343,13 +343,17 @@ synchronized CuminRunStatus checkVarHandleMethods() throws CuminRunException, Ca
          CashewValue thisarg = getValue(0);
          CashewValue tgtval = getValue(1);
          CashewValue setval = getValue(2);
-         CashewValue fldoffset = thisarg.getFieldValue(getSession(),getTyper(),getClock(),
-               "java.lang.invoke.VarHandleObjects.FieldInstanceReadOnly.fieldOffset",getContext());
+         // THIS CODE NO LONGER WORKS
+         CashewValue fldoffset = thisarg.getFieldValue(getSession(),
+               getTyper(),getClock(),
+               "java.lang.invoke.VarHandleObjects.FieldInstanceReadOnly.fieldOffset",
+               getContext());
          int fldoff = fldoffset.getNumber(getSession(),getClock()).intValue();
          JcompType typ = tgtval.getDataType(getSession(),getClock(),getTyper());
          String js = getFieldAtOffset(typ,fldoff);
          if (js != null) {
-            tgtval.setFieldValue(getSession(),getTyper(),getClock(),js,setval);
+            tgtval.setFieldValue(getSession(),getTyper(),
+                  getClock(),js,setval);
           }
          break;
       case "compareAndSet" :
@@ -467,6 +471,30 @@ private String getFieldAtOffset(JcompType typ,int off)
    return null;
 }
 
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      Blocker methods                                                         */
+/*                                                                              */
+/********************************************************************************/
+
+CuminRunStatus checkBlockerMethods() throws CuminRunException
+{
+   CashewValue rslt = null;
+   
+   switch (getMethod().getName()) {
+      case "begin" :
+         rslt = CashewValue.booleanValue(getTyper(),true);
+         break;
+      case "end" :
+         break;
+      default :
+         return null;
+    }
+   
+   return CuminRunStatus.Factory.createReturn(rslt);
+}
 
 
 }	// end of class CuminConcurrentEvaluator

@@ -154,6 +154,20 @@ protected int [] getIntArray(int idx) throws CashewException
 }
 
 
+protected long [] getLongArray(int idx) throws CashewException
+{
+   CashewValueSession sess = getSession();
+   CashewClock cc = getClock();
+   CashewValue cv = getContext().findReference(idx).getActualValue(sess,cc);
+   int dim = cv.getDimension(sess,cc);
+   long [] rslt = new long[dim];
+   for (int i = 0; i < dim; ++i) {
+      rslt[i] = cv.getIndexValue(sess,cc,i).getNumber(sess,cc).longValue();
+    }
+   return rslt;
+}
+
+
 protected float [] getFloatArray(int idx) throws CashewException
 {
    CashewValueSession sess = getSession();

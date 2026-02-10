@@ -92,6 +92,7 @@ static {
          "java.desktop/sun.java2d.pipe",
          "java.desktop/java.awt.geom",
          "java.base/sun.util.calendar",
+         "java.base/sun.security.provider",
     };
 }
 
@@ -340,6 +341,23 @@ protected void addSeedeFiles(String id,String... files)
    sendSeedeMessage("ADDFILE",id,null,cnts,rply);
    String sstatus = rply.waitForString();
    AcornLog.logI("TEST: SEEDE ADDFILE STATUS: " + sstatus);
+}
+
+
+protected void addAllFiles(String id)
+{
+   CommandArgs args = new CommandArgs("FILES",true);
+   MintDefaultReply rply = new MintDefaultReply();
+   sendBubblesMessage("OPENPROJECT",project_name,args,null,rply);
+   Element pxml = rply.waitForXml();
+   Element e1 = IvyXml.getChild(pxml,"PROJECT");
+   Element e2 = IvyXml.getChild(e1,"FILES");
+   for (Element e3 : IvyXml.children(e2,"FILE")) {
+      if (IvyXml.getAttrBool(e3,"SOURCE")) {
+         String p = IvyXml.getAttrString(e3,"PATH");
+         addSeedeFiles(id,p);
+       }
+    }
 }
 
 

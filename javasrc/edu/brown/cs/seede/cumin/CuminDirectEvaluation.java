@@ -27,6 +27,8 @@ package edu.brown.cs.seede.cumin;
 import java.io.UnsupportedEncodingException;
 
 import java.lang.reflect.Modifier;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -2587,6 +2589,228 @@ CuminRunStatus checkVMMethods() throws CuminRunException
    return CuminRunStatus.Factory.createReturn(rslt);
 }
 
+
+
+/********************************************************************************/
+/*                                                                              */
+/*       ByteArrayAccess methods                                                */
+/*                                                                              */
+/********************************************************************************/
+
+CuminRunStatus checkByteArrayAccessMethods() throws CuminRunException, CashewException
+{
+   if (!getMethod().isStatic()) return null;
+   
+   String name = getMethod().getName();
+   
+   switch (name) {
+      case "i2bLittle" :
+      case "i2bLittle4" :
+      case "b2iBig" :
+      case "b2iBig64" :
+      case "i2bBig" :
+      case "i2bBig4" :
+      case "b2lBig" :
+      case "b2lBig128" :
+      case "l2bBig" :
+      case "b2lLittle" :
+      case "l2bLittle" :
+         break;
+         
+      default :
+         return null;
+    }
+   
+   ByteOrder bo = ByteOrder.BIG_ENDIAN;
+   if (name.contains("Little")) {
+      bo = ByteOrder.LITTLE_ENDIAN;
+    }
+   
+   CashewValue rslt = null;
+   JcompTyper typer = getTyper();
+   CashewValueSession sess = getSession();
+   
+   if (name.startsWith("i2b")) { 
+      int [] input;
+      int inoffset = 0;
+      int outoffset = 0;
+      int len;
+      CashewValue out = null;
+      if (name.endsWith("4")) {
+         input = new int[1];
+         input[0] = getInt(0);
+         len = 1;
+         outoffset = getInt(2);
+         out = getArrayValue(1);
+       }
+      else {
+         input = getIntArray(0);
+         inoffset = getInt(1);
+         out = getArrayValue(2);
+         outoffset = getInt(3);
+         len = getInt(4)/4;
+       }
+      byte [] buf = new byte[4*len];
+      ByteBuffer bb = ByteBuffer.wrap(buf);
+      bb.order(bo); 
+      for (int i = 0; i < len; ++i) {
+         int intv = input[inoffset+i];
+         bb.putInt(intv);
+       }
+      for (int i = 0; i < buf.length; ++i) {
+         CashewValue bval = CashewValue.numericValue(typer.BYTE_TYPE,buf[i]);
+         out.setIndexValue(sess,getClock(),outoffset+i,bval);
+       }
+    }
+   else if (name.startsWith("l2b")) {
+      long [] input;
+      int inoffset = 0;
+      int outoffset = 0;
+      int len;
+      CashewValue out = null;
+      input = getLongArray(0); 
+      inoffset = getInt(1);
+      out = getArrayValue(2);
+      outoffset = getInt(3);
+      len = getInt(4)/8;
+      byte [] buf = new byte[8*len];
+      ByteBuffer bb = ByteBuffer.wrap(buf);
+      bb.order(bo); 
+      for (int i = 0; i < len; ++i) {
+         long intv = input[inoffset+i];
+         bb.putLong(intv);
+       }
+      for (int i = 0; i < buf.length; ++i) {
+         CashewValue bval = CashewValue.numericValue(typer.BYTE_TYPE,buf[i]);
+         out.setIndexValue(sess,getClock(),outoffset+i,bval);
+       }
+    }
+   else if (name.startsWith("b2i")) {
+      byte [] in = getByteArray(0);
+      int inoffset = getInt(1);
+      int outoffset = 0;
+      CashewValue out = getArrayValue(2);
+      int len = 64/4;
+      if (!name.endsWith("64")) {
+         outoffset = getInt(3);
+         len = getInt(4)/4;
+       }
+      ByteBuffer bb = ByteBuffer.wrap(in);
+      bb.order(bo);
+      bb.position(inoffset);
+      for (int i = 0; i < len; ++i) {
+         int intv = bb.getInt();
+         CashewValue ival = CashewValue.numericValue(typer.INT_TYPE,intv);
+         out.setIndexValue(sess,getClock(),outoffset+i,ival);
+       }
+    }
+   else if (name.startsWith("b2l")) {
+      byte [] in = getByteArray(0);
+      int inoffset = getInt(1);
+      int outoffset = 0;
+      CashewValue out = getArrayValue(2);
+      int len = 128/8;
+      if (!name.endsWith("128")) {
+         outoffset = getInt(3);
+         len = getInt(4)/8;
+       }
+      ByteBuffer bb = ByteBuffer.wrap(in);
+      bb.order(bo);
+      bb.position(inoffset);
+      for (int i = 0; i < len; ++i) {
+         long intv = bb.getLong();
+         CashewValue ival = CashewValue.numericValue(typer.LONG_TYPE,intv);
+         out.setIndexValue(sess,getClock(),outoffset+i,ival);
+       }
+    }
+   
+   return CuminRunStatus.Factory.createReturn(rslt); 
+}
+
+
+
+/********************************************************************************/
+/*                                                                              */
+/*      HexDigits methods                                                       */
+/*                                                                              */
+/********************************************************************************/
+
+CuminRunStatus checkHexDigitsMethods() throws CuminRunException, CashewException
+{
+   String name = getMethod().getName();
+   if (!getMethod().isStatic()) return null;
+   
+   CashewValue rslt = null;
+   JcompTyper typer = getTyper();
+   
+   switch (name) {
+      case "packDigits" :
+         if (getNumArgs() == 2) {
+            int v1 = getInt(0);
+            int v2 = getInt(1);
+            rslt = CashewValue.numericValue(typer,typer.INT_TYPE,hexit(v1) * 256 + hexit(v2));
+          }
+         else {
+            int v1 = getInt(0);
+            int v2 = getInt(1);
+            int v3 = getInt(2);
+            int v4 = getInt(3);
+            long vx = hexit(v1) * 256*256*256 + hexit(v2) * 256 *256 + hexit(v3) * 256 + hexit(v4);
+            rslt = CashewValue.numericValue(typer,typer.LONG_TYPE,vx);
+          }
+         break;
+      default :
+         return null;
+    }
+   
+   return CuminRunStatus.Factory.createReturn(rslt);
+}
+   
+
+private int hexit(int v)
+{
+   v = v & 0xff;
+   String s1 = Integer.toHexString(v);
+   if (s1.length() == 1) s1 = "0" + s1;
+   int v0 = s1.charAt(0) * 16 + s1.charAt(1);
+   return v0;
+}
+   
+   
+/********************************************************************************/
+/*                                                                              */
+/*      UUID methods                                                            */
+/*                                                                              */
+/********************************************************************************/
+
+CuminRunStatus checkUUIDethods() throws CuminRunException, CashewException
+{
+   CashewValue rslt = null;
+   
+   String arg = "";
+   
+   if (getMethod().isStatic()) {
+      switch (getMethod().getName()) {
+         case "randomUUID" :
+            arg = "";
+            break;
+         case "fromString" :
+            arg = getString(0);
+            break;
+         default :
+            return null;
+       }
+      exec_runner.ensureLoaded("edu.brown.cs.seede.poppy.PoppyValue");
+      String expr = "edu.brown.cs.seede.poppy.PoppyValue.getUUIDUsingPoppy(\"" + arg + "\")";
+      rslt = exec_runner.getLookupContext().evaluate(expr);
+    }
+   else {
+      return null;
+    }
+   
+   return CuminRunStatus.Factory.createReturn(rslt);
+}
+      
 
 }	// end of class CuminDirectEvaluation
 
