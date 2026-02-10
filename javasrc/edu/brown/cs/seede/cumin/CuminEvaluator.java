@@ -920,6 +920,7 @@ static void throwException(CashewValueSession sess,CashewContext ctx,
       JcompTyper typer,JcompType typ) 
         throws CuminRunException
 {
+   typ.defineAll(typer);
    CashewValue cv = CashewValue.objectValue(sess,ctx,typer,typ);
    throw new CuminRunException(Reason.EXCEPTION,typ.toString(),null,cv);
 }

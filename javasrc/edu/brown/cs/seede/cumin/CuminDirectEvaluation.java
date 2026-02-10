@@ -2731,85 +2731,85 @@ CuminRunStatus checkByteArrayAccessMethods() throws CuminRunException, CashewExc
 
 /********************************************************************************/
 /*                                                                              */
-/*      HexDigits methods                                                       */
+/*      HexDigits methods  -- not needed                                        */
 /*                                                                              */
 /********************************************************************************/
 
-CuminRunStatus checkHexDigitsMethods() throws CuminRunException, CashewException
-{
-   String name = getMethod().getName();
-   if (!getMethod().isStatic()) return null;
-   
-   CashewValue rslt = null;
-   JcompTyper typer = getTyper();
-   
-   switch (name) {
-      case "packDigits" :
-         if (getNumArgs() == 2) {
-            int v1 = getInt(0);
-            int v2 = getInt(1);
-            rslt = CashewValue.numericValue(typer,typer.INT_TYPE,hexit(v1) * 256 + hexit(v2));
-          }
-         else {
-            int v1 = getInt(0);
-            int v2 = getInt(1);
-            int v3 = getInt(2);
-            int v4 = getInt(3);
-            long vx = hexit(v1) * 256*256*256 + hexit(v2) * 256 *256 + hexit(v3) * 256 + hexit(v4);
-            rslt = CashewValue.numericValue(typer,typer.LONG_TYPE,vx);
-          }
-         break;
-      default :
-         return null;
-    }
-   
-   return CuminRunStatus.Factory.createReturn(rslt);
-}
+// CuminRunStatus checkHexDigitsMethods() throws CuminRunException, CashewException
+// {
+// String name = getMethod().getName();
+// if (!getMethod().isStatic()) return null;
+// 
+// CashewValue rslt = null;
+// JcompTyper typer = getTyper();
+// 
+// switch (name) {
+//    case "packDigits" :
+//       if (getNumArgs() == 2) {
+//          int v1 = getInt(0);
+//          int v2 = getInt(1);
+//          rslt = CashewValue.numericValue(typer,typer.INT_TYPE,hexit(v1) * 256 + hexit(v2));
+//        }
+//       else {
+//          int v1 = getInt(0);
+//          int v2 = getInt(1);
+//          int v3 = getInt(2);
+//          int v4 = getInt(3);
+//          long vx = hexit(v1) * 256*256*256 + hexit(v2) * 256 *256 + hexit(v3) * 256 + hexit(v4);
+//          rslt = CashewValue.numericValue(typer,typer.LONG_TYPE,vx);
+//        }
+//       break;
+//    default :
+//       return null;
+//  }
+// 
+// return CuminRunStatus.Factory.createReturn(rslt);
+// }
    
 
-private int hexit(int v)
-{
-   v = v & 0xff;
-   String s1 = Integer.toHexString(v);
-   if (s1.length() == 1) s1 = "0" + s1;
-   int v0 = s1.charAt(0) * 16 + s1.charAt(1);
-   return v0;
-}
+// private int hexit(int v)
+// {
+// v = v & 0xff;
+// String s1 = Integer.toHexString(v);
+// if (s1.length() == 1) s1 = "0" + s1;
+// int v0 = s1.charAt(0) * 16 + s1.charAt(1);
+// return v0;
+// }
    
    
 /********************************************************************************/
 /*                                                                              */
-/*      UUID methods                                                            */
+/*      UUID methods  -- not needed                                             */
 /*                                                                              */
 /********************************************************************************/
 
-CuminRunStatus checkUUIDethods() throws CuminRunException, CashewException
-{
-   CashewValue rslt = null;
-   
-   String arg = "";
-   
-   if (getMethod().isStatic()) {
-      switch (getMethod().getName()) {
-         case "randomUUID" :
-            arg = "";
-            break;
-         case "fromString" :
-            arg = getString(0);
-            break;
-         default :
-            return null;
-       }
-      exec_runner.ensureLoaded("edu.brown.cs.seede.poppy.PoppyValue");
-      String expr = "edu.brown.cs.seede.poppy.PoppyValue.getUUIDUsingPoppy(\"" + arg + "\")";
-      rslt = exec_runner.getLookupContext().evaluate(expr);
-    }
-   else {
-      return null;
-    }
-   
-   return CuminRunStatus.Factory.createReturn(rslt);
-}
+// CuminRunStatus checkUUIDethods() throws CuminRunException, CashewException
+// {
+// CashewValue rslt = null;
+// 
+// String arg = "";
+// 
+// if (getMethod().isStatic()) {
+//    switch (getMethod().getName()) {
+//       case "randomUUID" :
+//          arg = "";
+//          break;
+//       case "fromString" :
+//          arg = getString(0);
+//          break;
+//       default :
+//          return null;
+//     }
+//    exec_runner.ensureLoaded("edu.brown.cs.seede.poppy.PoppyValue");
+//    String expr = "edu.brown.cs.seede.poppy.PoppyValue.getUUIDUsingPoppy(\"" + arg + "\")";
+//    rslt = exec_runner.getLookupContext().evaluate(expr);
+//  }
+// else {
+//    return null;
+//  }
+// 
+// return CuminRunStatus.Factory.createReturn(rslt);
+// }
       
 
 }	// end of class CuminDirectEvaluation

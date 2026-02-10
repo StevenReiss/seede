@@ -24,6 +24,7 @@
 
 package edu.brown.cs.seede.cumin;
 
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -217,8 +218,9 @@ CuminRunStatus checkConcurrentHashMapMethods() throws CuminRunException, CashewE
 	    int idxv = getInt(1);
 	    CashewValue a2 = getValue(2);
 	    CashewValue a3 = getValue(3);
-	    CashewValue v1 = a1.getIndexValue(sess,getClock(),idxv).getActualValue(sess,
-                  getClock());
+	    CashewValue v1 = a1.getIndexValue(sess,
+                  getClock(),idxv).getActualValue(sess,
+                        getClock());
 	    if (v1 == a2) {
 	       a1.setIndexValue(sess,getClock(),idxv,a3);
 	       rslt = CashewValue.booleanValue(getTyper(),true);
@@ -230,8 +232,8 @@ CuminRunStatus checkConcurrentHashMapMethods() throws CuminRunException, CashewE
          case "setTabAt" :
             a1 = getArrayValue(0);
 	    idxv = getInt(1);
-	    a3 = getValue(3);
-            a1.setIndexValue(sess,getClock(),idxv,a3);
+	    a2 = getValue(2);
+            a1.setIndexValue(sess,getClock(),idxv,a2);
             break;
 	 default :
 	    return null;
@@ -335,19 +337,53 @@ synchronized CuminRunStatus checkSunToolkitMethods() throws CuminRunException, C
 synchronized CuminRunStatus checkVarHandleMethods() throws CuminRunException, CashewException
 {
    CashewValue rslt = null;
+   JcompTyper typer = getTyper();
+   CashewValueSession sess = getSession();
    
    switch (getMethod().getName()) {
       case "set" :
       case "setRelease" :
       case "setVolatile" :
-         CashewValue thisarg = getValue(0);
          CashewValue tgtval = getValue(1);
+         JcompType tgttyp = tgtval.getDataType(sess,getClock(),typer);
+         if (tgttyp.isArrayType()) {
+            int index = getInt(2);
+            CashewValue srcval = getValue(3);
+            JcompType srctyp = srcval.getDataType(sess,getClock(),typer);
+            if (tgttyp.getBaseType().isByteType()) {
+               if (srctyp.isLongType()) {
+                  byte [] buf = new byte[8];
+                  ByteBuffer bbuf = ByteBuffer.wrap(buf);
+                  bbuf.putLong(getLong(3));
+                  for (int i = 0; i < 8; ++i) {
+                     CashewValue bval = CashewValue.numericValue(typer,
+                           typer.BYTE_TYPE,buf[i]);
+                     tgtval.setIndexValue(sess,getClock(),index+i,bval);
+                   }
+                }
+               else if (srctyp.isIntType()) {
+                  byte [] buf = new byte[4];
+                  ByteBuffer bbuf = ByteBuffer.wrap(buf);
+                  bbuf.putInt(getInt(3));
+                  for (int i = 0; i < 4; ++i) {
+                     CashewValue bval = CashewValue.numericValue(typer,
+                           typer.BYTE_TYPE,buf[i]);
+                     tgtval.setIndexValue(sess,getClock(),index+i,bval);
+                   }
+                }
+               else {
+                  AcornLog.logE("CUMIN","SETTING ARRAY " + tgttyp + " NOT IMPLEMENTED");
+                  return null;      
+                }
+               break;
+             }
+          }
+         CashewValue thisarg = getValue(0);
          CashewValue setval = getValue(2);
-         // THIS CODE NO LONGER WORKS
+         String fld = getOffsetField(thisarg);
          CashewValue fldoffset = thisarg.getFieldValue(getSession(),
                getTyper(),getClock(),
-               "java.lang.invoke.VarHandleObjects.FieldInstanceReadOnly.fieldOffset",
-               getContext());
+               fld,getContext());
          int fldoff = fldoffset.getNumber(getSession(),getClock()).intValue();
          JcompType typ = tgtval.getDataType(getSession(),getClock(),getTyper());
          String js = getFieldAtOffset(typ,fldoff);
@@ -364,8 +400,9 @@ synchronized CuminRunStatus checkVarHandleMethods() throws CuminRunException, Ca
          thisarg = getValue(0);
          tgtval = getValue(1);
          setval = getValue(3);
+         fld = getOffsetField(thisarg);
          fldoffset = thisarg.getFieldValue(getSession(),getTyper(),getClock(),
-               "java.lang.invoke.VarHandleObjects.FieldInstanceReadOnly.fieldOffset",getContext());
+               fld,getContext());
          fldoff = fldoffset.getNumber(getSession(),getClock()).intValue();
          typ = tgtval.getDataType(getSession(),getClock(),getTyper());
          js = getFieldAtOffset(typ,fldoff);
@@ -378,8 +415,9 @@ synchronized CuminRunStatus checkVarHandleMethods() throws CuminRunException, Ca
       case "getAcquire" :
          thisarg = getValue(0);
          tgtval = getValue(1);
+         fld = getOffsetField(thisarg);
          fldoffset = thisarg.getFieldValue(getSession(),getTyper(),getClock(),
-               "java.lang.invoke.VarHandleObjects.FieldInstanceReadOnly.fieldOffset",getContext());
+               fld,getContext());
          fldoff = fldoffset.getNumber(getSession(),getClock()).intValue();
          typ = tgtval.getDataType(getSession(),getClock(),getTyper());
          js = getFieldAtOffset(typ,fldoff);
@@ -400,6 +438,20 @@ synchronized CuminRunStatus checkVarHandleMethods() throws CuminRunException, Ca
     }
     
    return CuminRunStatus.Factory.createReturn(rslt);
+}
+
+
+private String getOffsetField(CashewValue thisarg)
+{
+   String fld = "java.lang.invoke.VarHandleObjects.FieldInstanceReadOnly.fieldOffset";
+   JcompType jt = thisarg.getDataType(getSession(),getClock(),getTyper());
+   for (String s : jt.getFields().keySet()) {
+      if (s.endsWith(".fieldOffset")) {
+         fld = s;
+         break;
+       }
+    }
+   return fld;
 }
 
 

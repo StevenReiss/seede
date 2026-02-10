@@ -83,7 +83,8 @@ static {
          "java.base/sun.util.locale.provider",
          "java.base/jdk.internal.math",
          "java.base/jdk.internal.misc",
-         "java.base/java.util","java.base/java.lang",
+         "java.base/java.util",
+         "java.base/java.lang",
          "java.base/java.util.concurrent",
          "java.base/sun.util.locale",
          "java.desktop/sun.java2d",
@@ -93,6 +94,8 @@ static {
          "java.desktop/java.awt.geom",
          "java.base/sun.util.calendar",
          "java.base/sun.security.provider",
+         "java.base/jdk.internal.util",
+         "java.base/java.time",
     };
 }
 
@@ -168,9 +171,11 @@ protected void setupSeedeSession(String id,LaunchData ld,int framecount)
    String frameid = null;
    
    if (framecount != 0) {
+      int xct = framecount+1;
+      if (framecount < 0) xct = -1;
       MintDefaultReply stkrply = new MintDefaultReply();
       CommandArgs sargs = new CommandArgs("ARRAY",-1,
-            "COUNT",framecount+1,
+            "COUNT",xct,
             "THREAD",ld.getThreadId(),
             "LAUNCH",ld.getLaunchId());
       sendBubblesMessage("GETSTACKFRAMES",project_name,sargs,null,stkrply);
@@ -184,6 +189,15 @@ protected void setupSeedeSession(String id,LaunchData ld,int framecount)
             if (ct++ == framecount) {
                frameid = IvyXml.getAttrString(f1,"ID");
                break;
+             }
+            else if (framecount < 0) {
+               String ft = IvyXml.getAttrString(f1,"FILETYPE");
+               if (ft != null && 
+                     ft.equals("JAVAFILE") && 
+                     !IvyXml.getAttrBool(f1,"SYNTHETIC") &&
+                     IvyXml.getAttrInt(f1,"LINENO") > 0) {
+                  frameid = IvyXml.getAttrString(f1,"ID");
+                }
              }
           }
        }

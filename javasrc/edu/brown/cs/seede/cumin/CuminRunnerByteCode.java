@@ -1152,6 +1152,25 @@ private void handleDynamicCall(JcodeInstruction ins)
 
       cv = new CashewValueFunctionRef(typer,rt1,args[4],bind);
     }
+   else if (args[2].startsWith("java/lang/invoke/LambdaMetafactory.altMetafactory")) {
+      int fgs = Integer.parseInt(args[6]);
+      AcornLog.logD("CUMIN","AltMetaFactory flags " + fgs);
+      JcompType t1 = buildMethodType1(args[5]);
+      Map<Object,CashewValue> bind = null;
+      int act = 0;
+      if (!args[1].startsWith("()")) {
+         if (bind == null) bind = new HashMap<>();
+         Type t0 = Type.getType(args[1]);
+         Type [] argtyps = t0.getArgumentTypes();
+         for (int i = 0; i < argtyps.length; ++i) {
+            CashewValue v0 = execution_stack.pop();
+            bind.put(act++,v0);
+          }
+       }
+      JcompType rt1 = JcompType.createFunctionRefType(t1,null,null);
+      
+      cv = new CashewValueFunctionRef(typer,rt1,args[4],bind);
+    }
    else if (args[2].startsWith("java/lang/invoke/StringConcatFactory.makeConcatWithConstants")) {
       StringBuffer buf = new StringBuffer();
       for (int i = 0; i < args[3].length(); ++i) {
@@ -1586,14 +1605,14 @@ private CuminRunStatus checkSpecial() throws CuminRunException
             cde = new CuminDirectEvaluation(this);
             sts = cde.checkByteArrayAccessMethods(); 
             break;
-         case "jdk.internal.util.HexDigits" :
-            cde = new CuminDirectEvaluation(this);
-            sts = cde.checkHexDigitsMethods(); 
-            break;
-         case "java.util.UUID" :
-            cde = new CuminDirectEvaluation(this);
-            sts = cde.checkUUIDethods();
-            break;
+//       case "jdk.internal.util.HexDigits" :
+//          cde = new CuminDirectEvaluation(this);
+//          sts = cde.checkHexDigitsMethods(); 
+//          break;
+//       case "java.util.UUID" :
+//          cde = new CuminDirectEvaluation(this);
+//          sts = cde.checkUUIDethods();
+//          break;
        }
     }
    catch (CuminRunException e) {
