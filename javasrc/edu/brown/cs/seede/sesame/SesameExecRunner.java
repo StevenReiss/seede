@@ -587,19 +587,19 @@ private class MasterThread extends Thread implements LoggerThread {
       run_status.clear();
       for_session.getIOModel().clear();
       CuminRunner.resetGraphics();
-
+   
       SesameProject proj = for_session.getProject();
-
+   
       if (!firsttime && reply_id != null) {
          CommandArgs args = new CommandArgs();
          if (reply_id != null) args.put("ID",reply_id);
          for_monitor.sendCommand("RESET",args,null,null);
        }
-
+   
       graphics_outputs.clear();
-
+   
       proj.compileProject();
-
+   
       for_session.resetCache();
     }
 
