@@ -202,7 +202,7 @@ void process(IvyXmlWriter xw)
     }
    else {
       xw.field("TYPE","STATEMENT");
-      xw.textElement("BODY",stmt.toString());
+      xw.textElement("BODY",stmt.toString().trim());
     }
    
    RefVisitor rv = new RefVisitor();
@@ -213,9 +213,13 @@ void process(IvyXmlWriter xw)
       xw.begin("VAR");
       xw.field("NAME",js.getFullName());
       xw.field("TYPE",js.getType().getName());
+      if (js.getType().isBinaryType()) xw.field("BINARY",true);
       xw.field("KIND",js.getSymbolKind());
       JcompType ctyp = js.getClassType();
-      if (ctyp != null) xw.field("CLASS",ctyp.getName());
+      if (ctyp != null) {
+         xw.field("CLASS",ctyp.getName());
+         if (ctyp.isBinaryType()) xw.field("BINCLASS",true);
+       }
       xw.end("VAR");
     }
    
