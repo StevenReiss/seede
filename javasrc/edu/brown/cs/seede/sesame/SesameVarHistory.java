@@ -186,17 +186,15 @@ void process(IvyXmlWriter xw)
     }
    else if (actual_context != relative_context) {
       xw.field("TYPE","CALL");
-      xw.field("INNERMETHOD",actual_context.getName());
       CashewContext ctx1 = actual_context;
-      
-      while (ctx1 != null && ctx1.getParentContext() != relative_context) {
-         ctx1 = ctx1.getParentContext();
-       }
       if (ctx1 == null) {
-         AcornLog.logE("SESAME","Contexts differ " + actual_context.getId() + " " +
-               relative_context.getId() + " " + base_time);
+         // outer method given, not inner
          ctx1 = relative_context;
        }
+      else {
+         xw.field("INNERMETHOD",actual_context.getName());
+       }
+      
       xw.field("CALLMETHOD",ctx1.getName());
       // stmt = the part of statement corresponding to the function call to ctx1
     }
