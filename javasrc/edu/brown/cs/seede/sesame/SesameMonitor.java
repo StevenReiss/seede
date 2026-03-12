@@ -410,6 +410,12 @@ private TextEdit buildTextEdit(Element xml)
          return new DeleteEdit(off,len);
       case "REPLACE" :
          txt = IvyXml.getText(xml);
+         if (len == 0) {
+            return new InsertEdit(off,txt);
+          }
+         else if (txt == null || txt.isEmpty()) {
+            return new DeleteEdit(off,len);
+          }
          return new ReplaceEdit(off,len,txt);
       case "COPYRANGE" :
          return new CopyingRangeMarker(off,len);
@@ -880,14 +886,14 @@ private final class EclipseHandler implements MintHandler {
    @Override public void receive(MintMessage msg,MintArguments args) {
       String cmd = args.getArgument(0);
       Element e = msg.getXml();
-
+   
       switch (cmd) {
          case "ELISION" :
             return;
        }
-
+   
       AcornLog.logD("Message from eclipse: " + cmd + " " + msg.getText());
-
+   
       switch (cmd) {
          case "PING" :
          case "PING1" :
@@ -928,7 +934,7 @@ private final class EclipseHandler implements MintHandler {
             for (Element re : IvyXml.children(e,"RUNEVENT")) {
                handleRunEvent(re,when);
              }
-
+   
             break;
          case "RESOURCE" :
             for (Element re : IvyXml.children(e,"DELTA")) {
