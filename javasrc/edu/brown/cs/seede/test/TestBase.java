@@ -33,6 +33,7 @@ import org.w3c.dom.Element;
 
 import edu.brown.cs.ivy.exec.IvyExec;
 import edu.brown.cs.ivy.file.IvyFile;
+import edu.brown.cs.ivy.file.IvyLog;
 import edu.brown.cs.ivy.mint.MintArguments;
 import edu.brown.cs.ivy.mint.MintConstants;
 import edu.brown.cs.ivy.mint.MintControl;

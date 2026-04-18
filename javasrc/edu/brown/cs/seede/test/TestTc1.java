@@ -70,7 +70,7 @@ public TestTc1()
 @Test public void testTc1()
 {
    AcornLog.logI("TEST: Start TEST TC1");
-   LaunchData ld = startLaunch(LAUNCHTC4_NAME,1);
+   LaunchData ld = startLaunch(LAUNCHTC3_NAME,0);
    setupSeedeSession(TESTTC1_SID,ld,-1);
    addAllFiles(TESTTC1_SID);
    runSeede(TESTTC1_SID);
