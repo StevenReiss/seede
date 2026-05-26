@@ -49,17 +49,17 @@ public class CashewInputOutputModel implements CashewConstants
 /********************************************************************************/
 
 private Map<Integer,OutputData> 	output_files;
-private Map<Integer,InputData>		input_files;
+private Map<Integer,InputData>	input_files;
 private Set<File>			files_created;
 private Set<File>			files_removed;
-private Map<File,Integer>		file_permissions;
+private Map<File,Integer>               file_permissions;
 
 
-private int	READ_PERM = 1;
-private int	WRITE_PERM = 2;
-private int	EXEC_PERM = 4;
+private static final int	READ_PERM = 1;
+private static final int	WRITE_PERM = 2;
+private static final int	EXEC_PERM = 4;
 
-private int	DIRECTORY_PERM = 32;
+private static final int	DIRECTORY_PERM = 32;
 
 
 

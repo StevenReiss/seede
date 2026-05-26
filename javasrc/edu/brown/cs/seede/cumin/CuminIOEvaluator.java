@@ -361,7 +361,9 @@ CuminRunStatus checkInputStreamMethods() throws CashewException
    try {
       CashewValue pathv = thisarg.getFieldValue(sess,typer,getClock(),
             "java.io.FileInputStream.path",getContext());
-      if (!pathv.isNull(sess,getClock())) path = pathv.getString(sess,typer,getClock());
+      if (!pathv.isNull(sess,getClock())) {
+         path = pathv.getString(sess,typer,getClock());
+       }
     }
    catch (Throwable t) {
       // path is not defined before jdk 1.8
@@ -378,25 +380,29 @@ CuminRunStatus checkInputStreamMethods() throws CashewException
 	    if (path != null && fdv < 0) {
 	       File f = new File(path);
 	       if (!f.canRead()) {
-                  return CuminEvaluator.returnException(sess,getContext(),typer,"java.io.IOException");
+                  return CuminEvaluator.returnException(sess,getContext(),typer,
+                        "java.io.FileNotFoundException");
 		}
 	     }
 	    if (fdv < 0) {
 	       fdv = file_counter.incrementAndGet();
 	       fdval.setFieldValue(sess,typer,getClock(),"java.io.FileDescriptor.fd",
 		     CashewValue.numericValue(typer,typer.INT_TYPE,fdv));
-	       mdl.checkInputFile(sess,typer,getContext(),getClock(),thisarg,fdv,path,false);
+	       mdl.checkInputFile(sess,typer,getContext(),getClock(),
+                     thisarg,fdv,path,false);
 	     }
 	    break;
 	 case "read0" :
-	    mdl.checkInputFile(sess,typer,getContext(),getClock(),thisarg,fdv,path,true);
+	    mdl.checkInputFile(sess,typer,getContext(),getClock(),
+                  thisarg,fdv,path,true);
 	    wbuf = new byte[1];
 	    wbuf[0] = (byte) getInt(1);
 	    long lenread = mdl.fileRead(getClock(),fdv,wbuf,0,1);
 	    rslt = CashewValue.numericValue(typer,typer.INT_TYPE,lenread);
 	    break;
 	 case "readBytes" :
-	    mdl.checkInputFile(sess,typer,getContext(),getClock(),thisarg,fdv,path,true);
+	    mdl.checkInputFile(sess,typer,getContext(),getClock(),
+                  thisarg,fdv,path,true);
 	    int len = getInt(3);
 	    wbuf = new byte[len];
 	    lenread = mdl.fileRead(getClock(),fdv,wbuf,0,len);
@@ -404,12 +410,14 @@ CuminRunStatus checkInputStreamMethods() throws CashewException
 	    rslt = CashewValue.numericValue(typer,typer.INT_TYPE,lenread);
 	    break;
 	 case "skip" :
-	    mdl.checkInputFile(sess,typer,getContext(),getClock(),thisarg,fdv,path,true);
+	    mdl.checkInputFile(sess,typer,getContext(),getClock(),
+                  thisarg,fdv,path,true);
 	    lenread = mdl.fileRead(getClock(),fdv,null,0,getLong(1));
 	    rslt = CashewValue.numericValue(typer,typer.LONG_TYPE,lenread);
 	    break;
 	 case "available" :
-	    mdl.checkInputFile(sess,typer,getContext(),getClock(),thisarg,fdv,path,true);
+	    mdl.checkInputFile(sess,typer,getContext(),getClock(),
+                  thisarg,fdv,path,true);
 	    lenread = mdl.fileAvailable(getClock(),fdv);
 	    rslt = CashewValue.numericValue(typer,typer.INT_TYPE,lenread);
 	    break;
