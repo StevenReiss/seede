@@ -207,7 +207,7 @@ static CashewValue evaluateUnchecked(CuminRunner runner,JcompTyper typer,
 	  }
 	 else {
 	    crslt = (v1 == v2);
-	    AcornLog.logD("COMPARE RESULT " + crslt + " " + v1 + " " + v2 + " " + (v1==v2));
+	    AcornLog.logT("COMPARE RESULT " + crslt + " " + v1 + " " + v2 + " " + (v1==v2));
 	  }
 	 break;
       case GEQ :
@@ -443,11 +443,11 @@ static CashewValue evaluateUnchecked(CuminRunner runner,JcompTyper typer,
     }
 
    if (rslt == null) {
-      AcornLog.logD("EVAL " + op + " " + v1 + " " + v2 + " " + rslt + " " + crslt);
+      AcornLog.logT("EVAL " + op + " " + v1 + " " + v2 + " " + rslt + " " + crslt);
       throw CuminRunStatus.Factory.createCompilerError();
     }
 
-   AcornLog.logD("EVAL " + op + " " + v1 + " " + v2 + " " + rslt);
+   AcornLog.logT("EVAL " + op + " " + v1 + " " + v2 + " " + rslt);
 
    return rslt;
 }
