@@ -307,7 +307,8 @@ CuminRunStatus checkOutputStreamMethods() throws CashewException
 	 if (path != null && fdv < 0) {
 	    File f = new File(path);
 	    if (f.exists() && !f.canWrite()) {
-	       return CuminEvaluator.returnException(sess,getContext(),typer,"java.io.IOException");
+	       return CuminEvaluator.returnException(sess,
+                     getContext(),typer,"java.io.IOException");
 	     }
 	    //TODO: check that directory is writable
 	  }

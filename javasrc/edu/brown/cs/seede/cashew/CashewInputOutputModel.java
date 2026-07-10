@@ -110,7 +110,8 @@ public synchronized void reset()
 /*										*/
 /********************************************************************************/
 
-public synchronized void fileWrite(CashewClock clk,int fd,String path,byte [] buf,int off,int len,boolean app)
+public synchronized void fileWrite(CashewClock clk,int fd,String path,
+      byte [] buf,int off,int len,boolean app)
 {
    if (fd < 0) return;
    OutputData file = output_files.get(fd);
