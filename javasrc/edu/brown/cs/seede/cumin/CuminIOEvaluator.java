@@ -369,6 +369,7 @@ CuminRunStatus checkInputStreamMethods() throws CashewException
    catch (Throwable t) {
       // path is not defined before jdk 1.8
     }
+   if (path == null && fdv == 1) path = "*STDIN*";
 
    CashewInputOutputModel mdl = getContext().getIOModel();
 

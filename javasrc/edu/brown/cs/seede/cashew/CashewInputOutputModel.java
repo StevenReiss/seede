@@ -166,7 +166,7 @@ public synchronized void checkInputFile(CashewValueSession sess,JcompTyper typer
 {
    InputData id = input_files.get(fd);
 
-   if (id == null && path.equals("*STDIN*")) {
+   if (id == null && (path == null || path.equals("*STDIN*"))) {
       id = new StandardInput();
       input_files.put(fd,id);
     }

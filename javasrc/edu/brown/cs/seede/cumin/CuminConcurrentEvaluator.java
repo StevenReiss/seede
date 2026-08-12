@@ -297,8 +297,10 @@ synchronized CuminRunStatus checkUnsafeMethods() throws CuminRunException, Cashe
 	  }
 	 break;
       case "fullFence" :
+      case "ensureClassInitialized0" :
          break;
       default :
+         AcornLog.logD("CUMIN","Unhandle UNSAFE method " + getMethod().getName());
 	 return null;
     }
 

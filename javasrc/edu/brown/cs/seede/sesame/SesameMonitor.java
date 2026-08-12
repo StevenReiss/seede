@@ -690,7 +690,7 @@ private void handleAddFile(String sid,Element xml)
       String cnts = IvyXml.getTextElement(e,"CONTENTS");
       File ff = AcornConstants.getCanonical(file);
       SesameFile sf = sesame_control.getFileManager().openFile(ff,cnts);
-      if (sf != null) sp.addFile(sf);
+      if (sf != null && sp != null) sp.addFile(sf);
     }
 
    ss.resetRunners();

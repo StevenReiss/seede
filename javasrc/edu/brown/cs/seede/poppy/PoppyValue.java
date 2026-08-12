@@ -203,7 +203,7 @@ public static Object getStaticFieldValue(String itm)
     }
 
    System.err.println("POPPY: Problem getting static field: " + c1.getModule().getName() +
-			 "/" +  c1.getName() + " " + fld);
+			 "/" +  c1.getName() + " " + fld + " " + err);
    System.err.println("POPPY: Error: " + err);
    System.err.println("POPPY: Add '" + c1.getModule().getName() + "/" + c1.getName() + "' to Bicex.props");
 
@@ -349,7 +349,17 @@ public static Object [] getToArray(Object o)
 public static void setAccessible(String cls)
 {
    Class<?> c1 = getClassByName(cls);
-   if (c1 == null) return;
+   if (c1 == null) {
+      System.err.println("POPPY: Problem finding class " + cls);
+      return;
+    }
+   setFieldsAccessible(c1);
+   // might want to set inner classes accessible here
+}
+
+
+private static void setFieldsAccessible(Class<?> c1)
+{
    for (Field f : c1.getDeclaredFields()) {
       try {
 	 f.trySetAccessible();
