@@ -177,7 +177,10 @@ public static Object getStaticFieldValue(String itm)
    String cls = itm.substring(0,idx1);
 
    Class<?> c1 = getClassByName(cls);
-   if (c1 == null) return null;
+   if (c1 == null) {
+      System.err.println("POPPY: Class not found " + cls);
+      return null;
+    }
 
    Throwable err = null;
 
