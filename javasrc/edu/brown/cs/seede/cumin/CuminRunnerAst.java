@@ -3179,7 +3179,7 @@ private CuminRunStatus evaluateReference(ASTNode n,ASTNode after)
       thisval = handleNew(jty);
     }
    if (after == null) {
-      if (!js.isStatic()) {
+      if (!js.isStatic() && !(n instanceof CreationReference)) {
 	 if (atyps.size() == args.size()-2) {
 	    thisval = args.remove(1);
 	  }
