@@ -584,7 +584,7 @@ static CashewValue castValue(CuminRunner cr,CashewValue cv,JcompType target)
       cv = boxValue(cr,cv);
     }
    else if (styp.isBooleanType()) {
-      if (target.getName().equals("java.lang.Boolean")) {
+      if (target.getName().equals("java.lang.Boolean") || target.getName().equals("java.lang.Object")) {
 	 cv = boxValue(cr,cv);
        }
     }

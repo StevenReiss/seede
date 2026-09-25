@@ -1,8 +1,8 @@
 /********************************************************************************/
 /*                                                                              */
-/*              TestTc1.java                                                    */
+/*              TestTc2.java                                                    */
 /*                                                                              */
-/*      description of class                                                    */
+/*      Tests for TC2                                                           */
 /*                                                                              */
 /********************************************************************************/
 /*      Copyright 2011 Brown University -- Steven P. Reiss                    */
@@ -26,7 +26,7 @@ import org.junit.Test;
 
 import edu.brown.cs.seede.acorn.AcornLog;
 
-public class TestTc1 extends TestBase
+public class TestTc2 extends TestBase
 {
 
 
@@ -36,15 +36,9 @@ public class TestTc1 extends TestBase
 /*                                                                              */
 /********************************************************************************/
 
-
-private static final String             TESTTC1_SID = "SEED_32548";
-private static final String             TEST_PROJECT = "tc1";
-static final String             LAUNCHTC1_NAME = "EventRoutingTest";
-static final String             LAUNCHTC2_NAME = "InventoryServiceTest";
-static final String             LAUNCHTC3_NAME = "OrderLifecysleTest";
-static final String             LAUNCHTC4_NAME = "PaymentProcessingTest";
-
-
+private static final String             TESTTC2_SID = "SEED_32578";
+private static final String             TEST_PROJECT = "tc2";
+private static final String             LAUNCH_NAME = "t01MultiItemOrderTest";
 
 
 /********************************************************************************/
@@ -53,34 +47,37 @@ static final String             LAUNCHTC4_NAME = "PaymentProcessingTest";
 /*                                                                              */
 /********************************************************************************/
 
-public TestTc1()
+public TestTc2()
 {
-   super("TC1","tc1",TEST_PROJECT);
+   super("TC2","tc2",TEST_PROJECT);
 }
 
 
 
 /********************************************************************************/
 /*                                                                              */
-/*      Test method                                                             */
+/*      Test methods                                                            */
 /*                                                                              */
 /********************************************************************************/
 
-@Test public void testTc1()
+
+@Test public void testTc2()
 {
-   AcornLog.logI("TEST","Start TEST TC1");
-   LaunchData ld = startLaunch(LAUNCHTC3_NAME,0);
-   setupSeedeSession(TESTTC1_SID,ld,-1);
-   addAllFiles(TESTTC1_SID);
-   runSeede(TESTTC1_SID);
-   removeSeede(TESTTC1_SID);
+   AcornLog.logI("TEST","Start TEST TC2");
+   LaunchData ld = startLaunch(LAUNCH_NAME,0);
+   setupSeedeSession(TESTTC2_SID,ld,-1);
+   addAllFiles(TESTTC2_SID);
+   runSeede(TESTTC2_SID);
+   removeSeede(TESTTC2_SID);
 }
 
 
-}       // end of class TestTc1
+
+
+}       // end of class TestTc2
 
 
 
 
-/* end of TestTc1.java */
+/* end of TestTc2.java */
 

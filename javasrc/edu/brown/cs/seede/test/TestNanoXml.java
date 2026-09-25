@@ -71,7 +71,7 @@ public TestNanoXml()
 @Test
 public void testNanoXml()
 {
-   AcornLog.logI("TEST: Start TEST NanoXML");
+   AcornLog.logI("TEST","Start TEST NanoXML");
    LaunchData ld = startLaunch(LAUNCH_NAME,0);
    
    setupSeedeSession(TESTNANOXML_SID,ld,2);

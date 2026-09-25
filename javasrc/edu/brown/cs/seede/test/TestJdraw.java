@@ -69,7 +69,7 @@ public void testJdraw01()
 {
    setup("jdraw","jdraw");
    
-   AcornLog.logI("TEST: Start ROSETEST");
+   AcornLog.logI("TEST","Start ROSETEST");
    LaunchData ld = startLaunch("jdraw",1);
    
    setupSeedeSession(TESTJDRAW_SID,ld,0);

@@ -66,7 +66,7 @@ public TestPole()
 
 @Test public void testPole()
 {
-   AcornLog.logI("TEST: Start TEST POLE");
+   AcornLog.logI("TEST","Start TEST POLE");
    LaunchData ld = startLaunch(LAUNCHPOLE_NAME,1);
    
    setupSeedeSession(TESTPOLE_SID,ld,0);

@@ -70,7 +70,7 @@ public TestSolar()
 
 @Test public void testSolar()
 {
-   AcornLog.logI("TEST: Start TEST3 (solar)");
+   AcornLog.logI("TEST","Start TEST3 (solar)");
    LaunchData ld = startLaunch(LAUNCHSOLAR_NAME,1);
    setupSeedeSession(TESTSOLAR_SID,ld,0);
    runSeede(TESTSOLAR_SID);

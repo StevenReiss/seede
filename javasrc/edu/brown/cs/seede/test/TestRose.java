@@ -68,7 +68,7 @@ public TestRose()
 @Test
 public void testRose01()
 {
-   AcornLog.logI("TEST: Start ROSETEST");
+   AcornLog.logI("TEST","Start ROSETEST");
    LaunchData ld = startLaunch(LAUNCH1_NAME,0);
    setupSeedeSession(TEST1_SID,ld,2);
    addSeedeFiles(TEST1_SID,"src/edu/brown/cs/rosetest/RoseTestExamples.java",
@@ -99,7 +99,7 @@ public void testRose01()
 @Test
 public void testRose08()
 {
-   AcornLog.logI("TEST: Start ROSETEST");
+   AcornLog.logI("TEST","Start ROSETEST");
    LaunchData ld = startLaunch(LAUNCH8_NAME,0);
    setupSeedeSession(TEST8_SID,ld,0);
    CommandArgs args = new CommandArgs("VALUE",true);

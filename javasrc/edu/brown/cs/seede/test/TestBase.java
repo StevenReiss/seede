@@ -26,7 +26,13 @@ package edu.brown.cs.seede.test;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.module.ModuleFinder;
+import java.lang.module.ModuleReader;
+import java.lang.module.ModuleReference;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 import org.junit.Assert;
 import org.w3c.dom.Element;
@@ -74,30 +80,7 @@ private static final String LHOME_WS = "Eclipse/";
 private static final String BROWN_SEEDE_LIB = "/research/people/spr/seede/lib";
 private static final String HOME_SEEDE_LIB = "/pro/seede/lib";
 
-private static final String [] OPENS;
-
-static {
-   OPENS = new String [] { "java.desktop/sun.font", "java.desktop/sun.awt", "java.desktop/sun.swing",
-         "java.desktop/javax.swing", "java.base/jdk.internal.math", "java.base/sun.nio.cs", 
-         "java.base/java.nio",
-         "java.base/sun.util.locale.provider",
-         "java.base/jdk.internal.math",
-         "java.base/jdk.internal.misc",
-         "java.base/java.util",
-         "java.base/java.lang",
-         "java.base/java.util.concurrent",
-         "java.base/sun.util.locale",
-         "java.desktop/sun.java2d",
-         "java.desktop/sun.java2d.loops",
-         "java.desktop/sun.java2d.metal",
-         "java.desktop/sun.java2d.pipe",
-         "java.desktop/java.awt.geom",
-         "java.base/sun.util.calendar",
-         "java.base/sun.security.provider",
-         "java.base/jdk.internal.util",
-         "java.base/java.time",
-    };
-}
+private static Set<String> open_modules = null;
 
       
 
@@ -121,6 +104,8 @@ protected TestBase(String id,String workspace,String project)
    bedrock_id = null;
    stopped_thread = null; 
    
+   findOpens();
+   
    if (workspace != null) {
       setupBedrock(workspace,project);
       startSeede();
@@ -138,6 +123,31 @@ protected void setup(String workspace,String project)
    startSeede();
 }
 
+
+private void findOpens()
+{
+   if (open_modules != null) return;
+   
+   open_modules = new TreeSet<>();
+   for (ModuleReference ref : ModuleFinder.ofSystem().findAll()) {
+      String mnam = ref.descriptor().name();
+      if (mnam.contains("unsupported")) continue;
+      try (ModuleReader mr = ref.open()) {
+         mr.list().forEach(entry -> {
+            if (entry.endsWith(".class") && entry.contains("/")) {
+               String pkg = entry.substring(0,entry.lastIndexOf("/"));
+               pkg = pkg.replace("/",".");
+               pkg = mnam + "/" + pkg;
+               open_modules.add(pkg);
+             }
+          });
+       }
+      catch (IOException e) {
+         AcornLog.logE("TEST","Problem opening or reading module",e);
+       }
+    }
+   AcornLog.logD("TEST","Finished finding opens " + open_modules.size());
+}
 
 
 
@@ -249,7 +259,7 @@ protected Element runSeede(String id,int ct)
    AcornLog.logD("TEST: RESULT IS " + sstatus);
    Element xml = waitForSeedeResult();
    Assert.assertNotNull(xml);
-   AcornLog.logI("TEST: SEEDE RESULT IS " + IvyXml.convertXmlToString(xml));
+   AcornLog.logI("TEST","SEEDE RESULT IS " + IvyXml.convertXmlToString(xml));
    
    return xml;
 }
@@ -260,7 +270,7 @@ protected void removeSeede(String id)
    MintDefaultReply rply = new MintDefaultReply();
    sendSeedeMessage("REMOVE",id,null,null,rply);
    String sstatus = rply.waitForString();
-   AcornLog.logI("TEST: SEEDE REMOVE STATUS: " + sstatus);
+   AcornLog.logI("TEST","SEEDE REMOVE STATUS: " + sstatus);
 }
 
 
@@ -281,7 +291,8 @@ protected Element editBedrock(String file,int len,int off,String txt)
    xw.close();
    
    Element xml = waitForSeedeResult();
-   AcornLog.logI("TEST: SEEDE result after editing Is " + IvyXml.convertXmlToString(xml));
+   AcornLog.logI("TEST","SEEDE result after editing Is " + 
+         IvyXml.convertXmlToString(xml));
    
    return xml;
 }
@@ -334,7 +345,7 @@ protected void editSeede(String id,String file,int len,int off,String txt)
    MintDefaultReply rply = new MintDefaultReply();
    sendSeedeMessage("EDITFILE",id,null,cnts,rply);
    String sstatus = rply.waitForString();
-   AcornLog.logI("TEST: SEEDE EDITFILE STATUS: " + sstatus); 
+   AcornLog.logI("TEST","SEEDE EDITFILE STATUS: " + sstatus); 
 }
 
 
@@ -354,7 +365,7 @@ protected void addSeedeFiles(String id,String... files)
    MintDefaultReply rply = new MintDefaultReply();
    sendSeedeMessage("ADDFILE",id,null,cnts,rply);
    String sstatus = rply.waitForString();
-   AcornLog.logI("TEST: SEEDE ADDFILE STATUS: " + sstatus);
+   AcornLog.logI("TEST","SEEDE ADDFILE STATUS: " + sstatus);
 }
 
 
@@ -387,7 +398,7 @@ protected void addSeedeFiles(String id,File f)
    MintDefaultReply rply = new MintDefaultReply();
    sendSeedeMessage("ADDFILE",id,null,cnts,rply);
    String sstatus = rply.waitForString();
-   AcornLog.logI("TEST: SEEDE ADDFILE STATUS: " + sstatus);
+   AcornLog.logI("TEST","SEEDE ADDFILE STATUS: " + sstatus);
 }
 
 
@@ -430,7 +441,7 @@ protected void setVariable(String id,String var,String valtype,String val)
 
 private void setupBedrock(String workspace,String project)
 {
-   AcornLog.logI("TEST: SETTING UP BEDROCK");
+   AcornLog.logI("TEST","SETTING UP BEDROCK");
    
    File ec1 = getFile(BROWN_ECLIPSE);
    File ec2 = getFile(BROWN_WS + workspace);
@@ -588,7 +599,7 @@ private class ShutdownAll extends Thread {
     }
    
    @Override public void run() {
-      AcornLog.logI("TEST: Shutting down");
+      AcornLog.logI("TEST","Shutting down");
       sendBubblesMessage("EXIT");
       // sendSeedeMessage("EXIT");       -- seede is running in our process
     }
@@ -614,7 +625,7 @@ private LaunchData doStartLaunch(String name)
    
 // File f1 = new File(lib,"poppy.jar");
 // dargs = "-javaagent:" + f1.getPath();
-   for (String s : OPENS) {
+   for (String s : open_modules) {
       String arg = "--add-opens=" + s + "=ALL-UNNAMED";
       if (dargs == null) dargs = arg;
       else dargs += " " + arg;
@@ -779,7 +790,7 @@ protected void sendBubblesMessage(String cmd,String proj,CommandArgs flds,String
    String xml = xw.toString();
    xw.close();
    
-   AcornLog.logD("TEST: SEND to BUBBLES: " + xml);
+   AcornLog.logD("TEST","SEND to BUBBLES: " + xml);
    
    int fgs = MINT_MSG_NO_REPLY;
    if (rply != null) fgs = MINT_MSG_FIRST_NON_NULL;
@@ -921,7 +932,7 @@ protected Element waitForSeedeResult()
 private final class SeedeHandler implements MintHandler {
    
    @Override public void receive(MintMessage msg,MintArguments args) {
-      AcornLog.logI("TEST: Received from seede: " + msg.getText());
+      AcornLog.logI("TEST","Received from seede: " + msg.getText());
       String what = args.getArgument(0);
       Element xml = msg.getXml();
       switch (what) {

@@ -85,7 +85,7 @@ public TestSeede()
 
 @Test public void test1()
 {
-   AcornLog.logD("TEST: START TEST1");
+   AcornLog.logD("TEST","START TEST1");
    LaunchData ld = startLaunch(LAUNCH1_NAME,0);
    setupSeedeSession(TEST1_SID,ld,0);
    runSeede(TEST1_SID);
@@ -95,7 +95,7 @@ public TestSeede()
 
 @Test public void test2()
 {
-   AcornLog.logD("TEST: START TEST2");
+   AcornLog.logD("TEST","START TEST2");
 
    File srcf = new File(project_directory,REL_PATH1);
    IvyXmlWriter xw = new IvyXmlWriter();
@@ -139,7 +139,7 @@ public TestSeede()
 
 @Test public void test3()
 {
-   AcornLog.logD("TEST: START TEST3");
+   AcornLog.logD("TEST","START TEST3");
    LaunchData ld = startLaunch(LAUNCH3_NAME,1);
    setupSeedeSession(TEST3_SID,ld,0);
    runSeede(TEST3_SID);
@@ -149,7 +149,7 @@ public TestSeede()
 
 @Test public void test4()
 {
-   AcornLog.logD("TEST: START TEST4");
+   AcornLog.logD("TEST","START TEST4");
    LaunchData ld = startLaunch(LAUNCH4_NAME,1);
    setupSeedeSession(TEST4_SID,ld,0);
    runSeede(TEST4_SID);
@@ -160,7 +160,7 @@ public TestSeede()
 
 @Test public void test5()
 {
-   AcornLog.logD("TEST: START TEST5");
+   AcornLog.logD("TEST","START TEST5");
    LaunchData ld = startLaunch(LAUNCH5_NAME,1);
    setupSeedeSession(TEST5_SID,ld,0);
    runSeede(TEST5_SID);
@@ -171,7 +171,7 @@ public TestSeede()
 
 @Test public void test6()
 {
-   AcornLog.logD("TEST: START TEST6");
+   AcornLog.logD("TEST","START TEST6");
    LaunchData ld = startLaunch(LAUNCH6_NAME,1);
    setupSeedeSession(TEST6_SID,ld,0);
    runSeede(TEST6_SID);
@@ -181,7 +181,7 @@ public TestSeede()
 
 @Test public void test7()
 {
-   AcornLog.logD("TEST: START TEST7");
+   AcornLog.logD("TEST","START TEST7");
    LaunchData ld = startLaunch(LAUNCH7_NAME,1);
    setupSeedeSession(TEST7_SID,ld,0);
    runSeede(TEST7_SID);
@@ -189,7 +189,7 @@ public TestSeede()
 
 @Test public void test8()
 {
-   AcornLog.logD("TEST: START TEST8");
+   AcornLog.logD("TEST","START TEST8");
    LaunchData ld = startLaunch(LAUNCH8_NAME,0);
    setupSeedeSession(TEST8_SID,ld,0);
    runSeede(TEST8_SID);
