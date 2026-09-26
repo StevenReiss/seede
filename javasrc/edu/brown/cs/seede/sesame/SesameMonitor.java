@@ -141,7 +141,7 @@ private boolean checkEclipse()
    String msg = "<BUBBLES DO='PING' />";
    mint_control.send(msg,rply,MintConstants.MINT_MSG_FIRST_NON_NULL);
    String r = rply.waitForString(300000);
-   AcornLog.logD("BUBBLES PING " + r);
+   AcornLog.logD("SESAME","BUBBLES PING " + r);
    if (r == null) return false;
    return true;
 }
@@ -191,11 +191,11 @@ private class WaitForExit extends Thread {
 
 void noteFileChanged(SesameFile sf)
 {
-   AcornLog.logD("MONITOR: begin note changed");
+   AcornLog.logD("SESAME","MONITOR: begin note changed");
    for (SesameSession ss : session_map.values()) {
       ss.noteFileChanged(sf);
     }
-   AcornLog.logD("MONITOR: end note changed");
+   AcornLog.logD("SESAME","MONITOR: end note changed");
 }
 
 
@@ -232,10 +232,10 @@ void sendCommand(String cmd,CommandArgs args,String cnts,MintReply rply)
 
    String msg1 = msg;
    if (msg1.length() > 1024000) {
-      AcornLog.logW("Size of response is " + msg.length());
+      AcornLog.logW("SESAME","Size of response is " + msg.length());
       msg1 = msg1.substring(0,1024000);
     }
-   AcornLog.logD("Send to Bubbles: " + msg1);
+   AcornLog.logD("SESAME","Send to Bubbles: " + msg1);
 
    if (rply != null) {
       sendMessage(msg,rply,MintConstants.MINT_MSG_FIRST_REPLY);
@@ -269,7 +269,7 @@ private void handleErrors(String proj,File file,Element messages)
             break;
           }
        }
-      AcornLog.logD("EDIT RESTART " + fnd);
+      AcornLog.logD("SESAME","EDIT RESTART " + fnd);
       if (fnd != null) {
          ss.restartRunners();
        }
@@ -285,17 +285,17 @@ private void handleEdit(MintMessage msg,String bid,String sid,File file,int len,
       return;
     }
 
-   AcornLog.logD("MONITOR: Begin edit");
+   AcornLog.logD("SESAME","MONITOR: Begin edit");
 
    SesameFile sf = sesame_control.getFileManager().handleEdit(file,len,offset,complete,txt);
 
    msg.replyTo("<OK/>");
 
-   AcornLog.logD("MONITOR: EDIT ACCEPTED");
+   AcornLog.logD("SESAME","MONITOR: EDIT ACCEPTED");
 
    if (sf != null) sesame_control.noteFileChanged(sf);
 
-   AcornLog.logD("MONITOR: End edit");
+   AcornLog.logD("SESAME","MONITOR: End edit");
 }
 
 
@@ -499,7 +499,7 @@ private void handleBegin(String sid,Element xml,IvyXmlWriter xw) throws SesameEx
 {
    SesameSession ss = SesameSession.createSession(sesame_control,sid,xml);
    sid = ss.getSessionId();
-   AcornLog.logD("BEGIN " + sid + " " + ss);
+   AcornLog.logD("SESAME","BEGIN " + sid + " " + ss);
    xw.begin("SESSION");
    xw.field("ID",ss.getSessionId());
    xw.end();
@@ -517,7 +517,7 @@ private void handleSubsession(String sid,Element xml,IvyXmlWriter xw)
    ss.waitForReady();
 
    SesameSubsession sss = new SesameSubsession((SesameSessionLaunch) ss,xml);
-   AcornLog.logD("SUBSESSION " + sid + " " + sss.getSessionId());
+   AcornLog.logD("SESAME","SUBSESSION " + sid + " " + sss.getSessionId());
 
    session_map.put(sss.getSessionId(),sss);
 
@@ -557,7 +557,7 @@ private void handleExec(String sid,Element xml,IvyXmlWriter xw)
    SesameSession ss = session_map.get(sid);
    if (ss == null) throw new SesameException("Session " + sid + " not found");
 
-   AcornLog.logD("WAIT FOR SESSION READY");
+   AcornLog.logD("SESAME","WAIT FOR SESSION READY");
    ss.waitForReady();
    if (ss.getActiveLocations().isEmpty()) {
       throw new SesameException("Session " + sid + " has no starting points");
@@ -588,23 +588,23 @@ private class ExecHandler extends Thread {
     }
 
    @Override public void run() {
-      AcornLog.logD("WAIT FOR SESSION READY");
+      AcornLog.logD("SESAME","WAIT FOR SESSION READY");
       for_session.waitForReady();
       SesameContext gblctx = new SesameContext(for_session);
    
-      AcornLog.logD("COMPILE PROJECT");
+      AcornLog.logD("SESAME","COMPILE PROJECT");
       for_session.getProject().compileProject();
       SesameExecRunner execer = null;
       int nr = 0;
       for (SesameLocation loc : for_session.getActiveLocations()) {
          CuminRunner cr = for_session.createRunner(loc,gblctx);
          if (cr == null) {
-            AcornLog.logD("No runner " + for_session.getCallMethod(loc) + " " +
+            AcornLog.logD("SESAME","No runner " + for_session.getCallMethod(loc) + " " +
                   for_session.getCallArgs(loc) + " " + loc.getFile() + " " +
                   loc);
             SesameFile sf = loc.getFile();
             ASTNode root = sf.getResolvedAst(for_session.getProject());
-            AcornLog.logD("Root is " + root);
+            AcornLog.logD("SESAME","Root is " + root);
             continue;
           }
          ++nr;
@@ -617,7 +617,7 @@ private class ExecHandler extends Thread {
             execer.addRunner(cr);
           }
        }
-      AcornLog.logD("START RUNNER " + nr + " " + execer);
+      AcornLog.logD("SESAME","START RUNNER " + nr + " " + execer);
       if (execer != null) {
          execer.startExecution();
        }
@@ -641,7 +641,7 @@ private class ExecHandler extends Thread {
 private void handleRemove(String sid) throws SesameException
 {
    SesameSession ss = session_map.remove(sid);
-   if (ss == null) AcornLog.logE("Session " + sid + " not found");
+   if (ss == null) AcornLog.logE("SESAME","Session " + sid + " not found");
    else {
       RemoveHandler rh = new RemoveHandler(ss);
       rh.start();
@@ -892,7 +892,7 @@ private final class EclipseHandler implements MintHandler {
             return;
        }
    
-      AcornLog.logD("Message from eclipse: " + cmd + " " + msg.getText());
+      AcornLog.logD("SESAME","Message from eclipse: " + cmd + " " + msg.getText());
    
       switch (cmd) {
          case "PING" :
@@ -945,7 +945,6 @@ private final class EclipseHandler implements MintHandler {
             handleConsoleEvent(e);
             break;
          case "EVALUATION" :
-            AcornLog.logD("Eclipse Message: " + msg.getText());
             bid = IvyXml.getAttrString(e,"BID");
             String id = IvyXml.getAttrString(e,"ID");
             if ((bid == null || bid.equals(SOURCE_ID)) && id != null) {
@@ -958,7 +957,6 @@ private final class EclipseHandler implements MintHandler {
             msg.replyTo("<OK/>");
             break;
          case "STOP" :
-            AcornLog.logD("Eclipse Message: " + msg.getText());
             serverDone();
             break;
        }
@@ -1057,7 +1055,7 @@ private String processCommand(String cmd,String sid,Element e) throws SesameExce
          handleInitialization(sid,e);
          break;
       default :
-         AcornLog.logE("Unknown command " + cmd);
+         AcornLog.logE("SESAME","Unknown command " + cmd);
          break;
     }
    xw.end("RESULT");
@@ -1071,18 +1069,18 @@ private String processCommand(String cmd,String sid,Element e) throws SesameExce
 private final class CommandHandler implements MintHandler {
 
    @Override public void receive(MintMessage msg,MintArguments args) {
-      AcornLog.logD("PROCESS COMMAND: " + msg.getText());
+      AcornLog.logD("SESAME","PROCESS COMMAND: " + msg.getText());
       String cmd = args.getArgument(0);
       String sid = args.getArgument(1);
       Element e = msg.getXml();
       String rslt = null;
       try {
          rslt = processCommand(cmd,sid,e);
-         AcornLog.logD("COMMAND RESULT: " + rslt);
+         AcornLog.logD("SESAME","COMMAND " + cmd + " RESULT: " + rslt);
        }
       catch (SesameException t) {
          String xmsg = "SEEDE: error in command " + cmd + ": " + t;
-         AcornLog.logE(xmsg,t);
+         AcornLog.logE("SESAME",xmsg,t);
          IvyXmlWriter xw = new IvyXmlWriter();
          xw.cdataElement("ERROR",xmsg);
          rslt = xw.toString();
@@ -1090,7 +1088,7 @@ private final class CommandHandler implements MintHandler {
        }
       catch (Throwable t) {
          String xmsg = "Problem processing command " + cmd + ": " + t;
-         AcornLog.logE(xmsg,t);
+         AcornLog.logE("SESAME",xmsg,t);
          StringWriter sw = new StringWriter();
          PrintWriter pw = new PrintWriter(sw);
          t.printStackTrace(pw);
@@ -1100,7 +1098,7 @@ private final class CommandHandler implements MintHandler {
             pw.println();
             xt.printStackTrace(pw);
           }
-         AcornLog.logE("TRACE: " + sw.toString());
+         AcornLog.logE("SESAME","TRACE: " + sw.toString());
          IvyXmlWriter xw = new IvyXmlWriter();
          xw.begin("ERROR");
          xw.textElement("MESSAGE",xmsg);

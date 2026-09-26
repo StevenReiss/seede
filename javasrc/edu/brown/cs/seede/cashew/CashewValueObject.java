@@ -104,7 +104,8 @@ CashewValueObject(JcompTyper typer,JcompType jt,Map<String,Object> inits,boolean
 	    if (fsym.isStatic()) {
 	       if (!static_values.containsKey(key)) {
 		  static_values.put(key,cr);
-		  AcornLog.logD("Add static field " + key + " to " + getDataType(null).getName());
+		  AcornLog.logD("CASHEW","Add static field " + key + 
+                        " to " + getDataType(null).getName());
 		}
 	     }
 	    else field_values.put(key,cr);

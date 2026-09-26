@@ -394,7 +394,7 @@ public void define(JcompSymbol sym,CashewValue addr)
 public void define(Object var,CashewValue addr)
 {
    if (addr == null) {
-      AcornLog.logE("Attempt to put null address in context for " + var);
+      AcornLog.logE("CASHEW","Attempt to put null address in context for " + var);
       return;
     }
    context_map.put(var,addr);
@@ -570,7 +570,7 @@ public void checkToArray(CashewValueSession sess,CashewOutputContext outctx)
       if (key.startsWith("*")) continue;
       CashewValue cv = ent.getValue();
       if (cv != null) {
-         AcornLog.logD("CONTEXT VALUE " + key + " "  + cv.isEmpty(sess) +
+         AcornLog.logD("CASHEW","CONTEXT VALUE " + key + " "  + cv.isEmpty(sess) +
                " " + cv);
          cv.checkToArray(sess,outctx);
        }

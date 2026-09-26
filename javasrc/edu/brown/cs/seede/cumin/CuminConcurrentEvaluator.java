@@ -435,7 +435,7 @@ synchronized CuminRunStatus checkVarHandleMethods() throws CuminRunException, Ca
          break;
          
       default :
-         AcornLog.logE("Unknown VarHandle operation " + getMethod().getName());
+         AcornLog.logT("CUMIN","Unknown VarHandle operation " + getMethod().getName());
          break;
     }
     

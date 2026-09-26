@@ -75,7 +75,7 @@ static CashewValue evaluate(CuminRunner runner,JcompTyper typer,
       throw e;
     }
    catch (Throwable t) {
-      AcornLog.logE("Problem in evaluation",t);
+      AcornLog.logE("CUMIN","Problem in evaluation",t);
       throw CuminRunStatus.Factory.createCompilerError();
     }
 }
@@ -129,7 +129,7 @@ static CashewValue evaluateUnchecked(CuminRunner runner,JcompTyper typer,
    Boolean crslt = null;
    int irslt = 0;
 
-   // AcornLog.logD("START EVAL " + op + " " + v1 + " " + v2 );
+   // AcornLog.logD("CUMIN","START EVAL " + op + " " + v1 + " " + v2 );
 
    switch (op) {
       case ADD :
@@ -430,7 +430,7 @@ static CashewValue evaluateUnchecked(CuminRunner runner,JcompTyper typer,
 	  }
 	 return CashewValue.numericValue(typer,typer.INT_TYPE,irslt);
       default :
-	 AcornLog.logE("Unknown operator " + op);
+	 AcornLog.logE("CUMIN","Unknown operator " + op);
 	 // illegal binary operator
 	 break;
     }
@@ -503,7 +503,7 @@ static CashewValue evaluateAssign(CuminRunner cr,CuminOperator op,CashewValue v1
 	 break;
     }
 
-   //AcornLog.logD("ASSIGN " + op + " " + v1.getDebugString(cc) + " " + v2.getDebugString(cc) + " " +
+   //AcornLog.logD("CUMIIN","ASSIGN " + op + " " + v1.getDebugString(cc) + " " + v2.getDebugString(cc) + " " +
 		    // rslt.getDebugString(cc) + " " + tgt);
 
    assignValue(cr,v1,rslt,tgt);
@@ -520,7 +520,7 @@ static void assignValue(CuminRunner cr,CashewValue vr,CashewValue cv,JcompType t
    CashewValueSession sess = cr.getSession();
    cv = castValue(cr,cv,tgt);
    cv = cv.getActualValue(sess,cc);
-   // AcornLog.logD("DOASSIGN " + vr + " " + vr.getDebugString(cc) + " " + cv.getDebugString(cc));
+   // AcornLog.logD("CUMIN","DOASSIGN " + vr + " " + vr.getDebugString(cc) + " " + cv.getDebugString(cc));
    vr.setValueAt(sess,cc,cv);
 }
 

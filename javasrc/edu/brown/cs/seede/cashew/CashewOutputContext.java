@@ -180,7 +180,7 @@ public String getToString(CashewValueSession sess,CashewValue cv)
       return rslt.getString(sess,type_context,clk);
     }
    catch (CashewException e) {
-      AcornLog.logE("Problem getting toString",e);
+      AcornLog.logD("CASHEW","Problem getting toString",e);
     }
 
    return null;

@@ -79,7 +79,7 @@ SesameSubsession(SesameSessionLaunch base,Element xml)
    base_session = base;
    if (IvyXml.getAttrBool(xml,"SHOWALL")) setShowAll(true);
    position_map = new HashMap<>();
-   AcornLog.logD("Create subsession for " + base_session.getSessionId());
+   AcornLog.logD("SESAME","Create subsession for " + base_session.getSessionId());
    call_location = null;
    Element locxml = IvyXml.getChild(xml,"LOCATION");
    if (locxml != null) {
@@ -344,7 +344,7 @@ private boolean isInitBlock(Block b)
       rslt.add(call_location);
     }
    
-   AcornLog.logD("START LOCATIONS " + rslt.size());
+   AcornLog.logD("SESAME","START LOCATIONS " + rslt.size());
    
    for (SesameLocation loc : rslt) {
       AcornLog.logD("SESAME","WORK ON LOCATION " + loc + " " + loc.getLineNumber() + " " +
@@ -369,7 +369,7 @@ private boolean isInitBlock(Block b)
        }
     }
    
-   AcornLog.logD("END LOCATION " + nrslt.size());
+   AcornLog.logD("SESAME","END LOCATION " + nrslt.size());
    return nrslt; 
 }
 

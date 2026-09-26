@@ -1304,11 +1304,11 @@ CuminRunStatus checkObjectMethods() throws CuminRunException, CashewException
 	 rslt = CashewValue.stringValue(typer,typer.STRING_TYPE,getString(0));
 	 break;
       default :
-	 AcornLog.logD("UNKNOWN CALL TO OBJECT: " + getMethod().getName());
+	 AcornLog.logD("CUMIN","UNKNOWN CALL TO OBJECT: " + getMethod().getName());
 	 return null;
     }
    
-   AcornLog.logT("CUMIN","Result of internal evaluation: " + rslt);
+   AcornLog.logT("Result of internal evaluation: " + rslt);
 
    return CuminRunStatus.Factory.createReturn(rslt);
 }
@@ -1497,7 +1497,7 @@ CuminRunStatus checkClassMethods() throws CashewException, CuminRunException
 	    return null;
 
 	 default :
-	    AcornLog.logE("Unknown call to java.lang.Class." + getMethod());
+	    AcornLog.logE("CUMIN","Unknown call to java.lang.Class." + getMethod());
 	    return null;
        }
     }

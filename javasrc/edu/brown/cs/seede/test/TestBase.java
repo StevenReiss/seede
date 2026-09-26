@@ -29,7 +29,6 @@ import java.io.IOException;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReader;
 import java.lang.module.ModuleReference;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;

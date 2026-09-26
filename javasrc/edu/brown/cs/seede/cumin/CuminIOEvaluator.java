@@ -247,7 +247,7 @@ CuminRunStatus checkFileMethods() throws CashewException, CuminRunException
                break;
                
             default :
-               AcornLog.logE("Unknown file operation: " + getMethod().getName());
+               AcornLog.logE("CUMIN","Unknown file operation: " + getMethod().getName());
                return null;
                
           }

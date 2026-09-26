@@ -291,7 +291,8 @@ String getMethodName()
 	 sts = r;
        }
       catch (CashewException e) {
-	 AcornLog.logI("Exception evaluating " + current_node + " in:\n " + method_node + " using: " + call_args);
+	 AcornLog.logI("CUMIN","Exception evaluating " + current_node +
+               " in:\n " + method_node + " using: " + call_args);
 	 sts = CuminRunStatus.Factory.createCompilerError();
        }
       catch (Throwable t) {
@@ -498,13 +499,13 @@ private CuminRunStatus evalNode(ASTNode node,ASTNode afterchild)
        }
     }
    if (node == null) {
-      AcornLog.logD("ATTEMPT TO EXECUTE NULL NODE " + node);
+      AcornLog.logD("CUMIN","ATTEMPT TO EXECUTE NULL NODE " + node);
       return CuminRunStatus.Factory.createCompilerError();
     }
 
    JcompType jt = JcompAst.getExprType(node);
    if (jt != null && jt.isErrorType()) {
-      AcornLog.logD("COMPILER SEMANTIC ERROR " + node);
+      AcornLog.logD("CUMIN","COMPILER SEMANTIC ERROR " + node);
       return CuminRunStatus.Factory.createCompilerError();
     }
    else if ((node.getFlags() & ASTNode.RECOVERED) != 0) {
@@ -733,7 +734,7 @@ private CuminRunStatus evalNode(ASTNode node,ASTNode afterchild)
 	 sts = visit((WhileStatement) node,afterchild);
 	 break;
       default :
-	 AcornLog.logE("Unknown AST node " + current_node);
+	 AcornLog.logE("CUMIN","Unknown AST node " + current_node);
 	 sts = CuminRunStatus.Factory.createError("Unknown AST Node " + current_node);
 	 break;
     }
@@ -749,7 +750,9 @@ private CuminRunStatus evalThrow(ASTNode node,CuminRunStatus cause)
 {
    next_node = null;
 
-   if (AcornLog.isTracing()) AcornLog.logT("EXECT: " + node.getClass() + " " + cause.getReason());
+   if (AcornLog.isTracing()) {
+      AcornLog.logT("EXECT: " + node.getClass() + " " + cause.getReason());
+    }
    // need to restore stack in each of these
 
    CuminRunStatus sts = null;
@@ -877,7 +880,7 @@ private CuminRunStatus evalThrow(ASTNode node,CuminRunStatus cause)
 	 break;
 
       default :
-	 AcornLog.logE("Unknown AST node " + current_node);
+	 AcornLog.logE("CUMIN","Unknown AST node " + current_node);
 	 break;
     }
 
@@ -896,13 +899,15 @@ private CuminRunStatus evalThrow(ASTNode node,CuminRunStatus cause)
 private CuminRunStatus visit(MethodDeclaration md,ASTNode after) throws CashewException
 {
    if (after == null) {
-      if (AcornLog.isTracing()) AcornLog.logT("Start executing method " + md.getName());
+      if (AcornLog.isTracing()) {
+         AcornLog.logT("Start executing method " + md.getName());
+       }
       List<CashewValue> argvals = getCallArgs();
 
       for (int i = 0; i < argvals.size(); ++i) {
 	 CashewValue arg = argvals.get(i);
 	 if (arg == null) {
-	    AcornLog.logE("ARG " + i + " is UNDEFINED for " + argvals.size() + " " +
+	    AcornLog.logE("CUMIN","ARG " + i + " is UNDEFINED for " + argvals.size() + " " +
 		  JcompAst.getJavaType(md) + " " + md);
 	  }
 	 else if (AcornLog.isTracing()) {
@@ -1391,22 +1396,26 @@ private CuminRunStatus visit(SimpleName v) throws CashewException
 		  js.getFullName(),lookup_context,false);
 	  }
 	 if (cv == null) {
-	    AcornLog.logE("Missing Field " + js.getFullName());
+	    AcornLog.logE("CUMIN","Missing Field " + js.getFullName());
 	  }
        }
     }
    else {
       cv = lookup_context.findReference(type_converter,js);
-      if (AcornLog.isTracing()) AcornLog.logT("\tReference " + js.getName() + " at " + v.getStartPosition());
+      if (AcornLog.isTracing()) {
+         AcornLog.logT("\tReference " + js.getName() + " at " + v.getStartPosition());
+       }
     }
 
    if (cv == null || JcompAst.getExprType(v).isErrorType()) {
-      AcornLog.logI("Unknown simple name " + v + " in " + v.getParent());
+      AcornLog.logI("CUMIN","Unknown simple name " + v + " in " + v.getParent());
       String msg = v.getIdentifier() + " is undefined";
       return CuminRunStatus.Factory.createCompilerError(msg);
     }
 
-   if (AcornLog.isTracing()) AcornLog.logT("\tNAME: " + v);
+   if (AcornLog.isTracing()) {
+      AcornLog.logT("\tNAME: " + v);
+    }
 
    execution_stack.push(cv);
 
@@ -1441,7 +1450,9 @@ private CuminRunStatus visit(QualifiedName v,ASTNode after)
        }
       CashewValue rslt = obj.getFieldValue(runner_session,type_converter,execution_clock,
 	    "length",lookup_context);
-      if (AcornLog.isTracing()) AcornLog.logT("LENGTH " + obj + " = " + rslt);
+      if (AcornLog.isTracing()) {
+         AcornLog.logT("LENGTH " + obj + " = " + rslt);
+       }
       execution_stack.push(rslt);
     }
 
@@ -1594,7 +1605,7 @@ private CuminRunStatus visit(ClassInstanceCreation v, ASTNode after)
 	 JcompType argtyp = atyps.get(atypct);
 	 CashewValue ncv = CuminEvaluator.castValue(this,cv,argtyp);
 	 if (ncv == null) {
-	    AcornLog.logD("Conversion problem " + cv + " " + argtyp + " " +
+	    AcornLog.logD("CUMIN","Conversion problem " + cv + " " + argtyp + " " +
 			     cv.getDataType(runner_session,execution_clock,null));
 	  }
 	 argv.add(ncv);
@@ -1668,7 +1679,7 @@ private CuminRunStatus visit(ConstructorInvocation v,ASTNode after)
       JcompType argtyp = atyps.get(args.size()-1-i);
       CashewValue ncv = CuminEvaluator.castValue(this,cv,argtyp);
       if (ncv == null) {
-	 AcornLog.logD("Conversion problem " + cv + " " + argtyp + " " +
+	 AcornLog.logD("CUMIN","Conversion problem " + cv + " " + argtyp + " " +
 			  cv.getDataType(runner_session,execution_clock,null));
        }
       argv.add(ncv);
@@ -1700,7 +1711,9 @@ private CuminRunStatus visit(MethodInvocation v,ASTNode after)
       return null;
     }
 
-   if (AcornLog.isTracing()) AcornLog.logT("INVOKE " + args.size() + " " + v + " " + js.getType());
+   if (AcornLog.isTracing()) {
+      AcornLog.logT("INVOKE " + args.size() + " " + v + " " + js.getType());
+    }
 // if (v.toString().contains("props.put")) {
 //    System.err.println("CHECK HERE");
 //  }
@@ -1746,7 +1759,7 @@ private CuminRunStatus visit(MethodInvocation v,ASTNode after)
       JcompType argtyp = atyps.get(narg-1-i);
       CashewValue ncv = CuminEvaluator.castValue(this,cv,argtyp);
       if (ncv == null) {
-	 AcornLog.logD("Conversion problem " + cv + " " + argtyp);
+	 AcornLog.logD("CUMIN","Conversion problem " + cv + " " + argtyp);
 	 ncv = cv;
        }
       argv.add(ncv);
@@ -1771,7 +1784,7 @@ private CuminRunStatus visit(MethodInvocation v,ASTNode after)
 	 argv.add(thisv);
        }
       else {
-	 AcornLog.logE("THIS problem " + js + " " + v);
+	 AcornLog.logE("CUMIN","THIS problem " + js + " " + v);
        }
     }
    else cty = CallType.STATIC;
@@ -1888,7 +1901,9 @@ private CuminRunStatus visit(SuperMethodInvocation v,ASTNode after)
    // CuminRunner crun = handleCall(execution_clock,js,argv,cty);
    // return CuminRunStatus.Factory.createCall(crun);
 
-   if (AcornLog.isTracing()) AcornLog.logT("SUPER INVOKE " + args.size() + " " + v);
+   if (AcornLog.isTracing()) {
+      AcornLog.logT("SUPER INVOKE " + args.size() + " " + v);
+    }
 
    JcompSymbol js = JcompAst.getReference(v.getName());
    JcompType ctyp = js.getType();
@@ -1927,7 +1942,7 @@ private CuminRunStatus visit(SuperMethodInvocation v,ASTNode after)
       JcompType argtyp = atyps.get(narg-1-i);
       CashewValue ncv = CuminEvaluator.castValue(this,cv,argtyp);
       if (ncv == null) {
-	 AcornLog.logD("Conversion problem " + cv + " " + argtyp + " " +
+	 AcornLog.logD("CUMIN","Conversion problem " + cv + " " + argtyp + " " +
 	       cv.getDataType(runner_session,execution_clock,null));
        }
       argv.add(ncv);
@@ -3122,7 +3137,7 @@ private CashewValue handleThisAccess(JcompType base)
 	 nm,lookup_context);
     }
    if (cv1 == null) {
-      AcornLog.logE("Can't find outer this for " + base + " " + thistyp);
+      AcornLog.logE("CUMIN","Can't find outer this for " + base + " " + thistyp);
     }
    cv1 = handleThisAccess(base,cv1);
    if (cv1 != null) return cv1;

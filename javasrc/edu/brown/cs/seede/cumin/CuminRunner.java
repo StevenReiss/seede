@@ -94,7 +94,7 @@ public CashewValue executeCall(String method,CashewValue... args)
     }
    catch (CuminRunException e) {
       if (e.getReason() != Reason.RETURN) {
-	 AcornLog.logE("Unexpected return value from internal call",e);
+	 AcornLog.logE("CUMIN","Unexpected return value from internal call",e);
        }
       sts = e;
     }
@@ -403,7 +403,7 @@ protected CuminRunStatus checkTimeout()
 {
    if (max_time <= 0) return null;
    if (execution_clock.getTimeValue() > max_time) {
-      AcornLog.logI("Timeout " + max_time);
+      AcornLog.logI("CUMIN","Timeout " + max_time);
       return CuminRunStatus.Factory.createTimeout(getSession(),lookup_context,getTyper());
     }
 
@@ -417,7 +417,7 @@ protected void checkStackOverflow() throws CuminRunException
    int depth = cur_depth;
 
    if (depth > max_depth) {
-      AcornLog.logI("Stack overflow " + max_depth);
+      AcornLog.logI("CUMIN","Stack overflow " + max_depth);
       CuminEvaluator.throwException(getSession(),lookup_context,
             getTyper(),"java.lang.StackOverflowError");
 //    throw CuminRunStatus.Factory.createStackOverflow();
@@ -454,10 +454,10 @@ CuminRunner handleCall(CashewClock cc,JcompSymbol method,List<CashewValue> args,
 
    JcompSymbol cmethod = findTargetMethod(cc,method,thisarg,ctyp);
    if (cmethod == null) {
-      AcornLog.logE("Couldn't find method to call " + 
+      AcornLog.logE("CUMIN","Couldn't find method to call " + 
             thisarg.getDataType(getSession(),cc,type_converter) + " " + method);
       for (CashewValue cv : args) {
-	 AcornLog.logE("ARG: " + cv.getDebugString(getSession(),getTyper(),cc));
+	 AcornLog.logE("CUMIN","   ARG: " + cv.getDebugString(getSession(),getTyper(),cc));
        }
       throw CuminRunStatus.Factory.createError("Missing method " + method);
     }
@@ -469,7 +469,7 @@ CuminRunner handleCall(CashewClock cc,JcompSymbol method,List<CashewValue> args,
       ASTNode an = cmethod.getDefinitionNode();
       if (an == null) {
 	 if (type.isEnumType() && cmethod.getName().equals("values")) ;
-	 else AcornLog.logD("Missing AST for method declaration " + cmethod);
+	 else AcornLog.logD("CUMIN","Missing AST for method declaration " + cmethod);
        }
       else if (an instanceof MethodDeclaration) {
 	 MethodDeclaration md = (MethodDeclaration) an;
@@ -570,7 +570,7 @@ CuminRunner handleCall(CashewClock cc,JcodeMethod method,List<CashewValue> args,
 	  }
        }
       buf.append(")");
-      AcornLog.logI("Couldn't find bc method to call " + buf.toString());
+      AcornLog.logI("CUMIN","Couldn't find bc method to call " + buf.toString());
       throw CuminRunStatus.Factory.createCompilerError("Missing method " + buf.toString());
     }
 
@@ -663,8 +663,8 @@ private JcompSymbol findTargetMethod(CashewClock cc,JcompSymbol method,
       nmethod = base.lookupMethod(getTyper(),method.getName(),method.getType());
     }
    if (nmethod == null) {
-      AcornLog.logD("Can't find target method " + method.getName() + " " + method.getType() +
-		       " " + base);
+      AcornLog.logD("CUMIN","Can't find target method " + method.getName() + " " + 
+            method.getType() + " " + base);
       nmethod = method;
     }
 

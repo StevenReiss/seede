@@ -179,7 +179,7 @@ String getCallingClass()
 	    sts = cr;
 	  }
 	 catch (CashewException e) {
-	    AcornLog.logD("Bad value access: " + e);
+	    AcornLog.logD("CUMIN","Bad value access: " + e);
 	    sts = CuminRunStatus.Factory.createCompilerError();
 	  }
 	 if (sts != null) {
@@ -259,7 +259,7 @@ private void setupContext(List<CashewValue> args)
    int act = -1;
    if (jcode_method.isStatic()) act = 0;
    for (CashewValue cv : args) {
-      // AcornLog.logD("ARG " + vct + " " + cv);
+      // AcornLog.logD("CUMIN","ARG " + vct + " " + cv);
       CashewValue ref = CashewValue.createReference(cv,false);
       ctx.define(Integer.valueOf(vct),ref);
       ++vct;
@@ -331,7 +331,9 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException, CashewExc
        }
     }
 
-   if (AcornLog.isTracing()) AcornLog.logT(jins + " @ " + execution_clock.getTimeValue());
+   if (AcornLog.isTracing()) {
+      AcornLog.logT(jins + " @ " + execution_clock.getTimeValue());
+    }
 
    switch (jins.getOpcode()) {
 
@@ -1004,7 +1006,7 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException, CashewExc
 	 fld = jins.getFieldReference();
 	 v1 = lookup_context.findReference(type_converter,fld);
 	 if (v1 == null) {
-	    AcornLog.logE("Cannot find field " + fld);
+	    AcornLog.logE("CUMIN","Cannot find field " + fld);
 	  }
 	 else {
 	    v1.setValueAt(sess,execution_clock,v0);
@@ -1077,13 +1079,16 @@ private CuminRunStatus evaluateInstruction() throws CuminRunException, CashewExc
 	 break;
 
       default :
-	 AcornLog.logE("Unknown instruction: " + jins);
+	 AcornLog.logE("CUMIN","Unknown instruction: " + jins);
 	 throw CuminRunStatus.Factory.createError("Unknown instruction");
     }
 
    if (vstack != null) {
-      if (AcornLog.isTracing()) AcornLog.logT("RESULT: " +
-	    vstack.getString(sess,typer,execution_clock,0,true));
+      if (AcornLog.isTracing()) {
+         AcornLog.logT("RESULT: " +
+               vstack.getString(sess,typer,execution_clock,0,true));
+         
+       }
       execution_stack.push(vstack);
     }
    if (nextins != null) next = nextins.getIndex();
@@ -1207,7 +1212,7 @@ private void handleDynamicCall(JcodeInstruction ins)
       cv = CashewValue.stringValue(typer,typer.STRING_TYPE,buf.toString());
     }
    else {
-      AcornLog.logE("Unknown dynamic call user: " + args[2]);
+      AcornLog.logE("CUMIN","Unknown dynamic call user: " + args[2]);
       // need to do something here, setting cv
     }
 
@@ -1619,11 +1624,11 @@ private CuminRunStatus checkSpecial() throws CuminRunException
       throw e;
     }
    catch (CashewException e) {
-      AcornLog.logD("Problem in special evaluation",e);
+      AcornLog.logD("CUMIN","Problem in special evaluation",e);
       throw CuminRunStatus.Factory.createCompilerError();
     }
    catch (Throwable t) {
-      AcornLog.logE("Unknown Problem in special evaluation",t);
+      AcornLog.logE("CUMIN","Unknown Problem in special evaluation",t);
       throw CuminRunStatus.Factory.createCompilerError();
     }
 

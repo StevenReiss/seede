@@ -64,7 +64,7 @@ CuminStack()
 CashewValue push(CashewValue cv)
 {
    if (cv == null) {
-      AcornLog.logX("Pushing null onto stack");
+      AcornLog.logX("CUMIN","Pushing null onto stack");
       throw new Error("Attempt to push null onto stack");
     }
    
@@ -76,7 +76,7 @@ CashewValue push(CashewValue cv)
 CashewValue pop() 
 {
    if (execution_stack.isEmpty()) {
-      AcornLog.logE("ATTEMPT TO POP EMTPY STACK");
+      AcornLog.logE("CUMIN","ATTEMPT TO POP EMTPY STACK");
     }
    return (CashewValue) execution_stack.pop();
 }

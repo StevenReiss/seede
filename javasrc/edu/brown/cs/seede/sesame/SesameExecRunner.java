@@ -232,7 +232,7 @@ private void stopCurrentRunAndWait()
    if (mth == null) return;
    mth.stopCurrentRun();
 
-   AcornLog.logD("MASTER: Current run ended");
+   AcornLog.logD("SESAME","MASTER: Current run ended");
 
    if (is_continuous) startRunner();
 }
@@ -243,7 +243,7 @@ private void stopCurrentRunAndWait()
 
 private void startRunner()
 {
-   AcornLog.logD("MASTER: Start runner");
+   AcornLog.logD("SESAME","MASTER: Start runner");
 
    MasterThread mth = master_thread;
    if (mth == null) {
@@ -313,7 +313,7 @@ private void report(long time)
        }
     }
 
-   AcornLog.logD("MASTER: Start report " + reply_id + " " + empty + " " + error + " " + time);
+   AcornLog.logD("SESAME","MASTER: Start report " + reply_id + " " + empty + " " + error + " " + time);
 
    if (reply_id != null) {
       CommandArgs args = new CommandArgs();
@@ -366,7 +366,7 @@ private void report(long time)
 
    run_status.clear();
 
-   AcornLog.logD("MASTER: Done report");
+   AcornLog.logD("SESAME","MASTER: Done report");
 }
 
 
@@ -496,22 +496,22 @@ private class MasterThread extends Thread implements LoggerThread {
             runOnce(i == 0);
           }
          catch (Throwable t) {
-            AcornLog.logE("MASTER: Problem running",t);
+            AcornLog.logE("SESAME","MASTER: Problem running",t);
           }
 
          long time = System.currentTimeMillis() - starttime;
-         AcornLog.logI("MASTER: Execution time = " + time);
+         AcornLog.logI("SESAME","MASTER: Execution time = " + time);
          try {
             report(time);
           }
          catch (Throwable t) {
-            AcornLog.logE("MASTER: Problem with reporting: " + t,t);
+            AcornLog.logE("SESAME","MASTER: Problem with reporting: " + t,t);
           }
 
          synchronized (this) {
             if (!is_continuous) break;
             while (!run_again) {
-               AcornLog.logD("MASTER: begin wait " + stop_state + " " + run_state + " " + is_continuous);
+               AcornLog.logD("SESAME","MASTER: begin wait " + stop_state + " " + run_state + " " + is_continuous);
                if (interrupted()) continue;
                if (stop_state == StopState.EXIT_DESIRED) break;
                stop_state = StopState.RUN;
@@ -532,11 +532,11 @@ private class MasterThread extends Thread implements LoggerThread {
       master_thread = null;
       run_state = RunState.EXIT;
       if (stopper_thread != null) stopper_thread.exit();
-      AcornLog.logD("MASTER: exit");
+      AcornLog.logD("SESAME","MASTER: exit");
     }
 
    synchronized void restart() {
-      AcornLog.logD("MASTER: restart request");
+      AcornLog.logD("SESAME","MASTER: restart request");
       run_again = true;
       notifyAll();
     }
@@ -544,7 +544,7 @@ private class MasterThread extends Thread implements LoggerThread {
    synchronized void stopCurrentRun() {
       stop_state = StopState.STOP_DESIRED;
    
-      AcornLog.logI("MASTER: Stop current run " + runner_threads.size());
+      AcornLog.logI("SESAME","MASTER: Stop current run " + runner_threads.size());
    
       for (RunnerThread rt : runner_threads.values()) {
          rt.interrupt();
@@ -567,7 +567,7 @@ private class MasterThread extends Thread implements LoggerThread {
     }
 
    synchronized void stopMaster() {
-      AcornLog.logI("MASTER: Stop master request");
+      AcornLog.logI("SESAME","MASTER: Stop master request");
       is_continuous = false;
       run_again = false;
       stop_state = StopState.EXIT_DESIRED;
@@ -578,11 +578,11 @@ private class MasterThread extends Thread implements LoggerThread {
           }
          catch (InterruptedException e) { }
        }
-      AcornLog.logD("MASTER: threads stopped");
+      AcornLog.logD("SESAME","MASTER: threads stopped");
     }
 
    private void setupRun(boolean firsttime) {
-      AcornLog.logD("MASTER: setup run");
+      AcornLog.logD("SESAME","MASTER: setup run");
       run_state = RunState.INIT;
       run_status.clear();
       for_session.getIOModel().clear();
@@ -609,7 +609,7 @@ private class MasterThread extends Thread implements LoggerThread {
 
       proj.executionLock();
       run_state = RunState.RUNNING;
-      AcornLog.logD("MASTER: Start running");
+      AcornLog.logD("SESAME","MASTER: Start running");
       try {
          synchronized (this) {
             if (!firsttime) {
@@ -667,13 +667,13 @@ private class MasterThread extends Thread implements LoggerThread {
       finally {
          proj.executionUnlock();
          run_state = RunState.STOPPED;
-         AcornLog.logD("MASTER: Run finished");
+         AcornLog.logD("SESAME","MASTER: Run finished");
        }
    }
 
    private void runSwingThreads() {
       if (swing_components == null || swing_components.isEmpty()) return;
-      AcornLog.logD("MASTER: Start swing thread run");
+      AcornLog.logD("SESAME","MASTER: Start swing thread run");
       run_state = RunState.SWING;
       for (String cvname : swing_components) {
          if (stop_state != StopState.RUN) return;
@@ -690,14 +690,14 @@ private class MasterThread extends Thread implements LoggerThread {
                   rv = cr.executeCall("edu.brown.cs.seede.poppy.PoppyGraphics.computeDrawingG",cv,cv1);
                   if (rv != null) {
                      String rpt = rv.getString(cr.getSession(),cr.getTyper(),cr.getClock());
-                     AcornLog.logI("SWING REPORT: " + rpt);
+                     AcornLog.logI("SESAME","SWING REPORT: " + rpt);
                      if (rpt != null) graphics_outputs.add(rpt);
                    }
                   break;
                 }
              }
             catch (CashewException e) {
-               AcornLog.logE("Unexpected error starting swing thread",e);
+               AcornLog.logE("SESAME","Unexpected error starting swing thread",e);
              }
           }
        }
@@ -725,7 +725,7 @@ private class MasterThread extends Thread implements LoggerThread {
                if (rslt != null) graphics_outputs.add(rslt);
              }
             catch (CashewException e) {
-               AcornLog.logE("Unexpected error getting graphics result",e);
+               AcornLog.logE("SESAME","Unexpected error getting graphics result",e);
              }
           }
        }
@@ -769,7 +769,7 @@ private static class RunnerThread extends Thread implements LoggerThread {
        }
       catch (Throwable t) {
          cumin_runner.getLookupContext().setEndTime(cumin_runner.getClock());
-         AcornLog.logE("Problem running thread",t);
+         AcornLog.logE("SESAME","Problem running thread",t);
          sts = new CuminRunException(t);
        }
 
@@ -796,7 +796,7 @@ private class StopperThread extends Thread {
     }
 
    synchronized void initiateStop() {
-      AcornLog.logD("MASTER: stopper stop request " + do_stop);
+      AcornLog.logD("SESAME","MASTER: stopper stop request " + do_stop);
 
       if (do_stop < 0) return;
       do_stop = 1;
@@ -804,7 +804,7 @@ private class StopperThread extends Thread {
     }
 
    synchronized void exit() {
-      AcornLog.logD("MASTER: Stopper exit request");
+      AcornLog.logD("SESAME","MASTER: Stopper exit request");
       do_stop = -1;
       interrupt();
       notifyAll();
@@ -826,7 +826,7 @@ private class StopperThread extends Thread {
        }
       stopper_thread = null;
 
-      AcornLog.logD("MASTER: Stopper thread exited");
+      AcornLog.logD("SESAME","MASTER: Stopper thread exited");
     }
 
 }       // end of inner class StopperThread

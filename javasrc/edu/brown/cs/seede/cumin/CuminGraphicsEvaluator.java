@@ -187,7 +187,7 @@ CuminRunStatus checkPoppyGraphics() throws CashewException
    CashewValue thisarg = getValue(0);
    GraphicsOutput graphics = output_map.get(thisarg);
    if (graphics == null) {
-      AcornLog.logD("POPPY: create graphics");
+      AcornLog.logD("CUMIN","POPPY: create graphics");
       graphics = new GraphicsOutput(thisarg);
       output_map.put(thisarg,graphics);
     }
@@ -360,7 +360,7 @@ CuminRunStatus checkPoppyGraphics() throws CashewException
 	 return null;
 
       default :
-	 AcornLog.logE("Unexpected method " + getMethod());
+	 AcornLog.logE("CUMIN","Unexpected method " + getMethod());
 	 return null;
 
       case "getReport" :
@@ -467,7 +467,7 @@ private void createCommand(GraphicsOutput g,CommandType typ,int ign) throws Cash
 {
    int act = getNumArgs() - ign;
 
-   AcornLog.logD("Begin command " + typ);
+   AcornLog.logD("CUMIN","Begin command " + typ);
 
    g.addFields();
    CashewValueSession sess = getSession();
@@ -824,7 +824,7 @@ private class GraphicsOutput {
       CashewValue fval = poppy_graphics.getFieldValue(getSession(),getTyper(),getClock(),
             fld1,getContext());
       String nval = encodeField(fval);
-      // AcornLog.logD("Update Field " + fld + " " + cur + " " + nval);
+      // AcornLog.logD("CUMIN","Update Field " + fld + " " + cur + " " + nval);
       if (nval == null && cur == null) return cur;
       else if (nval != null && nval.equals(cur)) return cur;
       IvyXmlWriter xw = getCommandList();

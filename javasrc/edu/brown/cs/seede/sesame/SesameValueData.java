@@ -139,7 +139,7 @@ CashewValue getCashewValue(SesameSessionLaunch sess)
    if (result_value != null) return result_value;
    
    if (sess == null) {
-      AcornLog.logE("Value has unknown session " + val_kind + " " + val_type + " " + val_expr + " " +
+      AcornLog.logE("SESAME","Value has unknown session " + val_kind + " " + val_type + " " + val_expr + " " +
             val_value + " " + val_thread + " " + is_local + " " + is_static + " " + hash_code);
     }
    
@@ -206,7 +206,7 @@ CashewValue getCashewValue(SesameSessionLaunch sess)
       addall = ltyp;
     }
    if (typ == null) {
-      AcornLog.logE("TYPE " + val_type +  " " + vtype + " not found");
+      AcornLog.logW("SESAME","TYPE " + val_type +  " " + vtype + " not found");
       return CashewValue.nullValue(typer);
     }
 
@@ -280,7 +280,7 @@ CashewValue getCashewValue(SesameSessionLaunch sess)
                result_value.setFieldValue(sess,typer,null,ent.getKey(),cv);
              }
             catch (CashewException e) {
-               AcornLog.logE("Unexpected error setting field value",e);
+               AcornLog.logE("SESAME","Unexpected error setting field value",e);
              }
           }
          for (Map.Entry<String,SesameValueData> ent : other.entrySet()) {
@@ -305,7 +305,7 @@ CashewValue getCashewValue(SesameSessionLaunch sess)
              }
           }
          result_value = CashewValue.arrayValue(typer,typ,array_length,ainits);
-         // AcornLog.logD("BUILT ARRAY : " + result_value);
+         // AcornLog.logD("SESAME","BUILT ARRAY : " + result_value);
          break;
       case CLASS :
          int idx2 = val_value.lastIndexOf("(");
@@ -324,7 +324,7 @@ CashewValue getCashewValue(SesameSessionLaunch sess)
              }
           }
          if (ctyp == null) {
-            AcornLog.logE("Can't find type " + tnm + " for " + val_value);
+            AcornLog.logE("SESAME","Can't find type " + tnm + " for " + val_value);
           }
          result_value = CashewValue.classValue(typer,ctyp);
          break;
@@ -333,7 +333,7 @@ CashewValue getCashewValue(SesameSessionLaunch sess)
     }
 
    if (result_value == null) {
-      AcornLog.logE("Unknown conversion to cashew value from bubbles");
+      AcornLog.logE("SESAME","Unknown conversion to cashew value from bubbles");
     }
 
    return result_value;
