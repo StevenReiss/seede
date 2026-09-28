@@ -1980,6 +1980,7 @@ private CuminRunStatus visit(AssertStatement s,ASTNode after)
    if (after == null) next_node = s.getExpression();
    else {
       CashewValue cv = execution_stack.pop();
+      AcornLog.logD("CUMIN","Assert " + s.getExpression() + " " + cv);
       if (!getBoolean(cv)) {
 	 CuminEvaluator.throwException(runner_session,lookup_context,
 	       type_converter,"java.lang.AssertionError");

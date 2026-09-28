@@ -38,7 +38,7 @@ public class TestTc2 extends TestBase
 
 private static final String             TESTTC2_SID = "SEED_32578";
 private static final String             TEST_PROJECT = "tc2";
-private static final String             LAUNCH_NAME = "t10VipDiscountTest";
+private static final String             LAUNCH_NAME = "t13CorrelationTest";
 
 
 /********************************************************************************/
