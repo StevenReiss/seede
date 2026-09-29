@@ -546,6 +546,10 @@ private class DeferredLookup implements CashewConstants.CashewDeferredValue {
       AcornLog.logD("SESAME","Deferred Lookup of " + lookup + " = " + cvr.toString(sessobj));
       return cvr;
     }
+   
+   @Override public String toString() {
+      return "DEFERED[" + field_name + "@" + val_name + ":" + val_type + "]";
+    }
 
 }       // end of inner class DeferredLookup
 
